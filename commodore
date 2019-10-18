@@ -2,9 +2,10 @@
 
 import json, requests, os
 from git import Repo
+from url_normalize import url_normalize
 
 def fetch_inventory(customer, cluster):
-    r = requests.get(f"{API_URL}/inventory/{customer}/{cluster}")
+    r = requests.get(url_normalize(f"{API_URL}/inventory/{customer}/{cluster}"))
     resp = json.loads(r.text)
     if r.status_code == 404:
         print(resp['message'])
@@ -13,7 +14,7 @@ def fetch_inventory(customer, cluster):
         return resp
 
 def fetch_git_repository(repository_url, directory):
-    Repo.clone_from(repository_url, directory)
+    Repo.clone_from(url_normalize(repository_url), directory)
 
 def fetch_config(response):
     config = response['global']['config']
@@ -34,7 +35,7 @@ def fetch_components(response):
         fetch_component(c)
 
 def fetch_target(customer, cluster):
-    r = requests.get(f"{API_URL}/targets/{customer}/{cluster}")
+    r = requests.get(url_normalize(f"{API_URL}/targets/{customer}/{cluster}"))
     resp = json.loads(r.text)
     if r.status_code == 404:
         print(resp['message'])
