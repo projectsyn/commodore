@@ -3,11 +3,6 @@
 import json, requests, os
 from git import Repo
 
-API_URL="http://localhost:5000"
-GLOBAL_GIT_BASE="/home/simon/syn/git"
-CUSTOMER_GIT_BASE="/home/simon/syn/git"
-
-
 def fetch_inventory(customer, cluster):
     r = requests.get(f"{API_URL}/inventory/{customer}/{cluster}")
     resp = json.loads(r.text)
@@ -99,6 +94,11 @@ def main():
     except IndexError:
         parser.print_help()
         sys.exit(1)
+
+    global API_URL, GLOBAL_GIT_BASE, CUSTOMER_GIT_BASE
+    API_URL=os.environ['API_URL']
+    GLOBAL_GIT_BASE=os.environ['GLOBAL_GIT_BASE']
+    CUSTOMER_GIT_BASE=os.environ['CUSTOMER_GIT_BASE']
 
     if cmd == 'compile':
         compile(args.customer, args.cluster)
