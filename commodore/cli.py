@@ -4,12 +4,6 @@ from .config import Config
 from .helpers import clean as _clean
 from .commodore import compile as _compile
 
-class Config(object):
-    def __init__(self, api_url, global_git, customer_git):
-        self.api_url = api_url
-        self.global_git_base = global_git
-        self.customer_git_base = customer_git
-
 pass_config = click.make_pass_decorator(Config)
 
 @click.group()

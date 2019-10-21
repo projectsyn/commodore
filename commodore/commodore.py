@@ -1,5 +1,5 @@
 import json, os
-from .helpers import clean, api_request, fetch_git_repository
+from .helpers import clean, api_request, fetch_git_repository, kapitan_compile
 
 def fetch_inventory(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
@@ -30,17 +30,6 @@ def fetch_customer_config(cfg, repo, customer):
         repo = f"{cfg.customer_git_base}/{customer}.git"
     print("Updating customer config...")
     fetch_git_repository(repo, f"inventory/classes/{customer}")
-
-def clean():
-    import shutil
-    shutil.rmtree("inventory", ignore_errors=True)
-    shutil.rmtree("dependencies", ignore_errors=True)
-    shutil.rmtree("compiled", ignore_errors=True)
-
-def kapitan_compile():
-    # TODO: maybe use kapitan.targets.compile_targets directly?
-    import shlex, subprocess
-    subprocess.run(shlex.split("kapitan compile"))
 
 def compile(config, customer, cluster):
     clean()

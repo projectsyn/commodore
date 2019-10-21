@@ -41,3 +41,8 @@ def clean():
     shutil.rmtree("inventory", ignore_errors=True)
     shutil.rmtree("dependencies", ignore_errors=True)
     shutil.rmtree("compiled", ignore_errors=True)
+
+def kapitan_compile():
+    # TODO: maybe use kapitan.targets.compile_targets directly?
+    import shlex, subprocess
+    subprocess.run(shlex.split("kapitan compile"))
