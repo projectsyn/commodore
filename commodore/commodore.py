@@ -1,5 +1,7 @@
 import json, os
-from .helpers import clean, api_request, fetch_git_repository, kapitan_compile
+
+from .git import clone_repository, checkout_version
+from .helpers import clean, api_request, kapitan_compile
 
 def fetch_inventory(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
@@ -7,12 +9,12 @@ def fetch_inventory(cfg, customer, cluster):
 def fetch_config(cfg, response):
     config = response['global']['config']
     print(f"Updating global config...")
-    fetch_git_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
 
 def fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = f"dependencies/{component}"
-    fetch_git_repository(repository_url, target_directory)
+    repo = clone_repository(repository_url, target_directory)
     os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
 
 def fetch_components(cfg, response):
@@ -29,7 +31,7 @@ def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
     print("Updating customer config...")
-    fetch_git_repository(repo, f"inventory/classes/{customer}")
+    clone_repository(repo, f"inventory/classes/{customer}")
 
 def compile(config, customer, cluster):
     clean()
