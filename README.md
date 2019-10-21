@@ -21,6 +21,8 @@
    CUSTOMER_GIT_BASE="..."
    ```
 
+   Note: currently Commodore only supports fetching Git repositories via SSH
+
 1. Run the mock CI job script
 
    ```console
