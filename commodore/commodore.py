@@ -1,4 +1,5 @@
 import json, os
+from kapitan.resources import inventory_reclass
 
 from .git import clone_repository, checkout_version
 from .helpers import clean, api_request, kapitan_compile
@@ -15,14 +16,25 @@ def fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = f"dependencies/{component}"
     repo = clone_repository(repository_url, target_directory)
+    cfg.register_component(component, repo)
     os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
 
 def fetch_components(cfg, response):
     components = response['global']['components']
     os.makedirs('inventory/classes/components', exist_ok=True)
+    print("Updating components...")
     for c in components:
-        print(f"Updating component {c}...")
+        print(f" > {c}...")
         fetch_component(cfg, c)
+
+def set_component_version(cfg, component, version):
+    print(f" > {component}: {version}")
+    checkout_version(cfg.get_component_repo(component), version)
+
+def set_component_versions(cfg, versions):
+    print("Setting component versions...")
+    for cn, c in versions.items():
+        set_component_version(cfg, cn, c['version'])
 
 def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster)
@@ -44,8 +56,16 @@ def compile(config, customer, cluster):
     fetch_customer_config(config, r['cluster'].get('override', None), customer)
 
     target = fetch_target(config, customer, cluster)
+    target_name = target['target']
     os.makedirs('inventory/targets', exist_ok=True)
-    with open(f"inventory/targets/{target['target']}.yml", 'w') as tgt:
+    with open(f"inventory/targets/{target_name}.yml", 'w') as tgt:
         json.dump(target['contents'], tgt)
+
+    # Compile kapitan inventory to extract component versions. Component
+    # versions are assumed to be defined in the inventory key
+    # 'parameters.component_versions'
+    inventory = inventory_reclass('inventory')
+    versions = inventory['nodes'][target_name]['parameters']['component_versions']
+    set_component_versions(config, versions)
 
     kapitan_compile()
