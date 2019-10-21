@@ -16,9 +16,9 @@
    # URL of SYNventory API
    API_URL="http://localhost:5000/"
    # Base URL (local or remote) for global Git repositories
-   GLOBAL_GIT_BASE="..."
+   GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
    # Base URL (local or remote) for customer Git repositories
-   CUSTOMER_GIT_BASE="..."
+   CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/"
    ```
 
 1. Run the mock CI job script

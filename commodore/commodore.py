@@ -10,7 +10,7 @@ def fetch_config(cfg, response):
     fetch_git_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
 
 def fetch_component(cfg, component):
-    repository_url = f"{cfg.global_git_base}/components/{component}.git"
+    repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = f"dependencies/{component}"
     fetch_git_repository(repository_url, target_directory)
     os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
