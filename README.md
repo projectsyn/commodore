@@ -23,10 +23,10 @@
 
    Note: currently Commodore only supports fetching Git repositories via SSH
 
-1. Run the mock CI job script
+1. Run commodore
 
    ```console
-   pipenv run ./runjob
+   pipenv run commodore
    ```
 
 1. Start hacking on Commodore

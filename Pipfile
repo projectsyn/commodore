@@ -14,3 +14,6 @@ click = "*"
 
 [requires]
 python_version = "3.6"
+
+[scripts]
+commodore = "python -m commodore"
