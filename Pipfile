@@ -11,6 +11,7 @@ requests = "*"
 GitPython = "*"
 url-normalize = "~=1.4"
 click = "*"
+ruamel-yaml = "*"
 
 [requires]
 python_version = "3.6"
