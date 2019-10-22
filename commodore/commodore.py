@@ -1,8 +1,8 @@
-import json, os
+import click, json, os
 from kapitan.resources import inventory_reclass
 
 from .git import clone_repository, checkout_version
-from .helpers import clean, api_request, kapitan_compile
+from .helpers import clean, api_request, kapitan_compile, ApiError
 
 def fetch_inventory(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
@@ -48,14 +48,24 @@ def fetch_customer_config(cfg, repo, customer):
 def compile(config, customer, cluster):
     clean()
 
-    r = fetch_inventory(config, customer, cluster)
+    try:
+        r = fetch_inventory(config, customer, cluster)
+    except ApiError as e:
+        raise click.ClickException(f"While fetching inventory: {e}") from e
 
     # Fetch all Git repos
-    fetch_config(config, r)
-    fetch_components(config, r)
-    fetch_customer_config(config, r['cluster'].get('override', None), customer)
+    try:
+        fetch_config(config, r)
+        fetch_components(config, r)
+        fetch_customer_config(config, r['cluster'].get('override', None), customer)
+    except Exception as e:
+        raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    target = fetch_target(config, customer, cluster)
+    try:
+        target = fetch_target(config, customer, cluster)
+    except ApiError as e:
+        raise click.ClickException(f"While fetching target: {e}") from e
+
     target_name = target['target']
     os.makedirs('inventory/targets', exist_ok=True)
     with open(f"inventory/targets/{target_name}.yml", 'w') as tgt:
