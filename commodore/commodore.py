@@ -60,6 +60,20 @@ def fetch_customer_config(cfg, repo, customer):
     print("Updating customer config...")
     clone_repository(repo, f"inventory/classes/{customer}")
 
+def fetch_jsonnet_libs(cfg, response):
+    print("Updating Jsonnet libraries...")
+    os.makedirs('dependencies/libs', exist_ok=True)
+    os.makedirs('dependencies/lib', exist_ok=True)
+    libs = response['global']['jsonnet_libs']
+    for lib in libs:
+        libname = lib['name']
+        filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
+        print(f" > {libname}: {filestext}")
+        repo = clone_repository(lib['repository'], f"dependencies/libs/{libname}")
+        for file in lib['files']:
+            os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
+                    f"dependencies/lib/{file['targetfile']}")
+
 def compile(config, customer, cluster):
     clean()
 
@@ -73,6 +87,7 @@ def compile(config, customer, cluster):
         fetch_config(config, inv)
         fetch_components(config, inv)
         fetch_customer_config(config, inv['cluster'].get('override', None), customer)
+        fetch_jsonnet_libs(config, inv)
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
