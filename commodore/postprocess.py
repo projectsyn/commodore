@@ -6,11 +6,36 @@ def _yaml_load(file):
     with open(file, 'r') as f:
         return yaml.load(f)
 
-def _import_callback(dir, rel):
-    full_path, content = try_path(dir, rel)
+#  Returns content if worked, None if file not found, or throws an exception
+def _try_path(dir, rel):
+    if not rel:
+        raise RuntimeError('Got invalid filename (empty string).')
+    if rel[0] == '/':
+        full_path = rel
+    else:
+        full_path = dir + rel
+    if full_path[-1] == '/':
+        raise RuntimeError('Attempted to import a directory')
+
+    if not os.path.isfile(full_path):
+        return full_path, None
+    with open(full_path) as f:
+        return full_path, f.read()
+
+def _import_callback_with_searchpath(search, dir, rel):
+    full_path, content = _try_path(dir, rel)
     if content:
         return full_path, content
+    for p in search:
+        full_path, content = _try_path(p, rel)
+        if content:
+            return full_path, content
     raise RuntimeError('File not found')
+
+def _import_cb(dir, rel):
+    # Add current working dir to search path for Jsonnet import callback
+    search_path = [f"{os.getcwd()}/"]
+    return _import_callback_with_searchpath(search_path, dir, rel)
 
 _native_callbacks = {
     'yaml_load': (('file',), _yaml_load),
@@ -26,7 +51,7 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
     _native_cb['inventory'] = ((), _inventory)
     output = _jsonnet.evaluate_file(
         str(filterfile),
-        import_callback=_import_callback,
+        import_callback=_import_cb,
         native_callbacks=_native_cb,
         ext_vars={'target': target, 'component': component},
     )
