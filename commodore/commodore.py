@@ -5,7 +5,7 @@ from .git import clone_repository, checkout_version
 from .helpers import clean, api_request, kapitan_compile, ApiError
 from .postprocess import postprocess_components
 
-def fetch_inventory(cfg, customer, cluster):
+def fetch_cluster_spec(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
 
 def fetch_config(cfg, response):
@@ -64,9 +64,9 @@ def compile(config, customer, cluster):
     clean()
 
     try:
-        inv = fetch_inventory(config, customer, cluster)
+        inv = fetch_cluster_spec(config, customer, cluster)
     except ApiError as e:
-        raise click.ClickException(f"While fetching inventory: {e}") from e
+        raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
     # Fetch all Git repos
     try:
