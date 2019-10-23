@@ -3,6 +3,7 @@ from kapitan.resources import inventory_reclass
 
 from .git import clone_repository, checkout_version
 from .helpers import clean, api_request, kapitan_compile, ApiError
+from .postprocess import postprocess_components
 
 def fetch_inventory(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
@@ -74,8 +75,12 @@ def compile(config, customer, cluster):
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
-    inventory = inventory_reclass('inventory')
-    versions = inventory['nodes'][target_name]['parameters']['component_versions']
+    inventory = inventory_reclass('inventory')['nodes'][target_name]
+    versions = inventory['parameters']['component_versions']
     set_component_versions(config, versions)
 
-    kapitan_compile()
+    p = kapitan_compile()
+    if p.returncode != 0:
+        raise click.ClickException(f"Catalog compilation failed")
+
+    postprocess_components(inventory, target_name, config.get_components())

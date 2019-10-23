@@ -19,7 +19,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# Don't exclude lib, as we are providing Jsonnet libs in that folder
+# lib/
 lib64/
 parts/
 sdist/

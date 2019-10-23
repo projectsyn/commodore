@@ -10,6 +10,9 @@ class Config(object):
         self.customer_git_base = customer_git
         self._components = {}
 
+    def get_components(self):
+        return self._components
+
     def register_component(self, component, repo):
         c = Component(
                 name=component,
