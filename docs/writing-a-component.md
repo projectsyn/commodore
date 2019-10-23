@@ -13,9 +13,9 @@ TODO: quickstart guide
 ## The component templates
 
 The component templates can be any templating language that Kapitan can
-handle. Currently those are Jsonnet, Jinja2 and Kadet (alpha).
-
-This guide will use Jsonnet as the templating language for any examples.
+handle. Currently Kadet supports Jsonnet, Jinja2, Kadet (alpha) and Helm
+(alpha) as templating languages.  This guide will use Jsonnet as the
+templating language for any examples.
 
 Component templates can be stored anywhere in the Commodore component
 repository, as long as they're correctly referenced by the component class.
@@ -66,6 +66,14 @@ parameters:
 
 To avoid name collisions in the output, each component should specify the
 output path as the component's name for all compile instructions.
+
+### Rendering Helm charts with Kapitan
+
+See [Kapitan's documentation](https://kapitan.dev/compile/#helm).
+
+It is strongly suggested that each component downloads helm charts into
+`dependencies/<component-name>` to avoid weird interactions if multiple
+components build upon the same helm chart.
 
 ## Postprocessing filters
 
