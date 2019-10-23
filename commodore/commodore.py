@@ -40,6 +40,20 @@ def set_component_versions(cfg, versions):
 def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster)
 
+def update_target(cfg, customer, cluster):
+    print("Updating Kapitan target...")
+    try:
+        target = fetch_target(cfg, customer, cluster)
+    except ApiError as e:
+        raise click.ClickException(f"While fetching target: {e}") from e
+
+    target_name = target['target']
+    os.makedirs('inventory/targets', exist_ok=True)
+    with open(f"inventory/targets/{target_name}.yml", 'w') as tgt:
+        json.dump(target['contents'], tgt)
+
+    return target_name
+
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
@@ -50,37 +64,29 @@ def compile(config, customer, cluster):
     clean()
 
     try:
-        r = fetch_inventory(config, customer, cluster)
+        inv = fetch_inventory(config, customer, cluster)
     except ApiError as e:
         raise click.ClickException(f"While fetching inventory: {e}") from e
 
     # Fetch all Git repos
     try:
-        fetch_config(config, r)
-        fetch_components(config, r)
-        fetch_customer_config(config, r['cluster'].get('override', None), customer)
+        fetch_config(config, inv)
+        fetch_components(config, inv)
+        fetch_customer_config(config, inv['cluster'].get('override', None), customer)
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    try:
-        target = fetch_target(config, customer, cluster)
-    except ApiError as e:
-        raise click.ClickException(f"While fetching target: {e}") from e
-
-    target_name = target['target']
-    os.makedirs('inventory/targets', exist_ok=True)
-    with open(f"inventory/targets/{target_name}.yml", 'w') as tgt:
-        json.dump(target['contents'], tgt)
+    target_name = update_target(config, customer, cluster)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
-    inventory = inventory_reclass('inventory')['nodes'][target_name]
-    versions = inventory['parameters']['component_versions']
+    kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
+    versions = kapitan_inventory['parameters']['component_versions']
     set_component_versions(config, versions)
 
     p = kapitan_compile(config.get_components())
     if p.returncode != 0:
         raise click.ClickException(f"Catalog compilation failed")
 
-    postprocess_components(inventory, target_name, config.get_components())
+    postprocess_components(kapitan_inventory, target_name, config.get_components())
