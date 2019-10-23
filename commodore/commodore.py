@@ -79,6 +79,8 @@ def compile(config, customer, cluster):
     versions = inventory['parameters']['component_versions']
     set_component_versions(config, versions)
 
-    kapitan_compile()
+    p = kapitan_compile()
+    if p.returncode != 0:
+        raise click.ClickException(f"Catalog compilation failed")
 
     postprocess_components(inventory, target_name, config.get_components())
