@@ -27,8 +27,8 @@ def clean():
     shutil.rmtree("dependencies", ignore_errors=True)
     shutil.rmtree("compiled", ignore_errors=True)
 
-def kapitan_compile():
+def kapitan_compile(components):
     # TODO: maybe use kapitan.targets.compile_targets directly?
     import shlex, subprocess, sys
     print("Compiling catalog...")
-    return subprocess.run(shlex.split("kapitan compile --fetch"))
+    return subprocess.run(shlex.split("kapitan compile --fetch -J . dependencies"))
