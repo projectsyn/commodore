@@ -35,6 +35,106 @@ Any variables which are configured in any class in the inventory under
 inv.parameters.section.subsection.value
 ```
 
+### Validating inventory schemas
+
+Kapitan includes [JSON Schema](https://json-schema.org/), which can be used to
+validate inventory section structures against schemas. To write schemas,
+please refer to ["Understanding JSON Schema"](https://json-schema.org/understanding-json-schema/index.html).
+
+Given the schema
+
+```jsonnet
+local section_schema = {
+  type: "object",
+  properties: {
+    key1: { type: "string" },
+    key2: { type: "int" },
+    key3: { type: "string", pattern: "^prefix-[0-9]+$" }
+  },
+  required: [ 'key1', 'key2' ]
+};
+```
+
+and the example inventory
+
+```yaml
+parameters:
+  section_a:
+    key1: test
+    key2: 20
+  section_b:
+    key1: test
+    key2: 20
+    key3: prefix-0000
+  section_c:
+    key1: test
+    key2: 50G
+  section_d:
+    key1: test
+    key2: 20
+    key3: other-2000
+  section_e:
+    key1: test
+    key3: prefix-2000
+```
+
+we can validate the structure of each of `section_a`, `section_b` and
+`section_c` using the `jsonschema()` function:
+
+```jsonnet
+local validation = kap.jsonschema(inv.parameters.section_X, section_schema);
+assert validation.valid: validation.reason;
+```
+
+Validation of `section_a` and `section_b` succeeds and produces no output.
+
+Validation of `section_c` fails with:
+
+```
+Jsonnet error: failed to compile schema_example.jsonnet:
+ RUNTIME ERROR: '50G' is not of type 'integer'
+
+Failed validating 'type' in schema['properties']['key2']:
+    {'type': 'integer'}
+
+On instance['key2']:
+    '50G'
+```
+
+Validation of `section_d` fails with:
+
+```
+Jsonnet error: failed to compile schema_example.jsonnet:
+ RUNTIME ERROR: 'other-2000' does not match '^prefix-[0-9]+$'
+
+Failed validating 'pattern' in schema['properties']['key3']:
+    {'pattern': '^prefix-[0-9]+$', 'type': 'string'}
+
+On instance['key3']:
+    'other-2000'
+```
+
+Validation of `section_e` fails with:
+
+```
+Jsonnet error: failed to compile schema_example.jsonnet:
+ RUNTIME ERROR: 'key2' is a required property
+
+Failed validating 'required' in schema:
+    {'properties': {'key1': {'type': 'string'},
+                    'key2': {'type': 'integer'},
+                    'key3': {'pattern': '^prefix-[0-9]+$',
+                             'type': 'string'}},
+     'required': ['key1', 'key2'],
+     'type': 'object'}
+
+On instance:
+    {'key1': 'test', 'key3': 'prefix-2000'}
+```
+
+If `validation.valid` is not true, the `assert` will fail, which aborts the
+compilation, and the reason for the validation failure will be displayed.
+
 ## The component class
 
 Commodore looks for the component class in `class/<component-name>.yml`. Since
