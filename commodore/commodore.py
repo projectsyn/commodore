@@ -133,6 +133,8 @@ def update_catalog(cfg, target_name, repo):
         else:
             repo.head.reset()
             click.echo(" > Skipping commit+push to catalog in local mode...")
+    else:
+        click.echo(" > Skipping commit+push to catalog...")
 
 
 def compile(config, customer, cluster):
