@@ -2,7 +2,7 @@
 
 Commodore components are bundles which contain templates and a component
 class describing a component (e.g. a fully-configured Crossplane stack) for
-consumption by Kapitan.  Additionally a Commodore component can contain
+consumption by Kapitan. Additionally a Commodore component can contain
 postprocessing filters, which are arbitrary Jsonnet scripts that are executed
 by Commodore after Kapitan has compiled the component.
 
@@ -59,8 +59,8 @@ After that, you can start developing your component by writing Jsonnet in
 ## The component templates
 
 The component templates can be any templating language that Kapitan can
-handle. Currently Kadet supports Jsonnet, Jinja2, Kadet (alpha) and Helm
-(alpha) as templating languages.  This guide will use Jsonnet as the
+handle. Currently Commodore supports Jsonnet, Jinja2, Kadet (alpha) and Helm
+(alpha) as templating languages. This guide will use Jsonnet as the
 templating language for any examples.
 
 Component templates can be stored anywhere in the Commodore component
@@ -191,7 +191,7 @@ The component class provides Kapitan with the information that's necessary to
 compile a component.
 
 Commodore components will always be stored under
-`dependencies/<component-name>` in Kapitan's working directory.  Commodore
+`dependencies/<component-name>` in Kapitan's working directory. Commodore
 configures Kapitan to look for inputs in the working directory and in
 `dependencies`. To ensure that template file names cannot cause conflicts
 between different components, the component class will always have to specify
@@ -264,5 +264,5 @@ local object = commodore.yaml_load('/path/to/input.yaml');
 ```
 
 The value of each key of the Jsonnet output object is dumped as YAML to
-`compiled/target/<output_path>/<key>.yaml`.  Filter authors can decide
+`compiled/target/<output_path>/<key>.yaml`. Filter authors can decide
 themselves whether to write filters that overwrite their inputs, or not.
