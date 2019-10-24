@@ -1,0 +1,5 @@
+FROM golang:1.12-stretch as builder
+
+WORKDIR /virtualenv
+COPY ./lib/python3.6/site-packages/kapitan ./kapitan
+RUN ./kapitan/inputs/helm/build.sh

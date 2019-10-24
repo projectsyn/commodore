@@ -1,7 +1,7 @@
 import click, json, os
 from kapitan.resources import inventory_reclass
 
-from .git import clone_repository, checkout_version
+from .git import clone_repository, checkout_version, init_repository
 from .helpers import clean, api_request, kapitan_compile, ApiError
 from .postprocess import postprocess_components
 
@@ -75,33 +75,48 @@ def fetch_jsonnet_libs(cfg, response):
                     f"dependencies/lib/{file['targetfile']}")
 
 def compile(config, customer, cluster):
-    clean()
+    if config.local:
+        print("Running in local mode, will use existing inventory and dependencies")
+        target_name = config.local
+        if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
+            raise click.ClickException(f"Invalid target: {target_name}")
+        print(f"Using target: {target_name}")
+        print("Registering components...")
+        for c in os.listdir('dependencies'):
+            # Skip jsonnet libs when collecting components
+            if c == "lib" or c == "libs":
+                continue
+            print(f" > {c}")
+            repo = init_repository(f"dependencies/{c}")
+            config.register_component(c, repo)
+    else:
+        clean()
 
-    try:
-        inv = fetch_cluster_spec(config, customer, cluster)
-    except ApiError as e:
-        raise click.ClickException(f"While fetching cluster specification: {e}") from e
+        try:
+            inv = fetch_cluster_spec(config, customer, cluster)
+        except ApiError as e:
+            raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    # Fetch all Git repos
-    try:
-        fetch_config(config, inv)
-        fetch_components(config, inv)
-        fetch_customer_config(config, inv['cluster'].get('override', None), customer)
-        fetch_jsonnet_libs(config, inv)
-    except Exception as e:
-        raise click.ClickException(f"While cloning git repositories: {e}") from e
+        # Fetch all Git repos
+        try:
+            fetch_config(config, inv)
+            fetch_components(config, inv)
+            fetch_customer_config(config, inv['cluster'].get('override', None), customer)
+            fetch_jsonnet_libs(config, inv)
+        except Exception as e:
+            raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    target_name = update_target(config, customer, cluster)
+        target_name = update_target(config, customer, cluster)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
     versions = kapitan_inventory['parameters'].get('component_versions', None)
-    if versions:
+    if versions and not config.local:
         set_component_versions(config, versions)
 
-    p = kapitan_compile(config.get_components())
+    p = kapitan_compile()
     if p.returncode != 0:
         raise click.ClickException(f"Catalog compilation failed")
 
