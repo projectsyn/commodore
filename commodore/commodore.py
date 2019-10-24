@@ -30,7 +30,10 @@ def fetch_components(cfg, response):
 
 def set_component_version(cfg, component, version):
     print(f" > {component}: {version}")
-    checkout_version(cfg.get_component_repo(component), version)
+    try:
+        git.checkout_version(cfg.get_component_repo(component), version)
+    except git.RefError as e:
+        print(f"    unable to set version: {e}")
 
 def set_component_versions(cfg, versions):
     print("Setting component versions...")

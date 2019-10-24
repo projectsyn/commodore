@@ -1,5 +1,7 @@
+import difflib
+
 from git import Repo
-from git.exc import GitCommandError
+from git.exc import GitCommandError, BadName
 
 class RefError(ValueError):
     def __init__(self, message):
@@ -36,7 +38,9 @@ def checkout_version(repo, ref):
         repo.head.reference = repo.commit(f"remotes/origin/{ref}")
         repo.head.reset(index=True, working_tree=True)
     except GitCommandError as e:
-        raise RefError(f"Failed to checkout revision {ref}") from e
+        raise RefError(f"Failed to checkout revision '{ref}'") from e
+    except BadName as e:
+        raise RefError(f"Revision '{ref}' not found in repository") from e
 
 def clone_repository(repository_url, directory):
     return Repo.clone_from(_normalize_git_ssh(repository_url), directory)
