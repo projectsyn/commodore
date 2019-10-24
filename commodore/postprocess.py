@@ -67,6 +67,8 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
 def postprocess_components(inventory, target, components):
     print("Postprocessing...")
     for cn, c in components.items():
+        if f"components.{cn}" not in inventory["classes"]:
+            continue
         repodir = pathlib.PurePath(c.repo.working_tree_dir)
         filterdir = repodir / "postprocess"
         if os.path.isdir(filterdir):

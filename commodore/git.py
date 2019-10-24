@@ -33,7 +33,7 @@ def checkout_version(repo, ref):
     massively simplifies the implementation.
     """
     try:
-        repo.head.reference = repo.commit(ref)
+        repo.head.reference = repo.commit(f"remotes/origin/{ref}")
         repo.head.reset(index=True, working_tree=True)
     except GitCommandError as e:
         raise RefError(f"Failed to checkout revision {ref}") from e
