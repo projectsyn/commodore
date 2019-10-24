@@ -97,8 +97,9 @@ def compile(config, customer, cluster):
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
-    versions = kapitan_inventory['parameters']['component_versions']
-    set_component_versions(config, versions)
+    versions = kapitan_inventory['parameters'].get('component_versions', None)
+    if versions:
+        set_component_versions(config, versions)
 
     p = kapitan_compile(config.get_components())
     if p.returncode != 0:
