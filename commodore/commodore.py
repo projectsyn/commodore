@@ -38,7 +38,7 @@ def set_component_versions(cfg, versions):
         set_component_version(cfg, cn, c['version'])
 
 def fetch_target(cfg, customer, cluster):
-    return api_request(cfg.api_url, 'targets', customer, cluster)
+    return api_request(cfg.api_url, 'targets', customer, cluster, is_json=False)
 
 def update_target(cfg, customer, cluster):
     print("Updating Kapitan target...")
@@ -47,12 +47,11 @@ def update_target(cfg, customer, cluster):
     except ApiError as e:
         raise click.ClickException(f"While fetching target: {e}") from e
 
-    target_name = target['target']
     os.makedirs('inventory/targets', exist_ok=True)
-    with open(f"inventory/targets/{target_name}.yml", 'w') as tgt:
-        json.dump(target['contents'], tgt)
+    with open('inventory/targets/cluster.yml', 'w') as tgt:
+        tgt.write(target)
 
-    return target_name
+    return 'cluster'
 
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
