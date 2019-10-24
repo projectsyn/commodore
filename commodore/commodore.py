@@ -117,12 +117,21 @@ def update_catalog(cfg, target_name, repo):
     difftext = git.commit_all(repo, message)
     print(f"Commited changes:\n{difftext}")
 
-    repo.remotes.origin.push()
+    if not cfg.local:
+        print(" > Commiting changes...")
+        message = _render_catalog_commit_msg(cfg)
+        repo.index.commit(message)
+        print(" > Pushing catalog to remote...")
+        repo.remotes.origin.push()
+    else:
+        repo.head.reset()
+        print(" > Skipping commit+push to catalog in local mode...")
 
 
 def compile(config, customer, cluster):
     if config.local:
-        print("Running in local mode, will use existing inventory and dependencies")
+        print("Running in local mode")
+        print(" > Will use existing inventory, dependencies, and catalog")
         target_name = config.local
         if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
             raise click.ClickException(f"Invalid target: {target_name}")
@@ -135,6 +144,8 @@ def compile(config, customer, cluster):
             print(f" > {c}")
             repo = git.init_repository(f"dependencies/{c}")
             config.register_component(c, repo)
+        print("Configuring catalog repo...")
+        catalog_repo = git.init_repository(f"catalog")
     else:
         clean()
 
@@ -169,5 +180,6 @@ def compile(config, customer, cluster):
 
     postprocess_components(kapitan_inventory, target_name, config.get_components())
 
-    if not config.local:
-        update_catalog(config, target_name, catalog_repo)
+    update_catalog(config, target_name, catalog_repo)
+
+    print("Catalog compiled! 🎉")
