@@ -4,10 +4,13 @@
 
 1. Make sure [Pipenv](https://github.com/pypa/pipenv) is set up
 
+1. To build the Kapitan helm binding, a working Go installation is required
+
 1. Install requirements
 
    ```console
    pipenv install
+   pipenv run build_kapitan_helm_binding
    ```
 
 1. Setup a `.env` file to configure Commodore (or provide command line flags):

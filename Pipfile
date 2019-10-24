@@ -18,3 +18,4 @@ python_version = "3.6"
 
 [scripts]
 commodore = "python -m commodore"
+build_kapitan_helm_binding="${VIRTUAL_ENV}/lib/python3.6/site-packages/kapitan/inputs/helm/build.sh"
