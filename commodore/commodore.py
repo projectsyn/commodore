@@ -117,6 +117,8 @@ def update_catalog(cfg, target_name, repo):
     difftext = git.commit_all(repo, message)
     print(f"Commited changes:\n{difftext}")
 
+    repo.remotes.origin.push()
+
 
 def compile(config, customer, cluster):
     if config.local:
