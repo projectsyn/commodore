@@ -4,7 +4,7 @@
 
 1. Make sure [Pipenv](https://github.com/pypa/pipenv) is set up
 
-1. To build the Kapitan helm binding, a working Go installation is required
+1. To build the Kapitan helm binding, Docker is required
 
 1. Install requirements
 
