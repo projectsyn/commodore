@@ -2,7 +2,7 @@ import click, json, os
 from kapitan.resources import inventory_reclass
 
 from . import git
-from .helpers import clean, api_request, kapitan_compile, ApiError
+from .helpers import clean, api_request, kapitan_compile, ApiError, rm_tree_contents
 from .postprocess import postprocess_components
 
 def fetch_cluster_spec(cfg, customer, cluster):
@@ -11,7 +11,8 @@ def fetch_cluster_spec(cfg, customer, cluster):
 def fetch_config(cfg, response):
     config = response['global']['config']
     print(f"Updating global config...")
-    git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    cfg.register_config('global', repo)
 
 def fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
@@ -60,7 +61,8 @@ def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
     print("Updating customer config...")
-    git.clone_repository(repo, f"inventory/classes/{customer}")
+    repo = git.clone_repository(repo, f"inventory/classes/{customer}")
+    cfg.register_config('customer', repo)
 
 def fetch_jsonnet_libs(cfg, response):
     print("Updating Jsonnet libraries...")
@@ -75,6 +77,46 @@ def fetch_jsonnet_libs(cfg, response):
         for file in lib['files']:
             os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
                     f"dependencies/lib/{file['targetfile']}")
+
+def fetch_customer_catalog(cfg, target_name, repoinfo):
+    print("Updating customer catalog...")
+    return git.clone_repository(repoinfo['url'], 'catalog')
+
+def _render_catalog_commit_msg(cfg):
+    import datetime
+    now = datetime.datetime.now().isoformat(timespec='milliseconds')
+
+    component_commits = [ f" * {cn}: {c.repo.head.commit.hexsha}" for cn, c in cfg.get_components().items() ]
+    component_commits = '\n'.join(component_commits)
+
+    config_commits = [ f" * {c}: {r.head.commit.hexsha}" for c, r in cfg.get_configs().items() ]
+    config_commits = '\n'.join(config_commits)
+
+    return f"""
+Automated catalog update from Commodore
+
+Component commits:
+{component_commits}
+
+Configuration commits:
+{config_commits}
+
+Compilation timestamp: {now}
+"""
+
+
+def update_catalog(cfg, target_name, repo):
+    from distutils import dir_util
+    catalogdir = repo.working_tree_dir
+    # delete everything in catalog
+    rm_tree_contents(catalogdir)
+    # copy compiled catalog into catalog directory
+    dir_util.copy_tree(f"compiled/{target_name}", catalogdir)
+
+    message = _render_catalog_commit_msg(cfg)
+    difftext = git.commit_all(repo, message)
+    print(f"Commited changes:\n{difftext}")
+
 
 def compile(config, customer, cluster):
     if config.local:
@@ -99,16 +141,17 @@ def compile(config, customer, cluster):
         except ApiError as e:
             raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
+        target_name = update_target(config, customer, cluster)
+
         # Fetch all Git repos
         try:
             fetch_config(config, inv)
             fetch_components(config, inv)
             fetch_customer_config(config, inv['cluster'].get('override', None), customer)
             fetch_jsonnet_libs(config, inv)
+            catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
         except Exception as e:
             raise click.ClickException(f"While cloning git repositories: {e}") from e
-
-        target_name = update_target(config, customer, cluster)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
@@ -123,3 +166,6 @@ def compile(config, customer, cluster):
         raise click.ClickException(f"Catalog compilation failed")
 
     postprocess_components(kapitan_inventory, target_name, config.get_components())
+
+    if not config.local:
+        update_catalog(config, target_name, catalog_repo)

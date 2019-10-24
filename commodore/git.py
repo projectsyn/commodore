@@ -47,3 +47,25 @@ def clone_repository(repository_url, directory):
 
 def init_repository(path):
     return Repo(path)
+
+def commit_all(repo, message):
+    index = repo.index
+    index.add('*')
+    diff = index.diff(repo.head.commit)
+    difftext = []
+    for ct in diff.change_type:
+        for c in diff.iter_change_type(ct):
+            if ct == 'M':
+                # The diff object is inverted because we're comparing the
+                # staged changes with the previous HEAD.
+                after = c.a_blob.data_stream.read().decode('utf-8').split('\n')
+                before = c.b_blob.data_stream.read().decode('utf-8').split('\n')
+                u = difflib.unified_diff(before, after, lineterm='',
+                        fromfile=c.a_path, tofile=c.b_path)
+                difftext.append('\n'.join(u).strip())
+            elif ct == 'A':
+                difftext.append(f"Deleted file {c.b_path}")
+            elif ct == 'D':
+                difftext.append(f"Added file {c.b_path}")
+    index.commit(message)
+    return '\n'.join(difftext)

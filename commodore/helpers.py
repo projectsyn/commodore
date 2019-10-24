@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, shutil
 from requests.exceptions import ConnectionError
 from url_normalize import url_normalize
 
@@ -27,13 +27,27 @@ def api_request(api_url, type, customer, cluster, is_json=True):
         return resp
 
 def clean():
-    import shutil
     shutil.rmtree("inventory", ignore_errors=True)
     shutil.rmtree("dependencies", ignore_errors=True)
     shutil.rmtree("compiled", ignore_errors=True)
+    shutil.rmtree("catalog", ignore_errors=True)
 
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
     import shlex, subprocess, sys
     print("Compiling catalog...")
     return subprocess.run(shlex.split("kapitan compile --fetch -J . dependencies"))
+
+def rm_tree_contents(dir):
+    """
+    Delete all files in directory `dir`, but do not delete the directory
+    itself.
+    """
+    import glob, os
+    if not os.path.isdir(dir):
+        raise ValueError("Expected directory as argument")
+    for f in glob.glob(f"{dir}/*"):
+        if os.path.isdir(f):
+            shutil.rmtree(f)
+        else:
+            os.unlink(f)
