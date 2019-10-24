@@ -8,7 +8,53 @@ by Commodore after Kapitan has compiled the component.
 
 ## Quickstart
 
-TODO: quickstart guide
+To kickstart developing a component, the following shell commands can be
+executed to create a barebones, best-practice oriented directory layout. Make
+sure you are in the directory in which you wish to develop your comopnent and
+set the variable `COMPONENT` to the name of your component.
+
+```shell
+COMPONENT="<The Component Name>"
+```
+
+If the component name does not match the name of the Component's Git
+repository, the variable `input_paths` in `kapitan.compile` must be adjusted
+accordingly to use the Git repository name instead of the component name as
+the first path component.
+
+```shell
+mkdir -p class component postprocess
+cat <<EOF > README.md
+# ${COMPONENT}
+
+A commodore Component for ${COMPONENT}
+EOF
+cat <<EOF > class/${COMPONENT}.yml
+parameters:
+  kapitan:
+    compile:
+      - output_path: ${COMPONENT}
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - ${COMPONENT}/component/main.jsonnet
+EOF
+cat <<EOF > component/main.jsonnet
+local kap = import 'lib/kapitan.libjsonnet';
+local kube = import 'lib/kube.libjsonnet';
+local inv = kap.inventory()
+
+// Define outputs below
+{
+}
+EOF
+cat <<EOF > postprocess/filters.yml
+filters: []
+EOF
+```
+
+After that, you can start developing your component by writing Jsonnet in
+`component/main.jsonnet`.
 
 ## The component templates
 
