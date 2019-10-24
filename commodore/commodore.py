@@ -1,7 +1,7 @@
 import click, json, os
 from kapitan.resources import inventory_reclass
 
-from .git import clone_repository, checkout_version, init_repository
+from . import git
 from .helpers import clean, api_request, kapitan_compile, ApiError
 from .postprocess import postprocess_components
 
@@ -11,12 +11,12 @@ def fetch_cluster_spec(cfg, customer, cluster):
 def fetch_config(cfg, response):
     config = response['global']['config']
     print(f"Updating global config...")
-    clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
 
 def fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = f"dependencies/{component}"
-    repo = clone_repository(repository_url, target_directory)
+    repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
     os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
 
@@ -57,7 +57,7 @@ def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
     print("Updating customer config...")
-    clone_repository(repo, f"inventory/classes/{customer}")
+    git.clone_repository(repo, f"inventory/classes/{customer}")
 
 def fetch_jsonnet_libs(cfg, response):
     print("Updating Jsonnet libraries...")
@@ -68,7 +68,7 @@ def fetch_jsonnet_libs(cfg, response):
         libname = lib['name']
         filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
         print(f" > {libname}: {filestext}")
-        repo = clone_repository(lib['repository'], f"dependencies/libs/{libname}")
+        repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
         for file in lib['files']:
             os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
                     f"dependencies/lib/{file['targetfile']}")
@@ -86,7 +86,7 @@ def compile(config, customer, cluster):
             if c == "lib" or c == "libs":
                 continue
             print(f" > {c}")
-            repo = init_repository(f"dependencies/{c}")
+            repo = git.init_repository(f"dependencies/{c}")
             config.register_component(c, repo)
     else:
         clean()
