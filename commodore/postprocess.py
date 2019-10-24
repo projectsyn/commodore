@@ -1,4 +1,4 @@
-import _jsonnet, json, pathlib, os
+import _jsonnet, json, pathlib, os, click
 from ruamel.yaml import YAML
 
 def _yaml_load(file):
@@ -65,14 +65,14 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
             yaml.dump(outcontents, outf)
 
 def postprocess_components(inventory, target, components):
-    print("Postprocessing...")
+    click.secho("Postprocessing...", bold=True)
     for cn, c in components.items():
         if f"components.{cn}" not in inventory["classes"]:
             continue
         repodir = pathlib.PurePath(c.repo.working_tree_dir)
         filterdir = repodir / "postprocess"
         if os.path.isdir(filterdir):
-            print(f" > {cn}...")
+            click.echo(f" > {cn}...")
             filters = _yaml_load(filterdir / "filters.yml")
             for filter in filters['filters']:
                 filterpath = filterdir / filter['filter']

@@ -1,4 +1,4 @@
-import json, requests, shutil
+import click, json, requests, shutil
 from requests.exceptions import ConnectionError
 from url_normalize import url_normalize
 
@@ -35,7 +35,7 @@ def clean():
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
     import shlex, subprocess, sys
-    print("Compiling catalog...")
+    click.secho("Compiling catalog...", bold=True)
     return subprocess.run(shlex.split("kapitan compile --fetch -J . dependencies"))
 
 def rm_tree_contents(dir):

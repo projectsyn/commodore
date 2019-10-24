@@ -10,7 +10,7 @@ def fetch_cluster_spec(cfg, customer, cluster):
 
 def fetch_config(cfg, response):
     config = response['global']['config']
-    print(f"Updating global config...")
+    click.secho(f"Updating global config...", bold=True)
     repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
     cfg.register_config('global', repo)
 
@@ -24,20 +24,20 @@ def fetch_component(cfg, component):
 def fetch_components(cfg, response):
     components = response['global']['components']
     os.makedirs('inventory/classes/components', exist_ok=True)
-    print("Updating components...")
+    click.secho("Updating components...", bold=True)
     for c in components:
-        print(f" > {c}...")
+        click.echo(f" > {c}...")
         fetch_component(cfg, c)
 
 def set_component_version(cfg, component, version):
-    print(f" > {component}: {version}")
+    click.echo(f" > {component}: {version}")
     try:
         git.checkout_version(cfg.get_component_repo(component), version)
     except git.RefError as e:
-        print(f"    unable to set version: {e}")
+        click.secho(f"    unable to set version: {e}", fg='yellow')
 
 def set_component_versions(cfg, versions):
-    print("Setting component versions...")
+    click.secho("Setting component versions...", bold=True)
     for cn, c in versions.items():
         set_component_version(cfg, cn, c['version'])
 
@@ -45,7 +45,7 @@ def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster, is_json=False)
 
 def update_target(cfg, customer, cluster):
-    print("Updating Kapitan target...")
+    click.secho("Updating Kapitan target...", bold=True)
     try:
         target = fetch_target(cfg, customer, cluster)
     except ApiError as e:
@@ -60,26 +60,26 @@ def update_target(cfg, customer, cluster):
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
-    print("Updating customer config...")
+    click.secho("Updating customer config...", bold=True)
     repo = git.clone_repository(repo, f"inventory/classes/{customer}")
     cfg.register_config('customer', repo)
 
 def fetch_jsonnet_libs(cfg, response):
-    print("Updating Jsonnet libraries...")
+    click.secho("Updating Jsonnet libraries...", bold=True)
     os.makedirs('dependencies/libs', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     libs = response['global']['jsonnet_libs']
     for lib in libs:
         libname = lib['name']
         filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
-        print(f" > {libname}: {filestext}")
+        click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
         for file in lib['files']:
             os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
                     f"dependencies/lib/{file['targetfile']}")
 
 def fetch_customer_catalog(cfg, target_name, repoinfo):
-    print("Updating customer catalog...")
+    click.secho("Updating customer catalog...", bold=True)
     return git.clone_repository(repoinfo['url'], 'catalog')
 
 def _render_catalog_commit_msg(cfg):
@@ -106,6 +106,7 @@ Compilation timestamp: {now}
 
 
 def update_catalog(cfg, target_name, repo):
+    click.secho("Updating catalog repository...", bold=True)
     from distutils import dir_util
     import textwrap
     catalogdir = repo.working_tree_dir
@@ -120,37 +121,37 @@ def update_catalog(cfg, target_name, repo):
         message = f" > Changes:\n{indented}"
     else:
         message = " > No changes."
-    print(message)
+    click.echo(message)
 
     if changed:
         if not cfg.local:
-            print(" > Commiting changes...")
+            click.echo(" > Commiting changes...")
             message = _render_catalog_commit_msg(cfg)
             repo.index.commit(message)
-            print(" > Pushing catalog to remote...")
+            click.echo(" > Pushing catalog to remote...")
             repo.remotes.origin.push()
         else:
             repo.head.reset()
-            print(" > Skipping commit+push to catalog in local mode...")
+            click.echo(" > Skipping commit+push to catalog in local mode...")
 
 
 def compile(config, customer, cluster):
     if config.local:
-        print("Running in local mode")
-        print(" > Will use existing inventory, dependencies, and catalog")
+        click.secho("Running in local mode", bold=True)
+        click.echo(" > Will use existing inventory, dependencies, and catalog")
         target_name = config.local
         if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
             raise click.ClickException(f"Invalid target: {target_name}")
-        print(f"Using target: {target_name}")
-        print("Registering components...")
+        click.echo(f" > Using target: {target_name}")
+        click.secho("Registering components...", bold=True)
         for c in os.listdir('dependencies'):
             # Skip jsonnet libs when collecting components
             if c == "lib" or c == "libs":
                 continue
-            print(f" > {c}")
+            click.echo(f" > {c}")
             repo = git.init_repository(f"dependencies/{c}")
             config.register_component(c, repo)
-        print("Configuring catalog repo...")
+        click.secho("Configuring catalog repo...", bold=True)
         catalog_repo = git.init_repository(f"catalog")
     else:
         clean()
@@ -188,4 +189,4 @@ def compile(config, customer, cluster):
 
     update_catalog(config, target_name, catalog_repo)
 
-    print("Catalog compiled! 🎉")
+    click.secho("Catalog compiled! 🎉", bold=True)
