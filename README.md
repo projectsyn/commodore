@@ -14,11 +14,11 @@
 
    ```shell
    # URL of SYNventory API
-   API_URL="http://localhost:5000/"
+   COMMODORE_API_URL="http://localhost:5000/"
    # Base URL (local or remote) for global Git repositories
-   GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
+   COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
    # Base URL (local or remote) for customer Git repositories
-   CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/"
+   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/"
    ```
 
    Note: currently Commodore only supports fetching Git repositories via SSH

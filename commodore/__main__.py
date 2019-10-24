@@ -1,4 +1,4 @@
-from .cli import commodore
+from .cli import main
 
 if __name__ == "__main__":
-    commodore.main(prog_name='commodore')
+    main()
