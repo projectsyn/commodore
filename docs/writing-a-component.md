@@ -81,6 +81,35 @@ Any variables which are configured in any class in the inventory under
 inv.parameters.section.subsection.value
 ```
 
+Commodore ensures that Bitnami Labs's
+[kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet)
+is available as `lib/kube.libjsonnet`. This allows templates to reuse the
+provided methods to abstract away a lot of the tedious bits of writing
+Kubernetes objects.
+
+As an illustration, below is an example `nginx` deployment which is written
+using `kube-libsonnet`.
+
+```jsonnet
+local kube = import 'lib/kube.libjsonnet';
+
+local deployment = kube.Deployment('test-nginx') {
+  spec+: {
+    template+: {
+      spec+: {
+        containers_+: {
+          default: kube.Container('nginx') {
+            image: 'nginx',
+            ports_+: { http: { containerPort: 80 } }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
 ### Validating inventory schemas
 
 Kapitan includes [JSON Schema](https://json-schema.org/), which can be used to
