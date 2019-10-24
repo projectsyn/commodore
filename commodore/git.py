@@ -40,3 +40,6 @@ def checkout_version(repo, ref):
 
 def clone_repository(repository_url, directory):
     return Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+
+def init_repository(path):
+    return Repo(path)

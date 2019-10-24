@@ -26,6 +26,11 @@ def clean(ctx):
 @commodore.command(short_help='Compile inventory and catalog')
 @click.argument('customer')
 @click.argument('cluster')
+@click.option('--local', envvar='LOCAL', metavar='TARGET',
+              help='Run in local mode, Local mode does not try to connect to ' + \
+                   'SYNventory or fetch/push Git repositories. TARGET specifies ' + \
+                   'the Kapitan target to compile')
 @pass_config
-def compile(config, customer, cluster):
+def compile(config, customer, cluster, local):
+    config.local = local
     _compile(config, customer, cluster)
