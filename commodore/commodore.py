@@ -107,25 +107,31 @@ Compilation timestamp: {now}
 
 def update_catalog(cfg, target_name, repo):
     from distutils import dir_util
+    import textwrap
     catalogdir = repo.working_tree_dir
     # delete everything in catalog
     rm_tree_contents(catalogdir)
     # copy compiled catalog into catalog directory
     dir_util.copy_tree(f"compiled/{target_name}", catalogdir)
 
-    message = _render_catalog_commit_msg(cfg)
-    difftext = git.commit_all(repo, message)
-    print(f"Commited changes:\n{difftext}")
-
-    if not cfg.local:
-        print(" > Commiting changes...")
-        message = _render_catalog_commit_msg(cfg)
-        repo.index.commit(message)
-        print(" > Pushing catalog to remote...")
-        repo.remotes.origin.push()
+    difftext, changed = git.stage_all(repo)
+    if changed:
+        indented = textwrap.indent(difftext, '     ')
+        message = f" > Changes:\n{indented}"
     else:
-        repo.head.reset()
-        print(" > Skipping commit+push to catalog in local mode...")
+        message = " > No changes."
+    print(message)
+
+    if changed:
+        if not cfg.local:
+            print(" > Commiting changes...")
+            message = _render_catalog_commit_msg(cfg)
+            repo.index.commit(message)
+            print(" > Pushing catalog to remote...")
+            repo.remotes.origin.push()
+        else:
+            repo.head.reset()
+            print(" > Skipping commit+push to catalog in local mode...")
 
 
 def compile(config, customer, cluster):
