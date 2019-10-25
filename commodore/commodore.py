@@ -1,8 +1,8 @@
 import click, json, os
 from kapitan.resources import inventory_reclass
 
-from .git import clone_repository, checkout_version, init_repository
-from .helpers import clean, api_request, kapitan_compile, ApiError
+from . import git
+from .helpers import clean, api_request, kapitan_compile, ApiError, rm_tree_contents
 from .postprocess import postprocess_components
 
 def fetch_cluster_spec(cfg, customer, cluster):
@@ -10,30 +10,34 @@ def fetch_cluster_spec(cfg, customer, cluster):
 
 def fetch_config(cfg, response):
     config = response['global']['config']
-    print(f"Updating global config...")
-    clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    click.secho(f"Updating global config...", bold=True)
+    repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    cfg.register_config('global', repo)
 
 def fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = f"dependencies/{component}"
-    repo = clone_repository(repository_url, target_directory)
+    repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
     os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
 
 def fetch_components(cfg, response):
     components = response['global']['components']
     os.makedirs('inventory/classes/components', exist_ok=True)
-    print("Updating components...")
+    click.secho("Updating components...", bold=True)
     for c in components:
-        print(f" > {c}...")
+        click.echo(f" > {c}...")
         fetch_component(cfg, c)
 
 def set_component_version(cfg, component, version):
-    print(f" > {component}: {version}")
-    checkout_version(cfg.get_component_repo(component), version)
+    click.echo(f" > {component}: {version}")
+    try:
+        git.checkout_version(cfg.get_component_repo(component), version)
+    except git.RefError as e:
+        click.secho(f"    unable to set version: {e}", fg='yellow')
 
 def set_component_versions(cfg, versions):
-    print("Setting component versions...")
+    click.secho("Setting component versions...", bold=True)
     for cn, c in versions.items():
         set_component_version(cfg, cn, c['version'])
 
@@ -41,7 +45,7 @@ def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster, is_json=False)
 
 def update_target(cfg, customer, cluster):
-    print("Updating Kapitan target...")
+    click.secho("Updating Kapitan target...", bold=True)
     try:
         target = fetch_target(cfg, customer, cluster)
     except ApiError as e:
@@ -56,38 +60,101 @@ def update_target(cfg, customer, cluster):
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
-    print("Updating customer config...")
-    clone_repository(repo, f"inventory/classes/{customer}")
+    click.secho("Updating customer config...", bold=True)
+    repo = git.clone_repository(repo, f"inventory/classes/{customer}")
+    cfg.register_config('customer', repo)
 
 def fetch_jsonnet_libs(cfg, response):
-    print("Updating Jsonnet libraries...")
+    click.secho("Updating Jsonnet libraries...", bold=True)
     os.makedirs('dependencies/libs', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     libs = response['global']['jsonnet_libs']
     for lib in libs:
         libname = lib['name']
         filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
-        print(f" > {libname}: {filestext}")
-        repo = clone_repository(lib['repository'], f"dependencies/libs/{libname}")
+        click.echo(f" > {libname}: {filestext}")
+        repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
         for file in lib['files']:
             os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
                     f"dependencies/lib/{file['targetfile']}")
 
+def fetch_customer_catalog(cfg, target_name, repoinfo):
+    click.secho("Updating customer catalog...", bold=True)
+    return git.clone_repository(repoinfo['url'], 'catalog')
+
+def _render_catalog_commit_msg(cfg):
+    import datetime
+    now = datetime.datetime.now().isoformat(timespec='milliseconds')
+
+    component_commits = [ f" * {cn}: {c.repo.head.commit.hexsha}" for cn, c in cfg.get_components().items() ]
+    component_commits = '\n'.join(component_commits)
+
+    config_commits = [ f" * {c}: {r.head.commit.hexsha}" for c, r in cfg.get_configs().items() ]
+    config_commits = '\n'.join(config_commits)
+
+    return f"""
+Automated catalog update from Commodore
+
+Component commits:
+{component_commits}
+
+Configuration commits:
+{config_commits}
+
+Compilation timestamp: {now}
+"""
+
+
+def update_catalog(cfg, target_name, repo):
+    click.secho("Updating catalog repository...", bold=True)
+    from distutils import dir_util
+    import textwrap
+    catalogdir = repo.working_tree_dir
+    # delete everything in catalog
+    rm_tree_contents(catalogdir)
+    # copy compiled catalog into catalog directory
+    dir_util.copy_tree(f"compiled/{target_name}", catalogdir)
+
+    difftext, changed = git.stage_all(repo)
+    if changed:
+        indented = textwrap.indent(difftext, '     ')
+        message = f" > Changes:\n{indented}"
+    else:
+        message = " > No changes."
+    click.echo(message)
+
+    if changed:
+        if not cfg.local:
+            click.echo(" > Commiting changes...")
+            message = _render_catalog_commit_msg(cfg)
+            repo.index.commit(message)
+            click.echo(" > Pushing catalog to remote...")
+            repo.remotes.origin.push()
+        else:
+            repo.head.reset()
+            click.echo(" > Skipping commit+push to catalog in local mode...")
+    else:
+        click.echo(" > Skipping commit+push to catalog...")
+
+
 def compile(config, customer, cluster):
     if config.local:
-        print("Running in local mode, will use existing inventory and dependencies")
+        click.secho("Running in local mode", bold=True)
+        click.echo(" > Will use existing inventory, dependencies, and catalog")
         target_name = config.local
         if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
             raise click.ClickException(f"Invalid target: {target_name}")
-        print(f"Using target: {target_name}")
-        print("Registering components...")
+        click.echo(f" > Using target: {target_name}")
+        click.secho("Registering components...", bold=True)
         for c in os.listdir('dependencies'):
             # Skip jsonnet libs when collecting components
             if c == "lib" or c == "libs":
                 continue
-            print(f" > {c}")
-            repo = init_repository(f"dependencies/{c}")
+            click.echo(f" > {c}")
+            repo = git.init_repository(f"dependencies/{c}")
             config.register_component(c, repo)
+        click.secho("Configuring catalog repo...", bold=True)
+        catalog_repo = git.init_repository(f"catalog")
     else:
         clean()
 
@@ -96,16 +163,17 @@ def compile(config, customer, cluster):
         except ApiError as e:
             raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
+        target_name = update_target(config, customer, cluster)
+
         # Fetch all Git repos
         try:
             fetch_config(config, inv)
             fetch_components(config, inv)
             fetch_customer_config(config, inv['cluster'].get('override', None), customer)
             fetch_jsonnet_libs(config, inv)
+            catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
         except Exception as e:
             raise click.ClickException(f"While cloning git repositories: {e}") from e
-
-        target_name = update_target(config, customer, cluster)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
@@ -120,3 +188,7 @@ def compile(config, customer, cluster):
         raise click.ClickException(f"Catalog compilation failed")
 
     postprocess_components(kapitan_inventory, target_name, config.get_components())
+
+    update_catalog(config, target_name, catalog_repo)
+
+    click.secho("Catalog compiled! 🎉", bold=True)

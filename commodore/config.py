@@ -9,6 +9,7 @@ class Config(object):
         self.global_git_base = global_git
         self.customer_git_base = customer_git
         self._components = {}
+        self._config_repos = {}
 
     def get_components(self):
         return self._components
@@ -28,3 +29,9 @@ class Config(object):
 
     def get_component_repo(self, component):
         return self._components[component].repo
+
+    def get_configs(self):
+        return self._config_repos
+
+    def register_config(self, level, repo):
+        self._config_repos[level] = repo
