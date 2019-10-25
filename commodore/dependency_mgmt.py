@@ -41,6 +41,7 @@ def _set_component_version(cfg, component, version):
         git.checkout_version(cfg.get_component_repo(component), version)
     except git.RefError as e:
         click.secho(f"    unable to set version: {e}", fg='yellow')
+    cfg.set_component_version(component, version)
 
 def set_component_versions(cfg, versions):
     """
