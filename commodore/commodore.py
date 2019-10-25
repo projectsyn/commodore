@@ -2,6 +2,11 @@ import click, json, os
 from kapitan.resources import inventory_reclass
 
 from . import git
+from .dependency_mgmt import (
+        fetch_components,
+        fetch_jsonnet_libs,
+        set_component_versions
+    )
 from .helpers import clean, api_request, kapitan_compile, ApiError, rm_tree_contents
 from .postprocess import postprocess_components
 
@@ -13,33 +18,6 @@ def fetch_config(cfg, response):
     click.secho(f"Updating global config...", bold=True)
     repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
     cfg.register_config('global', repo)
-
-def fetch_component(cfg, component):
-    repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
-    target_directory = f"dependencies/{component}"
-    repo = git.clone_repository(repository_url, target_directory)
-    cfg.register_component(component, repo)
-    os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
-
-def fetch_components(cfg, response):
-    components = response['global']['components']
-    os.makedirs('inventory/classes/components', exist_ok=True)
-    click.secho("Updating components...", bold=True)
-    for c in components:
-        click.echo(f" > {c}...")
-        fetch_component(cfg, c)
-
-def set_component_version(cfg, component, version):
-    click.echo(f" > {component}: {version}")
-    try:
-        git.checkout_version(cfg.get_component_repo(component), version)
-    except git.RefError as e:
-        click.secho(f"    unable to set version: {e}", fg='yellow')
-
-def set_component_versions(cfg, versions):
-    click.secho("Setting component versions...", bold=True)
-    for cn, c in versions.items():
-        set_component_version(cfg, cn, c['version'])
 
 def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster, is_json=False)
@@ -63,20 +41,6 @@ def fetch_customer_config(cfg, repo, customer):
     click.secho("Updating customer config...", bold=True)
     repo = git.clone_repository(repo, f"inventory/classes/{customer}")
     cfg.register_config('customer', repo)
-
-def fetch_jsonnet_libs(cfg, response):
-    click.secho("Updating Jsonnet libraries...", bold=True)
-    os.makedirs('dependencies/libs', exist_ok=True)
-    os.makedirs('dependencies/lib', exist_ok=True)
-    libs = response['global']['jsonnet_libs']
-    for lib in libs:
-        libname = lib['name']
-        filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
-        click.echo(f" > {libname}: {filestext}")
-        repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
-        for file in lib['files']:
-            os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
-                    f"dependencies/lib/{file['targetfile']}")
 
 def fetch_customer_catalog(cfg, target_name, repoinfo):
     click.secho("Updating customer catalog...", bold=True)
