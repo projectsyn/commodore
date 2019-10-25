@@ -131,7 +131,7 @@ def update_catalog(cfg, target_name, repo):
             click.echo(" > Pushing catalog to remote...")
             repo.remotes.origin.push()
         else:
-            repo.head.reset()
+            repo.head.reset(working_tree=True)
             click.echo(" > Skipping commit+push to catalog in local mode...")
     else:
         click.echo(" > Skipping commit+push to catalog...")
