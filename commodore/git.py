@@ -1,4 +1,4 @@
-import difflib, click
+import click, difflib, hashlib
 
 from git import Repo
 from git.exc import GitCommandError, BadName
@@ -48,6 +48,17 @@ def clone_repository(repository_url, directory):
 def init_repository(path):
     return Repo(path)
 
+def _NULL_TREE(repo):
+    """
+    An empty Git tree is represented by the C string "tree 0". The hash of the
+    empty tree is always SHA1("tree 0\\0").  This method computes the
+    hexdigest of this sha1 and creates a tree object for the empty tree of the
+    passed repo.
+    """
+    null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()
+    return repo.tree(null_tree_sha)
+
+
 def _colorize_diff(line):
     if line.startswith('---') or line.startswith('+++'):
         return click.style(line, fg='yellow')
@@ -59,13 +70,29 @@ def _colorize_diff(line):
 
 def stage_all(repo):
     index = repo.index
-    dels = index.diff(None)
-    index.add('*')
-    diff = index.diff(repo.head.commit)
     changed = False
     difftext = []
-    if diff:
+
+    # Stage and record deletions
+    dels = index.diff(None)
+    if dels:
         changed = True
+        to_remove = []
+        for c in dels.iter_change_type('D'):
+            difftext.append(click.style(f"Deleted file {c.b_path}", fg='red'))
+            to_remove.append(c.b_path)
+        index.remove(items=to_remove)
+
+    # Stage all remaining changes
+    index.add('*')
+    # Compute diff of remaining changes
+    try:
+        diff = index.diff(repo.head.commit)
+    except ValueError as e:
+        # Assume that we're in an empty repo if we get a ValueError from
+        # index.diff(repo.head.commit). Diff against empty tree.
+        diff = index.diff(_NULL_TREE(repo))
+    if diff:
         for ct in diff.change_type:
             for c in diff.iter_change_type(ct):
                 # Because we're diffing the staged changes, the diff objects
@@ -85,11 +112,5 @@ def stage_all(repo):
                             fromfile=c.b_path, tofile=c.a_path)
                     u = [ _colorize_diff(l) for l in u ]
                     difftext.append('\n'.join(u).strip())
-    if dels:
-        changed = True
-        to_remove = []
-        for c in dels.iter_change_type('D'):
-            difftext.append(click.style(f"Deleted file {c.b_path}", fg='red'))
-            to_remove.append(c.b_path)
-        index.remove(items=to_remove)
+
     return '\n'.join(difftext), changed
