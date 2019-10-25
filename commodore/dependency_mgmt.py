@@ -13,7 +13,8 @@ def _fetch_component(cfg, component):
     target_directory = f"dependencies/{component}"
     repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
-    os.symlink(os.path.abspath(f"{target_directory}/class/{component}.yml"), f"inventory/classes/components/{component}.yml")
+    _relsymlink(f"{target_directory}/class", f"{component}.yml",
+                "inventory/classes/components")
     libdir = f"{target_directory}/lib"
     if os.path.isdir(libdir):
         for file in os.listdir(libdir):
@@ -52,5 +53,5 @@ def fetch_jsonnet_libs(cfg, response):
         click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
         for file in lib['files']:
-            os.symlink(os.path.abspath(f"{repo.working_tree_dir}/{file['libfile']}"),
-                    f"dependencies/lib/{file['targetfile']}")
+            _relsymlink(repo.working_tree_dir, file['libfile'],
+                    "dependencies/lib", destname=file['targetfile'])
