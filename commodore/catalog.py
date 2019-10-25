@@ -7,14 +7,25 @@ def fetch_customer_catalog(cfg, target_name, repoinfo):
     click.secho("Updating customer catalog...", bold=True)
     return git.clone_repository(repoinfo['url'], 'catalog')
 
+def _pretty_print_component_commit(name, component):
+    repo = component.repo
+    sha = repo.head.commit.hexsha
+    short_sha = repo.git.rev_parse(sha, short=6)
+    return f" * {name}:{component.version} ({short_sha})"
+
+def _pretty_print_config_commit(name, repo):
+    sha = repo.head.commit.hexsha
+    short_sha = repo.git.rev_parse(sha, short=6)
+    return f" * {name}: {short_sha}"
+
 def _render_catalog_commit_msg(cfg):
     import datetime
     now = datetime.datetime.now().isoformat(timespec='milliseconds')
 
-    component_commits = [ f" * {cn}: {c.repo.head.commit.hexsha}" for cn, c in cfg.get_components().items() ]
+    component_commits = [ _pretty_print_component_commit(cn, c) for cn, c in cfg.get_components().items() ]
     component_commits = '\n'.join(component_commits)
 
-    config_commits = [ f" * {c}: {r.head.commit.hexsha}" for c, r in cfg.get_configs().items() ]
+    config_commits = [ _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items() ]
     config_commits = '\n'.join(config_commits)
 
     return f"""
@@ -47,11 +58,13 @@ def update_catalog(cfg, target_name, repo):
         message = " > No changes."
     click.echo(message)
 
+    commit_message = _render_catalog_commit_msg(cfg)
+    click.echo(" > Commit message will be")
+    click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
             click.echo(" > Commiting changes...")
-            message = _render_catalog_commit_msg(cfg)
-            repo.index.commit(message)
+            repo.index.commit(commit_message)
             click.echo(" > Pushing catalog to remote...")
             repo.remotes.origin.push()
         else:
