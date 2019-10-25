@@ -4,12 +4,24 @@ from enum import Enum
 Component = namedtuple('Component', ['name', 'repo', 'version'])
 
 class Config(object):
-    def __init__(self, api_url, global_git, customer_git):
+    def __init__(self, api_url, global_git, customer_git, verbose):
         self.api_url = api_url
         self.global_git_base = global_git
         self.customer_git_base = customer_git
         self._components = {}
         self._config_repos = {}
+        self._verbose = verbose
+
+    @property
+    def verbose(self):
+        return self._verbose
+
+    @property
+    def debug(self):
+        return self._verbose > 0
+
+    def update_verbosity(self, verbose):
+        self._verbose += verbose
 
     def get_components(self):
         return self._components

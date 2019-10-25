@@ -65,7 +65,7 @@ def compile(config, customer, cluster):
         click.secho("Configuring catalog repo...", bold=True)
         catalog_repo = git.init_repository(f"catalog")
     else:
-        clean()
+        clean(config)
 
         try:
             inv = fetch_cluster_spec(config, customer, cluster)
