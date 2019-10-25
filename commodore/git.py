@@ -70,29 +70,29 @@ def _colorize_diff(line):
 
 def stage_all(repo):
     index = repo.index
-    changed = False
-    difftext = []
 
-    # Stage and record deletions
+    # Stage deletions
     dels = index.diff(None)
     if dels:
-        changed = True
         to_remove = []
         for c in dels.iter_change_type('D'):
-            difftext.append(click.style(f"Deleted file {c.b_path}", fg='red'))
             to_remove.append(c.b_path)
         index.remove(items=to_remove)
 
     # Stage all remaining changes
     index.add('*')
-    # Compute diff of remaining changes
+    # Compute diff of all changes
     try:
         diff = index.diff(repo.head.commit)
     except ValueError as e:
         # Assume that we're in an empty repo if we get a ValueError from
         # index.diff(repo.head.commit). Diff against empty tree.
         diff = index.diff(_NULL_TREE(repo))
+
+    changed = False
+    difftext = []
     if diff:
+        changed = True
         for ct in diff.change_type:
             for c in diff.iter_change_type(ct):
                 # Because we're diffing the staged changes, the diff objects
