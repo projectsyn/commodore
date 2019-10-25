@@ -21,8 +21,13 @@ def _fetch_component(cfg, component):
             click.echo(f"     > installing template library: {file}")
             _relsymlink(f"{target_directory}/lib", file, "dependencies/lib")
 
-def fetch_components(cfg, response):
-    components = response['global']['components']
+def fetch_components(cfg, components):
+    """
+    Download all components specified in argument `components`.
+    Components are searched in
+    `GLOBAL_GIT_BASE/commodore_components/{component-name}.git`.
+    """
+
     os.makedirs('inventory/classes/components', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     click.secho("Updating components...", bold=True)
@@ -38,15 +43,35 @@ def _set_component_version(cfg, component, version):
         click.secho(f"    unable to set version: {e}", fg='yellow')
 
 def set_component_versions(cfg, versions):
+    """
+    Set component versions according to versions provided in versions dict.
+    The dict is assumed to contain component names as keys, and dicts as
+    values. The value dicts are assumed to contain a key 'version' which
+    indicates the version as a Git tree-ish.
+    """
+
     click.secho("Setting component versions...", bold=True)
     for cn, c in versions.items():
         _set_component_version(cfg, cn, c['version'])
 
-def fetch_jsonnet_libs(cfg, response):
+def fetch_jsonnet_libs(cfg, libs):
+    """
+    Download all libraries specified in list `libs`.
+    Each entry in `libs` is assumed to be a dict with keys
+      * 'repository', the value of which is interpreted as a git repository to
+                      clone.
+      * 'files', a list of dicts which defines which files in the repository
+                 should be installed as template libraries.
+    Each entry in files is assumed to have the keys
+      * 'libfile', indicating a filename relative to the repository of the
+                   library to install
+      * 'targetfile', the file name to use as the symlink target when
+                      installing the library
+    """
+
     click.secho("Updating Jsonnet libraries...", bold=True)
     os.makedirs('dependencies/libs', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
-    libs = response['global']['jsonnet_libs']
     for lib in libs:
         libname = lib['name']
         filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])

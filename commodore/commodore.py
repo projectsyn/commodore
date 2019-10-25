@@ -132,9 +132,9 @@ def compile(config, customer, cluster):
         # Fetch all Git repos
         try:
             fetch_config(config, inv)
-            fetch_components(config, inv)
+            fetch_components(config, inv['global']['components'])
             fetch_customer_config(config, inv['cluster'].get('override', None), customer)
-            fetch_jsonnet_libs(config, inv)
+            fetch_jsonnet_libs(config, inv['global']['jsonnet_libs'])
             catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
         except Exception as e:
             raise click.ClickException(f"While cloning git repositories: {e}") from e
