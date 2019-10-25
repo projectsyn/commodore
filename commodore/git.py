@@ -31,11 +31,20 @@ def _normalize_git_ssh(url):
 
 def checkout_version(repo, ref):
     """
-    Checkout `ref` in `repo`. Always checkout as detached HEAD as that
-    massively simplifies the implementation.
+    Checkout the commit `ref` resolves to in `repo`. If `ref` does not resolve
+    to a commit, try to resolve `remotes/origin/{ref}` to a commit, and
+    checkout that commit.  Always checkout as detached HEAD as that massively
+    simplifies the implementation.
     """
+    commit = None
     try:
-        repo.head.reference = repo.commit(f"remotes/origin/{ref}")
+        commit = repo.commit(f"{ref}")
+    except BadName:
+        pass
+    try:
+        if not commit:
+            commit = repo.commit(f"remotes/origin/{ref}")
+        repo.head.reference = commit
         repo.head.reset(index=True, working_tree=True)
     except GitCommandError as e:
         raise RefError(f"Failed to checkout revision '{ref}'") from e
