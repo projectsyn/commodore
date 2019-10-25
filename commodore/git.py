@@ -73,19 +73,18 @@ def stage_all(repo):
     changed = False
     difftext = []
 
-    # Stage and record deletions
+    # Stage deletions
     dels = index.diff(None)
     if dels:
         changed = True
         to_remove = []
         for c in dels.iter_change_type('D'):
-            difftext.append(click.style(f"Deleted file {c.b_path}", fg='red'))
             to_remove.append(c.b_path)
         index.remove(items=to_remove)
 
     # Stage all remaining changes
     index.add('*')
-    # Compute diff of remaining changes
+    # Compute diff of all changes
     try:
         diff = index.diff(repo.head.commit)
     except ValueError as e:
