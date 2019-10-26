@@ -86,7 +86,8 @@ def stage_all(repo):
         to_remove = []
         for c in dels.iter_change_type('D'):
             to_remove.append(c.b_path)
-        index.remove(items=to_remove)
+        if len(to_remove) > 0:
+            index.remove(items=to_remove)
 
     # Stage all remaining changes
     index.add('*')
