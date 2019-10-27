@@ -12,7 +12,6 @@ def _normalize_git_ssh(url):
                                             normalize_path, provide_url_scheme
     from url_normalize.tools import deconstruct_url, reconstruct_url
 
-    origurl = url
     if '@' in url and not url.startswith('ssh://'):
         # Assume git@host:repo format, reformat so url_normalize understands
         # the URL
