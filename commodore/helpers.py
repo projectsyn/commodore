@@ -1,5 +1,5 @@
 import click, json, requests, shutil
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
 from ruamel.yaml import YAML
 
@@ -20,17 +20,23 @@ class ApiError(Exception):
         self.message = message
 
 def api_request(api_url, type, customer, cluster):
-    if type != "inventory" and type != "targets":
-        print(f"Unknown API endpoint {type}")
-        return {}
+    if type != 'inventory' and type != 'targets':
+        raise ApiError(f"Client error: Unknown API endpoint: {type}")
     try:
         r = requests.get(url_normalize(f"{api_url}/{type}/{customer}/{cluster}"))
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to SYNventory at {api_url}") from e
-    resp = json.loads(r.text)
-    if r.status_code == 404:
-        print(resp['message'])
-        return {}
+    try:
+        resp = json.loads(r.text)
+    except:
+        resp = { 'message': "Client error: Unable to parse JSON" }
+    try:
+        r.raise_for_status()
+    except HTTPError as e:
+        extra_msg = ''
+        if r.status_code == 404:
+            extra_msg = f": {resp['message']}"
+        raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp
 
