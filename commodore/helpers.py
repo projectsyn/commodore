@@ -29,7 +29,7 @@ def api_request(api_url, type, customer, cluster):
     try:
         resp = json.loads(r.text)
     except:
-        resp = { 'message': "Client error: Unable to parse JSON" }
+        resp = { 'message': 'Client error: Unable to parse JSON' }
     try:
         r.raise_for_status()
     except HTTPError as e:
@@ -41,7 +41,7 @@ def api_request(api_url, type, customer, cluster):
         return resp
 
 def _verbose_rmtree(tree, *args, **kwargs):
-    click.echo(f" > deleting {tree}/")
+    click.echo(f' > deleting {tree}/')
     shutil.rmtree(tree, *args, **kwargs)
 
 def clean(cfg):
@@ -49,17 +49,17 @@ def clean(cfg):
         rmtree = _verbose_rmtree
     else:
         rmtree = shutil.rmtree
-    click.secho("Cleaning working tree", bold=True)
-    rmtree("inventory", ignore_errors=True)
-    rmtree("dependencies", ignore_errors=True)
-    rmtree("compiled", ignore_errors=True)
-    rmtree("catalog", ignore_errors=True)
+    click.secho('Cleaning working tree', bold=True)
+    rmtree('inventory', ignore_errors=True)
+    rmtree('dependencies', ignore_errors=True)
+    rmtree('compiled', ignore_errors=True)
+    rmtree('catalog', ignore_errors=True)
 
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
     import shlex, subprocess, sys
-    click.secho("Compiling catalog...", bold=True)
-    return subprocess.run(shlex.split("kapitan compile --fetch -J . dependencies"))
+    click.secho('Compiling catalog...', bold=True)
+    return subprocess.run(shlex.split('kapitan compile --fetch -J . dependencies'))
 
 def rm_tree_contents(dir):
     """
@@ -68,7 +68,7 @@ def rm_tree_contents(dir):
     """
     import glob, os
     if not os.path.isdir(dir):
-        raise ValueError("Expected directory as argument")
+        raise ValueError('Expected directory as argument')
     for f in glob.glob(f"{dir}/*"):
         if os.path.isdir(f):
             shutil.rmtree(f)

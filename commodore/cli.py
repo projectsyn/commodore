@@ -7,7 +7,7 @@ from .commodore import compile as _compile
 pass_config = click.make_pass_decorator(Config)
 
 verbosity = click.option('-v', '--verbose', count=True,
-        help="Control verbosity. Can be repeated for more verbose output")
+        help='Control verbosity. Can be repeated for more verbose output')
 
 @click.group()
 @click.option('--api-url', metavar='URL', help='SYNventory API URL')

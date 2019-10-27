@@ -33,27 +33,27 @@ def fetch_config(cfg, response):
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
-    click.secho("Updating customer config...", bold=True)
+    click.secho('Updating customer config...', bold=True)
     repo = git.clone_repository(repo, f"inventory/classes/{customer}")
     cfg.register_config('customer', repo)
 
 def compile(config, customer, cluster):
     if config.local:
-        click.secho("Running in local mode", bold=True)
-        click.echo(" > Will use existing inventory, dependencies, and catalog")
+        click.secho('Running in local mode', bold=True)
+        click.echo(' > Will use existing inventory, dependencies, and catalog')
         target_name = config.local
         if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
             raise click.ClickException(f"Invalid target: {target_name}")
         click.echo(f" > Using target: {target_name}")
-        click.secho("Registering components...", bold=True)
+        click.secho('Registering components...', bold=True)
         for c in os.listdir('dependencies'):
             # Skip jsonnet libs when collecting components
-            if c == "lib" or c == "libs":
+            if c == 'lib' or c == 'libs':
                 continue
             click.echo(f" > {c}")
             repo = git.init_repository(f"dependencies/{c}")
             config.register_component(c, repo)
-        click.secho("Configuring catalog repo...", bold=True)
+        click.secho('Configuring catalog repo...', bold=True)
         catalog_repo = git.init_repository(f"catalog")
     else:
         clean(config)
@@ -91,4 +91,4 @@ def compile(config, customer, cluster):
 
     update_catalog(config, target_name, catalog_repo)
 
-    click.secho("Catalog compiled! 🎉", bold=True)
+    click.secho('Catalog compiled! 🎉', bold=True)

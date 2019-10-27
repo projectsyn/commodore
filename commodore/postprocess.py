@@ -57,15 +57,15 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
         yaml_dump(outcontents, outpath)
 
 def postprocess_components(inventory, target, components):
-    click.secho("Postprocessing...", bold=True)
+    click.secho('Postprocessing...', bold=True)
     for cn, c in components.items():
-        if f"components.{cn}" not in inventory["classes"]:
+        if f"components.{cn}" not in inventory['classes']:
             continue
         repodir = pathlib.PurePath(c.repo.working_tree_dir)
-        filterdir = repodir / "postprocess"
+        filterdir = repodir / 'postprocess'
         if os.path.isdir(filterdir):
             click.echo(f" > {cn}...")
-            filters = yaml_load(filterdir / "filters.yml")
+            filters = yaml_load(filterdir / 'filters.yml')
             for filter in filters['filters']:
                 filterpath = filterdir / filter['filter']
                 output_path = filter['output_path']

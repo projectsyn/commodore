@@ -19,7 +19,7 @@ def _normalize_git_ssh(url):
         host, repo = url.split(':')
         url = f"{host}/{repo}"
     # Import heavy lifting from url_normalize, simplify for Git-SSH usecase
-    url = provide_url_scheme(url, "ssh")
+    url = provide_url_scheme(url, 'ssh')
     urlparts = deconstruct_url(url)
     urlparts = urlparts._replace(
             userinfo=normalize_userinfo(urlparts.userinfo),
@@ -64,7 +64,7 @@ def _NULL_TREE(repo):
     hexdigest of this sha1 and creates a tree object for the empty tree of the
     passed repo.
     """
-    null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()
+    null_tree_sha = hashlib.sha1(b'tree 0\0').hexdigest()
     return repo.tree(null_tree_sha)
 
 

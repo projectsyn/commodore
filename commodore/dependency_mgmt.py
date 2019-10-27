@@ -14,12 +14,12 @@ def _fetch_component(cfg, component):
     repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
     _relsymlink(f"{target_directory}/class", f"{component}.yml",
-                "inventory/classes/components")
+                'inventory/classes/components')
     libdir = f"{target_directory}/lib"
     if os.path.isdir(libdir):
         for file in os.listdir(libdir):
             click.echo(f"     > installing template library: {file}")
-            _relsymlink(f"{target_directory}/lib", file, "dependencies/lib")
+            _relsymlink(f"{target_directory}/lib", file, 'dependencies/lib')
 
 def fetch_components(cfg, components):
     """
@@ -30,7 +30,7 @@ def fetch_components(cfg, components):
 
     os.makedirs('inventory/classes/components', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
-    click.secho("Updating components...", bold=True)
+    click.secho('Updating components...', bold=True)
     for c in components:
         click.echo(f" > {c}...")
         _fetch_component(cfg, c)
@@ -51,7 +51,7 @@ def set_component_versions(cfg, versions):
     indicates the version as a Git tree-ish.
     """
 
-    click.secho("Setting component versions...", bold=True)
+    click.secho('Setting component versions...', bold=True)
     for cn, c in versions.items():
         _set_component_version(cfg, cn, c['version'])
 
@@ -70,7 +70,7 @@ def fetch_jsonnet_libs(cfg, libs):
                       installing the library
     """
 
-    click.secho("Updating Jsonnet libraries...", bold=True)
+    click.secho('Updating Jsonnet libraries...', bold=True)
     os.makedirs('dependencies/libs', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     for lib in libs:
@@ -80,4 +80,4 @@ def fetch_jsonnet_libs(cfg, libs):
         repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
         for file in lib['files']:
             _relsymlink(repo.working_tree_dir, file['libfile'],
-                    "dependencies/lib", destname=file['targetfile'])
+                    'dependencies/lib', destname=file['targetfile'])

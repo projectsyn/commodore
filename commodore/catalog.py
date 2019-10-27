@@ -4,7 +4,7 @@ from . import git
 from .helpers import rm_tree_contents
 
 def fetch_customer_catalog(cfg, target_name, repoinfo):
-    click.secho("Updating customer catalog...", bold=True)
+    click.secho('Updating customer catalog...', bold=True)
     return git.clone_repository(repoinfo['url'], 'catalog')
 
 def _pretty_print_component_commit(name, component):
@@ -41,7 +41,7 @@ Compilation timestamp: {now}
 """
 
 def update_catalog(cfg, target_name, repo):
-    click.secho("Updating catalog repository...", bold=True)
+    click.secho('Updating catalog repository...', bold=True)
     from distutils import dir_util
     import textwrap
     catalogdir = repo.working_tree_dir
@@ -55,21 +55,21 @@ def update_catalog(cfg, target_name, repo):
         indented = textwrap.indent(difftext, '     ')
         message = f" > Changes:\n{indented}"
     else:
-        message = " > No changes."
+        message = ' > No changes.'
     click.echo(message)
 
     commit_message = _render_catalog_commit_msg(cfg)
     if cfg.debug:
-        click.echo(" > Commit message will be")
+        click.echo(' > Commit message will be')
         click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
-            click.echo(" > Commiting changes...")
+            click.echo(' > Commiting changes...')
             repo.index.commit(commit_message)
-            click.echo(" > Pushing catalog to remote...")
+            click.echo(' > Pushing catalog to remote...')
             repo.remotes.origin.push()
         else:
             repo.head.reset(working_tree=True)
-            click.echo(" > Skipping commit+push to catalog in local mode...")
+            click.echo(' > Skipping commit+push to catalog in local mode...')
     else:
-        click.echo(" > Skipping commit+push to catalog...")
+        click.echo(' > Skipping commit+push to catalog...')
