@@ -58,7 +58,7 @@ def clean(cfg):
 
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
-    import shlex, subprocess, sys
+    import shlex, subprocess
     click.secho('Compiling catalog...', bold=True)
     return subprocess.run(shlex.split('kapitan compile --fetch -J . dependencies'))
 

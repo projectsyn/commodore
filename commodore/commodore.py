@@ -1,4 +1,4 @@
-import click, json
+import click
 from kapitan.resources import inventory_reclass
 from pathlib import Path as P
 
@@ -16,8 +16,7 @@ from .helpers import (
         clean,
         api_request,
         kapitan_compile,
-        ApiError,
-        rm_tree_contents
+        ApiError
     )
 from .postprocess import postprocess_components
 from .target import update_target

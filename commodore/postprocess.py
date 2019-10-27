@@ -1,4 +1,4 @@
-import _jsonnet, json, pathlib, click
+import _jsonnet, json, click
 from pathlib import Path as P
 
 from .helpers import yaml_load, yaml_dump

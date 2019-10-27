@@ -1,4 +1,4 @@
-import click, sys
+import click
 
 from .config import Config
 from .helpers import clean as _clean
