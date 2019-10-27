@@ -1,5 +1,6 @@
-import click, json, os
+import click, json
 from kapitan.resources import inventory_reclass
+from pathlib import Path as P
 
 from . import git
 from .catalog import (
@@ -27,14 +28,14 @@ def fetch_cluster_spec(cfg, customer, cluster):
 def fetch_config(cfg, response):
     config = response['global']['config']
     click.secho(f"Updating global config...", bold=True)
-    repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
+    repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", 'inventory/classes/global')
     cfg.register_config('global', repo)
 
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
         repo = f"{cfg.customer_git_base}/{customer}.git"
     click.secho('Updating customer config...', bold=True)
-    repo = git.clone_repository(repo, f"inventory/classes/{customer}")
+    repo = git.clone_repository(repo, P('inventory/classes') / customer)
     cfg.register_config('customer', repo)
 
 def compile(config, customer, cluster):
@@ -42,19 +43,25 @@ def compile(config, customer, cluster):
         click.secho('Running in local mode', bold=True)
         click.echo(' > Will use existing inventory, dependencies, and catalog')
         target_name = config.local
-        if not os.path.isfile(f"inventory/targets/{target_name}.yml"):
+        target_yml = P('inventory/targets') / f"{target_name}.yml"
+        if not target_yml.is_file():
             raise click.ClickException(f"Invalid target: {target_name}")
         click.echo(f" > Using target: {target_name}")
+        click.secho('Registering config...', bold=True)
+        config.register_config('global',
+                git.init_repository('inventory/classes/global'))
+        config.register_config('customer',
+                git.init_repository(P('inventory/classes/') / customer))
         click.secho('Registering components...', bold=True)
-        for c in os.listdir('dependencies'):
+        for c in P('dependencies').iterdir():
             # Skip jsonnet libs when collecting components
-            if c == 'lib' or c == 'libs':
+            if c.name == 'lib' or c.name == 'libs':
                 continue
             click.echo(f" > {c}")
-            repo = git.init_repository(f"dependencies/{c}")
-            config.register_component(c, repo)
+            repo = git.init_repository(c)
+            config.register_component(c.name, repo)
         click.secho('Configuring catalog repo...', bold=True)
-        catalog_repo = git.init_repository(f"catalog")
+        catalog_repo = git.init_repository('catalog')
     else:
         clean(config)
 

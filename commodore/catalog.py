@@ -1,4 +1,5 @@
 import click
+from pathlib import Path as P
 
 from . import git
 from .helpers import rm_tree_contents
@@ -48,7 +49,7 @@ def update_catalog(cfg, target_name, repo):
     # delete everything in catalog
     rm_tree_contents(catalogdir)
     # copy compiled catalog into catalog directory
-    dir_util.copy_tree(f"compiled/{target_name}", catalogdir)
+    dir_util.copy_tree(P('compiled') / target_name, catalogdir)
 
     difftext, changed = git.stage_all(repo)
     if changed:

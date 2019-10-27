@@ -2,6 +2,7 @@ import click, json, requests, shutil
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
 from ruamel.yaml import YAML
+from pathlib import Path as P
 
 def yaml_load(file):
     yaml=YAML(typ='safe')
@@ -66,11 +67,15 @@ def rm_tree_contents(dir):
     Delete all files in directory `dir`, but do not delete the directory
     itself.
     """
-    import glob, os
-    if not os.path.isdir(dir):
+    import os
+    dir = P(dir)
+    if not dir.is_dir():
         raise ValueError('Expected directory as argument')
-    for f in glob.glob(f"{dir}/*"):
-        if os.path.isdir(f):
+    for f in dir.glob('*'):
+        if f.name.startswith('.'):
+            # pathlib's glob doesn't filter hidden files, skip them here
+            continue
+        if f.is_dir():
             shutil.rmtree(f)
         else:
             os.unlink(f)

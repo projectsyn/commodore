@@ -1,25 +1,29 @@
 import click, os
+from pathlib import Path as P
 
 from . import git
 
 def _relsymlink(srcdir, srcname, destdir, destname=None):
     if destname is None:
         destname = srcname
-    link_src = os.path.relpath(f"{srcdir}/{srcname}", start=destdir)
-    os.symlink(link_src, f"{destdir}/{destname}")
+    # pathlib's relative_to() isn't suitable for this use case, since it only
+    # works for dropping a path's prefix according to the documentation. See
+    # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
+    link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
+    os.symlink(link_src, P(destdir) / destname)
 
 def _fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
-    target_directory = f"dependencies/{component}"
+    target_directory = P('dependencies') / component
     repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
-    _relsymlink(f"{target_directory}/class", f"{component}.yml",
+    _relsymlink(P(target_directory) / 'class', f"{component}.yml",
                 'inventory/classes/components')
-    libdir = f"{target_directory}/lib"
-    if os.path.isdir(libdir):
+    libdir = P(target_directory) / 'lib'
+    if libdir.is_dir():
         for file in os.listdir(libdir):
             click.echo(f"     > installing template library: {file}")
-            _relsymlink(f"{target_directory}/lib", file, 'dependencies/lib')
+            _relsymlink(libdir, file, 'dependencies/lib')
 
 def fetch_components(cfg, components):
     """
@@ -77,7 +81,7 @@ def fetch_jsonnet_libs(cfg, libs):
         libname = lib['name']
         filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
         click.echo(f" > {libname}: {filestext}")
-        repo = git.clone_repository(lib['repository'], f"dependencies/libs/{libname}")
+        repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
             _relsymlink(repo.working_tree_dir, file['libfile'],
                     'dependencies/lib', destname=file['targetfile'])
