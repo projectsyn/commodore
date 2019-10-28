@@ -11,7 +11,14 @@ from .dependency_mgmt import (
         fetch_jsonnet_libs,
         set_component_versions
     )
-from .helpers import clean, api_request, kapitan_compile, ApiError, rm_tree_contents
+from .helpers import (
+        clean,
+        api_request,
+        kapitan_compile,
+        ApiError,
+        rm_tree_contents,
+        yaml_dump
+    )
 from .postprocess import postprocess_components
 
 def fetch_cluster_spec(cfg, customer, cluster):
@@ -24,7 +31,34 @@ def fetch_config(cfg, response):
     cfg.register_config('global', repo)
 
 def fetch_target(cfg, customer, cluster):
-    return api_request(cfg.api_url, 'targets', customer, cluster, is_json=False)
+    return api_request(cfg.api_url, 'targets', customer, cluster)
+
+def _full_target(customer, cluster, apidata):
+    cloud_type = apidata['cloud_type']
+    cloud_region = apidata['cloud_region']
+    cluster_distro = apidata['cluster_distribution']
+    return {
+        "classes": [
+            "global.common",
+            f"global.{cloud_type}",
+            f"global.{cluster_distro}",
+            f"{customer}.{cluster}"
+        ],
+        "parameters": {
+            "target_name": "cluster",
+            "cluster": {
+                "name": f"{cluster}",
+                "dist": f"{cluster_distro}"
+            },
+            "cloud": {
+                "type": f"{cloud_type}",
+                "region": f"{cloud_region}"
+            },
+            "customer": {
+                "name": f"{customer}"
+            }
+        }
+    }
 
 def update_target(cfg, customer, cluster):
     click.secho("Updating Kapitan target...", bold=True)
@@ -34,8 +68,8 @@ def update_target(cfg, customer, cluster):
         raise click.ClickException(f"While fetching target: {e}") from e
 
     os.makedirs('inventory/targets', exist_ok=True)
-    with open('inventory/targets/cluster.yml', 'w') as tgt:
-        tgt.write(target)
+    yaml_dump(_full_target(customer, cluster, target),
+            'inventory/targets/cluster.yml')
 
     return 'cluster'
 
