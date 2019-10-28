@@ -1,4 +1,4 @@
-import _jsonnet, json, click
+import _jsonnet, json, click, os
 from pathlib import Path as P
 
 from .helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
@@ -56,6 +56,9 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
         outpath=P('compiled', target, output_path, f"{outobj}.yaml")
+        if not outpath.exists():
+            print(f" > {outpath} doesn't exist, creating...")
+            os.makedirs(outpath.parent, exist_ok=True)
         if isinstance(outcontents, list):
             yaml_dump_all(outcontents, outpath)
         else:
