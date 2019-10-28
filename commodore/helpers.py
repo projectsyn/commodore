@@ -26,11 +26,20 @@ def api_request(api_url, type, customer, cluster, is_json=True):
     else:
         return resp
 
-def clean():
-    shutil.rmtree("inventory", ignore_errors=True)
-    shutil.rmtree("dependencies", ignore_errors=True)
-    shutil.rmtree("compiled", ignore_errors=True)
-    shutil.rmtree("catalog", ignore_errors=True)
+def _verbose_rmtree(tree, *args, **kwargs):
+    click.echo(f" > deleting {tree}/")
+    shutil.rmtree(tree, *args, **kwargs)
+
+def clean(cfg):
+    if cfg.debug:
+        rmtree = _verbose_rmtree
+    else:
+        rmtree = shutil.rmtree
+    click.secho("Cleaning working tree", bold=True)
+    rmtree("inventory", ignore_errors=True)
+    rmtree("dependencies", ignore_errors=True)
+    rmtree("compiled", ignore_errors=True)
+    rmtree("catalog", ignore_errors=True)
 
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?

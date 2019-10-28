@@ -59,8 +59,9 @@ def update_catalog(cfg, target_name, repo):
     click.echo(message)
 
     commit_message = _render_catalog_commit_msg(cfg)
-    click.echo(" > Commit message will be")
-    click.echo(textwrap.indent(commit_message, '   '))
+    if cfg.debug:
+        click.echo(" > Commit message will be")
+        click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
             click.echo(" > Commiting changes...")
