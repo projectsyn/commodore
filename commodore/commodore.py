@@ -16,10 +16,10 @@ from .helpers import (
         api_request,
         kapitan_compile,
         ApiError,
-        rm_tree_contents,
-        yaml_dump
+        rm_tree_contents
     )
 from .postprocess import postprocess_components
+from .target import update_target
 
 def fetch_cluster_spec(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
@@ -29,49 +29,6 @@ def fetch_config(cfg, response):
     click.secho(f"Updating global config...", bold=True)
     repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", f"inventory/classes/global")
     cfg.register_config('global', repo)
-
-def fetch_target(cfg, customer, cluster):
-    return api_request(cfg.api_url, 'targets', customer, cluster)
-
-def _full_target(customer, cluster, apidata):
-    cloud_type = apidata['cloud_type']
-    cloud_region = apidata['cloud_region']
-    cluster_distro = apidata['cluster_distribution']
-    return {
-        "classes": [
-            "global.common",
-            f"global.{cloud_type}",
-            f"global.{cluster_distro}",
-            f"{customer}.{cluster}"
-        ],
-        "parameters": {
-            "target_name": "cluster",
-            "cluster": {
-                "name": f"{cluster}",
-                "dist": f"{cluster_distro}"
-            },
-            "cloud": {
-                "type": f"{cloud_type}",
-                "region": f"{cloud_region}"
-            },
-            "customer": {
-                "name": f"{customer}"
-            }
-        }
-    }
-
-def update_target(cfg, customer, cluster):
-    click.secho("Updating Kapitan target...", bold=True)
-    try:
-        target = fetch_target(cfg, customer, cluster)
-    except ApiError as e:
-        raise click.ClickException(f"While fetching target: {e}") from e
-
-    os.makedirs('inventory/targets', exist_ok=True)
-    yaml_dump(_full_target(customer, cluster, target),
-            'inventory/targets/cluster.yml')
-
-    return 'cluster'
 
 def fetch_customer_config(cfg, repo, customer):
     if repo is None:
