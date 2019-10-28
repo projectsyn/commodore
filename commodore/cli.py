@@ -2,7 +2,7 @@ import click
 
 from .config import Config
 from .helpers import clean as _clean
-from .commodore import compile as _compile
+from .compile import compile as _compile
 
 pass_config = click.make_pass_decorator(Config)
 
