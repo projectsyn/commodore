@@ -1,12 +1,25 @@
 import click, json, requests, shutil
 from requests.exceptions import ConnectionError
 from url_normalize import url_normalize
+from ruamel.yaml import YAML
+
+def yaml_load(file):
+    yaml=YAML(typ='safe')
+    with open(file, 'r') as f:
+        return yaml.load(f)
+
+def yaml_dump(obj, file):
+    yaml=YAML()
+    yaml.default_flow_style = False
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    with open(file, 'w') as outf:
+        yaml.dump(obj, outf)
 
 class ApiError(Exception):
     def __init__(self, message):
         self.message = message
 
-def api_request(api_url, type, customer, cluster, is_json=True):
+def api_request(api_url, type, customer, cluster):
     if type != "inventory" and type != "targets":
         print(f"Unknown API endpoint {type}")
         return {}
@@ -14,14 +27,9 @@ def api_request(api_url, type, customer, cluster, is_json=True):
         r = requests.get(url_normalize(f"{api_url}/{type}/{customer}/{cluster}"))
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to SYNventory at {api_url}") from e
-    if is_json:
-        resp = json.loads(r.text)
-    else:
-        resp = r.text
-
+    resp = json.loads(r.text)
     if r.status_code == 404:
-        if is_json:
-            print(resp['message'])
+        print(resp['message'])
         return {}
     else:
         return resp

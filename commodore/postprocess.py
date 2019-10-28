@@ -1,10 +1,6 @@
 import _jsonnet, json, pathlib, os, click
-from ruamel.yaml import YAML
 
-def _yaml_load(file):
-    yaml=YAML(typ='safe')
-    with open(file, 'r') as f:
-        return yaml.load(f)
+from .helpers import yaml_load, yaml_dump
 
 #  Returns content if worked, None if file not found, or throws an exception
 def _try_path(dir, rel):
@@ -38,7 +34,7 @@ def _import_cb(dir, rel):
     return _import_callback_with_searchpath(search_path, dir, rel)
 
 _native_callbacks = {
-    'yaml_load': (('file',), _yaml_load),
+    'yaml_load': (('file',), yaml_load),
 }
 
 def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
@@ -56,13 +52,9 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
         ext_vars={'target': target, 'component': component},
     )
     out_objs = json.loads(output)
-    yaml=YAML()
-    yaml.default_flow_style = False
-    yaml.indent(mapping=2, sequence=4, offset=2)
     for outobj, outcontents in out_objs.items():
         outpath=pathlib.PurePath('compiled', target, output_path, f"{outobj}.yaml")
-        with open(outpath, 'w') as outf:
-            yaml.dump(outcontents, outf)
+        yaml_dump(outcontents, outpath)
 
 def postprocess_components(inventory, target, components):
     click.secho("Postprocessing...", bold=True)
@@ -73,7 +65,7 @@ def postprocess_components(inventory, target, components):
         filterdir = repodir / "postprocess"
         if os.path.isdir(filterdir):
             click.echo(f" > {cn}...")
-            filters = _yaml_load(filterdir / "filters.yml")
+            filters = yaml_load(filterdir / "filters.yml")
             for filter in filters['filters']:
                 filterpath = filterdir / filter['filter']
                 output_path = filter['output_path']
