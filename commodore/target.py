@@ -14,30 +14,30 @@ def _full_target(customer, cluster, apidata):
     cloud_region = apidata['cloud_region']
     cluster_distro = apidata['cluster_distribution']
     return {
-        "classes": [
-            "global.common",
+        'classes': [
+            'global.common',
             f"global.{cloud_type}",
             f"global.{cluster_distro}",
             f"{customer}.{cluster}"
         ],
-        "parameters": {
-            "target_name": "cluster",
-            "cluster": {
-                "name": f"{cluster}",
-                "dist": f"{cluster_distro}"
+        'parameters': {
+            'target_name': 'cluster',
+            'cluster': {
+                'name': f"{cluster}",
+                'dist': f"{cluster_distro}"
             },
-            "cloud": {
-                "type": f"{cloud_type}",
-                "region": f"{cloud_region}"
+            'cloud': {
+                'type': f"{cloud_type}",
+                'region': f"{cloud_region}"
             },
-            "customer": {
-                "name": f"{customer}"
+            'customer': {
+                'name': f"{customer}"
             }
         }
     }
 
 def update_target(cfg, customer, cluster):
-    click.secho("Updating Kapitan target...", bold=True)
+    click.secho('Updating Kapitan target...', bold=True)
     try:
         target = fetch_target(cfg, customer, cluster)
     except ApiError as e:

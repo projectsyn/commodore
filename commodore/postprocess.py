@@ -1,4 +1,5 @@
-import _jsonnet, json, pathlib, os, click
+import _jsonnet, json, click
+from pathlib import Path as P
 
 from .helpers import yaml_load, yaml_dump
 
@@ -7,16 +8,16 @@ def _try_path(dir, rel):
     if not rel:
         raise RuntimeError('Got invalid filename (empty string).')
     if rel[0] == '/':
-        full_path = rel
+        full_path = P(rel)
     else:
-        full_path = dir + rel
-    if full_path[-1] == '/':
+        full_path = P(dir) / rel
+    if full_path.is_dir():
         raise RuntimeError('Attempted to import a directory')
 
-    if not os.path.isfile(full_path):
-        return full_path, None
+    if not full_path.is_file():
+        return full_path.name, None
     with open(full_path) as f:
-        return full_path, f.read()
+        return full_path.name, f.read()
 
 def _import_callback_with_searchpath(search, dir, rel):
     full_path, content = _try_path(dir, rel)
@@ -30,7 +31,7 @@ def _import_callback_with_searchpath(search, dir, rel):
 
 def _import_cb(dir, rel):
     # Add current working dir to search path for Jsonnet import callback
-    search_path = [f"{os.getcwd()}/"]
+    search_path = [P('.').resolve()]
     return _import_callback_with_searchpath(search_path, dir, rel)
 
 _native_callbacks = {
@@ -53,19 +54,19 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
     )
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
-        outpath=pathlib.PurePath('compiled', target, output_path, f"{outobj}.yaml")
+        outpath=P('compiled', target, output_path, f"{outobj}.yaml")
         yaml_dump(outcontents, outpath)
 
 def postprocess_components(inventory, target, components):
-    click.secho("Postprocessing...", bold=True)
+    click.secho('Postprocessing...', bold=True)
     for cn, c in components.items():
-        if f"components.{cn}" not in inventory["classes"]:
+        if f"components.{cn}" not in inventory['classes']:
             continue
-        repodir = pathlib.PurePath(c.repo.working_tree_dir)
-        filterdir = repodir / "postprocess"
-        if os.path.isdir(filterdir):
+        repodir = P(c.repo.working_tree_dir)
+        filterdir = repodir / 'postprocess'
+        if filterdir.is_dir():
             click.echo(f" > {cn}...")
-            filters = yaml_load(filterdir / "filters.yml")
+            filters = yaml_load(filterdir / 'filters.yml')
             for filter in filters['filters']:
                 filterpath = filterdir / filter['filter']
                 output_path = filter['output_path']

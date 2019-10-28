@@ -1,5 +1,4 @@
 from collections import namedtuple
-from enum import Enum
 
 Component = namedtuple('Component', ['name', 'repo', 'version'])
 
