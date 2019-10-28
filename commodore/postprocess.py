@@ -1,7 +1,7 @@
 import _jsonnet, json, click
 from pathlib import Path as P
 
-from .helpers import yaml_load, yaml_dump
+from .helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 
 #  Returns content if worked, None if file not found, or throws an exception
 def _try_path(dir, rel):
@@ -36,6 +36,7 @@ def _import_cb(dir, rel):
 
 _native_callbacks = {
     'yaml_load': (('file',), yaml_load),
+    'yaml_load_all': (('file',), yaml_load_all)
 }
 
 def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
@@ -55,7 +56,10 @@ def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
         outpath=P('compiled', target, output_path, f"{outobj}.yaml")
-        yaml_dump(outcontents, outpath)
+        if isinstance(outcontents, list):
+            yaml_dump_all(outcontents, outpath)
+        else:
+            yaml_dump(outcontents, outpath)
 
 def postprocess_components(inventory, target, components):
     click.secho('Postprocessing...', bold=True)
