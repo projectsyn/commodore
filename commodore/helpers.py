@@ -1,6 +1,19 @@
 import click, json, requests, shutil
 from requests.exceptions import ConnectionError
 from url_normalize import url_normalize
+from ruamel.yaml import YAML
+
+def yaml_load(file):
+    yaml=YAML(typ='safe')
+    with open(file, 'r') as f:
+        return yaml.load(f)
+
+def yaml_dump(obj, file):
+    yaml=YAML()
+    yaml.default_flow_style = False
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    with open(file, 'w') as outf:
+        yaml.dump(obj, outf)
 
 class ApiError(Exception):
     def __init__(self, message):
