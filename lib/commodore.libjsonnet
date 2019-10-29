@@ -1,5 +1,11 @@
+local namespaced(ns, obj) =
+  obj {
+    metadata+: { namespace: ns }
+  };
+
 {
   'inventory': std.native('inventory'),
   'yaml_load': std.native('yaml_load'),
-  'yaml_load_all': std.native('yaml_load_all')
+  'yaml_load_all': std.native('yaml_load_all'),
+  'namespaced': namespaced,
 }
