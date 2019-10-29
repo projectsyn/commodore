@@ -295,3 +295,42 @@ local object = commodore.yaml_load('/path/to/input.yaml');
 The value of each key of the Jsonnet output object is dumped as YAML to
 `compiled/target/<output_path>/<key>.yaml`. Filter authors can decide
 themselves whether to write filters that overwrite their inputs, or not.
+
+## Tips and hints
+### Converting existing YAML manifests
+When writing components you usually already have working kubernetes yaml
+manifests. Using a YAML to JSON function of your editor (VS Code) greatly
+helps to speed up this process.
+
+Also a lot of the existing YAML manifest is usually no longer needed
+when using [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet).
+
+A good workflow could be:
+1. copy paste your yaml snippet into a `kube.<object>` block
+2. mark the the yaml snippet and convert to JSON using your editors plugin
+3. remove everything that is done by kube-libsonnet
+4. change remaining keys from `keyname:` to `keyname+:` for merging
+
+#### Example
+Existing YAML:
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+  labels:
+    a-label: test
+
+```
+How it should look in jsonnet:
+```jsonnet
+{
+  '00_namespace': kube.Namespace('test') {
+    metadata+: {
+        labels: {
+            "a-label": "test"
+        }
+    }
+  },
+}
+```
