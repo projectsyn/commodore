@@ -3,9 +3,12 @@ local namespaced(ns, obj) =
     metadata+: { namespace: ns }
   };
 
+local filterNull(list) = std.filter(function(obj) obj != null, list);
+
 {
-  'inventory': std.native('inventory'),
-  'yaml_load': std.native('yaml_load'),
-  'yaml_load_all': std.native('yaml_load_all'),
-  'namespaced': namespaced,
+  inventory: std.native('inventory'),
+  yaml_load: std.native('yaml_load'),
+  yaml_load_all: std.native('yaml_load_all'),
+  namespaced: namespaced,
+  filterNull: filterNull,
 }
