@@ -1,4 +1,5 @@
 {
   'inventory': std.native('inventory'),
-  'yaml_load': std.native('yaml_load')
+  'yaml_load': std.native('yaml_load'),
+  'yaml_load_all': std.native('yaml_load_all')
 }

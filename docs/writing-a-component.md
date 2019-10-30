@@ -42,7 +42,7 @@ EOF
 cat <<EOF > component/main.jsonnet
 local kap = import 'lib/kapitan.libjsonnet';
 local kube = import 'lib/kube.libjsonnet';
-local inv = kap.inventory()
+local inv = kap.inventory();
 
 // Define outputs below
 {
@@ -55,6 +55,11 @@ EOF
 
 After that, you can start developing your component by writing Jsonnet in
 `component/main.jsonnet`.
+
+If you do not require any postprocessing of the Kapitan output, you can delete
+the whole `postprocess` folder in the component repository. Removing the
+folder will make Commodore skip the postprocessing step for the component
+completely.
 
 ## The component templates
 

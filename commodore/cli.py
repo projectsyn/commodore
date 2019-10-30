@@ -31,10 +31,9 @@ def clean(config, verbose):
 @commodore.command(short_help='Compile inventory and catalog')
 @click.argument('customer')
 @click.argument('cluster')
-@click.option('--local', metavar='TARGET',
+@click.option('--local', is_flag=True, default=False,
               help='Run in local mode, Local mode does not try to connect to ' + \
-                   'SYNventory or fetch/push Git repositories. TARGET specifies ' + \
-                   'the Kapitan target to compile')
+                   'SYNventory or fetch/push Git repositories.')
 @verbosity
 @pass_config
 def compile(config, customer, cluster, local, verbose):

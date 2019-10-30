@@ -44,6 +44,7 @@ def _regular_setup(config, customer, cluster):
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
     target_name = update_target(config, customer, cluster)
+    assert(target_name == 'cluster')
 
     # Fetch all Git repos
     try:
@@ -60,7 +61,8 @@ def _regular_setup(config, customer, cluster):
 def _local_setup(config, customer, cluster):
     click.secho('Running in local mode', bold=True)
     click.echo(' > Will use existing inventory, dependencies, and catalog')
-    target_name = config.local
+    # Currently, a target name other than "cluster" is not supported
+    target_name = 'cluster'
     target_yml = P('inventory/targets') / f"{target_name}.yml"
     if not target_yml.is_file():
         raise click.ClickException(f"Invalid target: {target_name}")
