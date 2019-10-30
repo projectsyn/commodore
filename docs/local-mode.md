@@ -6,16 +6,9 @@ SYNventory API or clone Git repositories for the inventory and components.
 
 
 Local mode can be enabled with the `--local` flag of the `compile` command.
-The flag takes an argument which specifies the Kapitan target to render.
 
 ```shell
-pipenv run commodore compile <customer> <cluster> --local <target>
-```
-
-Valid targets can be determined with
-
-```shell
-find inventory/targets -name '*.yml'
+pipenv run commodore compile <customer> <cluster> --local
 ```
 
 In local mode, the existing directory structure in the working directory is
