@@ -76,6 +76,16 @@ def _colorize_diff(line):
         return click.style(line, fg='red')
     return line
 
+def _compute_similarity(change):
+    before = change.b_blob.data_stream.read().decode('utf-8').split('\n')
+    after = change.a_blob.data_stream.read().decode('utf-8').split('\n')
+    r = difflib.SequenceMatcher(a=before, b=after).ratio()
+    similarity_diff = []
+    similarity_diff.append(click.style(f"--- {change.b_path}", fg='yellow'))
+    similarity_diff.append(click.style(f"+++ {change.a_path}", fg='yellow'))
+    similarity_diff.append(f"Renamed file, similarity index {r*100:.2f}%")
+    return similarity_diff
+
 def stage_all(repo):
     index = repo.index
 
@@ -111,8 +121,15 @@ def stage_all(repo):
                     difftext.append(click.style(f"Deleted file {c.b_path}", fg='red'))
                 elif ct == 'D':
                     difftext.append(click.style(f"Added file {c.b_path}", fg='green'))
+                elif ct == 'R':
+                    difftext.append(click.style(f"Renamed file {c.b_path} => {c.a_path}", fg='yellow'))
                 else:
-                    # Other change types should produce a usable diff
+                    if c.renamed_file:
+                        # Just compute similarity ratio for renamed files
+                        # similar to git's diffing
+                        difftext.append('\n'.join(_compute_similarity(c)).strip())
+                        continue
+                    # Other changes should produce a usable diff
                     # The diff objects are backwards, so use b_blob as before
                     # and a_blob as after.
                     before = c.b_blob.data_stream.read().decode('utf-8').split('\n')
