@@ -35,9 +35,21 @@ def _import_cb(dir, rel):
     search_path = [P('.').resolve()]
     return _import_callback_with_searchpath(search_path, dir, rel)
 
+def _list_dir(dir, basename):
+    """
+    Non-recursively list files in directory `dir`. If `basename` is set to
+    True, only return the file name itself and not the full path.
+    """
+    files = [ x for x in P(dir).iterdir() if x.is_file() ]
+    if basename:
+        return [ f.parts[-1] for f in files ]
+    else:
+        return files
+
 _native_callbacks = {
     'yaml_load': (('file',), yaml_load),
-    'yaml_load_all': (('file',), yaml_load_all)
+    'yaml_load_all': (('file',), yaml_load_all),
+    'list_dir': (('dir', 'basename',), _list_dir),
 }
 
 def exec_postprocess_jsonnet(inv, component, filterfile, target, output_path):

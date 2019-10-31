@@ -39,6 +39,19 @@ local patch_namespace(obj_file, namespace, kinds=null) =
     for obj in objs
   ];
 
+local list_dir(dir, basename=true) =
+  std.native('list_dir')(dir, basename);
+
+local addNamespaceToHelmOutput(template_dir, namespace) =
+  local chart_files = list_dir(template_dir);
+  local input_file(elem) = template_dir + '/' + elem;
+  local stem(elem) =
+    local elems = std.split(elem, '.');
+    std.join('.', elems[:std.length(elems)-1]);
+  {
+    [stem(elem)]: patch_namespace(input_file(elem), namespace)
+    for elem in chart_files
+  };
 
 {
   inventory: std.native('inventory'),
@@ -47,4 +60,5 @@ local patch_namespace(obj_file, namespace, kinds=null) =
   namespaced: namespaced,
   filterNull: filterNull,
   patchNamespace: patch_namespace,
+  addNamespaceToHelmOutput: addNamespaceToHelmOutput,
 }
