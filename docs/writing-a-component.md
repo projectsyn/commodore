@@ -257,23 +257,51 @@ components build upon the same helm chart.
 
 ## Postprocessing filters
 
-Postprocessing filters can be arbitrary Jsonnet. Other templating languages
-are not supported at the moment. The format of the Jsonnet is inspired by
-Kapitan and the postprocessor expects that each filter outputs a JSON object
-where the keys are used as the name of the resulting output files. For each
-file, the value of the object's key is rendered as YAML in that file.
-
 Postprocessing filters are defined in `postprocess/filters.yml`, which is
-inspired by the Kapitan compile instructions, but simplified as currently only
-one input and output type are supported.
+inspired by the Kapitan compile instructions.  Commodore supports two different
+filter types, `jsonnet` and `builtin`. Filters in other templating languages
+are not supported at the moment.
+
+Filters of type `jsonnet` can be arbitrary Jsonnet. The format of the Jsonnet
+is inspired by Kapitan and the postprocessor expects that each filter outputs
+a JSON object where the keys are used as the name of the resulting output
+files. For each file, the value of the object's key is rendered as YAML in
+that file.
+
+Builtin filters provide often-used filter actions to components. Currently,
+Commodore provides only one builtin filter, `helm_namespace`.  This filter
+processes the output of rendered Helm chart and adds a `metadata.namespace`
+field to each object in the output.  Builtin filters can take arguments in
+`filterargs`. Values in `filterargs` can use Kapitan-style inventory references.
 
 A sample `postprocess/filters.yml` might look like
 
 ```yaml
 filters:
-  - output_path: crossplane/01_helmchart/crossplane
-    filter: add_namespace_to_helm_output.jsonnet
+  # The builtin helm_namespace filter takes a filter argument `namespace`
+  - path: crossplane/01_helmchart/crossplane/templates
+    type: builtin
+    filter: helm_namespace
+    filterargs:
+      namespace: ${crossplane:namespace}
+  # A fictional custom filter which adds some custom annotations to the Helm
+  # chart output
+  - output_path: crossplane/01_helmchart/crossplane/templates
+    type: jsonnet
+    filter add_monitoring_annotations_to_deployments.jsonnet
 ```
+
+### Available built-in filters
+
+Builtin filters expect the argument `path` to indicate on which path in the
+compiled Kapitan output they operate.  This differs from custom filters which
+have a parameter `output_path` indicating where to write the filter output.
+
+* `helm_namespace`: Takes one argument `namespace` which is inserted as
+  `.metadata.namespace` into all objects found in files that are stored in
+  `output_path`.
+
+### Writing a custom postprocessing filter
 
 Commodore provides a `commodore.libjsonnet` Jsonnet library which can be used
 by Jsonnet filters to access the Kapitan inventory and to load YAML files:
