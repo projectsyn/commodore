@@ -5,10 +5,60 @@ local namespaced(ns, obj) =
 
 local filterNull(list) = std.filter(function(obj) obj != null, list);
 
+local yaml_load_all = std.native('yaml_load_all');
+
+/**
+ * \brief Add namespace `namespace` in all objects defined in file `obj_file`.
+ *
+ * This method uses the `yaml_load_all` native callback to load a
+ * multi-document YAML file and sets metadata.namespace to the argument
+ * namespace for objects which have kind in kinds.
+ *
+ * \arg `obj_file` The file name of the input file. Loaded as multid-document
+ *      YAML.
+ * \arg `namespace` The namespace to patch into the objects
+ * \arg `kinds` An array defining which object kinds to patch. If this
+ *      argument is `null`, all objects in the input will be patched. Defaults
+ *      to null.
+ */
+local patch_namespace(obj_file, namespace, kinds=null) =
+  // read objects from input file, drop null objects
+  local objs = std.filter(function(o) o != null, yaml_load_all(obj_file));
+  // convert kinds array into set
+  local kindset = if kinds != null then std.set(kinds);
+  // generate object filter function depending on whether we want to only
+  // patch specific object kinds.
+  local objfilter = if kinds != null then
+    function(o) std.setMember(o.kind, kindset)
+  else
+    function(o) true;
+  // helper to patch the objects
+  local addns(obj) = obj + { metadata+: { namespace: namespace } };
+  // add namespace to objects for which objfilter returns true
+  [ if objfilter(obj) then addns(obj) else obj
+    for obj in objs
+  ];
+
+local list_dir(dir, basename=true) =
+  std.native('list_dir')(dir, basename);
+
+local addNamespaceToHelmOutput(template_dir, namespace) =
+  local chart_files = list_dir(template_dir);
+  local input_file(elem) = template_dir + '/' + elem;
+  local stem(elem) =
+    local elems = std.split(elem, '.');
+    std.join('.', elems[:std.length(elems)-1]);
+  {
+    [stem(elem)]: patch_namespace(input_file(elem), namespace)
+    for elem in chart_files
+  };
+
 {
   inventory: std.native('inventory'),
   yaml_load: std.native('yaml_load'),
-  yaml_load_all: std.native('yaml_load_all'),
+  yaml_load_all: yaml_load_all,
   namespaced: namespaced,
   filterNull: filterNull,
+  patchNamespace: patch_namespace,
+  addNamespaceToHelmOutput: addNamespaceToHelmOutput,
 }
