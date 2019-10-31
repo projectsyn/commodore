@@ -68,7 +68,9 @@ def _NULL_TREE(repo):
 
 
 def _colorize_diff(line):
-    if line.startswith('--- ') or line.startswith('+++ '):
+    if line.startswith('--- ') or \
+       line.startswith('+++ ') or \
+       line.startswith('@@ '):
         return click.style(line, fg='yellow')
     if line.startswith('+'):
         return click.style(line, fg='green')
