@@ -34,11 +34,14 @@ def clean(config, verbose):
 @click.option('--local', is_flag=True, default=False,
               help='Run in local mode, Local mode does not try to connect to ' + \
                    'SYNventory or fetch/push Git repositories.')
+@click.option('--push', is_flag=True, default=False,
+              help='Push catalog to remote repository. Defaults to False')
 @verbosity
 @pass_config
-def compile(config, customer, cluster, local, verbose):
+def compile(config, customer, cluster, local, push, verbose):
     config.update_verbosity(verbose)
     config.local = local
+    config.push = push
     _compile(config, customer, cluster)
 
 def main():
