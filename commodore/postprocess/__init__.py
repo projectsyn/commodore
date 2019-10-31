@@ -1,7 +1,7 @@
 import _jsonnet, json, click, os
 from pathlib import Path as P
 
-from .helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
+from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 
 #  Returns content if worked, None if file not found, or throws an exception
 def _try_path(dir, rel):
