@@ -65,10 +65,14 @@ def update_catalog(cfg, target_name, repo):
         click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
-            click.echo(' > Commiting changes...')
-            repo.index.commit(commit_message)
-            click.echo(' > Pushing catalog to remote...')
-            repo.remotes.origin.push()
+            if cfg.push:
+                click.echo(' > Commiting changes...')
+                repo.index.commit(commit_message)
+                click.echo(' > Pushing catalog to remote...')
+                repo.remotes.origin.push()
+            else:
+                click.echo(' > Skipping commit+push to catalog...')
+                click.echo(' > Use flag --push to commit and push the catalog repo')
         else:
             repo.head.reset(working_tree=False)
             click.echo(' > Skipping commit+push to catalog in local mode...')
