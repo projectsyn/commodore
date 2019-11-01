@@ -67,7 +67,7 @@ def update_catalog(cfg, target_name, repo):
         if not cfg.local:
             if cfg.push:
                 click.echo(' > Commiting changes...')
-                repo.index.commit(commit_message)
+                git.commit(repo, commit_message)
                 click.echo(' > Pushing catalog to remote...')
                 repo.remotes.origin.push()
             else:

@@ -1,6 +1,6 @@
 import click, difflib, hashlib
 
-from git import Repo
+from git import Repo, Actor
 from git.exc import GitCommandError, BadName
 
 class RefError(ValueError):
@@ -142,3 +142,7 @@ def stage_all(repo):
                     difftext.append('\n'.join(u).strip())
 
     return '\n'.join(difftext), changed
+
+def commit(repo, commit_message):
+    author = Actor("Commodore", "commodore@vshn.net")
+    repo.index.commit(commit_message, author=author, committer=author)
