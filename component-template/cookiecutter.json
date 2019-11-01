@@ -1,0 +1,4 @@
+{
+  "component": "the-component",
+  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '_') }}"
+}
