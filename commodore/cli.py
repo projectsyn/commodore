@@ -47,11 +47,15 @@ def compile(config, customer, cluster, local, push, verbose):
 
 @commodore.command(short_help='Bootstrap new component')
 @click.argument('name')
+@click.option('--lib/--no-lib', default=False, show_default=True,
+              help='Add component library template')
+@click.option('--pp/--no-pp', default=False, show_default=True,
+              help='Add component postprocessing template')
 @verbosity
 @pass_config
-def new_component(config, name, verbose):
+def new_component(config, name, verbose, lib, pp):
     config.update_verbosity(verbose)
-    create_component(name)
+    create_component(name, lib, pp)
 
 def main():
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')

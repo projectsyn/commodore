@@ -1,4 +1,6 @@
 {
   "component": "the-component",
-  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '_') }}"
+  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '_') }}",
+  "add_lib": "n",
+  "add_pp": "n"
 }
