@@ -1,13 +1,13 @@
 # Commodore: Build dynamic inventories and compile catalogs with Kapitan
 
-## Requirements
+## System Requirements
 
-* Python 3.6
+* Python 3.6 (important because of Pipenv)
+* [Pipenv](https://github.com/pypa/pipenv)
 * Docker
 
 ## Getting started
 
-1. Make sure [Pipenv](https://github.com/pypa/pipenv) is set up
 
 1. Install requirements
 
