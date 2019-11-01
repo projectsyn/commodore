@@ -12,11 +12,8 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
     os.symlink(link_src, P(destdir) / destname)
 
-def _fetch_component(cfg, component):
-    repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
+def create_component_symlinks(component):
     target_directory = P('dependencies') / component
-    repo = git.clone_repository(repository_url, target_directory)
-    cfg.register_component(component, repo)
     _relsymlink(P(target_directory) / 'class', f"{component}.yml",
                 'inventory/classes/components')
     libdir = P(target_directory) / 'lib'
@@ -24,6 +21,13 @@ def _fetch_component(cfg, component):
         for file in os.listdir(libdir):
             click.echo(f"     > installing template library: {file}")
             _relsymlink(libdir, file, 'dependencies/lib')
+
+def _fetch_component(cfg, component):
+    repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
+    target_directory = P('dependencies') / component
+    repo = git.clone_repository(repository_url, target_directory)
+    cfg.register_component(component, repo)
+    create_component_symlinks(component)
 
 def fetch_components(cfg, components):
     """
