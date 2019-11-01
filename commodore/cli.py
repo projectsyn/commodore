@@ -3,6 +3,7 @@ import click
 from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile
+from .component_template import create_component
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -43,6 +44,14 @@ def compile(config, customer, cluster, local, push, verbose):
     config.local = local
     config.push = push
     _compile(config, customer, cluster)
+
+@commodore.command(short_help='Bootstrap new component')
+@click.argument('name')
+@verbosity
+@pass_config
+def new_component(config, name, verbose):
+    config.update_verbosity(verbose)
+    create_component(name)
 
 def main():
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')
