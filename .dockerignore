@@ -1,0 +1,10 @@
+.git*
+*.swp
+catalog/
+compiled/
+dependencies/
+inventory/
+tools/
+!tools/ssh
+README.md
+Dockerfile
