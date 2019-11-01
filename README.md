@@ -1,10 +1,13 @@
 # Commodore: Build dynamic inventories and compile catalogs with Kapitan
 
+## Requirements
+
+* Python 3.6
+* Docker
+
 ## Getting started
 
 1. Make sure [Pipenv](https://github.com/pypa/pipenv) is set up
-
-1. To build the Kapitan helm binding, Docker is required
 
 1. Install requirements
 
@@ -17,7 +20,7 @@
 
    ```shell
    # URL of SYNventory API
-   COMMODORE_API_URL="http://localhost:5000/"
+   COMMODORE_API_URL="https://synventory.appuioapp.ch/"
    # Base URL (local or remote) for global Git repositories
    COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
    # Base URL (local or remote) for customer Git repositories
