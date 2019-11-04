@@ -7,11 +7,15 @@ from .jsonnet import jsonnet_runner
 def _builtin_filter_helm_namespace(inv, component, target, path, **kwargs):
     if 'namespace' not in kwargs:
         raise click.ClickException("Builtin filter 'helm_namespace': filter argument 'namespace' is required")
+    if 'create_namespace' in kwargs:
+        create_namespace = kwargs['create_namespace']
+    else:
+        create_namespace = "false"
     output_dir = P('compiled', target, path)
 
     jsonnet_runner(inv, component, target, path,
             _jsonnet.evaluate_file, P('filters', 'helm_namespace.jsonnet'),
-            namespace = kwargs['namespace'], chart_output_dir=str(output_dir))
+            namespace = kwargs['namespace'], create_namespace = create_namespace, chart_output_dir=str(output_dir))
 
 _builtin_filters = {
     'helm_namespace': _builtin_filter_helm_namespace,
@@ -34,7 +38,10 @@ INV_REF = re.compile('\$\{([^}]+)\}')
 def _resolve_inventory_vars(inv, args):
     resolved = {}
     for k, v in args.items():
-        resolved[k] = INV_REF.sub(lambda m: _resolve_var(inv, m), v)
+        if isinstance(v, str):
+            resolved[k] = INV_REF.sub(lambda m: _resolve_var(inv, m), v)
+        else:
+            resolved[k] = v
     return resolved
 
 def run_builtin_filter(inv, component, target, f):

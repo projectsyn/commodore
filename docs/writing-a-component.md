@@ -227,7 +227,7 @@ components build upon the same helm chart.
 ## Postprocessing filters
 
 Postprocessing filters are defined in `postprocess/filters.yml`, which is
-inspired by the Kapitan compile instructions.  Commodore supports two different
+inspired by the Kapitan compile instructions. Commodore supports two different
 filter types, `jsonnet` and `builtin`. Filters in other templating languages
 are not supported at the moment.
 
@@ -238,21 +238,24 @@ files. For each file, the value of the object's key is rendered as YAML in
 that file.
 
 Builtin filters provide often-used filter actions to components. Currently,
-Commodore provides only one builtin filter, `helm_namespace`.  This filter
-processes the output of rendered Helm chart and adds a `metadata.namespace`
-field to each object in the output.  Builtin filters can take arguments in
-`filterargs`. Values in `filterargs` can use Kapitan-style inventory references.
+Commodore provides only one builtin filter, `helm_namespace`. This filter
+processes the output of a rendered Helm chart and adds a `metadata.namespace`
+field to each object in the output. Additionally, if `create_namespace` is set
+to the string `"true"`, the namespace itself is also created.
+Builtin filters can take arguments in `filterargs`. Values in `filterargs` can
+use Kapitan-style inventory references.
 
 A sample `postprocess/filters.yml` might look like
 
 ```yaml
 filters:
-  # The builtin helm_namespace filter takes a filter argument `namespace`
+  # The builtin helm_namespace filter takes a filter argument `namespace` and an optional argument `create_namespace` to create the namespace object.
   - path: crossplane/01_helmchart/crossplane/templates
     type: builtin
     filter: helm_namespace
     filterargs:
       namespace: ${crossplane:namespace}
+      create_namespace: "true"
   # A fictional custom filter which adds some custom annotations to the Helm
   # chart output
   - output_path: crossplane/01_helmchart/crossplane/templates
@@ -263,7 +266,7 @@ filters:
 ### Available built-in filters
 
 Builtin filters expect the argument `path` to indicate on which path in the
-compiled Kapitan output they operate.  This differs from custom filters which
+compiled Kapitan output they operate. This differs from custom filters which
 have a parameter `output_path` indicating where to write the filter output.
 
 * `helm_namespace`: Takes one argument `namespace` which is inserted as
