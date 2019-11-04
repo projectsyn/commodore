@@ -32,7 +32,7 @@ def _import_callback_with_searchpath(search, dir, rel):
 
 def _import_cb(dir, rel):
     # Add current working dir to search path for Jsonnet import callback
-    search_path = [P('.').resolve()]
+    search_path = [P('.').resolve(), P('./dependencies').resolve()]
     return _import_callback_with_searchpath(search_path, dir, rel)
 
 def _list_dir(dir, basename):
