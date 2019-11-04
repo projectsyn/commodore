@@ -1,32 +1,26 @@
-import click, json, requests, shutil
+import click, json, requests, shutil, yaml
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
-from ruamel.yaml import YAML
 from pathlib import Path as P
 
 def yaml_load(file):
     """
     Load single-document YAML and return document
     """
-    yaml=YAML(typ='safe')
     with open(file, 'r') as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
 
 def yaml_load_all(file):
     """
     Load multi-document YAML and return documents in list
     """
-    yaml=YAML(typ='safe')
     with open(file, 'r') as f:
-        return list(yaml.load_all(f))
+        return list(yaml.safe_load_all(f))
 
 def yaml_dump(obj, file):
     """
     Dump obj as single-document YAML
     """
-    yaml=YAML()
-    yaml.default_flow_style = False
-    yaml.indent(mapping=2, sequence=4, offset=2)
     with open(file, 'w') as outf:
         yaml.dump(obj, outf)
 
@@ -34,9 +28,6 @@ def yaml_dump_all(obj, file):
     """
     Dump obj as multi-document YAML
     """
-    yaml=YAML()
-    yaml.default_flow_style = False
-    yaml.indent(mapping=2, sequence=4, offset=2)
     with open(file, 'w') as outf:
         yaml.dump_all(obj, outf)
 
