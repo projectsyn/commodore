@@ -56,6 +56,9 @@ def clone_repository(repository_url, directory):
 def init_repository(path):
     return Repo(path)
 
+def create_repository(path):
+    return Repo.init(path)
+
 def _NULL_TREE(repo):
     """
     An empty Git tree is represented by the C string "tree 0". The hash of the

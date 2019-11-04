@@ -12,6 +12,7 @@ GitPython = "*"
 url-normalize = "~=1.4"
 click = "*"
 ruamel-yaml = "*"
+cookiecutter = "*"
 
 [requires]
 python_version = "3.6"

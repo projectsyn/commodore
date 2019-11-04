@@ -1,0 +1,11 @@
+parameters:
+  {{ cookiecutter.component }}:
+    namespace: syn-{{ cookiecutter.component }}
+
+  kapitan:
+    compile:
+      - output_path: {{ cookiecutter.component }}
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - {{ cookiecutter.component }}/component/main.jsonnet
