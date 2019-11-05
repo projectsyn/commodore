@@ -60,6 +60,7 @@ def jsonnet_runner(inv, component, target, output_path, jsonnet_func,
     _native_cb['inventory'] = ((), _inventory)
     kwargs['target'] = target
     kwargs['component'] = component
+    kwargs['output_path'] = output_path
     output = jsonnet_func(
         str(jsonnet_input),
         import_callback=_import_cb,
