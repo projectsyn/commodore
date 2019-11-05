@@ -55,7 +55,7 @@ def compile(config, customer, cluster, local, push, verbose):
 @pass_config
 def new_component(config, name, verbose, lib, pp):
     config.update_verbosity(verbose)
-    create_component(name, lib, pp)
+    create_component(config, name, lib, pp)
 
 def main():
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')
