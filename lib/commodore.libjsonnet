@@ -21,35 +21,44 @@ local yaml_load_all = std.native('yaml_load_all');
  *      argument is `null`, all objects in the input will be patched. Defaults
  *      to null.
  */
-local patch_namespace(obj_file, namespace, kinds=null) =
+local patch_namespace(obj_file, namespace, kinds=null, exclude_objects=[]) =
   // read objects from input file, drop null objects
   local objs = std.filter(function(o) o != null, yaml_load_all(obj_file));
   // convert kinds array into set
   local kindset = if kinds != null then std.set(kinds);
   // generate object filter function depending on whether we want to only
   // patch specific object kinds.
-  local objfilter = if kinds != null then
+  local kindfilter = if kinds != null then
     function(o) std.setMember(o.kind, kindset)
+  else
+    function(o) true;
+  local include = if std.length(exclude_objects) > 0 then
+    local filterfn(o) =
+      local conds = std.map(function(e) e.kind == o.kind && e.name == o.metadata.name,
+                            exclude_objects);
+      !std.foldl(function(aggregate, cond) aggregate || cond, conds, false);
+    filterfn
   else
     function(o) true;
   // helper to patch the objects
   local addns(obj) = obj + { metadata+: { namespace: namespace } };
   // add namespace to objects for which objfilter returns true
-  [ if objfilter(obj) then addns(obj) else obj
+  [ if kindfilter(obj) && include(obj) then addns(obj) else obj
     for obj in objs
   ];
 
 local list_dir(dir, basename=true) =
   std.native('list_dir')(dir, basename);
 
-local addNamespaceToHelmOutput(template_dir, namespace) =
+local addNamespaceToHelmOutput(template_dir, namespace, exclude_objects=[]) =
   local chart_files = list_dir(template_dir);
   local input_file(elem) = template_dir + '/' + elem;
   local stem(elem) =
     local elems = std.split(elem, '.');
     std.join('.', elems[:std.length(elems)-1]);
   {
-    [stem(elem)]: patch_namespace(input_file(elem), namespace)
+    [stem(elem)]: patch_namespace(input_file(elem), namespace,
+                                  exclude_objects=exclude_objects)
     for elem in chart_files
   };
 
