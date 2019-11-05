@@ -149,3 +149,6 @@ def stage_all(repo):
 def commit(repo, commit_message):
     author = Actor("Commodore", "commodore@vshn.net")
     repo.index.commit(commit_message, author=author, committer=author)
+
+def add_remote(repo, name, url):
+    return repo.create_remote('origin', _normalize_git_ssh(url))

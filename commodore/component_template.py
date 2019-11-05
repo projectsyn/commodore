@@ -7,7 +7,7 @@ from . import git
 from .dependency_mgmt import create_component_symlinks
 from .helpers import yaml_load, yaml_dump
 
-def create_component(name, lib, pp):
+def create_component(config, name, lib, pp):
     component_dir = P('dependencies', name)
     if component_dir.exists():
         raise click.ClickException(f"Unable to add component {name}: {component_dir} already exists.")
@@ -22,6 +22,7 @@ def create_component(name, lib, pp):
             extra_context=cookiecutter_args)
 
     repo = git.create_repository(component_dir)
+    git.add_remote(repo, 'origin', f"{config.global_git_base}/commodore-components/{name}.git")
     index = repo.index
     index.add('*')
     index.commit("Initial commit")
