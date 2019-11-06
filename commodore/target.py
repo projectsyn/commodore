@@ -32,6 +32,17 @@ def _full_target(customer, cluster, apidata):
             },
             'customer': {
                 'name': f"{customer}"
+            },
+            'kapitan': {
+                'secrets': {
+                    'vaultkv': {
+                        'auth': 'token',
+                        'engine': 'kv-v2',
+                        'mount': 'kv',
+                        'VAULT_ADDR': 'http://vault.syn-vault.svc:8200',
+                        'VAULT_SKIP_VERIFY': 'true'
+                    }
+                }
             }
         }
     }
