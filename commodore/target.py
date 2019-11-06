@@ -36,11 +36,10 @@ def _full_target(customer, cluster, apidata):
             'kapitan': {
                 'secrets': {
                     'vaultkv': {
-                        'auth': 'token',
+                        'auth': 'userpass',
                         'engine': 'kv-v2',
                         'mount': 'kv',
-                        'VAULT_ADDR': 'http://vault.syn-vault.svc:8200',
-                        'VAULT_SKIP_VERIFY': 'true'
+                        'VAULT_ADDR': 'https://vault.syn.vshn.net',
                     }
                 }
             }
