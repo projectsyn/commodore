@@ -1,4 +1,4 @@
-import _jsonnet, click, re
+import _jsonnet, click, json, re
 
 from pathlib import Path as P
 
@@ -7,15 +7,17 @@ from .jsonnet import jsonnet_runner
 def _builtin_filter_helm_namespace(inv, component, target, path, **kwargs):
     if 'namespace' not in kwargs:
         raise click.ClickException("Builtin filter 'helm_namespace': filter argument 'namespace' is required")
-    if 'create_namespace' in kwargs:
-        create_namespace = kwargs['create_namespace']
-    else:
-        create_namespace = "false"
+    create_namespace = kwargs.get('create_namespace', 'false')
+    exclude_objects = kwargs.get('exclude_objects', [])
+    exclude_objects = '|'.join([ json.dumps(e) for e in exclude_objects ])
     output_dir = P('compiled', target, path)
 
     jsonnet_runner(inv, component, target, path,
             _jsonnet.evaluate_file, P('filters', 'helm_namespace.jsonnet'),
-            namespace = kwargs['namespace'], create_namespace = create_namespace, chart_output_dir=str(output_dir))
+            namespace = kwargs['namespace'],
+            create_namespace = create_namespace,
+            exclude_objects = exclude_objects,
+            chart_output_dir=str(output_dir))
 
 _builtin_filters = {
     'helm_namespace': _builtin_filter_helm_namespace,
