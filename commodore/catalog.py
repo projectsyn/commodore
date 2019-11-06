@@ -45,11 +45,15 @@ def update_catalog(cfg, target_name, repo):
     click.secho('Updating catalog repository...', bold=True)
     from distutils import dir_util
     import textwrap
-    catalogdir = repo.working_tree_dir
+    catalogdir = P(repo.working_tree_dir, 'manifests')
     # delete everything in catalog
-    rm_tree_contents(catalogdir)
+    if catalogdir.is_dir():
+        rm_tree_contents(catalogdir)
+    else:
+        click.echo(" > Converting old-style catalog")
+        rm_tree_contents(repo.working_tree_dir)
     # copy compiled catalog into catalog directory
-    dir_util.copy_tree(P('compiled') / target_name, catalogdir)
+    dir_util.copy_tree(P('compiled') / target_name, str(catalogdir))
 
     difftext, changed = git.stage_all(repo)
     if changed:
