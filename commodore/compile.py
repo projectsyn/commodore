@@ -19,6 +19,7 @@ from .helpers import (
         ApiError
     )
 from .postprocess import postprocess_components
+from .refs import update_refs
 from .target import update_target
 
 def _fetch_cluster_spec(cfg, customer, cluster):
@@ -103,6 +104,10 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
+
+    # Generate Kapitan secret references from refs found in inventory
+    # parameters
+    update_refs(config, kapitan_inventory['parameters'])
 
     p = kapitan_compile()
     if p.returncode != 0:
