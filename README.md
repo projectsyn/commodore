@@ -36,3 +36,40 @@
    ```
 
 1. Start hacking on Commodore
+
+## Run Commodore in Docker
+
+1. Build the Docker image:
+
+```console
+docker build -t commodore .
+```
+
+1. Run the built image:
+
+```console
+docker run -it --rm \
+    -e COMMODORE_API_URL="https://synventory.syn.vshn.net/" \
+    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/" \
+    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/" \
+    -e SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \
+    -v $(pwd)/catalog:/app/catalog/ \
+    -v $(pwd)/dependencies:/app/dependencies/ \
+    -v $(pwd)/inventory:/app/inventory/ \
+    --entrypoint bash \
+    commodore
+```
+
+1. Set up ssh-agent in the running Docker container:
+
+```console
+tools/ssh
+eval $(ssh-agent)
+ssh-add .identityfile
+```
+
+1. Run Commodore:
+
+```console
+pipenv run commodore
+```
