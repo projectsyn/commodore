@@ -60,7 +60,8 @@ def jsonnet_runner(inv, component, target, output_path, jsonnet_func,
     _native_cb['inventory'] = ((), _inventory)
     kwargs['target'] = target
     kwargs['component'] = component
-    kwargs['output_path'] = output_path
+    output_dir = P('compiled', target, output_path)
+    kwargs['output_path'] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
         import_callback=_import_cb,
@@ -69,7 +70,7 @@ def jsonnet_runner(inv, component, target, output_path, jsonnet_func,
     )
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
-        outpath=P('compiled', target, output_path, f"{outobj}.yaml")
+        outpath = output_dir / f"{outobj}.yaml"
         if not outpath.exists():
             print(f"   > {outpath} doesn't exist, creating...")
             os.makedirs(outpath.parent, exist_ok=True)

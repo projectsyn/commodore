@@ -98,7 +98,7 @@ class RefBuilder(object):
             r = SecretRef.from_value(key, value)
             if r is not None:
                 if self.debug:
-                    click.echo(f"    > Found secret ref {r.refstr}")
+                    click.echo(f"    > Found secret ref {r.refstr} in {value}")
                 if r.refstr in self._refs:
                     if self.debug:
                         click.echo(f"    > Duplicate ref, adding key to list")
