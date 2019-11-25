@@ -50,8 +50,8 @@ def _regular_setup(config, customer, cluster):
     # Fetch all Git repos
     try:
         _fetch_global_config(config, inv)
-        fetch_components(config, inv['global']['components'])
         _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
+        fetch_components(config)
         fetch_jsonnet_libs(config, inv['global']['jsonnet_libs'])
         catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
     except Exception as e:

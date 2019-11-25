@@ -2,6 +2,7 @@ import click, os
 from pathlib import Path as P
 
 from . import git
+from .helpers import yaml_load
 
 def _relsymlink(srcdir, srcname, destdir, destname=None):
     if destname is None:
@@ -22,6 +23,26 @@ def create_component_symlinks(component):
             click.echo(f"     > installing template library: {file}")
             _relsymlink(libdir, file, 'dependencies/lib')
 
+def _discover_components(cfg, inventory_path):
+    """
+    Discover components in `inventory_path/`.  Parse all classes found in
+    inventory_path and look for class includes starting with `components.`.
+    """
+    components = []
+    inventory = P(inventory_path)
+    for classfile in inventory.glob('**/*.yml'):
+        if cfg.debug:
+            click.echo(f" > Discovering components in {classfile}")
+        classyaml = yaml_load(classfile)
+        if classyaml is not None:
+            for kls in classyaml.get('classes', []):
+                if kls.startswith('components.'):
+                    component = kls.split('.')[1]
+                    if cfg.debug:
+                        click.echo(f"   > Found component {component}")
+                    components.append(component)
+    return components
+
 def _fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = P('dependencies') / component
@@ -29,16 +50,19 @@ def _fetch_component(cfg, component):
     cfg.register_component(component, repo)
     create_component_symlinks(component)
 
-def fetch_components(cfg, components):
+def fetch_components(cfg):
     """
-    Download all components specified in argument `components`.
-    Components are searched in
-    `GLOBAL_GIT_BASE/commodore_components/{component-name}.git`.
+    Download all components required by target. Generate list of components
+    by searching for classes with prefix `components.` in the inventory files.
+
+    Component repos are searched in `GLOBAL_GIT_BASE/commodore_components`.
     """
 
+    click.secho('Discovering components...', bold=True)
+    components = _discover_components(cfg, 'inventory')
+    click.secho('Fetching components...', bold=True)
     os.makedirs('inventory/classes/components', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
-    click.secho('Updating components...', bold=True)
     for c in components:
         click.echo(f" > {c}...")
         _fetch_component(cfg, c)
