@@ -31,11 +31,11 @@ def _fetch_global_config(cfg, response):
     repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", 'inventory/classes/global')
     cfg.register_config('global', repo)
 
-def _fetch_customer_config(cfg, repo, customer):
-    if repo is None:
-        repo = f"{cfg.customer_git_base}/{customer}.git"
+def _fetch_customer_config(cfg, repopath, customer):
+    if repopath is None:
+        repopath = f"{cfg.customer_git_base}/{customer}.git"
     click.secho('Updating customer config...', bold=True)
-    repo = git.clone_repository(repo, P('inventory/classes') / customer)
+    repo = git.clone_repository(repopath, P('inventory/classes') / customer)
     cfg.register_config('customer', repo)
 
 def _regular_setup(config, customer, cluster):
