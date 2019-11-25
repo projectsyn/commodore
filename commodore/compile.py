@@ -52,7 +52,6 @@ def _regular_setup(config, customer, cluster):
         _fetch_global_config(config, inv)
         _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
         fetch_components(config)
-        fetch_jsonnet_libs(config, inv['global']['jsonnet_libs'])
         catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
@@ -104,6 +103,10 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
+
+    jsonnet_libs = kapitan_inventory['parameters'].get('commodore', {}).get('jsonnet_libs', None)
+    if jsonnet_libs and not config.local:
+        fetch_jsonnet_libs(config, jsonnet_libs)
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
