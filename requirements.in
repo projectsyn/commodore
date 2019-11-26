@@ -3,4 +3,4 @@ cookiecutter
 GitPython
 kapitan
 requests
-url-normalize>=1.4
+url-normalize~=1.4
