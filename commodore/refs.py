@@ -9,7 +9,7 @@ class SecretRef(object):
     Helper class for finding Kapitan secret ref strings and producing Kapitan
     secret ref files
     """
-    _SECRET_REF=re.compile('\?\{([^}]+)\}')
+    _SECRET_REF=re.compile('\?{([^}]+)\}')
 
     def __init__(self, key, ref):
         self.keys = [ key ]
@@ -18,7 +18,7 @@ class SecretRef(object):
         self.ref = refelems[1]
 
     def __str__(self):
-        return f"SecretRef(invkey={self.key}, type={self.type}, ref={self.ref})"
+        return f"SecretRef(invkeys={self.keys}, type={self.type}, ref={self.ref})"
 
     @property
     def refstr(self):

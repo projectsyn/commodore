@@ -31,11 +31,11 @@ def _fetch_global_config(cfg, response):
     repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", 'inventory/classes/global')
     cfg.register_config('global', repo)
 
-def _fetch_customer_config(cfg, repo, customer):
-    if repo is None:
-        repo = f"{cfg.customer_git_base}/{customer}.git"
+def _fetch_customer_config(cfg, repopath, customer):
+    if repopath is None:
+        repopath = f"{cfg.customer_git_base}/{customer}.git"
     click.secho('Updating customer config...', bold=True)
-    repo = git.clone_repository(repo, P('inventory/classes') / customer)
+    repo = git.clone_repository(repopath, P('inventory/classes') / customer)
     cfg.register_config('customer', repo)
 
 def _regular_setup(config, customer, cluster):
@@ -50,9 +50,8 @@ def _regular_setup(config, customer, cluster):
     # Fetch all Git repos
     try:
         _fetch_global_config(config, inv)
-        fetch_components(config, inv['global']['components'])
         _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
-        fetch_jsonnet_libs(config, inv['global']['jsonnet_libs'])
+        fetch_components(config)
         catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
@@ -104,6 +103,10 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
+
+    jsonnet_libs = kapitan_inventory['parameters'].get('commodore', {}).get('jsonnet_libs', None)
+    if jsonnet_libs and not config.local:
+        fetch_jsonnet_libs(config, jsonnet_libs)
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters

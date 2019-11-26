@@ -25,7 +25,7 @@ def create_component(config, name, lib, pp):
     git.add_remote(repo, 'origin', f"{config.global_git_base}/commodore-components/{name}.git")
     index = repo.index
     index.add('*')
-    index.commit("Initial commit")
+    git.commit(repo, 'Initial commit')
 
     click.echo(f" > Installing component")
     create_component_symlinks(name)
