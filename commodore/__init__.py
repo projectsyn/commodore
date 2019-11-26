@@ -1,5 +1,9 @@
-from .cli import main
+"""
+Commodore. Build dynamic inventories and compile catalogs with Kapitan
+"""
 
-if __name__ == '__main__':
-    main()
-
+__author__ = 'Simon Gerber'
+__email__ = 'simon.gerber@vshn.ch'
+__license__ = 'BSD'
+__url__ = 'https://git.vshn.net/syn/commodore/'
+__version__ = '0.1.0dev1'

@@ -1,0 +1,6 @@
+click
+cookiecutter
+GitPython
+kapitan
+requests
+url-normalize>=1.4

@@ -8,7 +8,6 @@
 
 ## Getting started
 
-
 1. Install requirements
 
    ```console
@@ -36,6 +35,28 @@
    ```
 
 1. Start hacking on Commodore
+
+1. Run linting and tests
+
+List all Tox targets:
+```console
+tox -lv
+```
+
+Run all linting and tests:
+```console
+tox
+```
+
+Run just a specific target:
+```console
+tox -e py38
+```
+
+Upgrade dependencies (Pipfile.lock, requirements.txt)
+```console
+tox -e requirements
+```
 
 ## Run Commodore in Docker
 
