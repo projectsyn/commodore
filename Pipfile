@@ -4,18 +4,18 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+tox = "*"
 
 [packages]
-kapitan = "*"
-requests = "*"
-GitPython = "*"
-url-normalize = "~=1.4"
 click = "*"
 cookiecutter = "*"
+GitPython = "*"
+kapitan = "*"
+requests = "*"
+url-normalize = "~=1.4"
 
 [requires]
-python_version = "3.6"
 
 [scripts]
 commodore = "python -m commodore"
-build_kapitan_helm_binding="./tools/build_kapitan_helm_binding.sh"
+build_kapitan_helm_binding = "./tools/build_kapitan_helm_binding.sh"
