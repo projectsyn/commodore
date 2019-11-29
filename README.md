@@ -36,27 +36,40 @@
 
 1. Start hacking on Commodore
 
+   ```console
+   pipenv shell
+   ```
+
+   - Write a line of test code, make the test fail
+   - Write a line of application code, make the test pass
+   - Repeat
+
 1. Run linting and tests
 
-List all Tox targets:
-```console
-tox -lv
-```
+   If you nedd to install Tox:
+   ```console
+   pipenv install --dev
+   ```
 
-Run all linting and tests:
-```console
-tox
-```
+   List all Tox targets:
+   ```console
+   tox -lv
+   ```
 
-Run just a specific target:
-```console
-tox -e py38
-```
+   Run all linting and tests:
+   ```console
+   tox
+   ```
 
-Upgrade dependencies (Pipfile.lock, requirements.txt)
-```console
-tox -e requirements
-```
+   Run just a specific target:
+   ```console
+   tox -e py38
+   ```
+
+   Upgrade dependencies (Pipfile.lock, requirements.txt)
+   ```console
+   tox -e requirements
+   ```
 
 ## Run Commodore in Docker
 
