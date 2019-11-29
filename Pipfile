@@ -10,7 +10,8 @@ tox = "*"
 click = "*"
 cookiecutter = "*"
 GitPython = "*"
-kapitan = "*"
+# Kapitan 0.25.5 is bugged when specifying search paths
+kapitan = "==0.25.4"
 requests = "*"
 url-normalize = "~=1.4"
 

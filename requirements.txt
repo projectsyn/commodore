@@ -11,7 +11,7 @@ binaryornot==0.4.4        # via cookiecutter
 boto3==1.10.28            # via kapitan
 botocore==1.13.28         # via boto3, s3transfer
 cachetools==3.1.1         # via google-auth
-certifi==2019.9.11        # via requests
+certifi==2019.11.28       # via requests
 cffi==1.13.2              # via cryptography, kapitan
 chardet==3.0.4            # via binaryornot, requests
 click==7.0
@@ -34,7 +34,7 @@ jinja2==2.10.3            # via cookiecutter, jinja2-time, kapitan
 jmespath==0.9.4           # via boto3, botocore
 jsonnet==0.14.0           # via kapitan
 jsonschema==3.1.1         # via kapitan
-kapitan==0.25.5
+kapitan==0.25.4
 markupsafe==1.1.1         # via jinja2
 more-itertools==7.2.0     # via zipp
 pathspec==0.6.0           # via yamllint
