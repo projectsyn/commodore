@@ -4,9 +4,11 @@ from pathlib import Path as P
 from . import git
 from .helpers import rm_tree_contents
 
+
 def fetch_customer_catalog(cfg, target_name, repoinfo):
     click.secho('Updating customer catalog...', bold=True)
     return git.clone_repository(repoinfo['url'], 'catalog')
+
 
 def _pretty_print_component_commit(name, component):
     repo = component.repo
@@ -14,19 +16,22 @@ def _pretty_print_component_commit(name, component):
     short_sha = repo.git.rev_parse(sha, short=6)
     return f" * {name}:{component.version} ({short_sha})"
 
+
 def _pretty_print_config_commit(name, repo):
     sha = repo.head.commit.hexsha
     short_sha = repo.git.rev_parse(sha, short=6)
     return f" * {name}: {short_sha}"
 
+
 def _render_catalog_commit_msg(cfg):
     import datetime
     now = datetime.datetime.now().isoformat(timespec='milliseconds')
 
-    component_commits = [ _pretty_print_component_commit(cn, c) for cn, c in cfg.get_components().items() ]
+    component_commits = [_pretty_print_component_commit(
+        cn, c) for cn, c in cfg.get_components().items()]
     component_commits = '\n'.join(component_commits)
 
-    config_commits = [ _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items() ]
+    config_commits = [_pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()]
     config_commits = '\n'.join(config_commits)
 
     return f"""
@@ -40,6 +45,7 @@ Configuration commits:
 
 Compilation timestamp: {now}
 """
+
 
 def update_catalog(cfg, target_name, repo):
     click.secho('Updating catalog repository...', bold=True)

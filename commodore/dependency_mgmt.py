@@ -1,8 +1,10 @@
-import click, os
+import click
+import os
 from pathlib import Path as P
 
 from . import git
 from .helpers import yaml_load
+
 
 def _relsymlink(srcdir, srcname, destdir, destname=None):
     if destname is None:
@@ -13,6 +15,7 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
     os.symlink(link_src, P(destdir) / destname)
 
+
 def create_component_symlinks(component):
     target_directory = P('dependencies') / component
     _relsymlink(P(target_directory) / 'class', f"{component}.yml",
@@ -22,6 +25,7 @@ def create_component_symlinks(component):
         for file in os.listdir(libdir):
             click.echo(f"     > installing template library: {file}")
             _relsymlink(libdir, file, 'dependencies/lib')
+
 
 def _discover_components(cfg, inventory_path):
     """
@@ -43,12 +47,14 @@ def _discover_components(cfg, inventory_path):
                     components.append(component)
     return components
 
+
 def _fetch_component(cfg, component):
     repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
     target_directory = P('dependencies') / component
     repo = git.clone_repository(repository_url, target_directory)
     cfg.register_component(component, repo)
     create_component_symlinks(component)
+
 
 def fetch_components(cfg):
     """
@@ -67,6 +73,7 @@ def fetch_components(cfg):
         click.echo(f" > {c}...")
         _fetch_component(cfg, c)
 
+
 def _set_component_version(cfg, component, version):
     click.echo(f" > {component}: {version}")
     try:
@@ -74,6 +81,7 @@ def _set_component_version(cfg, component, version):
     except git.RefError as e:
         click.secho(f"    unable to set version: {e}", fg='yellow')
     cfg.set_component_version(component, version)
+
 
 def set_component_versions(cfg, versions):
     """
@@ -86,6 +94,7 @@ def set_component_versions(cfg, versions):
     click.secho('Setting component versions...', bold=True)
     for cn, c in versions.items():
         _set_component_version(cfg, cn, c['version'])
+
 
 def fetch_jsonnet_libs(cfg, libs):
     """
@@ -107,9 +116,9 @@ def fetch_jsonnet_libs(cfg, libs):
     os.makedirs('dependencies/lib', exist_ok=True)
     for lib in libs:
         libname = lib['name']
-        filestext = ' '.join([ f['targetfile'] for f in lib['files'] ])
+        filestext = ' '.join([f['targetfile'] for f in lib['files']])
         click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
             _relsymlink(repo.working_tree_dir, file['libfile'],
-                    'dependencies/lib', destname=file['targetfile'])
+                        'dependencies/lib', destname=file['targetfile'])

@@ -1,18 +1,21 @@
-import click, re, os
+import click
+import re
+import os
 from base64 import b64encode
 from pathlib import Path as P
 
 from .helpers import rm_tree_contents, yaml_dump
+
 
 class SecretRef(object):
     """
     Helper class for finding Kapitan secret ref strings and producing Kapitan
     secret ref files
     """
-    _SECRET_REF=re.compile('\?{([^}]+)\}')
+    _SECRET_REF = re.compile(r'\?{([^}]+)\}')
 
     def __init__(self, key, ref):
-        self.keys = [ key ]
+        self.keys = [key]
         refelems = ref.split(':')
         self.type = refelems[0]
         self.ref = refelems[1]
@@ -78,10 +81,12 @@ class SecretRef(object):
     def add_key(self, key):
         self.keys.append(key)
 
+
 class RefBuilder(object):
     """
     Helper class to wrap recursive search for Kapitan secret references
     """
+
     def __init__(self, debug, parameters):
         self.debug = debug
         self.parameters = parameters

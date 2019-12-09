@@ -4,32 +4,37 @@ from pathlib import Path as P
 
 from . import git
 from .catalog import (
-        fetch_customer_catalog,
-        update_catalog
-    )
+    fetch_customer_catalog,
+    update_catalog
+)
 from .dependency_mgmt import (
-        fetch_components,
-        fetch_jsonnet_libs,
-        set_component_versions
-    )
+    fetch_components,
+    fetch_jsonnet_libs,
+    set_component_versions
+)
 from .helpers import (
-        clean,
-        api_request,
-        kapitan_compile,
-        ApiError
-    )
+    clean,
+    api_request,
+    kapitan_compile,
+    ApiError
+)
 from .postprocess import postprocess_components
 from .refs import update_refs
 from .target import update_target
 
+
 def _fetch_cluster_spec(cfg, customer, cluster):
     return api_request(cfg.api_url, 'inventory', customer, cluster)
+
 
 def _fetch_global_config(cfg, response):
     config = response['global']['config']
     click.secho(f"Updating global config...", bold=True)
-    repo = git.clone_repository(f"{cfg.global_git_base}/{config}.git", 'inventory/classes/global')
+    repo = git.clone_repository(
+        f"{cfg.global_git_base}/{config}.git",
+        'inventory/classes/global')
     cfg.register_config('global', repo)
+
 
 def _fetch_customer_config(cfg, repopath, customer):
     if repopath is None:
@@ -37,6 +42,7 @@ def _fetch_customer_config(cfg, repopath, customer):
     click.secho('Updating customer config...', bold=True)
     repo = git.clone_repository(repopath, P('inventory/classes') / customer)
     cfg.register_config('customer', repo)
+
 
 def _regular_setup(config, customer, cluster):
     try:
@@ -58,6 +64,7 @@ def _regular_setup(config, customer, cluster):
 
     return target_name, catalog_repo
 
+
 def _local_setup(config, customer, cluster):
     click.secho('Running in local mode', bold=True)
     click.echo(' > Will use existing inventory, dependencies, and catalog')
@@ -70,9 +77,9 @@ def _local_setup(config, customer, cluster):
 
     click.secho('Registering config...', bold=True)
     config.register_config('global',
-            git.init_repository('inventory/classes/global'))
+                           git.init_repository('inventory/classes/global'))
     config.register_config('customer',
-            git.init_repository(P('inventory/classes/') / customer))
+                           git.init_repository(P('inventory/classes/') / customer))
 
     click.secho('Registering components...', bold=True)
     for c in P('dependencies').iterdir():
@@ -88,13 +95,13 @@ def _local_setup(config, customer, cluster):
 
     return target_name, catalog_repo
 
+
 def compile(config, customer, cluster):
     if config.local:
         target_name, catalog_repo = _local_setup(config, customer, cluster)
     else:
         clean(config)
         target_name, catalog_repo = _regular_setup(config, customer, cluster)
-
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
@@ -104,7 +111,8 @@ def compile(config, customer, cluster):
     if versions and not config.local:
         set_component_versions(config, versions)
 
-    jsonnet_libs = kapitan_inventory['parameters'].get('commodore', {}).get('jsonnet_libs', None)
+    jsonnet_libs = kapitan_inventory['parameters'].get(
+        'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)
 

@@ -2,6 +2,7 @@ from collections import namedtuple
 
 Component = namedtuple('Component', ['name', 'repo', 'version'])
 
+
 class Config(object):
     def __init__(self, api_url, global_git, customer_git, verbose):
         self.api_url = api_url
@@ -27,10 +28,10 @@ class Config(object):
 
     def register_component(self, component, repo):
         c = Component(
-                name=component,
-                repo=repo,
-                version='master',
-                )
+            name=component,
+            repo=repo,
+            version='master',
+        )
         self._components[component] = c
 
     def set_component_version(self, component, version):

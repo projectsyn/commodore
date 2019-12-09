@@ -22,7 +22,6 @@ stages:
 flake8:
   extends: .lint
   script: tox -e flake8
-  allow_failure: true
 
 pylint:
   extends: .lint

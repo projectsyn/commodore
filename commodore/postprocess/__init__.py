@@ -7,6 +7,7 @@ from commodore.helpers import yaml_load
 from .jsonnet import run_jsonnet_filter
 from .builtin_filters import run_builtin_filter
 
+
 def postprocess_components(inventory, target, components):
     click.secho('Postprocessing...', bold=True)
     for cn, c in components.items():
@@ -19,7 +20,7 @@ def postprocess_components(inventory, target, components):
             filters = yaml_load(filterdir / 'filters.yml')
             for f in filters['filters']:
                 # old-style filters are always 'jsonnet'
-                if not 'type' in f:
+                if 'type' not in f:
                     click.secho(f"   > [WARN] component uses old-style postprocess filters",
                                 fg='yellow')
                     f['type'] = 'jsonnet'
