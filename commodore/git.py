@@ -74,7 +74,7 @@ def _NULL_TREE(repo):
     hexdigest of this sha1 and creates a tree object for the empty tree of the
     passed repo.
     """
-    null_tree_sha = hashlib.sha1(b'tree 0\0').hexdigest()
+    null_tree_sha = hashlib.sha1(b'tree 0\0').hexdigest()  # nosec
     return repo.tree(null_tree_sha)
 
 

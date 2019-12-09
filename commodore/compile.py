@@ -51,7 +51,9 @@ def _regular_setup(config, customer, cluster):
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
     target_name = update_target(config, customer, cluster)
-    assert(target_name == 'cluster')
+    if target_name != 'cluster':
+        raise click.ClickException(
+            f"Only target with name 'cluster' is supported, got {target_name}")
 
     # Fetch all Git repos
     try:

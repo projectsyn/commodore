@@ -35,7 +35,6 @@ safety:
 bandit:
   extends: .lint
   script: tox -e bandit
-  allow_failure: true
 
 readme:
   extends: .lint

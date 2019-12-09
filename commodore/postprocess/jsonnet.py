@@ -1,4 +1,5 @@
 import _jsonnet
+import click
 import json
 import os
 
@@ -94,7 +95,8 @@ def run_jsonnet_filter(inv, component, target, filterdir, f):
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    assert(f['type'] == 'jsonnet')
+    if f['type'] != 'jsonnet':
+        raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
     filterpath = filterdir / f['filter']
     output_path = f['output_path']
     jsonnet_runner(inv, component, target, output_path,

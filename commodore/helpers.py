@@ -87,9 +87,9 @@ def clean(cfg):
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
     import shlex
-    import subprocess
+    import subprocess  # nosec
     click.secho('Compiling catalog...', bold=True)
-    return subprocess.run(
+    return subprocess.run(  # nosec
         shlex.split('kapitan compile --fetch -J .  dependencies --refs-path ./catalog/refs'))
 
 
