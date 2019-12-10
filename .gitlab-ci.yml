@@ -22,7 +22,6 @@ stages:
 flake8:
   extends: .lint
   script: tox -e flake8
-  allow_failure: true
 
 pylint:
   extends: .lint
@@ -36,7 +35,6 @@ safety:
 bandit:
   extends: .lint
   script: tox -e bandit
-  allow_failure: true
 
 readme:
   extends: .lint

@@ -1,15 +1,19 @@
-import click, difflib, hashlib
+import click
+import difflib
+import hashlib
 
 from git import Repo, Actor
 from git.exc import GitCommandError, BadName
+
 
 class RefError(ValueError):
     def __init__(self, message):
         self.message = message
 
+
 def _normalize_git_ssh(url):
     from url_normalize.url_normalize import normalize_userinfo, normalize_host, \
-                                            normalize_path, provide_url_scheme
+        normalize_path, provide_url_scheme
     from url_normalize.tools import deconstruct_url, reconstruct_url
 
     if '@' in url and not url.startswith('ssh://'):
@@ -21,9 +25,9 @@ def _normalize_git_ssh(url):
     url = provide_url_scheme(url, 'ssh')
     urlparts = deconstruct_url(url)
     urlparts = urlparts._replace(
-            userinfo=normalize_userinfo(urlparts.userinfo),
-            host=normalize_host(urlparts.host),
-            path=normalize_path(urlparts.path, scheme='https'),
+        userinfo=normalize_userinfo(urlparts.userinfo),
+        host=normalize_host(urlparts.host),
+        path=normalize_path(urlparts.path, scheme='https'),
     )
     return reconstruct_url(urlparts)
 
@@ -50,14 +54,18 @@ def checkout_version(repo, ref):
     except BadName as e:
         raise RefError(f"Revision '{ref}' not found in repository") from e
 
+
 def clone_repository(repository_url, directory):
     return Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+
 
 def init_repository(path):
     return Repo(path)
 
+
 def create_repository(path):
     return Repo.init(path)
+
 
 def _NULL_TREE(repo):
     """
@@ -66,7 +74,7 @@ def _NULL_TREE(repo):
     hexdigest of this sha1 and creates a tree object for the empty tree of the
     passed repo.
     """
-    null_tree_sha = hashlib.sha1(b'tree 0\0').hexdigest()
+    null_tree_sha = hashlib.sha1(b'tree 0\0').hexdigest()  # nosec
     return repo.tree(null_tree_sha)
 
 
@@ -81,6 +89,7 @@ def _colorize_diff(line):
         return click.style(line, fg='red')
     return line
 
+
 def _compute_similarity(change):
     before = change.b_blob.data_stream.read().decode('utf-8').split('\n')
     after = change.a_blob.data_stream.read().decode('utf-8').split('\n')
@@ -90,6 +99,7 @@ def _compute_similarity(change):
     similarity_diff.append(click.style(f"+++ {change.a_path}", fg='yellow'))
     similarity_diff.append(f"Renamed file, similarity index {r*100:.2f}%")
     return similarity_diff
+
 
 def stage_all(repo):
     index = repo.index
@@ -108,7 +118,7 @@ def stage_all(repo):
     # Compute diff of all changes
     try:
         diff = index.diff(repo.head.commit)
-    except ValueError as e:
+    except ValueError:
         # Assume that we're in an empty repo if we get a ValueError from
         # index.diff(repo.head.commit). Diff against empty tree.
         diff = index.diff(_NULL_TREE(repo))
@@ -127,7 +137,10 @@ def stage_all(repo):
                 elif ct == 'D':
                     difftext.append(click.style(f"Added file {c.b_path}", fg='green'))
                 elif ct == 'R':
-                    difftext.append(click.style(f"Renamed file {c.b_path} => {c.a_path}", fg='yellow'))
+                    difftext.append(
+                        click.style(
+                            f"Renamed file {c.b_path} => {c.a_path}",
+                            fg='yellow'))
                 else:
                     if c.renamed_file:
                         # Just compute similarity ratio for renamed files
@@ -140,15 +153,17 @@ def stage_all(repo):
                     before = c.b_blob.data_stream.read().decode('utf-8').split('\n')
                     after = c.a_blob.data_stream.read().decode('utf-8').split('\n')
                     u = difflib.unified_diff(before, after, lineterm='',
-                            fromfile=c.b_path, tofile=c.a_path)
-                    u = [ _colorize_diff(l) for l in u ]
+                                             fromfile=c.b_path, tofile=c.a_path)
+                    u = [_colorize_diff(l) for l in u]
                     difftext.append('\n'.join(u).strip())
 
     return '\n'.join(difftext), changed
 
+
 def commit(repo, commit_message):
     author = Actor("Commodore", "commodore@vshn.net")
     repo.index.commit(commit_message, author=author, committer=author)
+
 
 def add_remote(repo, name, url):
     return repo.create_remote('origin', _normalize_git_ssh(url))

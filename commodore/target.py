@@ -1,13 +1,16 @@
-import click, os
+import click
+import os
 
 from .helpers import (
-        api_request,
-        ApiError,
-        yaml_dump
-    )
+    api_request,
+    ApiError,
+    yaml_dump
+)
+
 
 def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster)
+
 
 def _full_target(customer, cluster, apidata):
     cloud_type = apidata['cloud_type']
@@ -36,6 +39,7 @@ def _full_target(customer, cluster, apidata):
         }
     }
 
+
 def update_target(cfg, customer, cluster):
     click.secho('Updating Kapitan target...', bold=True)
     try:
@@ -45,6 +49,6 @@ def update_target(cfg, customer, cluster):
 
     os.makedirs('inventory/targets', exist_ok=True)
     yaml_dump(_full_target(customer, cluster, target),
-            'inventory/targets/cluster.yml')
+              'inventory/targets/cluster.yml')
 
     return 'cluster'

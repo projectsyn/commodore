@@ -2,9 +2,6 @@
 Tests for command line interface (CLI)
 """
 import os
-import pytest
-
-import commodore.cli
 
 
 def test_runas_module():
