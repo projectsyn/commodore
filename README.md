@@ -11,7 +11,7 @@
 1. Install requirements
 
    ```console
-   pipenv install
+   pipenv install --dev
    pipenv run build_kapitan_helm_binding
    ```
 
@@ -46,9 +46,9 @@
 
 1. Run linting and tests
 
-   If you nedd to install Tox:
+   Auto format with autopep8
    ```console
-   pipenv install --dev
+   pipenv run autopep
    ```
 
    List all Tox targets:

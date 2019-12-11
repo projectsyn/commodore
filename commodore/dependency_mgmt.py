@@ -1,4 +1,5 @@
 import click
+import errno
 import os
 from pathlib import Path as P
 
@@ -13,7 +14,15 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
     # works for dropping a path's prefix according to the documentation. See
     # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
-    os.symlink(link_src, P(destdir) / destname)
+    link_dst = P(destdir) / destname
+    try:
+        os.symlink(link_src, link_dst)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_dst)
+            os.symlink(link_src, link_dst)
+        else:
+            raise click.ClickException(f"While setting up symlinks: {e}") from e
 
 
 def create_component_symlinks(component):
@@ -80,6 +89,8 @@ def _set_component_version(cfg, component, version):
         git.checkout_version(cfg.get_component_repo(component), version)
     except git.RefError as e:
         click.secho(f"    unable to set version: {e}", fg='yellow')
+    # Create symlinks again with correctly checked out components
+    create_component_symlinks(component)
     cfg.set_component_version(component, version)
 
 
