@@ -5,6 +5,7 @@ verify_ssl = true
 
 [dev-packages]
 tox = "*"
+autopep8 = "*"
 
 [packages]
 click = "*"
@@ -19,3 +20,4 @@ url-normalize = "~=1.4"
 [scripts]
 commodore = "python -m commodore"
 build_kapitan_helm_binding = "./tools/build_kapitan_helm_binding.sh"
+autopep = "autopep8 --in-place --aggressive --recursive --verbose ./"
