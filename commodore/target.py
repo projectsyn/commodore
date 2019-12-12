@@ -19,8 +19,8 @@ def _full_target(customer, cluster, apidata):
     return {
         'classes': [
             'global.common',
-            f"global.{cloud_type}",
             f"global.{cluster_distro}",
+            f"global.{cloud_type}",
             f"{customer}.{cluster}"
         ],
         'parameters': {
