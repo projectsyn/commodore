@@ -41,7 +41,7 @@ def _discover_components(cfg, inventory_path):
     Discover components in `inventory_path/`.  Parse all classes found in
     inventory_path and look for class includes starting with `components.`.
     """
-    components = []
+    components = set()
     inventory = P(inventory_path)
     for classfile in inventory.glob('**/*.yml'):
         if cfg.debug:
@@ -53,8 +53,8 @@ def _discover_components(cfg, inventory_path):
                     component = kls.split('.')[1]
                     if cfg.debug:
                         click.echo(f"   > Found component {component}")
-                    components.append(component)
-    return components
+                    components.add(component)
+    return sorted(components)
 
 
 def _fetch_component(cfg, component):
