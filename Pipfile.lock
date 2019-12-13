@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e3592ff0e979b1e181909a879d070cf59169132372a4a68ed4bc1e8b1800399e"
+            "sha256": "305f9308a6fa2aecd6810e6fc5d8aade40cb91518965cf595ee02fe46f127320"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -44,17 +44,17 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:05645414e586c53c82dec591a8d96ff5756d869a3236e971125fdb719bc78270",
-                "sha256:de15bb0fc8f19d6c3366dcc7f0faf2aa32486ea29cf72141820892b7c7ec5a42"
+                "sha256:210b119965782feacadbdf46944b2ca83d52f7ac7c625ec2e5188c60621a6153",
+                "sha256:7dc118fafbc81e32d753ee3c00600f04fd032042cec9136fc8fdce3e6f58191d"
             ],
-            "version": "==1.10.36"
+            "version": "==1.10.37"
         },
         "botocore": {
             "hashes": [
-                "sha256:19dd144b5a65f813f72ada8cd05397bbb1b30dd8ff9f1a22e1fe011c27829a50",
-                "sha256:dc44349c362763af9da631c4755348aff4a4593ee98b0199ce83337d3ba11076"
+                "sha256:a5061854d117e4afb82c2f2da7ff1fb7492045e1968efdca6df80b9a9a1f31d5",
+                "sha256:cdecb25b58823784d6118d8f991bbd6a36ee220039ea7bf2001029d1bbff0cb0"
             ],
-            "version": "==1.13.36"
+            "version": "==1.13.37"
         },
         "cachetools": {
             "hashes": [
@@ -202,10 +202,10 @@
         },
         "google-auth": {
             "hashes": [
-                "sha256:17c5b7bf7b9f4c188beba5590d170c1546f31f99c1919621422a6a0011323d97",
-                "sha256:44fd26d86e9a04fbb21064a0295288044cb2b920d305501b5f8d546452f246bd"
+                "sha256:bdf3af2b19368fc50ed0542b891bf64c2e92d8f207d92064a6cf1e1a1014d761",
+                "sha256:bf45ce767ac45704372a6d3677b4a036594a935f4e460e58c7accc3c36925f06"
             ],
-            "version": "==1.8.1"
+            "version": "==1.8.2"
         },
         "google-auth-httplib2": {
             "hashes": [
@@ -278,11 +278,11 @@
         },
         "kapitan": {
             "hashes": [
-                "sha256:0412ffe3dab01a91d9134df5b88eb493f5572c032ad1ec1526fdfea71760ab18",
-                "sha256:70218d2619dcd3087efc26b9a5af9f724c12ebde76024039c8bb3cd9289b5075"
+                "sha256:499f15f1eec3c2510ed9f6796e53de89375110efbe103169d5ea78ce83d5b1b5",
+                "sha256:73ef7c8219f1cfb099a3a3884ab42f48890243d568178d7505eb9ebe81bf56f1"
             ],
             "index": "pypi",
-            "version": "==0.26.0rc1"
+            "version": "==0.26.0"
         },
         "markupsafe": {
             "hashes": [
