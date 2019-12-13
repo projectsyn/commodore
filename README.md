@@ -53,22 +53,22 @@
 
    List all Tox targets:
    ```console
-   tox -lv
+   pipenv run test tox -lv
    ```
 
    Run all linting and tests:
    ```console
-   tox
+   pipenv run test tox
    ```
 
    Run just a specific target:
    ```console
-   tox -e py38
+   pipenv run test tox -e py38
    ```
 
    Upgrade dependencies (Pipfile.lock, requirements.txt)
    ```console
-   tox -e requirements
+   pipenv run test tox -e requirements
    ```
 
 ## Run Commodore in Docker
