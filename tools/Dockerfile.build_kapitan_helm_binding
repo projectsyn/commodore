@@ -1,5 +1,7 @@
 FROM golang:1.13-stretch as builder
 
+ARG PY_VER='python3.6'
+
 WORKDIR /virtualenv
-COPY ./lib/python3.6/site-packages/kapitan ./kapitan
+COPY ./lib/${PY_VER}/site-packages/kapitan ./kapitan
 RUN ./kapitan/inputs/helm/build.sh
