@@ -50,16 +50,21 @@ def _regular_setup(config, customer, cluster):
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
+    # Fetch components and config
+    try:
+        _fetch_global_config(config, inv)
+        _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
+        fetch_components(config)
+    except Exception as e:
+        raise click.ClickException(f"While cloning git repositories: {e}") from e
+
     target_name = update_target(config, customer, cluster)
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
 
-    # Fetch all Git repos
+    # Fetch catalog
     try:
-        _fetch_global_config(config, inv)
-        _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
-        fetch_components(config)
         catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
@@ -112,6 +117,7 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
+        update_target(config, customer, cluster)
 
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)

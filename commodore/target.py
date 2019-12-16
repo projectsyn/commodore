@@ -7,17 +7,21 @@ from .helpers import (
     yaml_dump
 )
 
+from pathlib import Path as P
+
 
 def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster)
 
 
-def _full_target(customer, cluster, apidata):
+def _full_target(customer, cluster, apidata, components):
     cloud_type = apidata['cloud_type']
     cloud_region = apidata['cloud_region']
     cluster_distro = apidata['cluster_distribution']
+    component_defaults = [f"defaults.{cn}" for cn in components if
+                          (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
     return {
-        'classes': [
+        'classes': component_defaults + [
             'global.common',
             f"global.{cluster_distro}",
             f"global.{cloud_type}",
@@ -48,7 +52,7 @@ def update_target(cfg, customer, cluster):
         raise click.ClickException(f"While fetching target: {e}") from e
 
     os.makedirs('inventory/targets', exist_ok=True)
-    yaml_dump(_full_target(customer, cluster, target),
+    yaml_dump(_full_target(customer, cluster, target, cfg.get_components().keys()),
               'inventory/targets/cluster.yml')
 
     return 'cluster'
