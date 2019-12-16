@@ -35,6 +35,7 @@ def create_component(config, name, lib, pp):
     targetfile = P('inventory', 'targets', 'cluster.yml')
     target = yaml_load(targetfile)
     target['classes'].append(f"components.{name}")
+    target['classes'].insert(0, f"defaults.{name}")
     yaml_dump(target, targetfile)
 
     click.secho(f"Component {name} successfully added 🎉", bold=True)
