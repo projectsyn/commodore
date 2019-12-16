@@ -33,6 +33,9 @@ def create_component_symlinks(component):
     if component_defaults_class.is_file():
         _relsymlink(P(target_directory) / 'class', 'defaults.yml',
                     P('inventory/classes/defaults'), destname=f"{component}.yml")
+    else:
+        click.secho('     > Old-style component detected. Please move ' +
+                    'component defaults to \'class/defaults.yml\'', fg='yellow')
     libdir = P(target_directory) / 'lib'
     if libdir.is_dir():
         for file in os.listdir(libdir):
