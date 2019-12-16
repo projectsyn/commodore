@@ -73,7 +73,7 @@
 
 ## Run Commodore in Docker
 
-1. Build the Docker image:
+1. Build the Docker image inside of the cloned Commodore repository:
 
 ```console
 docker build -t commodore .
@@ -94,7 +94,7 @@ docker run -it --rm \
     commodore
 ```
 
-1. Set up ssh-agent in the running Docker container:
+1. Set up ssh-agent in the running Docker container for the access to Git repositories:
 
 ```console
 tools/ssh
@@ -102,7 +102,7 @@ eval $(ssh-agent)
 ssh-add .identityfile
 ```
 
-1. Run Commodore:
+1. Run Commodore inside of the running Docker container:
 
 ```console
 pipenv run commodore
