@@ -29,6 +29,10 @@ def create_component_symlinks(component):
     target_directory = P('dependencies') / component
     _relsymlink(P(target_directory) / 'class', f"{component}.yml",
                 'inventory/classes/components')
+    component_defaults_class = P(target_directory) / 'class' / 'defaults.yml'
+    if component_defaults_class.is_file():
+        _relsymlink(P(target_directory) / 'class', 'defaults.yml',
+                    P('inventory/classes/defaults'), destname=f"{component}.yml")
     libdir = P(target_directory) / 'lib'
     if libdir.is_dir():
         for file in os.listdir(libdir):
@@ -77,6 +81,7 @@ def fetch_components(cfg):
     components = _discover_components(cfg, 'inventory')
     click.secho('Fetching components...', bold=True)
     os.makedirs('inventory/classes/components', exist_ok=True)
+    os.makedirs('inventory/classes/defaults', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     for c in components:
         click.echo(f" > {c}...")

@@ -11,6 +11,7 @@ def test_run_newcomponent_command():
     """
 
     os.makedirs(P('inventory', 'classes', 'components'))
+    os.makedirs(P('inventory', 'classes', 'defaults'))
     os.makedirs(P('dependencies', 'lib'))
     os.makedirs(P('inventory', 'targets'))
     with open(P('inventory', 'targets', 'cluster.yml'), 'w') as file:
@@ -26,3 +27,9 @@ def test_run_newcomponent_command():
                  P('lib', f"{component_name}.libjsonnet"),
                  P('postprocess', 'filters.yml'), ]:
         assert os.path.exists(P('dependencies', component_name, file))
+    for file in [P('inventory', 'classes', 'components',
+                   f"{component_name}.yml"),
+                 P('inventory', 'classes', 'defaults',
+                   f"{component_name}.yml"),
+                 P('dependencies', 'lib', f"{component_name}.libjsonnet")]:
+        assert file.is_symlink()

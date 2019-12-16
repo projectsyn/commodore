@@ -30,6 +30,22 @@ the whole `postprocess` folder in the component repository. Removing the
 folder will make Commodore skip the postprocessing step for the component
 completely.
 
+## The component defaults
+
+Each component can define default configuration values for the Kapitan
+inventory. Those default values should be configured in `class/defaults.yml`
+which is inserted into the Kapitan class hierarchy at the lowest priority.
+
+The component template creates a bare-bones `defaults.yml` which defines a
+parameter to configure the namespace into which the component should be
+deployed. For example for a component with the name `mycomponent`:
+
+```yaml
+parameters:
+  mycomponent:
+    namespace: syn-mycomponent
+```
+
 ## The component templates
 
 The component templates can be any templating language that Kapitan can
@@ -82,7 +98,6 @@ local deployment = kube.Deployment('test-nginx') {
   }
 }
 ```
-
 
 ### Validating inventory schemas
 
