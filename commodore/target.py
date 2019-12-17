@@ -15,7 +15,7 @@ def fetch_target(cfg, customer, cluster):
 
 
 def _full_target(customer, cluster, apidata, components):
-    cloud_type = apidata['cloud_type']
+    cloud_provider = apidata['cloud_type']
     cloud_region = apidata['cloud_region']
     cluster_distro = apidata['cluster_distribution']
     component_defaults = [f"defaults.{cn}" for cn in components if
@@ -24,7 +24,8 @@ def _full_target(customer, cluster, apidata, components):
         'classes': component_defaults + [
             'global.common',
             f"global.{cluster_distro}",
-            f"global.{cloud_type}",
+            f"global.{cloud_provider}",
+            f"global.{cloud_provider}.{cloud_region}",
             f"{customer}.{cluster}"
         ],
         'parameters': {
@@ -34,7 +35,7 @@ def _full_target(customer, cluster, apidata, components):
                 'dist': f"{cluster_distro}"
             },
             'cloud': {
-                'type': f"{cloud_type}",
+                'type': f"{cloud_provider}",
                 'region': f"{cloud_region}"
             },
             'customer': {
