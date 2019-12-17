@@ -1,4 +1,8 @@
-# Commodore: Build dynamic inventories and compile catalogs with Kapitan
+# Project Syn: Commodore
+
+Build dynamic inventories and compile catalogs with [Kapitan](https://kapitan.dev/).
+
+**Please note that this project is in it's early stages and under active development**.
 
 ## System Requirements
 
@@ -28,7 +32,7 @@
 
    Note: currently Commodore only supports fetching Git repositories via SSH
 
-1. Run commodore
+1. Run Commodore
 
    ```console
    pipenv run commodore
