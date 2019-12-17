@@ -2,6 +2,7 @@
 Tests for new-component command
 """
 import os
+import yaml
 from pathlib import Path as P
 
 
@@ -14,7 +15,8 @@ def test_run_newcomponent_command():
     os.makedirs(P('inventory', 'classes', 'defaults'))
     os.makedirs(P('dependencies', 'lib'))
     os.makedirs(P('inventory', 'targets'))
-    with open(P('inventory', 'targets', 'cluster.yml'), 'w') as file:
+    targetyml = P('inventory', 'targets', 'cluster.yml')
+    with open(targetyml, 'w') as file:
         file.write('''classes:
         - test''')
     component_name = 'test-component'
@@ -33,3 +35,7 @@ def test_run_newcomponent_command():
                    f"{component_name}.yml"),
                  P('dependencies', 'lib', f"{component_name}.libjsonnet")]:
         assert file.is_symlink()
+    with open(targetyml) as file:
+        target = yaml.safe_load(file)
+        assert target['classes'][0] == f"defaults.{component_name}"
+        assert target['classes'][-1] == f"components.{component_name}"
