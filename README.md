@@ -23,11 +23,11 @@ Build dynamic inventories and compile catalogs with [Kapitan](https://kapitan.de
 
    ```shell
    # URL of SYNventory API
-   COMMODORE_API_URL="https://synventory.syn.vshn.net/"
+   COMMODORE_API_URL="https://lieutenant-api.example.com/"
    # Base URL (local or remote) for global Git repositories
-   COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
+   COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/"
    # Base URL (local or remote) for customer Git repositories
-   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/"
+   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/"
    ```
 
    Note: currently Commodore only supports fetching Git repositories via SSH
@@ -87,9 +87,9 @@ docker build -t commodore .
 
 ```console
 docker run -it --rm \
-    -e COMMODORE_API_URL="https://synventory.syn.vshn.net/" \
-    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/" \
-    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/" \
+    -e COMMODORE_API_URL="https://lieutenant-api.example.com/" \
+    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/" \
+    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/" \
     -e SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \
     -v $(pwd)/catalog:/app/catalog/ \
     -v $(pwd)/dependencies:/app/dependencies/ \
