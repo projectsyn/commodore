@@ -1,8 +1,25 @@
-# Commodore: Build dynamic inventories and compile catalogs with Kapitan
+# Project Syn: Commodore
+
+**Please note that this project is in its early stages and under active development**.
+
+Commodore provides opinionated tenant-aware management of
+[Kapitan](https://kapitan.dev/) inventories and templates. Commodore uses
+Kapitan for the heavy lifting of rendering templates and resolving a
+hierachical configuration structure.
+
+Commodore introduces the concept of a component, which is a bundle of Kapitan
+templates and associated Kapitan classes which describe how to render the
+templates. Commodore fetches any components that are required for a given
+configuration before running Kapitan, and sets up symlinks so Kapitan can find
+the component classes.
+
+Commodore also supports additional processing on the output of Kapitan, such
+as patching in the desired namespace for a Helm chart which has been rendered
+using `helm template`.
 
 ## System Requirements
 
-* Python 3.6 (important because of Pipenv)
+* Python 3.6+
 * [Pipenv](https://github.com/pypa/pipenv)
 * Docker
 
@@ -10,25 +27,54 @@
 
 1. Install requirements
 
-   ```console
-   pipenv install --dev
-   pipenv run build_kapitan_helm_binding
-   ```
+   Install pipenv according to the upstream
+   [documentation](https://github.com/pypa/pipenv#installation).
+
+   Create the Commdore pip environment:
+
+    ```console
+    pipenv install --dev
+    ```
+
+    Build the Kapitan helm binding:
+    * Linux:
+
+       ```console
+       pipenv run build_kapitan_helm_binding
+       ```
+
+    * OS X:
+
+      Note: At the moment you'll need a working Go compiler to build the Kapitan Helm
+      bindings on OS X.
+
+      ```console
+      pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
+      ```
 
 1. Setup a `.env` file to configure Commodore (or provide command line flags):
 
    ```shell
    # URL of SYNventory API
-   COMMODORE_API_URL="https://synventory.syn.vshn.net/"
-   # Base URL (local or remote) for global Git repositories
-   COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/"
-   # Base URL (local or remote) for customer Git repositories
-   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/"
+   COMMODORE_API_URL="https://lieutenant-api.example.com/"
+   # Base URL for global Git repositories
+   COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/"
+   # Base URL for customer Git repositories
+   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/"
    ```
 
-   Note: currently Commodore only supports fetching Git repositories via SSH
+   For Commodore to work, you need to run an instance of the
+   [Lieutenant API](https://github.com/projectsyn/lieutenant-api) somewhere
+   (locally is fine too).
 
-1. Run commodore
+   Commodore component repositories must exist in
+   `${COMMODORE_GLOBAL_GIT_BASE}/commodore_components/` with the repository
+   named identically to the component name.
+
+   Note: Commodore currently only supports fetching remote Git repositories
+   via SSH.
+
+1. Run Commodore
 
    ```console
    pipenv run commodore
@@ -83,9 +129,9 @@ docker build -t commodore .
 
 ```console
 docker run -it --rm \
-    -e COMMODORE_API_URL="https://synventory.syn.vshn.net/" \
-    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@git.vshn.net/syn/" \
-    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.vshn.net/syn/customers/" \
+    -e COMMODORE_API_URL="https://lieutenant-api.example.com/" \
+    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/" \
+    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/" \
     -e SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \
     -v $(pwd)/catalog:/app/catalog/ \
     -v $(pwd)/dependencies:/app/dependencies/ \
