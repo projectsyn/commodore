@@ -1,0 +1,5 @@
+= Commodore
+
+image::syn.png[]
+
+This is the documentation of the Commodore project.

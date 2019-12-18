@@ -1,36 +1,38 @@
-# Writing a Commodore Component
+= Writing a Commodore Component
 
 Commodore components are bundles which contain templates and a component
-class describing a component (e.g. a fully-configured Crossplane stack) for
+class describing a component (for example, a fully-configured Crossplane stack) for
 consumption by Kapitan. Additionally a Commodore component can contain
 postprocessing filters, which are arbitrary Jsonnet scripts that are executed
 by Commodore after Kapitan has compiled the component.
 
-## Quickstart
+== Quickstart
 
 To kickstart developing a component, Commodore provides the command
 `new-component`. Prepare your working directory by fetching the Commodore
 environment for some cluster by running
 
-```shell
+[source,bash]
+--
 pipenv run commodore compile <customer> <cluster>
-```
+--
 
 Then you can bootstrap the repository for your new component by running
 
-```shell
+[source,bash]
+--
 pipenv run commodore new-component <component-name>
-```
+--
 
 Now, you can start developing your component by writing Jsonnet in
 `component/main.jsonnet`.
 
-If you do not require any postprocessing of the Kapitan output, you can delete
+If you don't require any postprocessing of the Kapitan output, you can delete
 the whole `postprocess` folder in the component repository. Removing the
 folder will make Commodore skip the postprocessing step for the component
 completely.
 
-## The component defaults
+== The component defaults
 
 Each component can define default configuration values for the Kapitan
 inventory. Those default values should be configured in `class/defaults.yml`
@@ -40,13 +42,14 @@ The component template creates a bare-bones `defaults.yml` which defines a
 parameter to configure the namespace into which the component should be
 deployed. For example for a component with the name `mycomponent`:
 
-```yaml
+[source,yaml]
+--
 parameters:
   mycomponent:
     namespace: syn-mycomponent
-```
+--
 
-## The component templates
+== The component templates
 
 The component templates can be any templating language that Kapitan can
 handle. Currently Commodore supports Jsonnet, Jinja2, Kadet (alpha) and Helm
@@ -59,17 +62,19 @@ repository, as long as they're correctly referenced by the component class.
 From a template, the [Kapitan Inventory](https://kapitan.dev/inventory/) --
 which is managed by Commodore -- can be accessed with
 
-```jsonnet
+[source,jsonnet]
+--
 local kap = import "lib/kapitan.libjsonnet";
 local inv = kap.inventory();
-```
+--
 
 Any variables which are configured in any class in the inventory under
 `parameters` can then be retrieved via
 
-```jsonnet
+[source,jsonnet]
+--
 inv.parameters.section.subsection.value
-```
+--
 
 Commodore ensures that Bitnami Labs's
 [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet)
@@ -80,7 +85,8 @@ Kubernetes objects.
 As an illustration, below is an example `nginx` deployment which is written
 using `kube-libsonnet`.
 
-```jsonnet
+[source,jsonnet]
+--
 local kube = import 'lib/kube.libjsonnet';
 
 local deployment = kube.Deployment('test-nginx') {
@@ -97,9 +103,9 @@ local deployment = kube.Deployment('test-nginx') {
     }
   }
 }
-```
+--
 
-### Validating inventory schemas
+=== Validating inventory schemas
 
 Kapitan includes [JSON Schema](https://json-schema.org/), which can be used to
 validate inventory section structures against schemas. To write schemas,
@@ -107,7 +113,8 @@ please refer to ["Understanding JSON Schema"](https://json-schema.org/understand
 
 Given the schema
 
-```jsonnet
+[source,jsonnet]
+--
 local section_schema = {
   type: "object",
   properties: {
@@ -117,11 +124,12 @@ local section_schema = {
   },
   required: [ 'key1', 'key2' ]
 };
-```
+--
 
 and the example inventory
 
-```yaml
+[source,yaml]
+--
 parameters:
   section_a:
     key1: test
@@ -140,34 +148,37 @@ parameters:
   section_e:
     key1: test
     key3: prefix-2000
-```
+--
 
 we can validate the structure of each of `section_a`, `section_b` and
 `section_c` using the `jsonschema()` function:
 
-```jsonnet
+[source,jsonnet]
+--
 local validation = kap.jsonschema(inv.parameters.section_X, section_schema);
 assert validation.valid: validation.reason;
-```
+--
 
 Validation of `section_a` and `section_b` succeeds and produces no output.
 
 Validation of `section_c` fails with:
 
-```
+[source]
+--
 Jsonnet error: failed to compile schema_example.jsonnet:
- RUNTIME ERROR: '50G' is not of type 'integer'
+ RUNTIME ERROR: '50G' isn't of type 'integer'
 
 Failed validating 'type' in schema['properties']['key2']:
     {'type': 'integer'}
 
 On instance['key2']:
     '50G'
-```
+--
 
 Validation of `section_d` fails with:
 
-```
+[source]
+--
 Jsonnet error: failed to compile schema_example.jsonnet:
  RUNTIME ERROR: 'other-2000' does not match '^prefix-[0-9]+$'
 
@@ -176,11 +187,12 @@ Failed validating 'pattern' in schema['properties']['key3']:
 
 On instance['key3']:
     'other-2000'
-```
+--
 
 Validation of `section_e` fails with:
 
-```
+[source]
+--
 Jsonnet error: failed to compile schema_example.jsonnet:
  RUNTIME ERROR: 'key2' is a required property
 
@@ -194,12 +206,12 @@ Failed validating 'required' in schema:
 
 On instance:
     {'key1': 'test', 'key3': 'prefix-2000'}
-```
+--
 
-If `validation.valid` is not true, the `assert` will fail, which aborts the
+If `validation.valid` isn't true, the `assert` will fail, which aborts the
 compilation, and the reason for the validation failure will be displayed.
 
-## The component class
+== The component class
 
 Commodore looks for the component class in `class/<component-name>.yml`. Since
 Kapitan does only process files in the inventory which end with `.yml`, it's
@@ -211,13 +223,14 @@ compile a component.
 Commodore components will always be stored under
 `dependencies/<component-name>` in Kapitan's working directory. Commodore
 configures Kapitan to look for inputs in the working directory and in
-`dependencies`. To ensure that template file names cannot cause conflicts
+`dependencies`. To ensure that template file names can't cause conflicts
 between different components, the component class will always have to specify
 inputs in the form `<component-name>/path/to/the/input.jsonnet`, the component
 class will always have to specify inputs in the form
 `<component-name>/path/to/the/input.jsonnet`. For example:
 
-```yaml
+[source,yaml]
+--
 parameters:
   kapitan:
     compile:
@@ -226,25 +239,25 @@ parameters:
         output_type: yaml
         input_paths:
           - crossplane/component/main.jsonnet
-```
+--
 
 To avoid name collisions in the output, each component should specify the
 output path as the component's name for all compile instructions.
 
-### Rendering Helm charts with Kapitan
+=== Rendering Helm charts with Kapitan
 
 See [Kapitan's documentation](https://kapitan.dev/compile/#helm).
 
-It is strongly suggested that each component downloads helm charts into
+It's strongly suggested that each component downloads helm charts into
 `dependencies/<component-name>` to avoid weird interactions if multiple
 components build upon the same helm chart.
 
-## Postprocessing filters
+== Postprocessing filters
 
 Postprocessing filters are defined in `postprocess/filters.yml`, which is
 inspired by the Kapitan compile instructions. Commodore supports two different
 filter types, `jsonnet` and `builtin`. Filters in other templating languages
-are not supported at the moment.
+aren't supported at the moment.
 
 Filters of type `jsonnet` can be arbitrary Jsonnet. The format of the Jsonnet
 is inspired by Kapitan and the postprocessor expects that each filter outputs
@@ -262,7 +275,8 @@ use Kapitan-style inventory references.
 
 A sample `postprocess/filters.yml` might look like
 
-```yaml
+[source,yaml]
+--
 filters:
   # The builtin helm_namespace filter takes a filter argument `namespace` and an optional argument `create_namespace` to create the namespace object.
   - path: crossplane/01_helmchart/crossplane/templates
@@ -276,9 +290,9 @@ filters:
   - output_path: crossplane/01_helmchart/crossplane/templates
     type: jsonnet
     filter add_monitoring_annotations_to_deployments.jsonnet
-```
+--
 
-### Available built-in filters
+=== Available built-in filters
 
 Builtin filters expect the argument `path` to indicate on which path in the
 compiled Kapitan output they operate. This differs from custom filters which
@@ -288,15 +302,16 @@ have a parameter `output_path` indicating where to write the filter output.
   `.metadata.namespace` into all objects found in files that are stored in
   `output_path`.
 
-### Writing a custom postprocessing filter
+=== Writing a custom postprocessing filter
 
 Commodore provides a `commodore.libjsonnet` Jsonnet library which can be used
 by Jsonnet filters to access the Kapitan inventory and to load YAML files:
 
-```jsonnet
+[source,jsonnet]
+--
 local commodore = import 'lib/commodore.libjsonnet';
 local inv = commodore.inventory();
-```
+--
 
 The `inventory` function returns an object that behaves identically to the
 object returned from `kapitan.libjsonnet`'s `inventory` function.
@@ -308,16 +323,18 @@ belongs and the name of the Kapitan compilation target respectively.
 Commodore also provides `yaml_load` as a native callback to Jsonnet. This
 allows filters to read in YAML files:
 
-```jsonnet
+[source,jsonnet]
+--
 local object = commodore.yaml_load('/path/to/input.yaml');
-```
+--
 
 The value of each key of the Jsonnet output object is dumped as YAML to
 `compiled/target/<output_path>/<key>.yaml`. Filter authors can decide
 themselves whether to write filters that overwrite their inputs, or not.
 
-## Tips and hints
-### Converting existing YAML manifests
+== Tips and hints
+
+=== Converting existing YAML manifests
 When writing components you usually already have working kubernetes yaml
 manifests. Using a YAML to JSON function of your editor (VS Code) greatly
 helps to speed up this process.
@@ -328,22 +345,25 @@ when using [kube-libsonnet](https://github.com/bitnami-labs/kube-libsonnet).
 A good workflow could be:
 1. copy paste your yaml snippet into a `kube.<object>` block
 2. mark the the yaml snippet and convert to JSON using your editors plugin
-3. remove everything that is done by kube-libsonnet
+3. remove everything that's done by kube-libsonnet
 4. change remaining keys from `keyname:` to `keyname+:` for merging
 
-#### Example
+==== Example
 Existing YAML:
-```yaml
+[source,yaml]
+--
 apiVersion: v1
 kind: Namespace
 metadata:
   name: test
   labels:
     a-label: test
+--
 
-```
 How it should look in jsonnet:
-```jsonnet
+
+[source,jsonnet]
+--
 {
   '00_namespace': kube.Namespace('test') {
     metadata+: {
@@ -353,4 +373,4 @@ How it should look in jsonnet:
     }
   },
 }
-```
+--

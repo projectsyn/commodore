@@ -1,0 +1,3 @@
+* xref:index.adoc[Home]
+* xref:local-mode.adoc[Local Mode]
+* xref:writing-a-component.adoc[Writing a Component]
