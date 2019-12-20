@@ -58,7 +58,7 @@ def _regular_setup(config, customer, cluster):
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    target_name = update_target(config, customer, cluster, inv['catalog_repo'])
+    target_name = update_target(config, customer, cluster, inv['catalog_repo']['url'])
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
