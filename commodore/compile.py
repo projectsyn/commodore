@@ -118,7 +118,7 @@ def compile(config, customer, cluster):
     if versions and not config.local:
         set_component_versions(config, versions)
         update_target(config, customer, cluster,
-                list(catalog_repo.remote('origin').urls)[0])
+                      list(catalog_repo.remote('origin').urls)[0])
 
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)
