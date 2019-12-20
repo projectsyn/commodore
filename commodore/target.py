@@ -14,7 +14,7 @@ def fetch_target(cfg, customer, cluster):
     return api_request(cfg.api_url, 'targets', customer, cluster)
 
 
-def _full_target(customer, cluster, apidata, components):
+def _full_target(customer, cluster, apidata, components, catalog):
     cloud_provider = apidata['cloud_type']
     cloud_region = apidata['cloud_region']
     cluster_distro = apidata['cluster_distribution']
@@ -36,7 +36,8 @@ def _full_target(customer, cluster, apidata, components):
             },
             'cloud': {
                 'type': f"{cloud_provider}",
-                'region': f"{cloud_region}"
+                'region': f"{cloud_region}",
+                'catalog_repo': f"{catalog}"
             },
             'customer': {
                 'name': f"{customer}"
@@ -45,7 +46,7 @@ def _full_target(customer, cluster, apidata, components):
     }
 
 
-def update_target(cfg, customer, cluster):
+def update_target(cfg, customer, cluster, catalog):
     click.secho('Updating Kapitan target...', bold=True)
     try:
         target = fetch_target(cfg, customer, cluster)
@@ -53,7 +54,8 @@ def update_target(cfg, customer, cluster):
         raise click.ClickException(f"While fetching target: {e}") from e
 
     os.makedirs('inventory/targets', exist_ok=True)
-    yaml_dump(_full_target(customer, cluster, target, cfg.get_components().keys()),
+    yaml_dump(_full_target(customer, cluster, target,
+        cfg.get_components().keys(), catalog),
               'inventory/targets/cluster.yml')
 
     return 'cluster'

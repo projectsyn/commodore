@@ -58,7 +58,7 @@ def _regular_setup(config, customer, cluster):
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    target_name = update_target(config, customer, cluster)
+    target_name = update_target(config, customer, cluster, inv['catalog_repo'])
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
@@ -117,7 +117,8 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
-        update_target(config, customer, cluster)
+        update_target(config, customer, cluster,
+                list(catalog_repo.remote('origin').urls)[0])
 
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)
