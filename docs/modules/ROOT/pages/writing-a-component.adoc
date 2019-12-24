@@ -49,6 +49,36 @@ parameters:
     namespace: syn-mycomponent
 --
 
+=== The Kapitan class hierarchy
+
+// TODO: link to Platform Configuration Managment SDD once they're open-sourced
+The class hierarchy is documented in more detail in the Platform Configuration
+Management SDD, but the brief outline is that the Kapitan target includes a
+few well-defined classes based on the target cluster.
+
+The hierarchy is as follows (starting at the lowest precedence):
+
+* Component defaults, included as `defaults.<component-name>` for each component
+* Global defaults, `global.common`
+* Kubernetes distribution defaults, `global.<kubernetes-distribution>`. The
+  intention of the hierarchy is that component classes are included in each
+  distribution class separately to allow bootstrapping of new distributions in
+  a multi-distribution environment easier
+* Cloud provider defaults, `global.<cloud-provider>`
+* Cloud provider region defaults, `global.<cloud-provider>.<region>`
+* Cluster configuration, `<customer>.<cluster>`. The cluster configuration is
+  managed in the customer's configuration repository. The customer repository
+  can have any structure, the only requirement is that it contains a Kapitan
+  class for each of the customer's clusters.
+
+The intention for having the component defaults and class split into two
+Kapitan classes is that components can be included at any point in the
+hierarchy, without having their defaults overwrite defaults defined higher up
+in the configuration hierarchy. F.e. without the split, a component included
+for a particular cloud provider would overwrite configuration values specified
+in `global.common` or `global.<kubernetes-distribution>` for which the
+component provides defaults.
+
 == The component templates
 
 The component templates can be any templating language that Kapitan can
