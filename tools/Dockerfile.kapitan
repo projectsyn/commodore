@@ -1,0 +1,9 @@
+# Pushed to docker.io/vshn/kapitan:v0.26.0
+
+FROM docker.io/alpine:3.11
+
+ENV KAPITAN_VERSION=v0.26.0
+
+RUN apk add --no-cache curl \
+ && curl -Lo /usr/local/bin/kapitan https://github.com/deepmind/kapitan/releases/download/${KAPITAN_VERSION}/kapitan-linux-amd64 \
+ && chmod +x /usr/local/bin/kapitan
