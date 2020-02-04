@@ -1,5 +1,5 @@
 site:
-  title: "DRAFT: Commodore Documentation"
+  title: "PREVIEW Commodore Documentation"
   url: http://localhost/
   start_page: commodore::index.adoc
 content:
@@ -10,7 +10,7 @@ content:
     edit_url: 'https://github.com/projectsyn/commodore/edit/master/{path}'
 ui:
   bundle:
-    url: https://github.com/vshn/antora-ui-default/releases/download/1.5/ui-bundle.zip
+    url: https://github.com/projectsyn/antora-ui-default/releases/download/1.0/ui-bundle.zip
     snapshot: false
 asciidoc:
   attributes:
