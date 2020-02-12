@@ -7,28 +7,27 @@ from .catalog import (
     fetch_customer_catalog,
     update_catalog
 )
+from .cluster import (
+    fetch_cluster,
+    reconstruct_api_response,
+    update_target,
+)
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
     set_component_versions
 )
 from .helpers import (
+    ApiError,
     clean,
-    api_request,
     kapitan_compile,
-    ApiError
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
-from .target import update_target
 
 
-def _fetch_cluster_spec(cfg, customer, cluster):
-    return api_request(cfg.api_url, 'inventory', customer, cluster)
-
-
-def _fetch_global_config(cfg, response):
-    config = response['global']['config']
+def _fetch_global_config(cfg, cluster):
+    config = cluster['base_config']
     click.secho(f"Updating global config...", bold=True)
     repo = git.clone_repository(
         f"{cfg.global_git_base}/{config}.git",
@@ -44,35 +43,39 @@ def _fetch_customer_config(cfg, repopath, customer):
     cfg.register_config('customer', repo)
 
 
-def _regular_setup(config, customer, cluster):
+def _regular_setup(config, customer, cluster_id):
     try:
-        inv = _fetch_cluster_spec(config, customer, cluster)
+        cluster = fetch_cluster(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
+    if cluster['tenant'] != customer:
+        raise click.ClickException(f"Cluster's tenant '{cluster['tenant']}' doesn't match specified customer '{customer}'")
 
     # Fetch components and config
     try:
-        _fetch_global_config(config, inv)
-        _fetch_customer_config(config, inv['cluster'].get('override', None), customer)
+        _fetch_global_config(config, cluster)
+        # TODO: reimplement customer config repo override with Lieutenant
+        _fetch_customer_config(config, None, customer)
         fetch_components(config)
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    target_name = update_target(config, customer, cluster, inv['catalog_repo']['url'])
+    target_name = update_target(config, cluster)
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
 
     # Fetch catalog
     try:
-        catalog_repo = fetch_customer_catalog(config, target_name, inv['catalog_repo'])
+        catalog_repo = fetch_customer_catalog(config, target_name,
+                                              cluster['gitRepo'])
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
-    return target_name, catalog_repo
+    return cluster, target_name, catalog_repo
 
 
-def _local_setup(config, customer, cluster):
+def _local_setup(config, customer, cluster_id):
     click.secho('Running in local mode', bold=True)
     click.echo(' > Will use existing inventory, dependencies, and catalog')
     # Currently, a target name other than "cluster" is not supported
@@ -81,6 +84,9 @@ def _local_setup(config, customer, cluster):
     if not target_yml.is_file():
         raise click.ClickException(f"Invalid target: {target_name}")
     click.echo(f" > Using target: {target_name}")
+
+    click.echo(f" > Reconstructing Cluster API data from target")
+    cluster = reconstruct_api_response(target_yml)
 
     click.secho('Registering config...', bold=True)
     config.register_config('global',
@@ -100,15 +106,15 @@ def _local_setup(config, customer, cluster):
     click.secho('Configuring catalog repo...', bold=True)
     catalog_repo = git.init_repository('catalog')
 
-    return target_name, catalog_repo
+    return cluster, target_name, catalog_repo
 
 
-def compile(config, customer, cluster):
+def compile(config, customer, cluster_id):
     if config.local:
-        target_name, catalog_repo = _local_setup(config, customer, cluster)
+        cluster, target_name, catalog_repo = _local_setup(config, customer, cluster_id)
     else:
         clean(config)
-        target_name, catalog_repo = _regular_setup(config, customer, cluster)
+        cluster, target_name, catalog_repo = _regular_setup(config, customer, cluster_id)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
@@ -117,8 +123,7 @@ def compile(config, customer, cluster):
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
         set_component_versions(config, versions)
-        update_target(config, customer, cluster,
-                      list(catalog_repo.remote('origin').urls)[0])
+        update_target(config, cluster)
 
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)

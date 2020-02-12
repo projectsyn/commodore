@@ -45,13 +45,12 @@ class ApiError(Exception):
         self.message = message
 
 
-def api_request(api_url, type, customer, cluster):
-    if type != 'inventory' and type != 'targets':
-        raise ApiError(f"Client error: Unknown API endpoint: {type}")
+def lieutenant_query(api_url, api_token, api_endpoint, api_id):
     try:
-        r = requests.get(url_normalize(f"{api_url}/{type}/{customer}/{cluster}"))
+        r = requests.get(url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
+                         headers={'Authorization': f"Bearer {api_token}"})
     except ConnectionError as e:
-        raise ApiError(f"Unable to connect to SYNventory at {api_url}") from e
+        raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
     try:
         resp = json.loads(r.text)
     except BaseException:
@@ -60,9 +59,9 @@ def api_request(api_url, type, customer, cluster):
         r.raise_for_status()
     except HTTPError as e:
         extra_msg = ''
-        if r.status_code == 404:
-            extra_msg = f": {resp['message']}"
-        raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
+        if r.status_code >= 400:
+            extra_msg = f": {resp['reason']}"
+            raise ApiError(f"API returned {r.status_code}. Reason: {extra_msg}") from e
     else:
         return resp
 

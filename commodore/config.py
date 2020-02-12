@@ -4,8 +4,9 @@ Component = namedtuple('Component', ['name', 'repo', 'version'])
 
 
 class Config(object):
-    def __init__(self, api_url, global_git, customer_git, verbose):
+    def __init__(self, api_url, api_token, global_git, customer_git, verbose):
         self.api_url = api_url
+        self.api_token = api_token
         self.global_git_base = global_git
         self.customer_git_base = customer_git
         self._components = {}

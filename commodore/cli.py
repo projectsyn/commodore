@@ -12,7 +12,8 @@ verbosity = click.option('-v', '--verbose', count=True,
 
 
 @click.group()
-@click.option('--api-url', metavar='URL', help='SYNventory API URL')
+@click.option('--api-url', metavar='URL', help='Lieutenant API URL')
+@click.option('--api-token', metavar='TOKEN', help='Lieutenant API token')
 @click.option('--global-git-base', metavar='URL',
               help='Base directory for global Git config repositories')
 @click.option('--customer-git-base', metavar='URL',
@@ -20,8 +21,8 @@ verbosity = click.option('-v', '--verbose', count=True,
 @verbosity
 @click.version_option('0.0.1', prog_name='commodore')
 @click.pass_context
-def commodore(ctx, api_url, global_git_base, customer_git_base, verbose):
-    ctx.obj = Config(api_url, global_git_base, customer_git_base, verbose)
+def commodore(ctx, api_url, api_token, global_git_base, customer_git_base, verbose):
+    ctx.obj = Config(api_url, api_token, global_git_base, customer_git_base, verbose)
 
 
 @commodore.command(short_help='Delete generated files')
