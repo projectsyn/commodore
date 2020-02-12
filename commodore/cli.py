@@ -5,6 +5,8 @@ from .helpers import clean as _clean
 from .compile import compile as _compile
 from .component_template import create_component
 
+from . import __version__
+
 pass_config = click.make_pass_decorator(Config)
 
 verbosity = click.option('-v', '--verbose', count=True,
@@ -19,7 +21,7 @@ verbosity = click.option('-v', '--verbose', count=True,
 @click.option('--customer-git-base', metavar='URL',
               help='Base directory for customer Git config repositories')
 @verbosity
-@click.version_option('0.0.1', prog_name='commodore')
+@click.version_option(__version__, prog_name='commodore')
 @click.pass_context
 # pylint: disable=too-many-arguments
 def commodore(ctx, api_url, api_token, global_git_base, customer_git_base, verbose):

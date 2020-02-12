@@ -46,6 +46,10 @@ RUN ssh-keyscan -t rsa git.vshn.net > /app/.known_hosts
 
 ENV GIT_SSH=/app/tools/ssh
 
+ARG BINARY_VERSION
+
+RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
+
 RUN chown 1001 /app
 USER 1001
 

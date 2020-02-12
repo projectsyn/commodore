@@ -37,3 +37,27 @@ $(web_dir)/index.html: playbook.yml $(pages)
 check:
 	$(vale_cmd)
 
+
+###
+### Section for Commodore linting and testing
+###
+
+include tox.mk
+
+###
+### Section for Commodore image build using GitHub actions
+###
+
+# Project parameters
+BINARY_NAME ?= commodore
+
+BINARY_VERSION = $(shell git describe --tags --always --dirty --match=v* || (echo "command failed $$?"; exit 1))
+VERSION ?= $(BINARY_VERSION)
+
+IMAGE_NAME ?= docker.io/vshn/$(BINARY_NAME):$(VERSION)
+
+.PHONY: docker
+
+docker:
+	docker build --build-arg BINARY_VERSION=$(BINARY_VERSION) -t $(IMAGE_NAME) .
+	@echo built image $(IMAGE_NAME)
