@@ -1,6 +1,7 @@
+from pathlib import Path as P
+
 import click
 from kapitan.resources import inventory_reclass
-from pathlib import Path as P
 
 from . import git
 from .catalog import (
@@ -70,8 +71,7 @@ def _regular_setup(config, cluster_id):
 
     # Fetch catalog
     try:
-        catalog_repo = fetch_customer_catalog(config, target_name,
-                                              cluster['gitRepo'])
+        catalog_repo = fetch_customer_catalog(cluster['gitRepo'])
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
 
@@ -90,6 +90,11 @@ def _local_setup(config, cluster_id):
 
     click.echo(f" > Reconstructing Cluster API data from target")
     cluster = reconstruct_api_response(target_yml)
+    if cluster['id'] != cluster_id:
+        error = f"[Local mode] Cluster ID mismatch: local state targets " + \
+                f"{cluster['id']}, compilation was requested for {cluster_id}"
+        raise click.ClickException(error)
+
     customer_id = cluster['tenant']
 
     click.secho('Registering config...', bold=True)
@@ -114,6 +119,7 @@ def _local_setup(config, cluster_id):
     return cluster, target_name, catalog_repo
 
 
+# pylint: disable=redefined-builtin
 def compile(config, cluster_id):
     if config.local:
         cluster, target_name, catalog_repo = _local_setup(config, cluster_id)
@@ -133,7 +139,7 @@ def compile(config, cluster_id):
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
-        fetch_jsonnet_libs(config, jsonnet_libs)
+        fetch_jsonnet_libs(jsonnet_libs)
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters

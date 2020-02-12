@@ -1,6 +1,6 @@
-import click
-
 from pathlib import Path as P
+
+import click
 
 from commodore.helpers import yaml_load
 

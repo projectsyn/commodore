@@ -21,6 +21,7 @@ verbosity = click.option('-v', '--verbose', count=True,
 @verbosity
 @click.version_option('0.0.1', prog_name='commodore')
 @click.pass_context
+# pylint: disable=too-many-arguments
 def commodore(ctx, api_url, api_token, global_git_base, customer_git_base, verbose):
     ctx.obj = Config(api_url, api_token, global_git_base, customer_git_base, verbose)
 
@@ -36,12 +37,13 @@ def clean(config, verbose):
 @commodore.command(short_help='Compile inventory and catalog')
 @click.argument('cluster')
 @click.option('--local', is_flag=True, default=False,
-              help='Run in local mode, Local mode does not try to connect to ' +
-                   'SYNventory or fetch/push Git repositories.')
+              help=('Run in local mode, Local mode does not try to connect to ' +
+                    'Lieutenant API or fetch/push Git repositories.'))
 @click.option('--push', is_flag=True, default=False,
               help='Push catalog to remote repository. Defaults to False')
 @verbosity
 @pass_config
+# pylint: disable=redefined-builtin
 def compile(config, cluster, local, push, verbose):
     config.update_verbosity(verbose)
     config.local = local

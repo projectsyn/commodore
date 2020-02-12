@@ -1,22 +1,23 @@
-import _jsonnet
-import click
 import json
 import os
 
 from pathlib import Path as P
+
+import _jsonnet
+import click
 
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 
 #  Returns content if worked, None if file not found, or throws an exception
 
 
-def _try_path(dir, rel):
+def _try_path(basedir, rel):
     if not rel:
         raise RuntimeError('Got invalid filename (empty string).')
     if rel[0] == '/':
         full_path = P(rel)
     else:
-        full_path = P(dir) / rel
+        full_path = P(basedir) / rel
     if full_path.is_dir():
         raise RuntimeError('Attempted to import a directory')
 
@@ -26,8 +27,8 @@ def _try_path(dir, rel):
         return full_path.name, f.read()
 
 
-def _import_callback_with_searchpath(search, dir, rel):
-    full_path, content = _try_path(dir, rel)
+def _import_callback_with_searchpath(search, basedir, rel):
+    full_path, content = _try_path(basedir, rel)
     if content:
         return full_path, content
     for p in search:
@@ -37,22 +38,23 @@ def _import_callback_with_searchpath(search, dir, rel):
     raise RuntimeError('File not found')
 
 
-def _import_cb(dir, rel):
+def _import_cb(basedir, rel):
     # Add current working dir to search path for Jsonnet import callback
     search_path = [P('.').resolve(), P('./dependencies').resolve()]
-    return _import_callback_with_searchpath(search_path, dir, rel)
+    return _import_callback_with_searchpath(search_path, basedir, rel)
 
 
-def _list_dir(dir, basename):
+def _list_dir(basedir, basename):
     """
-    Non-recursively list files in directory `dir`. If `basename` is set to
+    Non-recursively list files in directory `basedir`. If `basename` is set to
     True, only return the file name itself and not the full path.
     """
-    files = [x for x in P(dir).iterdir() if x.is_file()]
+    files = [x for x in P(basedir).iterdir() if x.is_file()]
+
     if basename:
         return [f.parts[-1] for f in files]
-    else:
-        return files
+
+    return files
 
 
 _native_callbacks = {
@@ -62,6 +64,7 @@ _native_callbacks = {
 }
 
 
+# pylint: disable=too-many-arguments
 def jsonnet_runner(inv, component, target, output_path, jsonnet_func,
                    jsonnet_input, **kwargs):
     def _inventory():
@@ -99,5 +102,6 @@ def run_jsonnet_filter(inv, component, target, filterdir, f):
         raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
     filterpath = filterdir / f['filter']
     output_path = f['output_path']
+    # pylint: disable=c-extension-no-member
     jsonnet_runner(inv, component, target, output_path,
                    _jsonnet.evaluate_file, filterpath)

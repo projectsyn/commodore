@@ -3,7 +3,8 @@ from collections import namedtuple
 Component = namedtuple('Component', ['name', 'repo', 'version'])
 
 
-class Config(object):
+class Config:
+    # pylint: disable=too-many-arguments
     def __init__(self, api_url, api_token, global_git, customer_git, verbose):
         self.api_url = api_url
         self.api_token = api_token

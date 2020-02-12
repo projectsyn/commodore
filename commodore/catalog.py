@@ -1,11 +1,12 @@
-import click
 from pathlib import Path as P
+
+import click
 
 from . import git
 from .helpers import rm_tree_contents
 
 
-def fetch_customer_catalog(cfg, target_name, repoinfo):
+def fetch_customer_catalog(repoinfo):
     click.secho('Updating customer catalog...', bold=True)
     return git.clone_repository(repoinfo['url'], 'catalog')
 
@@ -24,6 +25,7 @@ def _pretty_print_config_commit(name, repo):
 
 
 def _render_catalog_commit_msg(cfg):
+    # pylint: disable=import-outside-toplevel
     import datetime
     now = datetime.datetime.now().isoformat(timespec='milliseconds')
 
@@ -49,6 +51,7 @@ Compilation timestamp: {now}
 
 def update_catalog(cfg, target_name, repo):
     click.secho('Updating catalog repository...', bold=True)
+    # pylint: disable=import-outside-toplevel
     from distutils import dir_util
     import textwrap
     catalogdir = P(repo.working_tree_dir, 'manifests')

@@ -1,13 +1,14 @@
-import click
 import os
+
+from pathlib import Path as P
+
+import click
 
 from .helpers import (
     lieutenant_query,
     yaml_dump,
     yaml_load,
 )
-
-from pathlib import Path as P
 
 
 def fetch_cluster(cfg, clusterid):

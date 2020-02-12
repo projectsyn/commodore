@@ -1,7 +1,8 @@
+from pathlib import Path as P
+
 import click
 
 from cookiecutter.main import cookiecutter
-from pathlib import Path as P
 
 from . import git
 from .dependency_mgmt import create_component_symlinks
