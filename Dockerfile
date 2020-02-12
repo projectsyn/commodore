@@ -1,4 +1,4 @@
-FROM docker.io/python:3.6.9-slim-buster AS base
+FROM docker.io/python:3.8.1-slim-buster AS base
 
 FROM base AS builder
 
@@ -7,11 +7,12 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y make build-essential && apt-get clean
 RUN pip install pipenv
 
-ENV PIPENV_VENV_IN_PROJECT=1
+ENV PIPENV_VENV_IN_PROJECT=1 \
+    VIRTUALENV_SEEDER=pip
 
 COPY Pipfile Pipfile.lock ./
 
-RUN chown -R 1001 /app
+RUN chown 1001 /app
 USER 1001
 
 RUN pipenv install
@@ -21,7 +22,7 @@ FROM docker.io/golang:1.13-stretch AS helm_binding_builder
 RUN apt-get update && apt-get install -y python3-cffi && apt-get clean
 
 WORKDIR /virtualenv
-COPY --from=builder /app/.venv/lib/python3.6/site-packages/kapitan ./kapitan
+COPY --from=builder /app/.venv/lib/python3.8/site-packages/kapitan ./kapitan
 RUN ./kapitan/inputs/helm/build.sh
 
 FROM base
@@ -37,7 +38,7 @@ COPY --from=builder /app/.venv/ ./.venv/
 COPY --from=helm_binding_builder \
 	/virtualenv/kapitan/inputs/helm/libtemplate.so \
 	/virtualenv/kapitan/inputs/helm/helm_binding.py \
-	./.venv/lib/python3.6/site-packages/kapitan/inputs/helm/
+	./.venv/lib/python3.8/site-packages/kapitan/inputs/helm/
 
 COPY . ./
 
