@@ -34,7 +34,6 @@ def clean(config, verbose):
 
 
 @commodore.command(short_help='Compile inventory and catalog')
-@click.argument('customer')
 @click.argument('cluster')
 @click.option('--local', is_flag=True, default=False,
               help='Run in local mode, Local mode does not try to connect to ' +
@@ -43,11 +42,11 @@ def clean(config, verbose):
               help='Push catalog to remote repository. Defaults to False')
 @verbosity
 @pass_config
-def compile(config, customer, cluster, local, push, verbose):
+def compile(config, cluster, local, push, verbose):
     config.update_verbosity(verbose)
     config.local = local
     config.push = push
-    _compile(config, customer, cluster)
+    _compile(config, cluster)
 
 
 @commodore.command(short_help='Bootstrap new component')

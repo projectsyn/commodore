@@ -21,6 +21,7 @@ from .helpers import (
     ApiError,
     clean,
     kapitan_compile,
+    lieutenant_query,
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
@@ -35,27 +36,29 @@ def _fetch_global_config(cfg, cluster):
     cfg.register_config('global', repo)
 
 
-def _fetch_customer_config(cfg, repopath, customer):
+def _fetch_customer_config(cfg, customer_id):
+    customer = lieutenant_query(cfg.api_url, cfg.api_token, 'tenants', customer_id)
+    if customer['id'] != customer_id:
+        raise click.ClickException("Customer id mismatch")
+    repopath = customer.get('gitRepo', None)
     if repopath is None:
-        repopath = f"{cfg.customer_git_base}/{customer}.git"
+        repopath = f"{cfg.customer_git_base}/{customer_id}.git"
     click.secho('Updating customer config...', bold=True)
-    repo = git.clone_repository(repopath, P('inventory/classes') / customer)
+    repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
     cfg.register_config('customer', repo)
 
 
-def _regular_setup(config, customer, cluster_id):
+def _regular_setup(config, cluster_id):
     try:
         cluster = fetch_cluster(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
-    if cluster['tenant'] != customer:
-        raise click.ClickException(f"Cluster's tenant '{cluster['tenant']}' doesn't match specified customer '{customer}'")
+    customer_id = cluster['tenant']
 
     # Fetch components and config
     try:
         _fetch_global_config(config, cluster)
-        # TODO: reimplement customer config repo override with Lieutenant
-        _fetch_customer_config(config, None, customer)
+        _fetch_customer_config(config, customer_id)
         fetch_components(config)
     except Exception as e:
         raise click.ClickException(f"While cloning git repositories: {e}") from e
@@ -75,7 +78,7 @@ def _regular_setup(config, customer, cluster_id):
     return cluster, target_name, catalog_repo
 
 
-def _local_setup(config, customer, cluster_id):
+def _local_setup(config, cluster_id):
     click.secho('Running in local mode', bold=True)
     click.echo(' > Will use existing inventory, dependencies, and catalog')
     # Currently, a target name other than "cluster" is not supported
@@ -87,12 +90,14 @@ def _local_setup(config, customer, cluster_id):
 
     click.echo(f" > Reconstructing Cluster API data from target")
     cluster = reconstruct_api_response(target_yml)
+    customer_id = cluster['tenant']
 
     click.secho('Registering config...', bold=True)
     config.register_config('global',
                            git.init_repository('inventory/classes/global'))
     config.register_config('customer',
-                           git.init_repository(P('inventory/classes/') / customer))
+                           git.init_repository(P('inventory/classes/') /
+                                               customer_id))
 
     click.secho('Registering components...', bold=True)
     for c in P('dependencies').iterdir():
@@ -109,12 +114,12 @@ def _local_setup(config, customer, cluster_id):
     return cluster, target_name, catalog_repo
 
 
-def compile(config, customer, cluster_id):
+def compile(config, cluster_id):
     if config.local:
-        cluster, target_name, catalog_repo = _local_setup(config, customer, cluster_id)
+        cluster, target_name, catalog_repo = _local_setup(config, cluster_id)
     else:
         clean(config)
-        cluster, target_name, catalog_repo = _regular_setup(config, customer, cluster_id)
+        cluster, target_name, catalog_repo = _regular_setup(config, cluster_id)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
