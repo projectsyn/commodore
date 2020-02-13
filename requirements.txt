@@ -15,7 +15,7 @@ certifi==2019.11.28       # via requests
 cffi==1.13.2              # via cryptography, kapitan
 chardet==3.0.4            # via binaryornot, requests
 click==7.0
-cookiecutter==1.6.0
+cookiecutter==1.7.0
 cryptography==2.8         # via kapitan
 docker==4.1.0             # via kapitan
 docutils==0.15.2          # via botocore
