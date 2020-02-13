@@ -37,7 +37,7 @@ jsonschema==3.1.1         # via kapitan
 kapitan==0.25.4
 markupsafe==1.1.1         # via jinja2
 more-itertools==7.2.0     # via zipp
-pathspec==0.6.0           # via yamllint
+pathspec==0.7.0           # via yamllint
 poyo==0.5.0               # via cookiecutter
 pyasn1-modules==0.2.7     # via google-auth
 pyasn1==0.4.8             # via pyasn1-modules, rsa
