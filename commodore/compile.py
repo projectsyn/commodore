@@ -38,13 +38,15 @@ def _fetch_global_config(cfg, cluster):
 
 
 def _fetch_customer_config(cfg, customer_id):
+    click.secho('Updating customer config...', bold=True)
     customer = lieutenant_query(cfg.api_url, cfg.api_token, 'tenants', customer_id)
     if customer['id'] != customer_id:
         raise click.ClickException("Customer id mismatch")
-    repopath = customer.get('gitRepo', None)
+    repopath = customer.get('gitRepo', {}).get('url', None)
     if repopath is None:
         repopath = f"{cfg.customer_git_base}/{customer_id}.git"
-    click.secho('Updating customer config...', bold=True)
+        click.echo(" > API did not return a repository URL for customer " +
+                   f"'{customer_id}', using '{repopath}'")
     repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
     cfg.register_config('customer', repo)
 
