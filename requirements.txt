@@ -33,7 +33,7 @@ jinja2-time==0.2.0        # via cookiecutter
 jinja2==2.10.3            # via cookiecutter, jinja2-time, kapitan
 jmespath==0.9.4           # via boto3, botocore
 jsonnet==0.14.0           # via kapitan
-jsonschema==3.1.1         # via kapitan
+jsonschema==3.2.0         # via kapitan
 kapitan==0.25.4
 markupsafe==1.1.1         # via jinja2
 more-itertools==7.2.0     # via zipp
