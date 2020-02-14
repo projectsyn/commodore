@@ -18,7 +18,7 @@ click==7.0
 cookiecutter==1.7.0
 cryptography==2.8         # via kapitan
 docker==4.1.0             # via kapitan
-docutils==0.15.2          # via botocore
+docutils==0.16          # via botocore
 future==0.18.2            # via cookiecutter
 gitdb2==2.0.6             # via gitpython
 gitpython==3.0.5
