@@ -2,6 +2,14 @@
 
 **Please note that this project is in its early stages and under active development**.
 
+See [CHANGELOG.md](/CHANGELOG.md) for changelogs of each release version of
+Commodore.
+
+See [DockerHub](https://hub.docker.com/r/projectsyn/commodore) for pre-built
+Docker images of Commodore.
+
+## Overview
+
 Commodore provides opinionated tenant-aware management of
 [Kapitan](https://kapitan.dev/) inventories and templates. Commodore uses
 Kapitan for the heavy lifting of rendering templates and resolving a
@@ -55,8 +63,10 @@ using `helm template`.
 1. Setup a `.env` file to configure Commodore (or provide command line flags):
 
    ```shell
-   # URL of SYNventory API
+   # URL of Lieutenant API
    COMMODORE_API_URL="https://lieutenant-api.example.com/"
+   # Lieutenant API token
+   COMMODORE_API_TOKEN="..."
    # Base URL for global Git repositories
    COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/"
    # Base URL for customer Git repositories
@@ -130,6 +140,7 @@ docker build -t commodore .
 ```console
 docker run -it --rm \
     -e COMMODORE_API_URL="https://lieutenant-api.example.com/" \
+    -e COMMODORE_API_TOKEN="..." \
     -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/" \
     -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/" \
     -e SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \

@@ -1,9 +1,10 @@
-import _jsonnet
-import click
 import json
 import re
 
 from pathlib import Path as P
+
+import _jsonnet
+import click
 
 from .jsonnet import jsonnet_runner
 
@@ -17,6 +18,7 @@ def _builtin_filter_helm_namespace(inv, component, target, path, **kwargs):
     exclude_objects = '|'.join([json.dumps(e) for e in exclude_objects])
     output_dir = P('compiled', target, path)
 
+    # pylint: disable=c-extension-no-member
     jsonnet_runner(inv, component, target, path,
                    _jsonnet.evaluate_file, P('filters', 'helm_namespace.jsonnet'),
                    namespace=kwargs['namespace'],

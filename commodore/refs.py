@@ -1,13 +1,14 @@
-import click
 import re
 import os
 from base64 import b64encode
 from pathlib import Path as P
 
+import click
+
 from .helpers import rm_tree_contents, yaml_dump
 
 
-class SecretRef(object):
+class SecretRef:
     """
     Helper class for finding Kapitan secret ref strings and producing Kapitan
     secret ref files
@@ -28,17 +29,17 @@ class SecretRef(object):
         return f"{self.type}:{self.ref}"
 
     @classmethod
-    def from_value(klass, key, value):
+    def from_value(cls, key, value):
         """
         Create SecretRef object from string `value`, if the string contains a
         Kapitan secret reference. If no secret reference is contained in
         `value` this method returns None.
         """
-        m = klass._SECRET_REF.search(value)
+        m = cls._SECRET_REF.search(value)
         if m:
             return SecretRef(key, m.group(1))
-        else:
-            return None
+
+        return None
 
     def _mangle_ref(self):
         """
@@ -51,8 +52,8 @@ class SecretRef(object):
         if self.type == 'vaultkv':
             secret, key = self.ref.rsplit('/', 1)
             return b64encode(f"{secret}:{key}".encode()).decode('utf-8')
-        else:
-            raise NotImplementedError(f"Ref type: {self.type}")
+
+        raise NotImplementedError(f"Ref type: {self.type}")
 
     def create_kapitan_ref(self, refdir, ref_params, debug=False):
         """
@@ -82,7 +83,7 @@ class SecretRef(object):
         self.keys.append(key)
 
 
-class RefBuilder(object):
+class RefBuilder:
     """
     Helper class to wrap recursive search for Kapitan secret references
     """

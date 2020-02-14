@@ -1,7 +1,8 @@
-import click
 import errno
 import os
 from pathlib import Path as P
+
+import click
 
 from . import git
 from .helpers import yaml_load
@@ -115,7 +116,7 @@ def set_component_versions(cfg, versions):
         _set_component_version(cfg, cn, c['version'])
 
 
-def fetch_jsonnet_libs(cfg, libs):
+def fetch_jsonnet_libs(libs):
     """
     Download all libraries specified in list `libs`.
     Each entry in `libs` is assumed to be a dict with keys

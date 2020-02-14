@@ -1,6 +1,7 @@
-import click
 import difflib
 import hashlib
+
+import click
 
 from git import Repo, Actor
 from git.exc import GitCommandError, BadName
@@ -8,10 +9,12 @@ from git.exc import GitCommandError, BadName
 
 class RefError(ValueError):
     def __init__(self, message):
+        super().__init__()
         self.message = message
 
 
 def _normalize_git_ssh(url):
+    # pylint: disable=import-outside-toplevel
     from url_normalize.url_normalize import normalize_userinfo, normalize_host, \
         normalize_path, provide_url_scheme
     from url_normalize.tools import deconstruct_url, reconstruct_url
@@ -39,15 +42,15 @@ def checkout_version(repo, ref):
     checkout that commit.  Always checkout as detached HEAD as that massively
     simplifies the implementation.
     """
-    commit = None
+    rev = None
     try:
-        commit = repo.commit(f"{ref}")
+        rev = repo.commit(f"{ref}")
     except BadName:
         pass
     try:
-        if not commit:
-            commit = repo.commit(f"remotes/origin/{ref}")
-        repo.head.reference = commit
+        if not rev:
+            rev = repo.commit(f"remotes/origin/{ref}")
+        repo.head.reference = rev
         repo.head.reset(index=True, working_tree=True)
     except GitCommandError as e:
         raise RefError(f"Failed to checkout revision '{ref}'") from e
@@ -166,4 +169,4 @@ def commit(repo, commit_message):
 
 
 def add_remote(repo, name, url):
-    return repo.create_remote('origin', _normalize_git_ssh(url))
+    return repo.create_remote(name, _normalize_git_ssh(url))
