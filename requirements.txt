@@ -21,7 +21,7 @@ docker==4.1.0             # via kapitan
 docutils==0.15.2          # via botocore
 future==0.18.2            # via cookiecutter
 gitdb2==2.0.6             # via gitpython
-gitpython==3.0.5
+gitpython==3.0.7
 google-api-python-client==1.7.11  # via kapitan
 google-auth-httplib2==0.0.3  # via google-api-python-client
 google-auth==1.11.1       # via google-api-python-client, google-auth-httplib2
