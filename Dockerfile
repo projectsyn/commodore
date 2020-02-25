@@ -4,20 +4,27 @@ FROM base AS builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y make build-essential && apt-get clean
-RUN pip install pipenv
+RUN apt-get update && apt-get install -y make build-essential git && apt-get clean
+RUN pip install poetry
 
-ENV PIPENV_VENV_IN_PROJECT=1 \
-    VIRTUALENV_SEEDER=pip
-
-COPY Pipfile Pipfile.lock ./
-
-RUN chown 1001 /app
+RUN mkdir -p /app/.config && chown -R 1001 /app
 USER 1001
+ENV HOME=/app
 
-RUN pipenv install
+COPY pyproject.toml poetry.lock ./
 
-FROM docker.io/golang:1.13-stretch AS helm_binding_builder
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --no-dev
+
+COPY . ./
+
+ARG BINARY_VERSION=v0.0.0+dirty
+RUN sed -ie "s/^__version__ = 'v0.0.0+dirty'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
+
+ARG PYPACKAGE_VERSION=v0.0.0+dirty
+RUN poetry version "$PYPACKAGE_VERSION" && poetry build
+
+FROM docker.io/golang:1.13-buster AS helm_binding_builder
 
 RUN apt-get update && apt-get install -y python3-cffi && apt-get clean
 
@@ -28,29 +35,24 @@ RUN ./kapitan/inputs/helm/build.sh
 FROM base
 
 WORKDIR /app
-RUN apt-get update && apt-get install -y git libnss-wrapper && apt-get clean
+RUN apt-get update && apt-get install -y git libnss-wrapper make build-essential && apt-get clean
 
-RUN pip install pipenv
+COPY --from=builder /app/dist/commodore-*-py3-none-any.whl ./
 
-ENV PIPENV_VENV_IN_PROJECT=1
+RUN pip install ./commodore-*-py3-none-any.whl
 
-COPY --from=builder /app/.venv/ ./.venv/
+RUN apt-get purge --purge -y make build-essential && apt-get autoremove -y && rm /app/*.whl
+
 COPY --from=helm_binding_builder \
 	/virtualenv/kapitan/inputs/helm/libtemplate.so \
 	/virtualenv/kapitan/inputs/helm/helm_binding.py \
-	./.venv/lib/python3.8/site-packages/kapitan/inputs/helm/
-
-COPY . ./
+	/usr/local/lib/lib/python3.8/site-packages/kapitan/inputs/helm/
 
 RUN ssh-keyscan -t rsa git.vshn.net > /app/.known_hosts
 
 ENV GIT_SSH=/app/tools/ssh
 
-ARG BINARY_VERSION
-
-RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
-
 RUN chown 1001 /app
 USER 1001
 
-ENTRYPOINT ["pipenv", "run", "commodore"]
+ENTRYPOINT ["/usr/local/bin/commodore"]
