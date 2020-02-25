@@ -9,4 +9,4 @@ __url__ = 'https://git.vshn.net/syn/commodore/'
 # NOTE: This variable is set during the Docker image build process and *MUST*
 # be set somehow during the package build process if python package builds are
 # setup in the future
-__version__ = 'Unreleased'
+__version__ = 'v0.0.0+dirty'

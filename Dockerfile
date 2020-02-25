@@ -2,28 +2,27 @@ FROM docker.io/python:3.8.3-slim-buster AS base
 
 WORKDIR /app
 
-ENV HOME=/app \
-    PIPENV_VENV_IN_PROJECT=1
+RUN apt-get update && apt-get install -y make build-essential git && apt-get clean
+RUN pip install poetry
 
-RUN pip install pipenv
-
-FROM base AS builder
-
-RUN apt-get update && apt-get install -y \
-      build-essential \
-      make \
- && rm -rf /var/lib/apt/lists/*
-
-ENV VIRTUALENV_SEEDER=pip
-
-COPY Pipfile Pipfile.lock ./
-
-RUN chown 1001 /app
+RUN mkdir -p /app/.config && chown -R 1001 /app
 USER 1001
+ENV HOME=/app
 
-RUN pipenv install
+COPY pyproject.toml poetry.lock ./
 
-FROM docker.io/golang:1.14-stretch AS helm_binding_builder
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --no-dev
+
+COPY . ./
+
+ARG BINARY_VERSION=v0.0.0+dirty
+RUN sed -ie "s/^__version__ = 'v0.0.0+dirty'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
+
+ARG PYPACKAGE_VERSION=v0.0.0+dirty
+RUN poetry version "$PYPACKAGE_VERSION" && poetry build
+
+FROM docker.io/golang:1.13-buster AS helm_binding_builder
 
 RUN apt-get update && apt-get install -y \
       python3-cffi \
@@ -35,26 +34,25 @@ RUN ./kapitan/inputs/helm/build.sh
 
 FROM base
 
-RUN apt-get update && apt-get install -y \
-      git \
-      libnss-wrapper \
- && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+RUN apt-get update && apt-get install -y git libnss-wrapper make build-essential && apt-get clean
 
-COPY --from=builder /app/.venv/ ./.venv/
+COPY --from=builder /app/dist/commodore-*-py3-none-any.whl ./
+
+RUN pip install ./commodore-*-py3-none-any.whl
+
+RUN apt-get purge --purge -y make build-essential && apt-get autoremove -y && rm /app/*.whl
+
 COPY --from=helm_binding_builder \
 	/virtualenv/kapitan/inputs/helm/libtemplate.so \
 	/virtualenv/kapitan/inputs/helm/helm_binding.py \
-	./.venv/lib/python3.8/site-packages/kapitan/inputs/helm/
+	/usr/local/lib/lib/python3.8/site-packages/kapitan/inputs/helm/
 
-COPY . ./
+RUN ssh-keyscan -t rsa git.vshn.net > /app/.known_hosts
 
-ARG BINARY_VERSION=unreleased
+ENV GIT_SSH=/app/tools/ssh
 
-RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
-
-RUN chgrp 0 /app/ \
- && chmod g+rwX /app/
-
+RUN chown 1001 /app
 USER 1001
 
-ENTRYPOINT [ "/app/tools/entrypoint.sh", "pipenv", "run", "commodore" ]
+ENTRYPOINT ["/usr/local/bin/commodore"]
