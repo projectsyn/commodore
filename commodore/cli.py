@@ -67,4 +67,10 @@ def new_component(config, name, verbose, lib, pp):
 
 
 def main():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ModuleNotFoundError as e:
+        pass
+
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')
