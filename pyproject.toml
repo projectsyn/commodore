@@ -17,6 +17,7 @@ url-normalize = "^1.4.1"
 [tool.poetry.dev-dependencies]
 tox = "*"
 autopep8 = "*"
+python-dotenv = "*"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
