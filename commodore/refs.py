@@ -150,12 +150,7 @@ class RefBuilder:
             self._ref_params = {
                 'vaultkv': {
                     'key': 'vault_params',
-                    'values': {
-                        'auth': kapitan_params['auth'],
-                        'engine': kapitan_params['engine'],
-                        'mount': kapitan_params['mount'],
-                        'VAULT_ADDR': kapitan_params['VAULT_ADDR'],
-                    }
+                    'values': kapitan_params
                 }
             }
         return self._ref_params
