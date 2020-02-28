@@ -49,18 +49,23 @@ Compilation timestamp: {now}
 """
 
 
-def update_catalog(cfg, target_name, repo):
-    click.secho('Updating catalog repository...', bold=True)
-    # pylint: disable=import-outside-toplevel
-    from distutils import dir_util
-    import textwrap
+def clean_catalog(repo):
     catalogdir = P(repo.working_tree_dir, 'manifests')
+    click.secho('Cleaning catalog repository...', bold=True)
     # delete everything in catalog
     if catalogdir.is_dir():
         rm_tree_contents(catalogdir)
     else:
         click.echo(" > Converting old-style catalog")
         rm_tree_contents(repo.working_tree_dir)
+
+
+def update_catalog(cfg, target_name, repo):
+    click.secho('Updating catalog repository...', bold=True)
+    # pylint: disable=import-outside-toplevel
+    from distutils import dir_util
+    import textwrap
+    catalogdir = P(repo.working_tree_dir, 'manifests')
     # copy compiled catalog into catalog directory
     dir_util.copy_tree(P('compiled') / target_name, str(catalogdir))
 

@@ -6,6 +6,7 @@ from kapitan.resources import inventory_reclass
 from . import git
 from .catalog import (
     fetch_customer_catalog,
+    clean_catalog,
     update_catalog
 )
 from .cluster import (
@@ -142,6 +143,8 @@ def compile(config, cluster_id):
         'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(jsonnet_libs)
+
+    clean_catalog(catalog_repo)
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
