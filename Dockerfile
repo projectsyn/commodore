@@ -1,4 +1,4 @@
-FROM docker.io/python:3.8.1-slim-buster AS base
+FROM docker.io/python:3.8.2-slim-buster AS base
 
 FROM base AS builder
 
