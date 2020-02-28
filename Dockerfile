@@ -17,7 +17,7 @@ USER 1001
 
 RUN pipenv install
 
-FROM docker.io/golang:1.13-stretch AS helm_binding_builder
+FROM docker.io/golang:1.14-stretch AS helm_binding_builder
 
 RUN apt-get update && apt-get install -y python3-cffi && apt-get clean
 
