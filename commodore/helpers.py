@@ -93,7 +93,7 @@ def kapitan_compile():
     click.secho('Compiling catalog...', bold=True)
     return subprocess.run(  # nosec
         shlex.split('kapitan compile --fetch -J .  dependencies --refs-path ./catalog/refs'),
-        check=True)
+        check=False)
 
 
 def rm_tree_contents(basedir):
