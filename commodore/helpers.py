@@ -44,9 +44,7 @@ def yaml_dump_all(obj, file):
 
 
 class ApiError(Exception):
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
+    pass
 
 
 def lieutenant_query(api_url, api_token, api_endpoint, api_id):
