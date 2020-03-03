@@ -43,14 +43,16 @@ def _full_target(cluster, components, catalog):
     customer = cluster['tenant']
     component_defaults = [f"defaults.{cn}" for cn in components if
                           (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
+    global_defaults = ['global.common', f"global.{cluster_distro}", f"global.{cloud_provider}"]
+    if not cluster_distro:
+        raise click.ClickException(f"Required fact 'distribution' not set")
+    if not cloud_provider:
+        raise click.ClickException(f"Required fact 'cloud' not set")
+    if cloud_region:
+        global_defaults.append(f"global.{cloud_provider}.{cloud_region}")
+    global_defaults.append(f"{customer}.{cluster_id}")
     return {
-        'classes': component_defaults + [
-            'global.common',
-            f"global.{cluster_distro}",
-            f"global.{cloud_provider}",
-            f"global.{cloud_provider}.{cloud_region}",
-            f"{customer}.{cluster_id}"
-        ],
+        'classes': component_defaults + global_defaults,
         'parameters': {
             'target_name': 'cluster',
             'cluster': {
@@ -59,7 +61,7 @@ def _full_target(cluster, components, catalog):
                 'catalog_url': f"{catalog}",
             },
             'cloud': {
-                'type': f"{cloud_provider}",
+                'provider': f"{cloud_provider}",
                 'region': f"{cloud_region}",
             },
             'customer': {

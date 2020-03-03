@@ -48,6 +48,7 @@ def _fetch_customer_config(cfg, customer_id):
         repopath = f"{cfg.customer_git_base}/{customer_id}.git"
         click.echo(" > API did not return a repository URL for customer " +
                    f"'{customer_id}', using '{repopath}'")
+    click.echo(f"Cloning {repopath}")
     repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
     cfg.register_config('customer', repo)
 
@@ -76,7 +77,8 @@ def _regular_setup(config, cluster_id):
     try:
         catalog_repo = fetch_customer_catalog(cluster['gitRepo'])
     except Exception as e:
-        raise click.ClickException(f"While cloning git repositories: {e}") from e
+        raise click.ClickException(
+            f"While cloning cluster catalog git repository: {e}") from e
 
     return cluster, target_name, catalog_repo
 
