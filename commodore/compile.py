@@ -154,7 +154,7 @@ def compile(config, cluster_id):
 
     p = kapitan_compile()
     if p.returncode != 0:
-        raise click.ClickException(f"Catalog compilation failed")
+        raise click.ClickException(f"Kapitan catalog compilation failed.")
 
     postprocess_components(kapitan_inventory, target_name, config.get_components())
 
