@@ -1,4 +1,5 @@
 from collections import namedtuple
+from pathlib import Path as P
 
 Component = namedtuple('Component', ['name', 'repo', 'version'])
 
@@ -7,7 +8,13 @@ class Config:
     # pylint: disable=too-many-arguments
     def __init__(self, api_url, api_token, global_git, customer_git, verbose):
         self.api_url = api_url
-        self.api_token = api_token
+        self.api_token = None
+        if api_token is not None:
+            p = P(api_token)
+            if p.is_file():
+                with open(p) as apitoken:
+                    api_token = apitoken.read()
+            self.api_token = api_token.strip()
         self.global_git_base = global_git
         self.customer_git_base = customer_git
         self._components = {}
