@@ -10,10 +10,14 @@ class Config:
         self.api_url = api_url
         self.api_token = None
         if api_token is not None:
-            p = P(api_token)
-            if p.is_file():
-                with open(p) as apitoken:
-                    api_token = apitoken.read()
+            try:
+                p = P(api_token)
+                if p.is_file():
+                    with open(p) as apitoken:
+                        api_token = apitoken.read()
+            except OSError:
+                # Assume token is not configured as file
+                pass
             self.api_token = api_token.strip()
         self.global_git_base = global_git
         self.customer_git_base = customer_git
