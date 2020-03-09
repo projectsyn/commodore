@@ -18,6 +18,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial implementation
 
-[v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/0.1.0
-[v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/0.1.1
+[v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/v0.1.0
+[v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
 [#53]: https://github.com/projectsyn/commodore/pull/53
