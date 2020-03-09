@@ -66,5 +66,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+    - name: Set binary version from Git
+      run: echo ::set-env name=BINARY_VERSION::$(git describe --tags --always --dirty --match=v*)
     - name: Build image
       run: make docker
+      env:
+        VERSION: test
+    - name: Verify image version
+      run: docker run --rm projectsyn/commodore:test --version
