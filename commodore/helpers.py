@@ -60,10 +60,10 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
     try:
         r.raise_for_status()
     except HTTPError as e:
-        extra_msg = ''
+        extra_msg = '.'
         if r.status_code >= 400:
             extra_msg = f": {resp['reason']}"
-            raise ApiError(f"API returned {r.status_code}. Reason: {extra_msg}") from e
+        raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp
 
