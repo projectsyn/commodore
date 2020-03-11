@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [v0.1.2]
+
+### Fixed
+
+* Build process properly sets Commodore binary version ([#58]).
+
 ## [v0.1.1]
 
 ### Added
@@ -20,4 +26,6 @@ Initial implementation
 
 [v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/v0.1.0
 [v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
+[v0.1.2]: https://github.com/projectsyn/commodore/releases/tag/v0.1.2
 [#53]: https://github.com/projectsyn/commodore/pull/53
+[#58]: https://github.com/projectsyn/commodore/pull/58
