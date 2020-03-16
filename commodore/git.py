@@ -59,7 +59,13 @@ def checkout_version(repo, ref):
 
 
 def clone_repository(repository_url, directory):
-    return Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+    repo = Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+    try:
+        _ = repo.head.commit
+    except ValueError as e:
+        click.echo(f" > {e}, creating initial commit for {directory}")
+        commit(repo, "Initial commit")
+    return repo
 
 
 def init_repository(path):
