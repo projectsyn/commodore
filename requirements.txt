@@ -34,7 +34,7 @@ jinja2==2.11.1            # via cookiecutter, jinja2-time, kapitan
 jmespath==0.9.4           # via boto3, botocore
 jsonnet==0.14.0           # via kapitan
 jsonschema==3.2.0         # via kapitan
-kapitan==0.26.1
+kapitan==0.27.2
 markupsafe==1.1.1         # via jinja2
 pathspec==0.7.0           # via yamllint
 poyo==0.5.0               # via cookiecutter
