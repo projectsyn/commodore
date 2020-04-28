@@ -28,7 +28,7 @@ google-auth==1.11.2       # via google-api-python-client, google-auth-httplib2
 httplib2==0.17.0          # via google-api-python-client, google-auth-httplib2
 hvac==0.9.6               # via kapitan
 idna==2.8                 # via requests
-importlib-metadata==1.5.0  # via jsonschema
+importlib-metadata==1.6.0  # via jsonschema
 jinja2-time==0.2.0        # via cookiecutter
 jinja2==2.11.1            # via cookiecutter, jinja2-time, kapitan
 jmespath==0.9.4           # via boto3, botocore
