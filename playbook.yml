@@ -10,7 +10,7 @@ content:
     edit_url: 'https://github.com/projectsyn/commodore/edit/master/{path}'
 ui:
   bundle:
-    url: https://github.com/projectsyn/antora-ui-default/releases/download/1.2/ui-bundle.zip
+    url: https://github.com/projectsyn/antora-ui-default/releases/download/1.3/ui-bundle.zip
     snapshot: false
 asciidoc:
   attributes:
