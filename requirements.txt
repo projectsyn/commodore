@@ -58,7 +58,7 @@ urllib3==1.25.8           # via botocore, requests
 websocket-client==0.57.0  # via docker
 whichcraft==0.6.1         # via cookiecutter
 yamllint==1.20.0          # via kapitan
-zipp==2.2.0               # via importlib-metadata
+zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
