@@ -27,28 +27,28 @@ using `helm template`.
 
 ## System Requirements
 
-* Python 3.6+
-* [Pipenv](https://github.com/pypa/pipenv)
+* Python 3.6+, with `python3-dev` and `python3-venv` updated
+* [Poetry](https://github.com/python-poetry/poetry)
 * Docker
 
 ## Getting started
 
 1. Install requirements
 
-   Install pipenv according to the upstream
-   [documentation](https://github.com/pypa/pipenv#installation).
+   Install poetry according to the upstream
+   [documentation](https://github.com/python-poetry/poetry#installation).
 
-   Create the Commdore pip environment:
+   Create the Commodore environment:
 
     ```console
-    pipenv install --dev
+    poetry install
     ```
 
     Build the Kapitan helm binding:
     * Linux:
 
        ```console
-       pipenv run build_kapitan_helm_binding
+       poetry run build_kapitan_helm_binding
        ```
 
     * OS X:
@@ -87,13 +87,13 @@ using `helm template`.
 1. Run Commodore
 
    ```console
-   pipenv run commodore
+   poetry run commodore
    ```
 
 1. Start hacking on Commodore
 
    ```console
-   pipenv shell
+   poetry shell
    ```
 
    - Write a line of test code, make the test fail
