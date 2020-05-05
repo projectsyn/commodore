@@ -60,7 +60,11 @@ using `helm template`.
       pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       ```
 
+<<<<<<< HEAD
 1. Setup a `.env` file to configure Commodore (don't use quotes):
+=======
+2. Setup a `.env` file to configure Commodore (or provide command line flags):
+>>>>>>> Readme changes
 
    ```shell
    # URL of Lieutenant API
@@ -84,13 +88,13 @@ using `helm template`.
    Note: Commodore currently only supports fetching remote Git repositories
    via SSH.
 
-1. Run Commodore
+3. Run Commodore
 
    ```console
    poetry run commodore
    ```
 
-1. Start hacking on Commodore
+4. Start hacking on Commodore
 
    ```console
    poetry shell
@@ -100,31 +104,31 @@ using `helm template`.
    - Write a line of application code, make the test pass
    - Repeat
 
-1. Run linting and tests
+5. Run linting and tests
 
    Auto format with autopep8
    ```console
-   pipenv run autopep
+   poetry run autopep
    ```
 
    List all Tox targets:
    ```console
-   pipenv run test tox -lv
+   poetry run test tox -lv
    ```
 
    Run all linting and tests:
    ```console
-   pipenv run test tox
+   poetry run test tox
    ```
 
    Run just a specific target:
    ```console
-   pipenv run test tox -e py38
+   poetry run test tox -e py38
    ```
 
    Upgrade dependencies (Pipfile.lock, requirements.txt)
    ```console
-   pipenv run test tox -e requirements
+   poetry run test tox -e requirements
    ```
 
 ## Run Commodore in Docker
@@ -140,7 +144,7 @@ You can skip starting an agent by setting the `SSH_AUTH_SOCK` env variable and m
 docker-compose build
 ```
 
-1. Run the built image:
+2. Run the built image:
 
 ```console
 docker-compose run commodore compile $CLUSTER_ID
