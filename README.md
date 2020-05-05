@@ -60,11 +60,7 @@ using `helm template`.
       pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       ```
 
-<<<<<<< HEAD
 1. Setup a `.env` file to configure Commodore (don't use quotes):
-=======
-2. Setup a `.env` file to configure Commodore (or provide command line flags):
->>>>>>> Readme changes
 
    ```shell
    # URL of Lieutenant API
