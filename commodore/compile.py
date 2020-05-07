@@ -31,7 +31,7 @@ from .refs import update_refs
 
 def _fetch_global_config(cfg, cluster):
     config = cluster['base_config']
-    click.secho(f"Updating global config...", bold=True)
+    click.secho('Updating global config...', bold=True)
     repo = git.clone_repository(
         f"{cfg.global_git_base}/{config}.git",
         'inventory/classes/global')
@@ -93,10 +93,10 @@ def _local_setup(config, cluster_id):
         raise click.ClickException(f"Invalid target: {target_name}")
     click.echo(f" > Using target: {target_name}")
 
-    click.echo(f" > Reconstructing Cluster API data from target")
+    click.echo(' > Reconstructing Cluster API data from target')
     cluster = reconstruct_api_response(target_yml)
     if cluster['id'] != cluster_id:
-        error = f"[Local mode] Cluster ID mismatch: local state targets " + \
+        error = '[Local mode] Cluster ID mismatch: local state targets ' + \
                 f"{cluster['id']}, compilation was requested for {cluster_id}"
         raise click.ClickException(error)
 
@@ -154,7 +154,7 @@ def compile(config, cluster_id):
 
     p = kapitan_compile()
     if p.returncode != 0:
-        raise click.ClickException(f"Kapitan catalog compilation failed.")
+        raise click.ClickException('Kapitan catalog compilation failed.')
 
     postprocess_components(kapitan_inventory, target_name, config.get_components())
 

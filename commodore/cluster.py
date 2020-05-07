@@ -45,9 +45,9 @@ def _full_target(cluster, components, catalog):
                           (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
     global_defaults = ['global.common', f"global.{cluster_distro}", f"global.{cloud_provider}"]
     if not cluster_distro:
-        raise click.ClickException(f"Required fact 'distribution' not set")
+        raise click.ClickException("Required fact 'distribution' not set")
     if not cloud_provider:
-        raise click.ClickException(f"Required fact 'cloud' not set")
+        raise click.ClickException("Required fact 'cloud' not set")
     if cloud_region:
         global_defaults.append(f"global.{cloud_provider}.{cloud_region}")
     global_defaults.append(f"{customer}.{cluster_id}")
