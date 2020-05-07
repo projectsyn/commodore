@@ -9,7 +9,7 @@ arrow==0.15.5             # via jinja2-time
 attrs==19.3.0             # via jsonschema
 binaryornot==0.4.4        # via cookiecutter
 boto3==1.11.17            # via kapitan
-botocore==1.14.17         # via boto3, s3transfer
+botocore==1.16.5         # via boto3, s3transfer
 cachetools==4.0.0         # via google-auth
 certifi==2019.11.28       # via requests
 cffi==1.14.0              # via cryptography, kapitan
