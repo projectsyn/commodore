@@ -7,7 +7,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y make build-essential && apt-get clean
 RUN pip install pipenv
 
-ENV PIPENV_VENV_IN_PROJECT=1 \
+ENV HOME=/app \
+    PIPENV_VENV_IN_PROJECT=1 \
     VIRTUALENV_SEEDER=pip
 
 COPY Pipfile Pipfile.lock ./
@@ -32,7 +33,8 @@ RUN apt-get update && apt-get install -y git libnss-wrapper && apt-get clean
 
 RUN pip install pipenv
 
-ENV PIPENV_VENV_IN_PROJECT=1
+ENV HOME=/app \
+    PIPENV_VENV_IN_PROJECT=1
 
 COPY --from=builder /app/.venv/ ./.venv/
 COPY --from=helm_binding_builder \
