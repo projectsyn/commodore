@@ -1,5 +1,5 @@
 click
-cookiecutter
+cookiecutter==1.7.0
 GitPython
 kapitan
 requests

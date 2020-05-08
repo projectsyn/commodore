@@ -107,7 +107,7 @@ class RefBuilder:
                     click.echo(f"    > Found secret ref {r.refstr} in {value}")
                 if r.refstr in self._refs:
                     if self.debug:
-                        click.echo(f"    > Duplicate ref, adding key to list")
+                        click.echo('    > Duplicate ref, adding key to list')
                     self._refs[r.refstr].add_key(key)
                 else:
                     self._refs[r.refstr] = r

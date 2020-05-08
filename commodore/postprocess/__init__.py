@@ -21,7 +21,7 @@ def postprocess_components(inventory, target, components):
             for f in filters['filters']:
                 # old-style filters are always 'jsonnet'
                 if 'type' not in f:
-                    click.secho(f"   > [WARN] component uses old-style postprocess filters",
+                    click.secho('   > [WARN] component uses old-style postprocess filters',
                                 fg='yellow')
                     f['type'] = 'jsonnet'
                 if f['type'] == 'jsonnet':
