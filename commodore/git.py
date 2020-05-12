@@ -161,10 +161,10 @@ def stage_all(repo):
                     # and a_blob as after.
                     before = c.b_blob.data_stream.read().decode('utf-8').split('\n')
                     after = c.a_blob.data_stream.read().decode('utf-8').split('\n')
-                    u = difflib.unified_diff(before, after, lineterm='',
-                                             fromfile=c.b_path, tofile=c.a_path)
-                    u = [_colorize_diff(l) for l in u]
-                    difftext.append('\n'.join(u).strip())
+                    diff = difflib.unified_diff(before, after, lineterm='',
+                                                fromfile=c.b_path, tofile=c.a_path)
+                    diff = [_colorize_diff(line) for line in diff]
+                    difftext.append('\n'.join(diff).strip())
 
     return '\n'.join(difftext), changed
 
