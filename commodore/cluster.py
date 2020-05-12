@@ -21,18 +21,20 @@ def fetch_cluster(cfg, clusterid):
 
 def reconstruct_api_response(target_yml):
     target_data = yaml_load(target_yml)['parameters']
-    return {
+    api_resp = {
         'id': target_data['cluster']['name'],
         'facts': {
-            'cloud': target_data['cloud']['region'],
+            'cloud': target_data['cloud']['provider'],
             'distribution': target_data['cluster']['dist'],
-            'region': target_data['cloud']['region'],
         },
         'gitRepo': {
             'url': target_data['cluster']['catalog_url'],
         },
         'tenant': target_data['customer']['name'],
     }
+    if 'region' in target_data['cloud']:
+        api_resp['facts']['region'] = target_data['cloud']['region']
+    return api_resp
 
 
 def _full_target(cluster, components, catalog):
