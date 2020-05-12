@@ -23,14 +23,13 @@ def test_render_target():
     target = cluster._full_target(cluster_obj, components, catalog)
     facts = cluster_obj['facts']
     assert target != ""
-    all_classes = ([f"defaults.{cn}" for cn in components] +
-                   ['global.common',
-                       f"global.{facts['distribution']}",
-                       f"global.{facts['cloud']}",
-                       f"{cluster_obj['tenant']}.{cluster_obj['id']}",
-                    ])
-    assert len(target['classes']) == len(
-        all_classes), "rendered target includes different amount of classes"
+    all_classes = [f"defaults.{cn}" for cn in components] + \
+        ['global.common',
+         f"global.{facts['distribution']}",
+         f"global.{facts['cloud']}",
+         f"{cluster_obj['tenant']}.{cluster_obj['id']}"]
+    assert len(target['classes']) == len(all_classes), \
+        "rendered target includes different amount of classes"
     # Test order of included classes
     for i in range(len(all_classes)):
         assert target['classes'][i] == all_classes[i]
