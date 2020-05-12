@@ -5,66 +5,35 @@ on:
     - master
 
 jobs:
-  lint_flake8:
+  tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        command:
+          - lint_flake8
+          - lint_pylint
+          - lint_safety
+          - lint_bandit
+          - lint_readme
+          - test_py36
+          - test_py37
+          - test_py38
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - name: Install Pipenv
+      run: |
+        pip install pipenv tox
     - name: Flake8
-      run: make lint_flake8
-  lint_pylint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Pylint
-      run: make lint_pylint
-  lint_safety:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Safety
-      run: make lint_safety
-  lint_bandit:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Bandit
-      run: make lint_bandit
-  lint_readme:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Readme
-      run: make lint_readme
-  test_py36:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Run tests on Python 3.6
-      run: make test_py36
-  test_py37:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Run tests on Python 3.7
-      run: make test_py37
-  test_py38:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
+      run: make ${{ matrix.command }}
+
     - name: Run tests on Python 3.8
       run: make test_py38
   build:
     needs:
-    - lint_flake8
-    - lint_pylint
-    - lint_safety
-    - lint_bandit
-    - lint_readme
-    - test_py36
-    - test_py37
-    - test_py38
+    - tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Build image
       run: make docker
