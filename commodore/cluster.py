@@ -22,36 +22,36 @@ def fetch_cluster(cfg, clusterid):
 def reconstruct_api_response(target_yml):
     target_data = yaml_load(target_yml)['parameters']
     return {
-        "id": target_data['cluster']['name'],
-        "facts": {
-            "cloud": target_data['cloud']['region'],
-            "distribution": target_data['cluster']['dist'],
-            "region": target_data['cloud']['region'],
+        'id': target_data['cluster']['name'],
+        'facts': {
+            'cloud': target_data['cloud']['region'],
+            'distribution': target_data['cluster']['dist'],
+            'region': target_data['cloud']['region'],
         },
-        "gitRepo": {
-            "url": target_data['cluster']['catalog_url'],
+        'gitRepo': {
+            'url': target_data['cluster']['catalog_url'],
         },
-        "tenant": target_data['customer']['name'],
+        'tenant': target_data['customer']['name'],
     }
 
 
 def _full_target(cluster, components, catalog):
-    cloud_provider = cluster['facts']['cloud']
-    cloud_region = cluster['facts']['region']
-    cluster_distro = cluster['facts']['distribution']
+    cluster_facts = cluster['facts']
+    for required_fact in ['distribution', 'cloud']:
+        if required_fact not in cluster_facts:
+            raise click.ClickException(f"Required fact '{required_fact}' not set")
+
+    cluster_distro = cluster_facts['distribution']
+    cloud_provider = cluster_facts['cloud']
     cluster_id = cluster['id']
     customer = cluster['tenant']
     component_defaults = [f"defaults.{cn}" for cn in components if
                           (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
     global_defaults = ['global.common', f"global.{cluster_distro}", f"global.{cloud_provider}"]
-    if not cluster_distro:
-        raise click.ClickException("Required fact 'distribution' not set")
-    if not cloud_provider:
-        raise click.ClickException("Required fact 'cloud' not set")
-    if cloud_region:
-        global_defaults.append(f"global.{cloud_provider}.{cloud_region}")
+    if 'region' in cluster_facts:
+        global_defaults.append(f"global.{cloud_provider}.{cluster_facts['region']}")
     global_defaults.append(f"{customer}.{cluster_id}")
-    return {
+    target = {
         'classes': component_defaults + global_defaults,
         'parameters': {
             'target_name': 'cluster',
@@ -62,13 +62,15 @@ def _full_target(cluster, components, catalog):
             },
             'cloud': {
                 'provider': f"{cloud_provider}",
-                'region': f"{cloud_region}",
             },
             'customer': {
                 'name': f"{customer}"
             },
         }
     }
+    if 'region' in cluster_facts:
+        target['parameters']['cloud']['region'] = cluster_facts['region']
+    return target
 
 
 def update_target(cfg, cluster):
