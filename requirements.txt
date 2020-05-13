@@ -28,7 +28,7 @@ google-auth-httplib2==0.0.3  # via google-api-python-client
 google-auth==1.14.2       # via google-api-python-client, google-auth-httplib2
 httplib2==0.17.3          # via google-api-python-client, google-auth-httplib2
 hvac==0.9.6               # via kapitan
-idna==2.8                 # via requests
+idna==2.9                 # via requests
 jinja2-time==0.2.0        # via cookiecutter
 jinja2==2.11.2            # via cookiecutter, jinja2-time, kapitan
 jmespath==0.9.5           # via boto3, botocore
