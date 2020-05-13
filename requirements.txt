@@ -25,7 +25,7 @@ gitdb==4.0.5              # via gitdb2
 gitpython==3.0.8          # via -r requirements.in, kapitan
 google-api-python-client==1.7.11  # via kapitan
 google-auth-httplib2==0.0.3  # via google-api-python-client
-google-auth==1.14.2       # via google-api-python-client, google-auth-httplib2
+google-auth==1.14.3       # via google-api-python-client, google-auth-httplib2
 httplib2==0.17.3          # via google-api-python-client, google-auth-httplib2
 hvac==0.9.6               # via kapitan
 idna==2.8                 # via requests
