@@ -46,7 +46,7 @@ pyrsistent==0.16.0        # via jsonschema
 python-dateutil==2.8.1    # via arrow, botocore
 python-gnupg==0.4.5       # via kapitan
 pyyaml==5.3.1             # via kapitan, yamllint
-requests==2.22.0          # via -r requirements.in, cookiecutter, docker, hvac, kapitan
+requests==2.23.0          # via -r requirements.in, cookiecutter, docker, hvac, kapitan
 rfc3987==1.3.8            # via kapitan
 rsa==4.0                  # via google-auth
 s3transfer==0.3.3         # via boto3
