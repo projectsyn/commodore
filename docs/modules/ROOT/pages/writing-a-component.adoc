@@ -60,12 +60,12 @@ The hierarchy is as follows (starting at the lowest precedence):
 
 * Component defaults, included as `defaults.<component-name>` for each component
 * Global defaults, `global.common`
-* Kubernetes distribution defaults, `global.<kubernetes-distribution>`. The
+* Kubernetes distribution defaults, `global.distribution.<kubernetes-distribution>`. The
   intention of the hierarchy is that component classes are included in each
   distribution class separately to allow bootstrapping of new distributions in
   a multi-distribution environment easier
-* Cloud provider defaults, `global.<cloud-provider>`
-* Cloud provider region defaults, `global.<cloud-provider>.<region>`
+* Cloud provider defaults, `global.cloud.<cloud-provider>`
+* Cloud provider region defaults, `global.cloud.<cloud-provider>.<region>`
 * Cluster configuration, `<customer>.<cluster>`. The cluster configuration is
   managed in the customer's configuration repository. The customer repository
   can have any structure, the only requirement is that it contains a Kapitan
@@ -76,7 +76,7 @@ Kapitan classes is that components can be included at any point in the
 hierarchy, without having their defaults overwrite defaults defined higher up
 in the configuration hierarchy. F.e. without the split, a component included
 for a particular cloud provider would overwrite configuration values specified
-in `global.common` or `global.<kubernetes-distribution>` for which the
+in `global.common` or `global.distribution.<kubernetes-distribution>` for which the
 component provides defaults.
 
 == The component templates

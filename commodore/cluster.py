@@ -49,9 +49,11 @@ def _full_target(cluster, components, catalog):
     customer = cluster['tenant']
     component_defaults = [f"defaults.{cn}" for cn in components if
                           (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
-    global_defaults = ['global.common', f"global.{cluster_distro}", f"global.{cloud_provider}"]
+    global_defaults = ['global.common',
+                       f"global.distribution.{cluster_distro}",
+                       f"global.cloud.{cloud_provider}"]
     if 'region' in cluster_facts:
-        global_defaults.append(f"global.{cloud_provider}.{cluster_facts['region']}")
+        global_defaults.append(f"global.cloud.{cloud_provider}.{cluster_facts['region']}")
     global_defaults.append(f"{customer}.{cluster_id}")
     target = {
         'classes': component_defaults + global_defaults,

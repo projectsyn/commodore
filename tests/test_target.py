@@ -24,8 +24,8 @@ def test_render_target():
     facts = cluster_obj['facts']
     all_classes = [f"defaults.{cn}" for cn in components] + [
         'global.common',
-        f"global.{facts['distribution']}",
-        f"global.{facts['cloud']}",
+        f"global.distribution.{facts['distribution']}",
+        f"global.cloud.{facts['cloud']}",
         f"{cluster_obj['tenant']}.{cluster_obj['id']}"]
     assert target != ""
     assert len(target['classes']) == len(all_classes), \
@@ -39,7 +39,7 @@ def test_optional_facts():
     cluster_obj['facts']['region'] = 'rma1'
     target = cluster._full_target(cluster_obj, components, catalog)
     facts = cluster_obj['facts']
-    assert f"global.{facts['cloud']}.{facts['region']}" in target['classes']
+    assert f"global.cloud.{facts['cloud']}.{facts['region']}" in target['classes']
 
 
 def test_missing_facts():
@@ -60,8 +60,8 @@ def test_reconstruct_api_response(tmp_path):
         file.write('''classes:
 - defaults.argocd
 - global.common
-- global.k3d
-- global.localdev
+- global.distribution.k3d
+- global.cloud.localdev
 - t-delicate-pine-3938.c-twilight-water-9032
 parameters:
   cloud:
