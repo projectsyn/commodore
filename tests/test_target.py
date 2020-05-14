@@ -51,6 +51,13 @@ def test_optional_fact_region(data):
     assert f"global.cloud.{facts['cloud']}.{facts['region']}" in target['classes']
 
 
+def test_optional_fact_lieutenant_instance(data):
+    data['cluster']['facts']['lieutenant-instance'] = 'lieutenant-dev'
+    target = cluster._full_target(data['cluster'], data['components'], data['catalog'])
+    facts = data['cluster']['facts']
+    assert f"global.lieutenant-instance.{facts['lieutenant-instance']}" in target['classes']
+
+
 def test_missing_facts(data):
     data['cluster']['facts'].pop('cloud')
     with pytest.raises(click.ClickException):
@@ -88,7 +95,7 @@ parameters:
 def test_reconstruct_api_response_no_region(tmp_path):
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes:
+        file.write('''classes: []
 parameters:
   cloud:
     provider: localdev
@@ -127,7 +134,7 @@ parameters:
 def test_reconstruct_api_response_missing_fact(tmp_path):
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes:
+        file.write('''classes: []
 parameters:
   cloud:
     region: north
