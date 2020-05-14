@@ -4,5 +4,8 @@
   ],
   "pipenv": {
     "enabled": true
+  },
+  "python": {
+    "enabled": false
   }
 }
