@@ -20,20 +20,26 @@ def fetch_cluster(cfg, clusterid):
 
 
 def reconstruct_api_response(target_yml):
-    target_data = yaml_load(target_yml)['parameters']
+    target_data = yaml_load(target_yml)
+    target_parameters = target_data['parameters']
+    target_classes = target_data['classes']
     api_resp = {
-        'id': target_data['cluster']['name'],
+        'id': target_parameters['cluster']['name'],
         'facts': {
-            'cloud': target_data['cloud']['provider'],
-            'distribution': target_data['cluster']['dist'],
+            'cloud': target_parameters['cloud']['provider'],
+            'distribution': target_parameters['cluster']['dist'],
         },
         'gitRepo': {
-            'url': target_data['cluster']['catalog_url'],
+            'url': target_parameters['cluster']['catalog_url'],
         },
-        'tenant': target_data['customer']['name'],
+        'tenant': target_parameters['customer']['name'],
     }
-    if 'region' in target_data['cloud']:
-        api_resp['facts']['region'] = target_data['cloud']['region']
+    if 'region' in target_parameters['cloud']:
+        api_resp['facts']['region'] = target_parameters['cloud']['region']
+    for cl in target_classes:
+        if cl.startswith('global.lieutenant-instance.'):
+            api_resp['facts']['lieutenant-instance'] = cl.split('.')[2]
+            break
     return api_resp
 
 
@@ -54,6 +60,9 @@ def _full_target(cluster, components, catalog):
                        f"global.cloud.{cloud_provider}"]
     if 'region' in cluster_facts:
         global_defaults.append(f"global.cloud.{cloud_provider}.{cluster_facts['region']}")
+    if 'lieutenant-instance' in cluster_facts:
+        global_defaults.append(
+            f"global.lieutenant-instance.{cluster_facts['lieutenant-instance']}")
     global_defaults.append(f"{customer}.{cluster_id}")
     target = {
         'classes': component_defaults + global_defaults,
