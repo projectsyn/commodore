@@ -8,8 +8,8 @@ addict==2.2.1             # via kapitan
 arrow==0.15.6             # via jinja2-time
 attrs==19.3.0             # via jsonschema
 binaryornot==0.4.4        # via cookiecutter
-boto3==1.13.5             # via kapitan
-botocore==1.16.5          # via boto3, s3transfer
+boto3==1.13.9             # via kapitan
+botocore==1.16.9          # via boto3, s3transfer
 cachetools==4.1.0         # via google-auth
 certifi==2020.4.5.1       # via requests
 cffi==1.14.0              # via cryptography, kapitan
@@ -25,13 +25,13 @@ gitdb==4.0.5              # via gitdb2
 gitpython==3.0.8          # via -r requirements.in, kapitan
 google-api-python-client==1.7.11  # via kapitan
 google-auth-httplib2==0.0.3  # via google-api-python-client
-google-auth==1.14.2       # via google-api-python-client, google-auth-httplib2
+google-auth==1.14.3       # via google-api-python-client, google-auth-httplib2
 httplib2==0.17.3          # via google-api-python-client, google-auth-httplib2
 hvac==0.9.6               # via kapitan
 idna==2.8                 # via requests
 jinja2-time==0.2.0        # via cookiecutter
 jinja2==2.11.2            # via cookiecutter, jinja2-time, kapitan
-jmespath==0.9.5           # via boto3, botocore
+jmespath==0.10.0          # via boto3, botocore
 jsonnet==0.15.0           # via kapitan
 jsonschema==3.2.0         # via kapitan
 kapitan==0.27.2           # via -r requirements.in
