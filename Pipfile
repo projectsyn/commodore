@@ -9,8 +9,7 @@ autopep8 = "*"
 
 [packages]
 click = "*"
-# Until we get sane kapitan dependencies
-cookiecutter = "==1.7.0"
+cookiecutter = "*"
 GitPython = "*"
 kapitan = "*"
 requests = "*"
