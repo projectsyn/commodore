@@ -1,8 +1,8 @@
-# Pushed to docker.io/vshn/kapitan:v0.27.3
+# Pushed to docker.io/vshn/kapitan:v0.27.4
 
 FROM docker.io/alpine:3.11
 
-ENV KAPITAN_VERSION=v0.27.3
+ENV KAPITAN_VERSION=v0.27.4
 
 RUN apk add --no-cache \
         ca-certificates \
