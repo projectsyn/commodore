@@ -1,5 +1,6 @@
 from subprocess import call, run
 
+
 def build_kapitan_helm_binding():
     call("./tools/build_kapitan_helm_binding.sh")
 
@@ -17,7 +18,7 @@ def compile():
 
 
 def test():
-    #call(['docker', 'run', '-it', '--rm', '-v', '$PWD:/src:ro', '-v', '$PWD/.dtox:/app/.tox', 'docker.io/painless/tox'])
+    # call(['docker', 'run', '-it', '--rm', '-v', '$PWD:/src:ro', '-v', '$PWD/.dtox:/app/.tox', 'docker.io/painless/tox'])
     run('docker run -it --rm -v $PWD:/src:ro -v $PWD/.dtox:/app/.tox docker.io/painless/tox', shell=True)
 
 
