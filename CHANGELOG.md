@@ -5,7 +5,17 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [v0.1.4]
+
+### Fixed
+* Vault error handling ([#95])
+* Optional facts ([#88])
+
+### Changed
+* Organize global calsses in folders ([#91])
+
+### Added
+* Include lieutenant-instance fact ([#94])
 
 ## [v0.1.3]
 
@@ -39,6 +49,11 @@ Initial implementation
 [v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
 [v0.1.2]: https://github.com/projectsyn/commodore/releases/tag/v0.1.2
 [v0.1.3]: https://github.com/projectsyn/commodore/releases/tag/v0.1.3
+[v0.1.4]: https://github.com/projectsyn/commodore/releases/tag/v0.1.4
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58
 [#81]: https://github.com/projectsyn/commodore/pull/81
+[#88]: https://github.com/projectsyn/commodore/pull/88
+[#91]: https://github.com/projectsyn/commodore/pull/91
+[#94]: https://github.com/projectsyn/commodore/pull/94
+[#95]: https://github.com/projectsyn/commodore/pull/95
