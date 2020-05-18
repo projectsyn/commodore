@@ -18,8 +18,8 @@ def compile():
 
 
 def test():
-    # call(['docker', 'run', '-it', '--rm', '-v', '$PWD:/src:ro', '-v', '$PWD/.dtox:/app/.tox', 'docker.io/painless/tox'])
-    run('docker run -it --rm -v $PWD:/src:ro -v $PWD/.dtox:/app/.tox docker.io/painless/tox', shell=True)
+    arguments = input("Enter tox arguments:")
+    run('docker run -it --rm -v $PWD:/src:ro -v $PWD/.dtox:/app/.tox docker.io/painless/tox {}'.format(arguments), shell=True)
 
 
 def update_requirements():
