@@ -1,0 +1,12 @@
+version: "3.0"
+services:
+  commodore:
+    build: .
+    image: docker.io/projectsyn/commodore:latest
+    env_file: .env
+    user: "${USER_ID:-0}"
+    volumes:
+    - ./catalog/:/app/catalog/
+    - ./dependencies/:/app/dependencies/
+    - ./inventory/:/app/inventory/
+    - ~/.ssh/:/app/.ssh/:ro

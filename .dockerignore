@@ -5,7 +5,7 @@ compiled/
 dependencies/
 inventory/
 tools/
-!tools/ssh
+!tools/entrypoint.sh
 README.md
 Dockerfile
 _antora

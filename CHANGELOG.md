@@ -5,6 +5,11 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Changed
+* Dockerfile to support local docker-compose setup
+
 ## [v0.1.4]
 
 ### Fixed

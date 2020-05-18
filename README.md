@@ -60,17 +60,17 @@ using `helm template`.
       pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       ```
 
-1. Setup a `.env` file to configure Commodore (or provide command line flags):
+1. Setup a `.env` file to configure Commodore (don't use quotes):
 
    ```shell
    # URL of Lieutenant API
-   COMMODORE_API_URL="https://lieutenant-api.example.com/"
+   COMMODORE_API_URL=https://lieutenant-api.example.com/
    # Lieutenant API token
-   COMMODORE_API_TOKEN="..."
+   COMMODORE_API_TOKEN=<my-token>
    # Base URL for global Git repositories
-   COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/"
-   # Base URL for customer Git repositories
-   COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/"
+   COMMODORE_GLOBAL_GIT_BASE=ssh://git@github.com/projectsyn/
+   # Your local user ID to be used in the container (optional, defaults to root)
+   USER_ID=<your-user-id>
    ```
 
    For Commodore to work, you need to run an instance of the
@@ -129,40 +129,21 @@ using `helm template`.
 
 ## Run Commodore in Docker
 
+A docker-compose setup enables running Commodore in a container.
+The environment variables are picked up from the local `.env` file.
+By default your `~/.ssh/` directory is mounted into the container and an `ssh-agent` is started.
+You can skip starting an agent by setting the `SSH_AUTH_SOCK` env variable and mounting the socket into the container.
+
 1. Build the Docker image inside of the cloned Commodore repository:
 
 ```console
-docker build -t commodore .
+docker-compose build
 ```
 
 1. Run the built image:
 
 ```console
-docker run -it --rm \
-    -e COMMODORE_API_URL="https://lieutenant-api.example.com/" \
-    -e COMMODORE_API_TOKEN="..." \
-    -e COMMODORE_GLOBAL_GIT_BASE="ssh://git@github.com/projectsyn/" \
-    -e COMMODORE_CUSTOMER_GIT_BASE="ssh://git@git.example.com/syn/customers/" \
-    -e SSH_PRIVATE_KEY="$(cat ~/.ssh/id_ed25519)" \
-    -v $(pwd)/catalog:/app/catalog/ \
-    -v $(pwd)/dependencies:/app/dependencies/ \
-    -v $(pwd)/inventory:/app/inventory/ \
-    --entrypoint bash \
-    commodore
-```
-
-1. Set up ssh-agent in the running Docker container for the access to Git repositories:
-
-```console
-tools/ssh
-eval $(ssh-agent)
-ssh-add .identityfile
-```
-
-1. Run Commodore inside of the running Docker container:
-
-```console
-pipenv run commodore
+docker-compose run commodore compile $CLUSTER_ID
 ```
 
 ## Documentation
@@ -170,4 +151,3 @@ pipenv run commodore
 Run the `make docs` command in the `docs` subfolder to generate the Antora documentation website locally. The website will be available at the `_antora/index.html` file.
 
 After writing the documentation, please use the `make check` command and correct any warnings raised by the tool.
-
