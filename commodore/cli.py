@@ -18,14 +18,12 @@ verbosity = click.option('-v', '--verbose', count=True,
 @click.option('--api-token', metavar='TOKEN', help='Lieutenant API token')
 @click.option('--global-git-base', metavar='URL',
               help='Base directory for global Git config repositories')
-@click.option('--customer-git-base', metavar='URL',
-              help='Base directory for customer Git config repositories')
 @verbosity
 @click.version_option(__version__, prog_name='commodore')
 @click.pass_context
 # pylint: disable=too-many-arguments
-def commodore(ctx, api_url, api_token, global_git_base, customer_git_base, verbose):
-    ctx.obj = Config(api_url, api_token, global_git_base, customer_git_base, verbose)
+def commodore(ctx, api_url, api_token, global_git_base, verbose):
+    ctx.obj = Config(api_url, api_token, global_git_base, verbose)
 
 
 @commodore.command(short_help='Delete generated files')
