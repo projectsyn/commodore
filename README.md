@@ -111,25 +111,16 @@ using `helm template`.
    poetry run autopep
    ```
 
-   List all Tox targets:
+   Run tox:
    ```console
-   poetry run test tox -lv
+   poetry run test
    ```
 
-   Run all linting and tests:
-   ```console
-   poetry run test tox
-   ```
-
-   Run just a specific target:
-   ```console
-   poetry run test tox -e py38
-   ```
-
-   Upgrade dependencies (Pipfile.lock, requirements.txt)
-   ```console
-   poetry run test tox -e requirements
-   ```
+   Arguments
+   - List all Tox targets: ```tox -lv```
+   - Run all linting and tests: ```tox```
+   - Run just a specific target: ```tox -e py38```
+   - Upgrade dependencies (Pipfile.lock, requirements.txt): ```tox -e requirements```
 
 ## Run Commodore in Docker
 

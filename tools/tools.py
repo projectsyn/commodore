@@ -18,9 +18,5 @@ def compile():
 
 
 def test():
-    arguments = input("Enter tox arguments:")
+    arguments = input("Enter tox arguments: ")
     run('docker run -it --rm -v $PWD:/src:ro -v $PWD/.dtox:/app/.tox docker.io/painless/tox {}'.format(arguments), shell=True)
-
-
-def update_requirements():
-    call(['tox', '-e', 'requirements'])
