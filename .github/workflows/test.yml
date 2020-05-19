@@ -1,4 +1,4 @@
-name: Test
+name: Pull Request
 on:
   pull_request:
     branches:
@@ -24,11 +24,16 @@ jobs:
     - name: Install Pipenv
       run: |
         pip install pipenv tox
-    - name: Flake8
+    - name: Run ${{ matrix.command }}
       run: make ${{ matrix.command }}
-
-    - name: Run tests on Python 3.8
-      run: make test_py38
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Check Docs
+      run: make check
+    - name: Compile Docs
+      run: make docs
   build:
     needs:
     - tests

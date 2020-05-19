@@ -1,15 +1,20 @@
 FROM docker.io/python:3.8.3-slim-buster AS base
 
-FROM base AS builder
-
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y make build-essential && apt-get clean
+ENV HOME=/app \
+    PIPENV_VENV_IN_PROJECT=1
+
 RUN pip install pipenv
 
-ENV HOME=/app \
-    PIPENV_VENV_IN_PROJECT=1 \
-    VIRTUALENV_SEEDER=pip
+FROM base AS builder
+
+RUN apt-get update && apt-get install -y \
+      build-essential \
+      make \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV VIRTUALENV_SEEDER=pip
 
 COPY Pipfile Pipfile.lock ./
 
@@ -20,7 +25,9 @@ RUN pipenv install
 
 FROM docker.io/golang:1.14-stretch AS helm_binding_builder
 
-RUN apt-get update && apt-get install -y python3-cffi && apt-get clean
+RUN apt-get update && apt-get install -y \
+      python3-cffi \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /virtualenv
 COPY --from=builder /app/.venv/lib/python3.8/site-packages/kapitan ./kapitan
@@ -28,13 +35,10 @@ RUN ./kapitan/inputs/helm/build.sh
 
 FROM base
 
-WORKDIR /app
-RUN apt-get update && apt-get install -y git libnss-wrapper && apt-get clean
-
-RUN pip install pipenv
-
-ENV HOME=/app \
-    PIPENV_VENV_IN_PROJECT=1
+RUN apt-get update && apt-get install -y \
+      git \
+      libnss-wrapper \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/.venv/ ./.venv/
 COPY --from=helm_binding_builder \
@@ -44,15 +48,13 @@ COPY --from=helm_binding_builder \
 
 COPY . ./
 
-RUN ssh-keyscan -t rsa git.vshn.net > /app/.known_hosts
-
-ENV GIT_SSH=/app/tools/ssh
-
-ARG BINARY_VERSION
+ARG BINARY_VERSION=unreleased
 
 RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
 
-RUN chown 1001 /app
+RUN chgrp 0 /app/ \
+ && chmod g+rwX /app/
+
 USER 1001
 
-ENTRYPOINT ["pipenv", "run", "commodore"]
+ENTRYPOINT [ "/app/tools/entrypoint.sh", "pipenv", "run", "commodore" ]

@@ -45,9 +45,8 @@ def _fetch_customer_config(cfg, customer_id):
         raise click.ClickException("Customer id mismatch")
     repopath = customer.get('gitRepo', {}).get('url', None)
     if repopath is None:
-        repopath = f"{cfg.customer_git_base}/{customer_id}.git"
-        click.echo(" > API did not return a repository URL for customer " +
-                   f"'{customer_id}', using '{repopath}'")
+        raise click.ClickException(
+            f" > API did not return a repository URL for customer '{customer_id}'")
     click.echo(f"Cloning {repopath}")
     repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
     cfg.register_config('customer', repo)
