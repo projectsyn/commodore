@@ -1,4 +1,3 @@
-import errno
 import os
 from pathlib import Path as P
 
@@ -17,13 +16,11 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
     link_dst = P(destdir) / destname
     try:
-        os.symlink(link_src, link_dst)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
+        if link_dst.exists():
             os.remove(link_dst)
-            os.symlink(link_src, link_dst)
-        else:
-            raise click.ClickException(f"While setting up symlinks: {e}") from e
+        os.symlink(link_src, link_dst)
+    except Exception as e:
+        raise click.ClickException(f"While setting up symlinks: {e}") from e
 
 
 def create_component_symlinks(component):
