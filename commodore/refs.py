@@ -88,8 +88,9 @@ class RefBuilder:
     Helper class to wrap recursive search for Kapitan secret references
     """
 
-    def __init__(self, debug, parameters):
+    def __init__(self, debug, trace, parameters):
         self.debug = debug
+        self.trace = trace
         self.parameters = parameters
         self._refs = {}
         self._ref_params = None
@@ -106,19 +107,19 @@ class RefBuilder:
                 if self.debug:
                     click.echo(f"    > Found secret ref {r.refstr} in {value}")
                 if r.refstr in self._refs:
-                    if self.debug:
+                    if self.trace:
                         click.echo('    > Duplicate ref, adding key to list')
                     self._refs[r.refstr].add_key(key)
                 else:
                     self._refs[r.refstr] = r
-        elif self.debug:
+        elif self.trace:
             click.echo(f"    > Ignoring leaf of type {type(value).__name__}...")
 
     def _find_refs(self, prefix, params):
         """
         Recursively search Kapitan refs, descending into dicts and lists.
         """
-        if self.debug:
+        if self.trace:
             click.echo(f" > Processing {prefix}")
 
         if isinstance(params, dict):
@@ -166,7 +167,7 @@ def update_refs(config, parameters):
     os.makedirs(refdir, exist_ok=True)
     rm_tree_contents(refdir)
     # Find references
-    rb = RefBuilder(config.debug, parameters)
+    rb = RefBuilder(config.debug, config.trace, parameters)
     rb.find_refs()
     ref_params = rb.params
     # Create Kapitan references

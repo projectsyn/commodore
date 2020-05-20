@@ -50,7 +50,7 @@ def _discover_components(cfg, inventory_path):
     components = set()
     inventory = P(inventory_path)
     for classfile in inventory.glob('**/*.yml'):
-        if cfg.debug:
+        if cfg.trace:
             click.echo(f" > Discovering components in {classfile}")
         classyaml = yaml_load(classfile)
         if classyaml is not None:

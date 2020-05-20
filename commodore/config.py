@@ -32,6 +32,10 @@ class Config:
     def debug(self):
         return self._verbose > 0
 
+    @property
+    def trace(self):
+        return self._verbose >= 3
+
     def update_verbosity(self, verbose):
         self._verbose += verbose
 
