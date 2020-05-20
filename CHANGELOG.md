@@ -5,6 +5,15 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Changed
+* Show some logs only in verbose mode ([#100])
+
+### Added
+* Allow overwriting of component git repo URLs ([#100])
+* Introduce trace log level with `-vvv` flag ([#100])
+
 ## [v0.1.5]
 
 ### Changed
@@ -65,3 +74,4 @@ Initial implementation
 [#94]: https://github.com/projectsyn/commodore/pull/94
 [#95]: https://github.com/projectsyn/commodore/pull/95
 [#99]: https://github.com/projectsyn/commodore/pull/99
+[#100]: https://github.com/projectsyn/commodore/pull/100
