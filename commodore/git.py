@@ -59,7 +59,11 @@ def checkout_version(repo, ref):
 
 
 def clone_repository(repository_url, directory):
-    repo = Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+    try:
+        repo = Repo.clone_from(_normalize_git_ssh(repository_url), directory)
+    except Exception as e:
+        raise click.ClickException(
+            f"While cloning git repository: {e}") from e
     try:
         _ = repo.head.commit
     except ValueError as e:

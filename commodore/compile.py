@@ -60,24 +60,16 @@ def _regular_setup(config, cluster_id):
     customer_id = cluster['tenant']
 
     # Fetch components and config
-    try:
-        _fetch_global_config(config, cluster)
-        _fetch_customer_config(config, customer_id)
-        fetch_components(config)
-    except Exception as e:
-        raise click.ClickException(f"While cloning git repositories: {e}") from e
-
+    _fetch_global_config(config, cluster)
+    _fetch_customer_config(config, customer_id)
+    fetch_components(config)
     target_name = update_target(config, cluster)
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
 
     # Fetch catalog
-    try:
-        catalog_repo = fetch_customer_catalog(cluster['gitRepo'])
-    except Exception as e:
-        raise click.ClickException(
-            f"While cloning cluster catalog git repository: {e}") from e
+    catalog_repo = fetch_customer_catalog(cluster['gitRepo'])
 
     return cluster, target_name, catalog_repo
 
