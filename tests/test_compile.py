@@ -19,4 +19,4 @@ def test_no_customer_repo(test_patch):
     }
     with pytest.raises(click.ClickException) as excinfo:
         compile._fetch_customer_config(config, customer_id)
-    assert customer_id in str(excinfo.value)
+    assert customer_id in str(excinfo)
