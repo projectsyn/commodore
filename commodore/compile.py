@@ -14,6 +14,7 @@ from .cluster import (
     reconstruct_api_response,
     update_target,
 )
+from .config import Component
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
@@ -108,7 +109,13 @@ def _local_setup(config, cluster_id):
             continue
         click.echo(f" > {c}")
         repo = git.init_repository(c)
-        config.register_component(c.name, repo)
+        component = Component(
+            name=c.name,
+            repo=repo,
+            version='master',
+            repo_url=repo.remotes.origin.url,
+        )
+        config.register_component(component)
 
     click.secho('Configuring catalog repo...', bold=True)
     catalog_repo = git.init_repository('catalog')

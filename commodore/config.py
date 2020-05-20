@@ -1,7 +1,11 @@
 from collections import namedtuple
 from pathlib import Path as P
 
-Component = namedtuple('Component', ['name', 'repo', 'version'])
+
+class Component(namedtuple('Component', ['name', 'repo', 'version', 'repo_url'])):
+    @property
+    def target_directory(self):
+        return P('dependencies') / self.name
 
 
 class Config:
@@ -36,27 +40,30 @@ class Config:
     def trace(self):
         return self._verbose >= 3
 
+    @property
+    def config_file(self):
+        return 'inventory/classes/global/commodore.yml'
+
+    @property
+    def default_component_base(self):
+        return f"{self.global_git_base}/commodore-components"
+
     def update_verbosity(self, verbose):
         self._verbose += verbose
 
     def get_components(self):
         return self._components
 
-    def register_component(self, component, repo):
-        c = Component(
-            name=component,
-            repo=repo,
-            version='master',
-        )
-        self._components[component] = c
+    def register_component(self, component: Component):
+        self._components[component.name] = component
 
-    def set_component_version(self, component, version):
-        c = self._components[component]
+    def set_component_version(self, component_name, version):
+        c = self._components[component_name]
         c = c._replace(version=version)
-        self._components[component] = c
+        self._components[component_name] = c
 
-    def get_component_repo(self, component):
-        return self._components[component].repo
+    def get_component_repo(self, component_name):
+        return self._components[component_name].repo
 
     def get_configs(self):
         return self._config_repos

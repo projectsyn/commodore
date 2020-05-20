@@ -5,15 +5,21 @@ import click
 from cookiecutter.main import cookiecutter
 
 from . import git
+from .config import Component
 from .dependency_mgmt import create_component_symlinks
 from .helpers import yaml_load, yaml_dump
 
 
 def create_component(config, name, lib, pp):
-    component_dir = P('dependencies', name)
-    if component_dir.exists():
+    component = Component(
+        name=name,
+        repo=None,
+        version='master',
+        repo_url=f"{config.default_component_base}/{name}.git",
+    )
+    if component.target_directory.exists():
         raise click.ClickException(
-            f"Unable to add component {name}: {component_dir} already exists.")
+            f"Unable to add component {name}: {component.target_directory} already exists.")
     click.secho(f"Adding component {name}...", bold=True)
     cookiecutter_args = {
         'component': name,
@@ -24,14 +30,15 @@ def create_component(config, name, lib, pp):
                  output_dir='dependencies',
                  extra_context=cookiecutter_args)
 
-    repo = git.create_repository(component_dir)
-    git.add_remote(repo, 'origin', f"{config.global_git_base}/commodore-components/{name}.git")
+    repo = git.create_repository(component.target_directory)
+    component = component._replace(repo=repo)
+    git.add_remote(repo, 'origin', component.repo_url)
     index = repo.index
     index.add('*')
     git.commit(repo, 'Initial commit')
 
     click.echo(' > Installing component')
-    create_component_symlinks(config, name)
+    create_component_symlinks(config, component)
 
     targetfile = P('inventory', 'targets', 'cluster.yml')
     target = yaml_load(targetfile)
