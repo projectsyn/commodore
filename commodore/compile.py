@@ -47,7 +47,8 @@ def _fetch_customer_config(cfg, customer_id):
     if repopath is None:
         raise click.ClickException(
             f" > API did not return a repository URL for customer '{customer_id}'")
-    click.echo(f"Cloning {repopath}")
+    if cfg.debug:
+        click.echo(f" > Cloning customer config {repopath}")
     repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
     cfg.register_config('customer', repo)
 
@@ -69,7 +70,7 @@ def _regular_setup(config, cluster_id):
             f"Only target with name 'cluster' is supported, got {target_name}")
 
     # Fetch catalog
-    catalog_repo = fetch_customer_catalog(cluster['gitRepo'])
+    catalog_repo = fetch_customer_catalog(config, cluster['gitRepo'])
 
     return cluster, target_name, catalog_repo
 
@@ -135,7 +136,7 @@ def compile(config, cluster_id):
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
-        fetch_jsonnet_libs(jsonnet_libs)
+        fetch_jsonnet_libs(config, jsonnet_libs)
 
     clean_catalog(catalog_repo)
 
@@ -147,7 +148,7 @@ def compile(config, cluster_id):
     if p.returncode != 0:
         raise click.ClickException('Kapitan catalog compilation failed.')
 
-    postprocess_components(kapitan_inventory, target_name, config.get_components())
+    postprocess_components(config, kapitan_inventory, target_name, config.get_components())
 
     update_catalog(config, target_name, catalog_repo)
 

@@ -23,7 +23,7 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
         raise click.ClickException(f"While setting up symlinks: {e}") from e
 
 
-def create_component_symlinks(component):
+def create_component_symlinks(cfg, component):
     target_directory = P('dependencies') / component
     _relsymlink(P(target_directory) / 'class', f"{component}.yml",
                 'inventory/classes/components')
@@ -37,13 +37,14 @@ def create_component_symlinks(component):
     libdir = P(target_directory) / 'lib'
     if libdir.is_dir():
         for file in os.listdir(libdir):
-            click.echo(f"     > installing template library: {file}")
+            if cfg.debug:
+                click.echo(f"     > installing template library: {file}")
             _relsymlink(libdir, file, 'dependencies/lib')
 
 
 def _discover_components(cfg, inventory_path):
     """
-    Discover components in `inventory_path/`.  Parse all classes found in
+    Discover components in `inventory_path/`. Parse all classes found in
     inventory_path and look for class includes starting with `components.`.
     """
     components = set()
@@ -85,8 +86,8 @@ def fetch_components(cfg):
     os.makedirs('inventory/classes/defaults', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     for c in components:
-        click.echo(f" > {c}...")
-        _fetch_component(cfg, c)
+        if cfg.debug:
+            click.echo(f" > Fetching component {c.name}...")
 
 
 def _set_component_version(cfg, component, version):
@@ -96,7 +97,7 @@ def _set_component_version(cfg, component, version):
     except git.RefError as e:
         click.secho(f"    unable to set version: {e}", fg='yellow')
     # Create symlinks again with correctly checked out components
-    create_component_symlinks(component)
+    create_component_symlinks(cfg, component)
     cfg.set_component_version(component, version)
 
 
@@ -113,7 +114,7 @@ def set_component_versions(cfg, versions):
         _set_component_version(cfg, cn, c['version'])
 
 
-def fetch_jsonnet_libs(libs):
+def fetch_jsonnet_libs(config, libs):
     """
     Download all libraries specified in list `libs`.
     Each entry in `libs` is assumed to be a dict with keys
@@ -134,7 +135,8 @@ def fetch_jsonnet_libs(libs):
     for lib in libs:
         libname = lib['name']
         filestext = ' '.join([f['targetfile'] for f in lib['files']])
-        click.echo(f" > {libname}: {filestext}")
+        if config.debug:
+            click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
             _relsymlink(repo.working_tree_dir, file['libfile'],

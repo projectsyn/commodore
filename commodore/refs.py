@@ -171,5 +171,6 @@ def update_refs(config, parameters):
     ref_params = rb.params
     # Create Kapitan references
     for r in rb.refs:
-        click.echo(f" > Creating Kapitan reffile for secret ref {r.refstr}")
+        if config.debug:
+            click.echo(f" > Creating Kapitan reffile for secret ref {r.refstr}")
         r.create_kapitan_ref(refdir, ref_params, debug=config.debug)

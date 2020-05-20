@@ -31,7 +31,7 @@ def create_component(config, name, lib, pp):
     git.commit(repo, 'Initial commit')
 
     click.echo(' > Installing component')
-    create_component_symlinks(name)
+    create_component_symlinks(config, name)
 
     targetfile = P('inventory', 'targets', 'cluster.yml')
     target = yaml_load(targetfile)
