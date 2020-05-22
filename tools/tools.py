@@ -15,8 +15,3 @@ def local_reveal():
 
 def compile():
     call(['kapitan', 'compile', '-J', '.', 'dependencies/', '--refs-path', './catalog/refs'])
-
-
-def test():
-    arguments = input("Enter tox arguments: ")
-    run('docker run -it --rm -v $PWD:/src:ro -v $PWD/.dtox:/app/.tox docker.io/painless/tox {}'.format(arguments), shell=True)
