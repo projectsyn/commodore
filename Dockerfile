@@ -1,58 +1,63 @@
 FROM docker.io/python:3.8.3-slim-buster AS base
 
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y make build-essential git && apt-get clean
-RUN pip install poetry
-
-RUN mkdir -p /app/.config && chown -R 1001 /app
-USER 1001
 ENV HOME=/app
+
+WORKDIR ${HOME}
+
+FROM base AS builder
+
+RUN apt-get update && apt-get install -y \
+      build-essential \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install poetry \
+ && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.in-project true && \
-    poetry install --no-dev
+RUN poetry config virtualenvs.in-project true \
+ && poetry install --no-dev
 
 COPY . ./
 
 ARG BINARY_VERSION=v0.0.0+dirty
-RUN sed -ie "s/^__version__ = 'v0.0.0+dirty'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
-
 ARG PYPACKAGE_VERSION=v0.0.0+dirty
-RUN poetry version "$PYPACKAGE_VERSION" && poetry build
 
-FROM docker.io/golang:1.13-buster AS helm_binding_builder
+RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py \
+ && poetry version "$PYPACKAGE_VERSION" \
+ && poetry build --format wheel
+
+FROM docker.io/golang:1.14-buster AS helm_binding_builder
 
 RUN apt-get update && apt-get install -y \
       python3-cffi \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /virtualenv
+
 COPY --from=builder /app/.venv/lib/python3.8/site-packages/kapitan ./kapitan
+
 RUN ./kapitan/inputs/helm/build.sh
 
-FROM base
+FROM base AS runtime
 
-WORKDIR /app
-RUN apt-get update && apt-get install -y git libnss-wrapper make build-essential && apt-get clean
-
-COPY --from=builder /app/dist/commodore-*-py3-none-any.whl ./
-
-RUN pip install ./commodore-*-py3-none-any.whl
-
-RUN apt-get purge --purge -y make build-essential && apt-get autoremove -y && rm /app/*.whl
+RUN apt-get update && apt-get install -y \
+      build-essential \
+      git \
+      libnss-wrapper \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY --from=helm_binding_builder \
 	/virtualenv/kapitan/inputs/helm/libtemplate.so \
 	/virtualenv/kapitan/inputs/helm/helm_binding.py \
 	/usr/local/lib/lib/python3.8/site-packages/kapitan/inputs/helm/
 
-RUN ssh-keyscan -t rsa git.vshn.net > /app/.known_hosts
+COPY --from=builder /app/dist/commodore-*-py3-none-any.whl ./
 
-ENV GIT_SSH=/app/tools/ssh
+RUN pip install ./commodore-*-py3-none-any.whl
 
-RUN chown 1001 /app
+RUN chgrp 0 /app/ \
+ && chmod g+rwX /app/
+
 USER 1001
 
 ENTRYPOINT ["/usr/local/bin/commodore"]
