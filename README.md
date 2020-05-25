@@ -84,13 +84,13 @@ using `helm template`.
    Note: Commodore currently only supports fetching remote Git repositories
    via SSH.
 
-3. Run Commodore
+1. Run Commodore
 
    ```console
    poetry run commodore
    ```
 
-4. Start hacking on Commodore
+1. Start hacking on Commodore
 
    ```console
    poetry shell
@@ -100,7 +100,7 @@ using `helm template`.
    - Write a line of application code, make the test pass
    - Repeat
 
-5. Run linting and tests
+1. Run linting and tests
 
    Auto format with autopep8
    ```console
@@ -140,7 +140,7 @@ You can skip starting an agent by setting the `SSH_AUTH_SOCK` env variable and m
 docker-compose build
 ```
 
-2. Run the built image:
+1. Run the built image:
 
 ```console
 docker-compose run commodore compile $CLUSTER_ID
