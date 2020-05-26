@@ -1,6 +1,7 @@
-click
-cookiecutter==1.7.0
-GitPython
 kapitan
+click
+cookiecutter
+gitpython
 requests
-url-normalize~=1.4
+url-normalize
+python-dotenv

@@ -1,5 +1,6 @@
 import click
 
+from dotenv import load_dotenv
 from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile
@@ -76,10 +77,5 @@ def new_component(config, name, verbose, lib, pp, owner, copyright_holder):
 
 
 def main():
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ModuleNotFoundError as e:
-        pass
-
+    load_dotenv()
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')

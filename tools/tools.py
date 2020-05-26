@@ -1,4 +1,4 @@
-from subprocess import call, run
+from subprocess import call
 
 
 def build_kapitan_helm_binding():
