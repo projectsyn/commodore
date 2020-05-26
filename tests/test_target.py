@@ -51,6 +51,13 @@ def test_optional_fact_region(data):
     assert f"global.cloud.{facts['cloud']}.{facts['region']}" in target['classes']
 
 
+def test_optional_fact_region_empty(data):
+    data['cluster']['facts']['region'] = ''
+    target = cluster._full_target(data['cluster'], data['components'], data['catalog'])
+    facts = data['cluster']['facts']
+    assert f"global.cloud.{facts['cloud']}.{facts['region']}" not in target['classes']
+
+
 def test_optional_fact_lieutenant_instance(data):
     data['cluster']['facts']['lieutenant-instance'] = 'lieutenant-dev'
     target = cluster._full_target(data['cluster'], data['components'], data['catalog'])
@@ -60,6 +67,12 @@ def test_optional_fact_lieutenant_instance(data):
 
 def test_missing_facts(data):
     data['cluster']['facts'].pop('cloud')
+    with pytest.raises(click.ClickException):
+        cluster._full_target(data['cluster'], data['components'], data['catalog'])
+
+
+def test_empty_facts(data):
+    data['cluster']['facts']['cloud'] = ''
     with pytest.raises(click.ClickException):
         cluster._full_target(data['cluster'], data['components'], data['catalog'])
 
