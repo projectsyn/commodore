@@ -21,9 +21,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
-    - name: Install Pipenv
+    - name: Install Poetry
       run: |
-        pip install pipenv tox
+        pip install poetry tox
     - name: Run ${{ matrix.command }}
       run: make ${{ matrix.command }}
   docs:

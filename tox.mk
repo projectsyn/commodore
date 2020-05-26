@@ -1,6 +1,6 @@
 .PHONY: tox lint_flake8 lint_pylint lint_safety lint_bandit lint_readme
 
-TOX_COMMAND = pipenv run tox
+TOX_COMMAND = poetry run tox
 
 tox:
 	$(TOX_COMMAND)

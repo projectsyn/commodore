@@ -2,9 +2,6 @@
   "extends": [
     "config:base"
   ],
-  "pipenv": {
-    "enabled": true
-  },
   "python": {
     "enabled": false
   }

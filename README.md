@@ -57,7 +57,7 @@ using `helm template`.
       bindings on OS X.
 
       ```console
-      pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
+      poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       ```
 
 1. Setup a `.env` file to configure Commodore (don't use quotes):
@@ -122,7 +122,7 @@ using `helm template`.
    poetry run tox -e py38
    ```
 
-   Upgrade dependencies (pipfile.lock, requirements.txt, poetry.lock)
+   Upgrade dependencies (requirements.txt, poetry.lock)
    ```console
    poetry run tox -e requirements
    ```
