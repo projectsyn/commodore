@@ -1,10 +1,10 @@
-import errno
 import os
 from pathlib import Path as P
 
 import click
 
 from . import git
+from .config import Component
 from .helpers import yaml_load
 
 
@@ -17,42 +17,40 @@ def _relsymlink(srcdir, srcname, destdir, destname=None):
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
     link_dst = P(destdir) / destname
     try:
-        os.symlink(link_src, link_dst)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
+        if link_dst.exists():
             os.remove(link_dst)
-            os.symlink(link_src, link_dst)
-        else:
-            raise click.ClickException(f"While setting up symlinks: {e}") from e
+        os.symlink(link_src, link_dst)
+    except Exception as e:
+        raise click.ClickException(f"While setting up symlinks: {e}") from e
 
 
-def create_component_symlinks(component):
-    target_directory = P('dependencies') / component
-    _relsymlink(P(target_directory) / 'class', f"{component}.yml",
+def create_component_symlinks(cfg, component: Component):
+    _relsymlink(component.target_directory / 'class', f"{component.name}.yml",
                 'inventory/classes/components')
-    component_defaults_class = P(target_directory) / 'class' / 'defaults.yml'
+    component_defaults_class = component.target_directory / 'class' / 'defaults.yml'
     if component_defaults_class.is_file():
-        _relsymlink(P(target_directory) / 'class', 'defaults.yml',
-                    P('inventory/classes/defaults'), destname=f"{component}.yml")
+        _relsymlink(component.target_directory / 'class', 'defaults.yml',
+                    P('inventory/classes/defaults'), destname=f"{component.name}.yml")
     else:
         click.secho('     > Old-style component detected. Please move ' +
                     'component defaults to \'class/defaults.yml\'', fg='yellow')
-    libdir = P(target_directory) / 'lib'
+    libdir = component.target_directory / 'lib'
     if libdir.is_dir():
         for file in os.listdir(libdir):
-            click.echo(f"     > installing template library: {file}")
+            if cfg.debug:
+                click.echo(f"     > installing template library: {file}")
             _relsymlink(libdir, file, 'dependencies/lib')
 
 
 def _discover_components(cfg, inventory_path):
     """
-    Discover components in `inventory_path/`.  Parse all classes found in
+    Discover components in `inventory_path/`. Parse all classes found in
     inventory_path and look for class includes starting with `components.`.
     """
     components = set()
     inventory = P(inventory_path)
     for classfile in inventory.glob('**/*.yml'):
-        if cfg.debug:
+        if cfg.trace:
             click.echo(f" > Discovering components in {classfile}")
         classyaml = yaml_load(classfile)
         if classyaml is not None:
@@ -65,12 +63,36 @@ def _discover_components(cfg, inventory_path):
     return sorted(components)
 
 
-def _fetch_component(cfg, component):
-    repository_url = f"{cfg.global_git_base}/commodore-components/{component}.git"
-    target_directory = P('dependencies') / component
-    repo = git.clone_repository(repository_url, target_directory)
-    cfg.register_component(component, repo)
-    create_component_symlinks(component)
+def _read_component_urls(cfg, component_names):
+    components = []
+    component_urls = {}
+    if cfg.debug:
+        click.echo(f"   > Read commodore config file {cfg.config_file}")
+    try:
+        commodore_config = yaml_load(cfg.config_file)
+    except Exception as e:
+        raise click.ClickException(f"Could not read Commodore configuration: {e}") from e
+    if commodore_config is None:
+        click.secho('Empty Commodore config file', fg='yellow')
+    else:
+        for component_override in commodore_config.get('components', []):
+            if cfg.debug:
+                click.echo(f"   > Found override for component {component_override['name']}:")
+                click.echo(f"     Using URL {component_override['url']}")
+            component_urls[component_override['name']] = component_override['url']
+    for component_name in component_names:
+        repository_url = \
+            component_urls.get(
+                component_name,
+                f"{cfg.default_component_base}/{component_name}.git")
+        component = Component(
+            name=component_name,
+            repo=None,
+            version='master',
+            repo_url=repository_url,
+        )
+        components.append(component)
+    return components
 
 
 def fetch_components(cfg):
@@ -82,25 +104,30 @@ def fetch_components(cfg):
     """
 
     click.secho('Discovering components...', bold=True)
-    components = _discover_components(cfg, 'inventory')
+    component_names = _discover_components(cfg, 'inventory')
+    components = _read_component_urls(cfg, component_names)
     click.secho('Fetching components...', bold=True)
     os.makedirs('inventory/classes/components', exist_ok=True)
     os.makedirs('inventory/classes/defaults', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
     for c in components:
-        click.echo(f" > {c}...")
-        _fetch_component(cfg, c)
+        if cfg.debug:
+            click.echo(f" > Fetching component {c.name}...")
+        repo = git.clone_repository(c.repo_url, c.target_directory)
+        c = c._replace(repo=repo)
+        cfg.register_component(c)
+        create_component_symlinks(cfg, c)
 
 
-def _set_component_version(cfg, component, version):
+def _set_component_version(cfg, component: Component, version):
     click.echo(f" > {component}: {version}")
     try:
-        git.checkout_version(cfg.get_component_repo(component), version)
+        git.checkout_version(component.repo, version)
     except git.RefError as e:
         click.secho(f"    unable to set version: {e}", fg='yellow')
     # Create symlinks again with correctly checked out components
-    create_component_symlinks(component)
-    cfg.set_component_version(component, version)
+    create_component_symlinks(cfg, component)
+    cfg.set_component_version(component.name, version)
 
 
 def set_component_versions(cfg, versions):
@@ -112,11 +139,12 @@ def set_component_versions(cfg, versions):
     """
 
     click.secho('Setting component versions...', bold=True)
-    for cn, c in versions.items():
-        _set_component_version(cfg, cn, c['version'])
+    for component_name, c in versions.items():
+        component = cfg.get_components()[component_name]
+        _set_component_version(cfg, component, c['version'])
 
 
-def fetch_jsonnet_libs(libs):
+def fetch_jsonnet_libs(config, libs):
     """
     Download all libraries specified in list `libs`.
     Each entry in `libs` is assumed to be a dict with keys
@@ -137,7 +165,8 @@ def fetch_jsonnet_libs(libs):
     for lib in libs:
         libname = lib['name']
         filestext = ' '.join([f['targetfile'] for f in lib['files']])
-        click.echo(f" > {libname}: {filestext}")
+        if config.debug:
+            click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
             _relsymlink(repo.working_tree_dir, file['libfile'],

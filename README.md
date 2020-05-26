@@ -68,7 +68,7 @@ using `helm template`.
    # Lieutenant API token
    COMMODORE_API_TOKEN=<my-token>
    # Base URL for global Git repositories
-   COMMODORE_GLOBAL_GIT_BASE=ssh://git@github.com/projectsyn/
+   COMMODORE_GLOBAL_GIT_BASE=ssh://git@github.com/projectsyn
    # Your local user ID to be used in the container (optional, defaults to root)
    USER_ID=<your-user-id>
    ```

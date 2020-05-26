@@ -11,10 +11,10 @@ def test_run_newcomponent_command():
     Run the new-component command
     """
 
-    os.makedirs(P('inventory', 'classes', 'components'))
-    os.makedirs(P('inventory', 'classes', 'defaults'))
-    os.makedirs(P('dependencies', 'lib'))
-    os.makedirs(P('inventory', 'targets'))
+    os.makedirs(P('inventory', 'classes', 'components'), exist_ok=True)
+    os.makedirs(P('inventory', 'classes', 'defaults'), exist_ok=True)
+    os.makedirs(P('dependencies', 'lib'), exist_ok=True)
+    os.makedirs(P('inventory', 'targets'), exist_ok=True)
     targetyml = P('inventory', 'targets', 'cluster.yml')
     with open(targetyml, 'w') as file:
         file.write('''classes:

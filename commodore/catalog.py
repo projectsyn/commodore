@@ -6,8 +6,10 @@ from . import git
 from .helpers import rm_tree_contents
 
 
-def fetch_customer_catalog(repoinfo):
-    click.secho('Updating customer catalog...', bold=True)
+def fetch_customer_catalog(config, repoinfo):
+    click.secho('Updating cluster catalog...', bold=True)
+    if config.debug:
+        click.echo(f" > Cloning cluster catalog {repoinfo['url']}")
     return git.clone_repository(repoinfo['url'], 'catalog')
 
 

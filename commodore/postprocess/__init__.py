@@ -8,7 +8,7 @@ from .jsonnet import run_jsonnet_filter
 from .builtin_filters import run_builtin_filter
 
 
-def postprocess_components(inventory, target, components):
+def postprocess_components(config, inventory, target, components):
     click.secho('Postprocessing...', bold=True)
     for cn, c in components.items():
         if f"components.{cn}" not in inventory['classes']:
@@ -16,7 +16,8 @@ def postprocess_components(inventory, target, components):
         repodir = P(c.repo.working_tree_dir)
         filterdir = repodir / 'postprocess'
         if filterdir.is_dir():
-            click.echo(f" > {cn}...")
+            if config.debug:
+                click.echo(f" > {cn}...")
             filters = yaml_load(filterdir / 'filters.yml')
             for f in filters['filters']:
                 # old-style filters are always 'jsonnet'
