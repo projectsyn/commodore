@@ -72,6 +72,20 @@ def clone_repository(repository_url, directory):
     return repo
 
 
+def update_remote(repo: Repo, remote_url):
+    origin = repo.remotes.origin
+    if origin.url != remote_url:
+        with origin.config_writer as cw:
+            cw.set("url", remote_url)
+        try:
+            origin.pull(prune=True)
+            return True
+        except Exception as e:
+            raise click.ClickException(
+                f"While fetching git repository: {e}") from e
+    return False
+
+
 def init_repository(path):
     return Repo(path)
 
