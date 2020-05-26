@@ -2,6 +2,7 @@
 """
 Packaging for Commodore
 """
+from importlib.metadata import version
 from setuptools import setup, find_packages
 
 import commodore as package
@@ -15,7 +16,7 @@ def read_file(filename):
 
 setup(
     name=package.__name__,
-    version=package.__version__,
+    version=version('commodore'),
     description=package.__doc__.strip().split('\n')[0],
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',

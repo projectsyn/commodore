@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 import click
 
 from dotenv import load_dotenv
@@ -5,8 +7,6 @@ from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile
 from .component_template import ComponentFactory
-
-from . import __version__
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -20,7 +20,7 @@ verbosity = click.option('-v', '--verbose', count=True,
 @click.option('--global-git-base', metavar='URL',
               help='Base directory for global Git config repositories')
 @verbosity
-@click.version_option(__version__, prog_name='commodore')
+@click.version_option(version('commodore'), prog_name='commodore')
 @click.pass_context
 # pylint: disable=too-many-arguments
 def commodore(ctx, api_url, api_token, global_git_base, verbose):

@@ -19,11 +19,9 @@ RUN poetry config virtualenvs.create false \
 
 COPY . ./
 
-ARG BINARY_VERSION=v0.0.0+dirty
-ARG PYPACKAGE_VERSION=v0.0.0+dirty
+ARG VERSION=v0.0.0+dirty
 
-RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py \
- && poetry version "$PYPACKAGE_VERSION" \
+RUN poetry version "$VERSION" \
  && poetry build --format wheel
 
 RUN pip install ./dist/commodore-*-py3-none-any.whl
