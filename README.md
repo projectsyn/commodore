@@ -122,10 +122,6 @@ using `helm template`.
    poetry run tox -e py38
    ```
 
-   Upgrade dependencies (requirements.txt, poetry.lock)
-   ```console
-   poetry run tox -e requirements
-   ```
 
 ## Run Commodore in Docker
 

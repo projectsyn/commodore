@@ -26,8 +26,6 @@ build_kapitan_helm_binding = 'tools.tools:build_kapitan_helm_binding'
 autopep = 'tools.tools:autopep'
 local_reveal = 'tools.tools:reveal'
 compile = 'tools.tools:compile'
-test = 'tools.tools:test'
-update_requirements = 'tools.tools:update_requirements'
 
 [build-system]
 requires = ["poetry>=0.12"]
