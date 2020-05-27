@@ -8,9 +8,7 @@ from git.exc import GitCommandError, BadName
 
 
 class RefError(ValueError):
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
+    pass
 
 
 def _normalize_git_ssh(url):
