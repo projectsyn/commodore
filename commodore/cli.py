@@ -1,8 +1,7 @@
-from importlib.metadata import version
-
 import click
 
 from dotenv import load_dotenv
+from importlib_metadata import version
 from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile

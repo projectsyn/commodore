@@ -67,10 +67,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.13.16"
+version = "1.13.17"
 
 [package.dependencies]
-botocore = ">=1.16.16,<1.17.0"
+botocore = ">=1.16.17,<1.17.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.3.0,<0.4.0"
 
@@ -80,7 +80,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.16.16"
+version = "1.16.17"
 
 [package.dependencies]
 docutils = ">=0.10,<0.16"
@@ -324,7 +324,6 @@ version = "2.9"
 [[package]]
 category = "main"
 description = "Read metadata from Python packages"
-marker = "python_version < \"3.8\""
 name = "importlib-metadata"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
@@ -827,7 +826,6 @@ pyyaml = "*"
 [[package]]
 category = "main"
 description = "Backport of pathlib-compatible object wrapper for zip files"
-marker = "python_version < \"3.8\""
 name = "zipp"
 optional = false
 python-versions = ">=3.6"
@@ -838,7 +836,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "47c4a9b718879509e0762ef20a32a4fcf0603b5a51d602573fb7e5a0f2ad9a3e"
+content-hash = "3f72e88604195fa115be0feff43ad82f2f1e1964341edb01d2b34555469a3b1b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -866,12 +864,12 @@ binaryornot = [
     {file = "binaryornot-0.4.4.tar.gz", hash = "sha256:359501dfc9d40632edc9fac890e19542db1a287bbcfa58175b66658392018061"},
 ]
 boto3 = [
-    {file = "boto3-1.13.16-py2.py3-none-any.whl", hash = "sha256:650d67b0d47b7bc0d79f04cc944506823dbbc2f76f60e64ce6d7cdd89f60a2eb"},
-    {file = "boto3-1.13.16.tar.gz", hash = "sha256:2a97c9e8fd2c0f8d8a92262a0ccbd00aad8c4786acb74f620f54164070cb72ff"},
+    {file = "boto3-1.13.17-py2.py3-none-any.whl", hash = "sha256:f5218afc43c4c21ae2e8a1d4620d27ab6765250fe1f913ab234fbb686de87ae1"},
+    {file = "boto3-1.13.17.tar.gz", hash = "sha256:009d0b483513e4c8639895c2b8dc451b41c9b863116d0234506b8b88b30a3d1b"},
 ]
 botocore = [
-    {file = "botocore-1.16.16-py2.py3-none-any.whl", hash = "sha256:0275023d023f0e3f9c27e5f23c437dd09ee715577cc628cf724e8bfbba2b459e"},
-    {file = "botocore-1.16.16.tar.gz", hash = "sha256:70d52f606bab2867971c0ea0c7723a769d81aa3cfd09f819d2b56e186e64ea0b"},
+    {file = "botocore-1.16.17-py2.py3-none-any.whl", hash = "sha256:cca04cd4bdb092a727772c38808f97e15f07dc609f6fbd7d7ba09c7734058794"},
+    {file = "botocore-1.16.17.tar.gz", hash = "sha256:f9627c718d480225cbfeeeb7b4a694b9cea3cae67940a4b673770cfaca328a81"},
 ]
 cachetools = [
     {file = "cachetools-4.1.0-py3-none-any.whl", hash = "sha256:de5d88f87781602201cde465d3afe837546663b168e8b39df67411b0bf10cefc"},
