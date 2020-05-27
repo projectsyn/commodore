@@ -12,9 +12,7 @@ jobs:
         command:
           - lint_flake8
           - lint_pylint
-          - lint_safety
           - lint_bandit
-          - lint_readme
           - test_py36
           - test_py37
           - test_py38
