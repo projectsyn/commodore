@@ -46,7 +46,7 @@ def reconstruct_api_response(target_yml):
 def _full_target(cluster, components, catalog):
     cluster_facts = cluster['facts']
     for required_fact in ['distribution', 'cloud']:
-        if required_fact not in cluster_facts:
+        if required_fact not in cluster_facts or not cluster_facts[required_fact]:
             raise click.ClickException(f"Required fact '{required_fact}' not set")
 
     cluster_distro = cluster_facts['distribution']
@@ -58,9 +58,9 @@ def _full_target(cluster, components, catalog):
     global_defaults = ['global.common',
                        f"global.distribution.{cluster_distro}",
                        f"global.cloud.{cloud_provider}"]
-    if 'region' in cluster_facts:
+    if 'region' in cluster_facts and cluster_facts['region']:
         global_defaults.append(f"global.cloud.{cloud_provider}.{cluster_facts['region']}")
-    if 'lieutenant-instance' in cluster_facts:
+    if 'lieutenant-instance' in cluster_facts and cluster_facts['lieutenant-instance']:
         global_defaults.append(
             f"global.lieutenant-instance.{cluster_facts['lieutenant-instance']}")
     global_defaults.append(f"{customer}.{cluster_id}")
