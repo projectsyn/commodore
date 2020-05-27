@@ -17,7 +17,7 @@ def _pretty_print_component_commit(name, component):
     repo = component.repo
     sha = repo.head.commit.hexsha
     short_sha = repo.git.rev_parse(sha, short=6)
-    return f" * {name}:{component.version} ({short_sha})"
+    return f" * {name}: {component.version} ({short_sha})"
 
 
 def _pretty_print_config_commit(name, repo):

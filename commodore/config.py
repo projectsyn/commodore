@@ -1,8 +1,15 @@
-from collections import namedtuple
+from typing import NamedTuple
 from pathlib import Path as P
 
+from git import Repo
 
-class Component(namedtuple('Component', ['name', 'repo', 'version', 'repo_url'])):
+
+class Component(NamedTuple):
+    name: str
+    repo: Repo
+    repo_url: str
+    version: str = 'master'
+
     @property
     def target_directory(self):
         return P('dependencies') / self.name
@@ -61,6 +68,13 @@ class Config:
         c = self._components[component_name]
         c = c._replace(version=version)
         self._components[component_name] = c
+        return c
+
+    def set_repo_url(self, component_name, repo_url):
+        c = self._components[component_name]
+        c = c._replace(repo_url=repo_url)
+        self._components[component_name] = c
+        return c
 
     def get_component_repo(self, component_name):
         return self._components[component_name].repo

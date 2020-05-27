@@ -18,7 +18,7 @@ from .config import Component
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
-    set_component_versions
+    set_component_overrides
 )
 from .helpers import (
     ApiError,
@@ -137,7 +137,7 @@ def compile(config, cluster_id):
     kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
-        set_component_versions(config, versions)
+        set_component_overrides(config, versions)
         update_target(config, cluster)
 
     jsonnet_libs = kapitan_inventory['parameters'].get(

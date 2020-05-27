@@ -8,9 +8,7 @@ from git.exc import GitCommandError, BadName
 
 
 class RefError(ValueError):
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
+    pass
 
 
 def _normalize_git_ssh(url):
@@ -70,6 +68,20 @@ def clone_repository(repository_url, directory):
         click.echo(f" > {e}, creating initial commit for {directory}")
         commit(repo, "Initial commit")
     return repo
+
+
+def update_remote(repo: Repo, remote_url):
+    origin = repo.remotes.origin
+    if origin.url != remote_url:
+        with origin.config_writer as cw:
+            cw.set("url", remote_url)
+        try:
+            origin.pull(prune=True)
+            return True
+        except Exception as e:
+            raise click.ClickException(
+                f"While fetching git repository: {e}") from e
+    return False
 
 
 def init_repository(path):

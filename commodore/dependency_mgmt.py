@@ -119,29 +119,38 @@ def fetch_components(cfg):
         create_component_symlinks(cfg, c)
 
 
-def _set_component_version(cfg, component: Component, version):
-    click.echo(f" > {component}: {version}")
-    try:
-        git.checkout_version(component.repo, version)
-    except git.RefError as e:
-        click.secho(f"    unable to set version: {e}", fg='yellow')
-    # Create symlinks again with correctly checked out components
-    create_component_symlinks(cfg, component)
-    cfg.set_component_version(component.name, version)
-
-
-def set_component_versions(cfg, versions):
+def set_component_overrides(cfg, versions):
     """
-    Set component versions according to versions provided in versions dict.
-    The dict is assumed to contain component names as keys, and dicts as
+    Set component overrides according to versions and URLs provided in versions dict.
+    The dict is assumed to contain the component names as keys, and dicts as
     values. The value dicts are assumed to contain a key 'version' which
-    indicates the version as a Git tree-ish.
+    indicates the version as a Git tree-ish. Additionally the key 'url' can
+    specify the URL of the Git repo.
     """
 
-    click.secho('Setting component versions...', bold=True)
-    for component_name, c in versions.items():
+    click.secho('Setting component overrides...', bold=True)
+    for component_name, overrides in versions.items():
         component = cfg.get_components()[component_name]
-        _set_component_version(cfg, component, c['version'])
+        needs_checkout = False
+        if 'url' in overrides:
+            url = overrides['url']
+            if cfg.debug:
+                click.echo(f" > Set URL for {component.name}: {url}")
+            needs_checkout = git.update_remote(component.repo, url)
+            component = cfg.set_repo_url(component_name, url)
+        if 'version' in overrides:
+            version = overrides['version']
+            if cfg.debug:
+                click.echo(f" > Set version for {component.name}: {version}")
+            needs_checkout = True
+            component = cfg.set_component_version(component_name, version)
+        if needs_checkout:
+            try:
+                git.checkout_version(component.repo, component.version)
+            except git.RefError as e:
+                raise click.ClickException(f"While setting component override: {e}") from e
+            # Create symlinks again with correctly checked out components
+            create_component_symlinks(cfg, component)
 
 
 def fetch_jsonnet_libs(config, libs):
