@@ -1,6 +1,9 @@
+local kap = import 'lib/kapitan.libjsonnet';
+local params = kap.inventory().parameters;
+
 local namespaced(ns, obj) =
   obj {
-    metadata+: { namespace: ns }
+    metadata+: { namespace: ns },
   };
 
 local filterNull(list) = std.filter(function(obj) obj != null, list);
@@ -41,9 +44,10 @@ local patch_namespace(obj_file, namespace, kinds=null, exclude_objects=[]) =
   else
     function(o) true;
   // helper to patch the objects
-  local addns(obj) = obj + { metadata+: { namespace: namespace } };
+  local addns(obj) = obj { metadata+: { namespace: namespace } };
   // add namespace to objects for which objfilter returns true
-  [ if kindfilter(obj) && include(obj) then addns(obj) else obj
+  [
+    if kindfilter(obj) && include(obj) then addns(obj) else obj
     for obj in objs
   ];
 
@@ -55,12 +59,62 @@ local addNamespaceToHelmOutput(template_dir, namespace, exclude_objects=[]) =
   local input_file(elem) = template_dir + '/' + elem;
   local stem(elem) =
     local elems = std.split(elem, '.');
-    std.join('.', elems[:std.length(elems)-1]);
+    std.join('.', elems[:std.length(elems) - 1]);
   {
-    [stem(elem)]: patch_namespace(input_file(elem), namespace,
+    [stem(elem)]: patch_namespace(input_file(elem),
+                                  namespace,
                                   exclude_objects=exclude_objects)
     for elem in chart_files
   };
+
+/**
+* \brief Helper to inject proxy variables into a containers environment.
+*
+* HTTP proxy configuration is supposed to be done at `parameters.global` and
+* meant to be used by all components. This helper makes it easy to add those
+* values to a containers environment. No need to do any checks whether or not
+* they have to be added.
+*
+* This helper is suitable to be used with `env_:` from the Kubernetes Jsonnet
+* library. If the list form is used, combine it with `com.envList`.
+*
+* \return Dictionary. When configured, contains the http proxy environment
+*         variables in both upper and lower case form. Will be empty otherwise.
+*/
+local proxyVars = if std.objectHas(params, 'global') then {
+  [if std.objectHas(params.global, 'http_proxy') then 'HTTP_PROXY']: params.global.http_proxy,
+  [if std.objectHas(params.global, 'http_proxy') then 'http_proxy']: params.global.http_proxy,
+  [if std.objectHas(params.global, 'https_proxy') then 'HTTPS_PROXY']: params.global.https_proxy,
+  [if std.objectHas(params.global, 'https_proxy') then 'https_proxy']: params.global.https_proxy,
+  [if std.objectHas(params.global, 'no_proxy') then 'NO_PROXY']: params.global.no_proxy,
+  [if std.objectHas(params.global, 'no_proxy') then 'no_proxy']: params.global.no_proxy,
+} else {};
+
+/**
+* \brief Helper function to convert a dictionary into an environment list.
+*
+* Kubernetes containers require environment variables to be a list of objects.
+* In its simplest form, the object contains the keys `name` and `value`.
+*
+* This helper converts a dictionary into such a list where keys become `name`,
+* and values become `value`.
+*
+* \arg map Dictionary to be converted.
+*
+* \return List of dictionaries with `name`, `value` keys.
+*/
+local envList(map) = [
+  if std.type(map[x]) == 'object'
+  then {
+    name: x,
+    valueFrom: map[x],
+  } else {
+    // Let `null` value stay as such (vs string-ified)
+    name: x,
+    value: if map[x] == null then null else std.toString(map[x]),
+  }
+  for x in std.objectFields(map)
+];
 
 {
   inventory: std.native('inventory'),
@@ -70,4 +124,6 @@ local addNamespaceToHelmOutput(template_dir, namespace, exclude_objects=[]) =
   filterNull: filterNull,
   patchNamespace: patch_namespace,
   addNamespaceToHelmOutput: addNamespaceToHelmOutput,
+  proxyVars: proxyVars,
+  envList: envList,
 }
