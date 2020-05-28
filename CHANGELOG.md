@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Allow overwriting of component git repo URLs ([#100])
 * Introduce trace log level with `-vvv` flag ([#100])
+* Helpers for managing HTTP proxy environment variables ([#106])
 
 ## [v0.1.5]
 
@@ -75,3 +76,4 @@ Initial implementation
 [#95]: https://github.com/projectsyn/commodore/pull/95
 [#99]: https://github.com/projectsyn/commodore/pull/99
 [#100]: https://github.com/projectsyn/commodore/pull/100
+[#106]: https://github.com/projectsyn/commodore/pull/106
