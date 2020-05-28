@@ -1,6 +1,6 @@
 local namespaced(ns, obj) =
   obj {
-    metadata+: { namespace: ns }
+    metadata+: { namespace: ns },
   };
 
 local filterNull(list) = std.filter(function(obj) obj != null, list);
@@ -41,9 +41,10 @@ local patch_namespace(obj_file, namespace, kinds=null, exclude_objects=[]) =
   else
     function(o) true;
   // helper to patch the objects
-  local addns(obj) = obj + { metadata+: { namespace: namespace } };
+  local addns(obj) = obj { metadata+: { namespace: namespace } };
   // add namespace to objects for which objfilter returns true
-  [ if kindfilter(obj) && include(obj) then addns(obj) else obj
+  [
+    if kindfilter(obj) && include(obj) then addns(obj) else obj
     for obj in objs
   ];
 
@@ -55,9 +56,10 @@ local addNamespaceToHelmOutput(template_dir, namespace, exclude_objects=[]) =
   local input_file(elem) = template_dir + '/' + elem;
   local stem(elem) =
     local elems = std.split(elem, '.');
-    std.join('.', elems[:std.length(elems)-1]);
+    std.join('.', elems[:std.length(elems) - 1]);
   {
-    [stem(elem)]: patch_namespace(input_file(elem), namespace,
+    [stem(elem)]: patch_namespace(input_file(elem),
+                                  namespace,
                                   exclude_objects=exclude_objects)
     for elem in chart_files
   };
