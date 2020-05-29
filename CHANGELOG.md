@@ -5,7 +5,7 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [v0.1.6]
 
 ### Changed
 * Show some logs only in verbose mode ([#100])
@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Allow overwriting of component git repo URLs ([#100])
 * Introduce trace log level with `-vvv` flag ([#100])
 * Helpers for managing HTTP proxy environment variables ([#106])
+
+### Fixed
+* Handle empty facts ([#103])
 
 ## [v0.1.5]
 
@@ -67,6 +70,7 @@ Initial implementation
 [v0.1.3]: https://github.com/projectsyn/commodore/releases/tag/v0.1.3
 [v0.1.4]: https://github.com/projectsyn/commodore/releases/tag/v0.1.4
 [v0.1.5]: https://github.com/projectsyn/commodore/releases/tag/v0.1.5
+[v0.1.6]: https://github.com/projectsyn/commodore/releases/tag/v0.1.6
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58
 [#81]: https://github.com/projectsyn/commodore/pull/81
@@ -76,4 +80,5 @@ Initial implementation
 [#95]: https://github.com/projectsyn/commodore/pull/95
 [#99]: https://github.com/projectsyn/commodore/pull/99
 [#100]: https://github.com/projectsyn/commodore/pull/100
+[#103]: https://github.com/projectsyn/commodore/pull/103
 [#106]: https://github.com/projectsyn/commodore/pull/106
