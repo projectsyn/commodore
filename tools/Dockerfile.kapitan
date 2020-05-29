@@ -1,6 +1,6 @@
 # Pushed to docker.io/vshn/kapitan:v0.27.4
 
-FROM docker.io/alpine:3.11
+FROM docker.io/alpine:3.12
 
 ENV KAPITAN_VERSION=v0.27.4
 
