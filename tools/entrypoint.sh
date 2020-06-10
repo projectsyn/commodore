@@ -14,6 +14,12 @@ if ! whoami &> /dev/null; then
   echo "commodore:x:$(id -u):0:commodore user:${HOME}:/sbin/nologin" > "${NSS_WRAPPER_PASSWD}"
 fi
 
+if [ ! -z "${SSH_PRIVATE_KEY}" ]; then
+  mkdir /app/.ssh
+  echo "${SSH_PRIVATE_KEY}" > /app/.ssh/id
+  chmod 0400 /app/.ssh/id
+fi
+
 if [ -z "${SSH_AUTH_SOCK}" ]; then
   eval "$(ssh-agent)"
   ssh-add $(grep -rlE 'BEGIN .+ PRIVATE KEY' /app/.ssh) || echo "No SSH keys were added"
