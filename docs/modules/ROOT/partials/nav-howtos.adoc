@@ -1,1 +1,1 @@
-* xref:writing-a-component.adoc[Writing a Component]
+* xref:commodore:ROOT:writing-a-component.adoc[Writing a Component]

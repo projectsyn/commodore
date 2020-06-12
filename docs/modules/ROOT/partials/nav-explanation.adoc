@@ -1,1 +1,1 @@
-* xref:local-mode.adoc[Local Mode]
+* xref:commodore:ROOT:local-mode.adoc[Local Mode]
