@@ -1,5 +1,5 @@
-= Commodore
+= Project Syn: Commodore
 
 image::syn.png[]
 
-This is the documentation of the Commodore project.
+Welcome to the documentation of Commodore - a Project Syn tool.
