@@ -32,3 +32,18 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         buildargs: BINARY_VERSION
+
+  build-component-test:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    env:
+      IMAGE: docker.io/${{ github.repository }}-compontent-test:latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Push Compontent Testing Image
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: "${{ env.IMAGE }}"
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: tools/Dockerfile.component_test

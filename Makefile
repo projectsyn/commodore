@@ -61,3 +61,10 @@ IMAGE_NAME ?= docker.io/vshn/$(BINARY_NAME):$(VERSION)
 docker:
 	docker build --build-arg BINARY_VERSION=$(BINARY_VERSION) -t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
+
+COMPONENT_TEST_IMAGE_NAME ?= docker.io/vshn/$(BINARY_NAME)-component-test:$(VERSION)
+
+.PHONY: docker-component-test
+docker-component-test:
+	docker build -t $(COMPONENT_TEST_IMAGE_NAME) -f tools/Dockerfile.component_test .
+	@echo built image $(COMPONENT_TEST_IMAGE_NAME)
