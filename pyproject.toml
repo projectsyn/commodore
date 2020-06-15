@@ -4,6 +4,7 @@ version = "v0.0.0"
 description = "Commodore is a wrapper around Kapitan which allows compiling a Kapitan inventory from multiple Git repositories"
 authors = ["Simon Gerber <simon.gerber@vshn.ch>"]
 license = "BSD-3-Clause"
+include = ["commodore/lib/commodore.libjsonnet", "commodore/filters/helm_namespace.jsonnet"]
 
 [tool.poetry.dependencies]
 python = "^3.6"

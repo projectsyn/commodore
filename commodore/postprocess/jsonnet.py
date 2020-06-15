@@ -7,6 +7,7 @@ import _jsonnet
 import click
 
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
+from commodore import __install_dir__
 
 #  Returns content if worked, None if file not found, or throws an exception
 
@@ -40,7 +41,7 @@ def _import_callback_with_searchpath(search, basedir, rel):
 
 def _import_cb(basedir, rel):
     # Add current working dir to search path for Jsonnet import callback
-    search_path = [P('.').resolve(), P('./dependencies').resolve()]
+    search_path = [P('.').resolve(), __install_dir__.resolve(), P('./dependencies').resolve()]
     return _import_callback_with_searchpath(search_path, basedir, rel)
 
 

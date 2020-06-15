@@ -60,8 +60,6 @@ COPY --from=helm_binding_builder \
       /usr/local/lib/python3.8/site-packages/kapitan/inputs/helm/
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
-COPY ./lib/ /app/lib/
-COPY ./filters/ /app/filters/
 
 RUN chgrp 0 /app/ \
  && chmod g+rwX /app/
