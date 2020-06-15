@@ -48,3 +48,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build component testing image
       run: make docker-component-test
+      env:
+        VERSION: test
