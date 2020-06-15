@@ -8,7 +8,8 @@ include = ["commodore/lib/commodore.libjsonnet", "commodore/filters/helm_namespa
 
 [tool.poetry.dependencies]
 python = "^3.6"
-kapitan = "*"
+# Require kapitan >= 0.27 to help poetry to resolve dependencies
+kapitan = ">=0.27"
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
