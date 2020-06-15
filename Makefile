@@ -51,14 +51,16 @@ include tox.mk
 # Project parameters
 BINARY_NAME ?= commodore
 
-VERSION ?= $(shell git describe --tags --always --dirty=+dirty --abbrev=0 --match=v* || (echo "command failed $?"; exit 1))
+GITVERSION ?= $(shell git describe --tags --always --match=v* --dirty=+dirty || (echo "command failed $?"; exit 1))
+PYVERSION ?= $(shell git describe --tags --always --abbrev=0 --match=v* || (echo "command failed $?"; exit 1))
 
 IMAGE_NAME ?= docker.io/vshn/$(BINARY_NAME):test
 
 .PHONY: docker
 
 docker:
-	docker build --build-arg VERSION=$(VERSION) \
+	docker build --build-arg PYVERSION=$(PYVERSION) \
+		--build-arg GITVERSION=$(GITVERSION) \
 		-t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
 

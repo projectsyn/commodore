@@ -19,9 +19,11 @@ RUN poetry config virtualenvs.create false \
 
 COPY . ./
 
-ARG VERSION=v0.0.0+dirty
+ARG PYVERSION=v0.0.0
+ARG GITVERSION=v0.0.0+dirty
 
-RUN poetry version "$VERSION" \
+RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py \
+ && poetry version "${PYVERSION}" \
  && poetry build --format wheel
 
 RUN pip install ./dist/commodore-*-py3-none-any.whl

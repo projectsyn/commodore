@@ -6,6 +6,7 @@ __author__ = 'Simon Gerber'
 __email__ = 'simon.gerber@vshn.ch'
 __license__ = 'BSD'
 __url__ = 'https://git.vshn.net/syn/commodore/'
+__git_version__ = "0"
 
 # provide Commodore installation dir as variable that can be imported
 from pathlib import Path as P
