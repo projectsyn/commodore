@@ -24,25 +24,9 @@ jobs:
       env:
         IMAGE_NAME: "${IMAGE}:${VERSION}"
     - name: Push Image
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: "${{ env.IMAGE }}:${{ env.VERSION }}"
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        buildargs: BINARY_VERSION
-
-  build-component-test:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    env:
-      IMAGE: docker.io/${{ github.repository }}-component-test:latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Push Compontent Testing Image
-      uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: "${{ env.IMAGE }}"
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: tools/Dockerfile.component_test
-        buildargs: VERSION
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        docker login docker.io --username "${DOCKER_USERNAME}" --password "${DOCKER_PASSWORD}"
+        docker push "${IMAGE}:${VERSION}"
