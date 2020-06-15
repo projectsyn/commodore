@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     env:
-      IMAGE: docker.io/${{ github.repository }}-compontent-test:latest
+      IMAGE: docker.io/${{ github.repository }}-component-test:latest
     steps:
     - uses: actions/checkout@v1
     - name: Push Compontent Testing Image
