@@ -38,9 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: "0"
     - name: Build image
-      env:
-        VERSION: v0.0.0+test
       run: make docker
   build-component-test:
     runs-on: ubuntu-latest
