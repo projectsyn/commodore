@@ -1,9 +1,10 @@
 {
   "component": "the-component",
-  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '_') }}",
+  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '-') }}",
   "component_param_key": "{{ cookiecutter.project_slug.replace('-', '_') }}",
   "add_lib": "n",
   "add_pp": "n",
   "copyright_holder": "VSHN AG <info@vshn.ch>",
-  "year": "2020"
+  "year": "2020",
+  "repository": "projectsyn/component-{{ cookiecutter.project_slug }}"
 }
