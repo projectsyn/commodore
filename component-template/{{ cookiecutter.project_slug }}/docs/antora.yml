@@ -1,0 +1,6 @@
+name: {{ cookiecutter.project_slug }}
+title: {{ cookiecutter.component }}
+version: master
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/partials/nav.adoc
