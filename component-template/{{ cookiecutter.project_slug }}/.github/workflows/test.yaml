@@ -1,0 +1,18 @@
+name: Pull Request
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        command:
+          - lint_jsonnet
+          - lint_yaml
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run {% raw %}${{ matrix.command }}{{% endraw %}}
+        run: make {% raw %}${{ matrix.command }}{{% endraw %}}
