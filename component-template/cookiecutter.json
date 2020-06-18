@@ -6,5 +6,5 @@
   "add_pp": "n",
   "copyright_holder": "VSHN AG <info@vshn.ch>",
   "year": "2020",
-  "repository": "projectsyn/component-{{ cookiecutter.project_slug }}"
+  "repository": "projectsyn/component-({ cookiecutter.project_slug }}"
 }
