@@ -1,6 +1,7 @@
 from pathlib import Path as P
 
 import click
+import datetime
 
 from cookiecutter.main import cookiecutter
 
@@ -21,10 +22,13 @@ def create_component(config, name, lib, pp):
         raise click.ClickException(
             f"Unable to add component {name}: {component.target_directory} already exists.")
     click.secho(f"Adding component {name}...", bold=True)
+    today = datetime.date.today()
     cookiecutter_args = {
         'component': name,
         'add_lib': 'y' if lib else 'n',
         'add_pp': 'y' if pp else 'n',
+        'year': today.strftime("%Y"),
+        'release_date': today.strftime("%Y-%m-%d"),
     }
     cookiecutter('component-template', no_input=True,
                  output_dir='dependencies',
