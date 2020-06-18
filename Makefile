@@ -1,4 +1,4 @@
-pages   := $(shell find . -type f -name '*.adoc')
+pages   := $(shell find docs -type f -name '*.adoc')
 web_dir := ./_antora
 
 docker_cmd  ?= docker
