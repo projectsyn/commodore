@@ -1,5 +1,5 @@
-name: {{ cookiecutter.project_slug }}
-title: {{ cookiecutter.component }}
+name: {{ cookiecutter.slug }}
+title: {{ cookiecutter.name }}
 version: master
 start_page: ROOT:index.adoc
 nav:

@@ -1,0 +1,3 @@
+parameters:
+  {{ cookiecutter.parameter_key }}:
+    namespace: syn-{{ cookiecutter.slug }}

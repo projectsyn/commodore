@@ -1,10 +1,15 @@
 {
-  "component": "the-component",
-  "project_slug": "{{ cookiecutter.component.lower().replace(' ', '-') }}",
-  "component_param_key": "{{ cookiecutter.project_slug.replace('-', '_') }}",
+  "name": "The Component",
+  "slug": "{{ cookiecutter.name.lower().replace(' ', '-') }}",
+  "parameter_key": "{{ cookiecutter.slug.replace('-', '_') }}",
+
   "add_lib": "n",
   "add_pp": "n",
+
   "copyright_holder": "VSHN AG <info@vshn.ch>",
-  "year": "2020",
-  "repository": "projectsyn/component-({ cookiecutter.project_slug }}"
+  "copyright_year": "1950",
+
+  "github_owner": "projectsyn",
+  "github_name": "component-{{ cookiecutter.slug }}",
+  "github_url": "https://github.com/{{ cookiecutter.github_owner }}/{{ cookiecutter.github_name }}"
 }

@@ -1,6 +1,6 @@
-# Commodore Component: {{ cookiecutter.component }}
+# Commodore Component: {{ cookiecutter.name }}
 
-This is a [Commodore][commodore] Component for {{ cookiecutter.component }}.
+This is a [Commodore][commodore] Component for {{ cookiecutter.name }}.
 
 This repository is part of Project Syn.
 For documentation on Project Syn and this component, see https://syn.tools.

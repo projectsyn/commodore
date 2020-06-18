@@ -1,0 +1,11 @@
+parameters:
+  kapitan:
+    compile:
+      - input_paths:
+          - {{ cookiecutter.slug }}/component/app.jsonnet
+        input_type: jsonnet
+        output_path: apps/
+      - input_paths:
+          - {{ cookiecutter.slug }}/component/main.jsonnet
+        input_type: jsonnet
+        output_path: {{ cookiecutter.slug }}/

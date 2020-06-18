@@ -1,14 +1,14 @@
 site:
-  title: "{{ cookiecutter.component }}"
+  title: "{{ cookiecutter.name }}"
   url: https://syn.tools/
-  start_page: {{ cookiecutter.project_slug }}::index.adoc
+  start_page: {{ cookiecutter.slug }}::index.adoc
   robots: disallow
 content:
   sources:
     - url: .
       branches: HEAD
       start_path: docs
-      edit_url: 'https://github.com/{{ cookiecutter.repository }}/edit/master/{path}'
+      edit_url: '{{ cookiecutter.github_url }}/edit/master/{path}'
 ui:
   bundle:
     url: https://github.com/vshn/antora-ui-default/releases/download/1.6/ui-bundle.zip

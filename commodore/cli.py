@@ -3,7 +3,7 @@ import click
 from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile
-from .component_template import create_component
+from .component_template import ComponentFactory
 
 from . import __version__
 
@@ -57,11 +57,22 @@ def compile(config, cluster, local, push, verbose):
               help='Add component library template')
 @click.option('--pp/--no-pp', default=False, show_default=True,
               help='Add component postprocessing template')
+@click.option('--owner', default="projectsyn", show_default=True,
+              help='The GitHub user or project name where the component will be hosted')
+@click.option('--copyright', 'copyright_holder',
+              default="VSHN AG <info@vshn.ch>", show_default=True,
+              help='The copyright holder added to the license file')
 @verbosity
 @pass_config
-def new_component(config, name, verbose, lib, pp):
+# pylint: disable=too-many-arguments
+def new_component(config, name, verbose, lib, pp, owner, copyright_holder):
     config.update_verbosity(verbose)
-    create_component(config, name, lib, pp)
+    f = ComponentFactory(config, name)
+    f.library = lib
+    f.post_process = pp
+    f.github_owner = owner
+    f.copyright_holder = copyright_holder
+    f.create()
 
 
 def main():
