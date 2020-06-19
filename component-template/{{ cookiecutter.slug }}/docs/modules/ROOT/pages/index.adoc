@@ -1,0 +1,3 @@
+= {{ cookiecutter.name }}: A Commodore component to manage {{ cookiecutter.name }}
+
+{doctitle} is a Commodore component for Managing {{ cookiecutter.name }}.
