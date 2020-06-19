@@ -6,7 +6,7 @@ SHELL := bash
 .SUFFIXES:
 
 DOCKER_CMD   ?= docker
-DOCKER_ARGS  ?= run -v "$${PWD}:/component" --workdir /component
+DOCKER_ARGS  ?= run --rm --user "$$(id -u)" -v "$${PWD}:/component" --workdir /component
 
 JSONNET_FILES   ?= $(shell find . -type f -name '*.*jsonnet' -or -name '*.libsonnet')
 JSONNETFMT_ARGS ?= --in-place
@@ -38,4 +38,4 @@ format: format_jsonnet
 
 .PHONY: format_jsonnet
 format_jsonnet: $(JSONNET_FILES)
-	$(JSONNET_DOCKER) -- chmod +x $$(command -v jsonnetfmt) && jsonnetfmt $(JSONNETFMT_ARGS) -- $?
+	$(JSONNET_DOCKER) $(JSONNETFMT_ARGS) -- $?
