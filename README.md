@@ -81,8 +81,8 @@ using `helm template`.
    `${COMMODORE_GLOBAL_GIT_BASE}/commodore_components/` with the repository
    named identically to the component name.
 
-   Note: Commodore currently only supports fetching remote Git repositories
-   via SSH.
+   Or they must be configured in the `commodore.yml` config file in the
+   `${COMMODORE_GLOBAL_GIT_BASE}/commodore-defaults.git` repository.
 
 1. Run Commodore
 
