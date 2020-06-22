@@ -14,7 +14,7 @@ def test_runas_module():
 
 def test_entrypoint():
     """
-    Is entrypoint script installed? (setup.py)
+    Is entrypoint script installed?
     """
     exit_status = os.system('commodore --help')
     assert exit_status == 0

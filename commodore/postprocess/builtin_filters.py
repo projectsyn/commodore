@@ -6,6 +6,8 @@ from pathlib import Path as P
 import _jsonnet
 import click
 
+from commodore import __install_dir__
+
 from .jsonnet import jsonnet_runner
 
 
@@ -20,7 +22,8 @@ def _builtin_filter_helm_namespace(inv, component, target, path, **kwargs):
 
     # pylint: disable=c-extension-no-member
     jsonnet_runner(inv, component, target, path,
-                   _jsonnet.evaluate_file, P('filters', 'helm_namespace.jsonnet'),
+                   _jsonnet.evaluate_file,
+                   __install_dir__ / 'filters' / 'helm_namespace.jsonnet',
                    namespace=kwargs['namespace'],
                    create_namespace=create_namespace,
                    exclude_objects=exclude_objects,

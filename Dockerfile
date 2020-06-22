@@ -1,60 +1,71 @@
 FROM docker.io/python:3.8.3-slim-buster AS base
 
-WORKDIR /app
+ENV HOME=/app
 
-ENV HOME=/app \
-    PIPENV_VENV_IN_PROJECT=1
-
-RUN pip install pipenv
+WORKDIR ${HOME}
 
 FROM base AS builder
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
-      make \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install poetry \
+ && mkdir -p /app/.config
 
-ENV VIRTUALENV_SEEDER=pip
+COPY pyproject.toml poetry.lock ./
 
-COPY Pipfile Pipfile.lock ./
+RUN poetry config virtualenvs.create false \
+ && poetry install --no-dev --no-root
 
-RUN chown 1001 /app
-USER 1001
+COPY . ./
 
-RUN pipenv install
+ARG PYVERSION=v0.0.0
+ARG GITVERSION=v0.0.0+dirty
 
-FROM docker.io/golang:1.14-stretch AS helm_binding_builder
+RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py \
+ && poetry version "${PYVERSION}" \
+ && poetry build --format wheel
 
-RUN apt-get update && apt-get install -y \
+RUN pip install ./dist/commodore-*-py3-none-any.whl
+
+FROM docker.io/golang:1.14-buster AS helm_binding_builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-cffi \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /virtualenv
-COPY --from=builder /app/.venv/lib/python3.8/site-packages/kapitan ./kapitan
+
+COPY --from=builder /usr/local/lib/python3.8/site-packages/kapitan ./kapitan
+
 RUN ./kapitan/inputs/helm/build.sh
 
-FROM base
+FROM base AS runtime
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       libnss-wrapper \
- && rm -rf /var/lib/apt/lists/*
+      openssh-client \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
-COPY --from=builder /app/.venv/ ./.venv/
+COPY --from=builder \
+      /usr/local/lib/python3.8/site-packages/ /usr/local/lib/python3.8/site-packages/
+COPY --from=builder \
+      /usr/local/bin/kapitan* \
+      /usr/local/bin/commodore* \
+      /usr/local/bin/
+
 COPY --from=helm_binding_builder \
-	/virtualenv/kapitan/inputs/helm/libtemplate.so \
-	/virtualenv/kapitan/inputs/helm/helm_binding.py \
-	./.venv/lib/python3.8/site-packages/kapitan/inputs/helm/
+      /virtualenv/kapitan/inputs/helm/libtemplate.so \
+      /virtualenv/kapitan/inputs/helm/helm_binding.py \
+      /usr/local/lib/python3.8/site-packages/kapitan/inputs/helm/
 
-COPY . ./
-
-ARG BINARY_VERSION=unreleased
-
-RUN sed -ie "s/^__version__ = 'Unreleased'$/__version__ = '$BINARY_VERSION'/" ./commodore/__init__.py
+COPY ./tools/entrypoint.sh /usr/local/bin/
 
 RUN chgrp 0 /app/ \
  && chmod g+rwX /app/
 
 USER 1001
 
-ENTRYPOINT [ "/app/tools/entrypoint.sh", "pipenv", "run", "commodore" ]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "commodore"]

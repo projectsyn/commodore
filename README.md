@@ -27,28 +27,28 @@ using `helm template`.
 
 ## System Requirements
 
-* Python 3.6+
-* [Pipenv](https://github.com/pypa/pipenv)
+* Python 3.6+, with `python3-dev` and `python3-venv` updated
+* [Poetry](https://github.com/python-poetry/poetry)
 * Docker
 
 ## Getting started
 
 1. Install requirements
 
-   Install pipenv according to the upstream
-   [documentation](https://github.com/pypa/pipenv#installation).
+   Install poetry according to the upstream
+   [documentation](https://github.com/python-poetry/poetry#installation).
 
-   Create the Commdore pip environment:
+   Create the Commodore environment:
 
     ```console
-    pipenv install --dev
+    poetry install
     ```
 
     Build the Kapitan helm binding:
     * Linux:
 
        ```console
-       pipenv run build_kapitan_helm_binding
+       poetry run build_kapitan_helm_binding
        ```
 
     * OS X:
@@ -57,7 +57,7 @@ using `helm template`.
       bindings on OS X.
 
       ```console
-      pipenv run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
+      poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       ```
 
 1. Setup a `.env` file to configure Commodore (don't use quotes):
@@ -81,19 +81,19 @@ using `helm template`.
    `${COMMODORE_GLOBAL_GIT_BASE}/commodore_components/` with the repository
    named identically to the component name.
 
-   Note: Commodore currently only supports fetching remote Git repositories
-   via SSH.
+   Or they must be configured in the `commodore.yml` config file in the
+   `${COMMODORE_GLOBAL_GIT_BASE}/commodore-defaults.git` repository.
 
 1. Run Commodore
 
    ```console
-   pipenv run commodore
+   poetry run commodore
    ```
 
 1. Start hacking on Commodore
 
    ```console
-   pipenv shell
+   poetry shell
    ```
 
    - Write a line of test code, make the test fail
@@ -104,28 +104,24 @@ using `helm template`.
 
    Auto format with autopep8
    ```console
-   pipenv run autopep
+   poetry run autopep
    ```
 
-   List all Tox targets:
+   List all Tox targets
    ```console
-   pipenv run test tox -lv
+   poetry run tox -lv
    ```
 
-   Run all linting and tests:
+   Run all linting and tests
    ```console
-   pipenv run test tox
+   poetry run tox
    ```
 
-   Run just a specific target:
+   Run just a specific target
    ```console
-   pipenv run test tox -e py38
+   poetry run tox -e py38
    ```
 
-   Upgrade dependencies (Pipfile.lock, requirements.txt)
-   ```console
-   pipenv run test tox -e requirements
-   ```
 
 ## Run Commodore in Docker
 

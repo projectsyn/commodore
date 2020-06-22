@@ -12,18 +12,16 @@ jobs:
         command:
           - lint_flake8
           - lint_pylint
-          - lint_safety
           - lint_bandit
-          - lint_readme
           - test_py36
           - test_py37
           - test_py38
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
-    - name: Install Pipenv
+    - name: Install Poetry
       run: |
-        pip install pipenv tox
+        pip install poetry tox
     - name: Run ${{ matrix.command }}
       run: make ${{ matrix.command }}
   docs:
@@ -40,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: "0"
     - name: Build image
       run: make docker
   build-component-test:
@@ -48,3 +48,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build component testing image
       run: make docker-component-test
+      env:
+        VERSION: test

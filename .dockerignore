@@ -8,7 +8,9 @@ tools/
 !tools/entrypoint.sh
 README.md
 Dockerfile
+docker-compose.*
 _antora
+.vscode/
 
 ## From here: GitHub's gitignore template for Python
 # Byte-compiled / optimized / DLL files

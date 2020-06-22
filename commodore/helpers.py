@@ -10,6 +10,8 @@ import yaml
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
 
+from commodore import __install_dir__
+
 
 def yaml_load(file):
     """
@@ -88,11 +90,11 @@ def clean(cfg):
 def kapitan_compile():
     # TODO: maybe use kapitan.targets.compile_targets directly?
     # pylint: disable=import-outside-toplevel
-    import shlex
     import subprocess  # nosec
     click.secho('Compiling catalog...', bold=True)
     return subprocess.run(  # nosec
-        shlex.split('kapitan compile --fetch -J .  dependencies --refs-path ./catalog/refs'),
+        ['kapitan', 'compile', '--fetch', '-J', '.', __install_dir__,
+         'dependencies', '--refs-path', './catalog/refs'],
         check=False)
 
 

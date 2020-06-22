@@ -1,16 +1,24 @@
 import click
 
+from dotenv import load_dotenv
+from importlib_metadata import version
+from commodore import __git_version__
 from .config import Config
 from .helpers import clean as _clean
 from .compile import compile as _compile
 from .component_template import ComponentFactory
 
-from . import __version__
-
 pass_config = click.make_pass_decorator(Config)
 
 verbosity = click.option('-v', '--verbose', count=True,
                          help='Control verbosity. Can be repeated for more verbose output')
+
+
+def _version():
+    pyversion = version('commodore')
+    if f"v{pyversion}" != __git_version__:
+        return f"{pyversion} (Git version: {__git_version__})"
+    return pyversion
 
 
 @click.group()
@@ -19,7 +27,7 @@ verbosity = click.option('-v', '--verbose', count=True,
 @click.option('--global-git-base', metavar='URL',
               help='Base directory for global Git config repositories')
 @verbosity
-@click.version_option(__version__, prog_name='commodore')
+@click.version_option(_version(), prog_name='commodore')
 @click.pass_context
 # pylint: disable=too-many-arguments
 def commodore(ctx, api_url, api_token, global_git_base, verbose):
@@ -76,4 +84,5 @@ def new_component(config, name, verbose, lib, pp, owner, copyright_holder):
 
 
 def main():
+    load_dotenv()
     commodore.main(prog_name='commodore', auto_envvar_prefix='COMMODORE')

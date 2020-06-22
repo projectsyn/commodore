@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "commodore"
+version = "v0.0.0"
+description = "Commodore provides opinionated tenant-aware management of Kapitan inventories and templates. Commodore uses Kapitan for the heavy lifting of rendering templates and resolving a hierachical configuration structure."
+authors = ["VSHN AG <info@vshn.ch>"]
+license = "BSD-3-Clause"
+include = ["commodore/lib/commodore.libjsonnet", "commodore/filters/helm_namespace.jsonnet"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+# Require kapitan >= 0.27 to help poetry to resolve dependencies
+kapitan = ">=0.27"
+click = "*"
+cookiecutter = "*"
+gitpython = "*"
+requests = "*"
+url-normalize = "*"
+python-dotenv = "*"
+importlib_metadata = "*"
+
+[tool.poetry.dev-dependencies]
+tox = "*"
+autopep8 = "*"
+
+[tool.poetry.scripts]
+commodore = 'commodore.cli:main'
+build_kapitan_helm_binding = 'tools.tools:build_kapitan_helm_binding'
+autopep = 'tools.tools:autopep'
+local_reveal = 'tools.tools:reveal'
+compile = 'tools.tools:compile'
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

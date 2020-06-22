@@ -14,14 +14,14 @@ environment for some cluster by running
 
 [source,bash]
 --
-pipenv run commodore compile <customer> <cluster>
+poetry run commodore compile <cluster-id>
 --
 
 Then you can bootstrap the repository for your new component by running
 
 [source,bash]
 --
-pipenv run commodore new-component <component-name>
+poetry run commodore new-component <component-name>
 --
 
 Now, you can start developing your component by writing Jsonnet in
