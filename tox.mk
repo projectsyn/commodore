@@ -1,4 +1,4 @@
-.PHONY: tox lint_flake8 lint_pylint lint_bandit
+.PHONY: tox lint lint_flake8 lint_pylint lint_bandit
 
 TOX_COMMAND = poetry run tox
 
@@ -13,6 +13,8 @@ lint_pylint:
 
 lint_bandit:
 	$(TOX_COMMAND) -e bandit
+
+lint: lint_flake8 lint_pylint lint_bandit
 
 .PHONY: test_py36 test_py37 test_py38
 
