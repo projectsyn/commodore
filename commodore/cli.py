@@ -7,6 +7,7 @@ from .config import Config
 from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component_template import ComponentFactory
+from .render import render_component as _render_component
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -86,6 +87,26 @@ def new(config, name, verbose, lib, pp, owner, copyright_holder):
     f.github_owner = owner
     f.copyright_holder = copyright_holder
     f.create()
+
+
+@component.command(short_help='Render a single component')
+@click.argument('path', type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option('-f', '--values', multiple=True,
+              type=click.Path(exists=True, file_okay=True, dir_okay=False),
+              help='Specify inventory class in a YAML file (can specify multiple).')
+@click.option('-J', '--search-paths', multiple=True,
+              type=click.Path(exists=True, file_okay=False, dir_okay=True),
+              help='Specify additional search paths.')
+@click.option('-o', '--output',
+              default='./', show_default=True,
+              type=click.Path(exists=True, file_okay=False, dir_okay=True),
+              help='Specify output path for rendered component.')
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def render(config, path, values, search_paths, output, verbose):
+    config.update_verbosity(verbose)
+    _render_component(config, path, values, search_paths, output)
 
 
 def main():
