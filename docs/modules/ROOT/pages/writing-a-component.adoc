@@ -9,7 +9,7 @@ by Commodore after Kapitan has compiled the component.
 == Quickstart
 
 To kickstart developing a component, Commodore provides the command
-`new-component`. Prepare your working directory by fetching the Commodore
+`component new`. Prepare your working directory by fetching the Commodore
 environment for some cluster by running
 
 [source,bash]
@@ -21,7 +21,7 @@ Then you can bootstrap the repository for your new component by running
 
 [source,bash]
 --
-poetry run commodore new-component <component-name>
+poetry run commodore component new <component-name>
 --
 
 Now, you can start developing your component by writing Jsonnet in

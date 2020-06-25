@@ -59,7 +59,12 @@ def compile(config, cluster, local, push, verbose):
     _compile(config, cluster)
 
 
-@commodore.command(short_help='Bootstrap new component')
+@commodore.group(short_help='Interact with components')
+def component():
+    return
+
+
+@component.command(short_help='Bootstrap a new component')
 @click.argument('name')
 @click.option('--lib/--no-lib', default=False, show_default=True,
               help='Add component library template')
@@ -73,7 +78,7 @@ def compile(config, cluster, local, push, verbose):
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
-def new_component(config, name, verbose, lib, pp, owner, copyright_holder):
+def new(config, name, verbose, lib, pp, owner, copyright_holder):
     config.update_verbosity(verbose)
     f = ComponentFactory(config, name)
     f.library = lib

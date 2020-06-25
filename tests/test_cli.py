@@ -40,5 +40,5 @@ def test_newcomponent_command():
     """
     Is subcommand available?
     """
-    exit_status = os.system('commodore new-component --help')
+    exit_status = os.system('commodore component new --help')
     assert exit_status == 0
