@@ -6,11 +6,11 @@ import click
 
 from cookiecutter.main import cookiecutter
 
-from . import git, __install_dir__
-from . import config as CommodoreConfig
-from .config import Component
-from .dependency_mgmt import create_component_symlinks
-from .helpers import yaml_load, yaml_dump
+from commodore import git, __install_dir__
+from commodore import config as CommodoreConfig
+from commodore.config import Component
+from commodore.dependency_mgmt import create_component_symlinks
+from commodore.helpers import yaml_load, yaml_dump
 
 
 class ComponentFactory:

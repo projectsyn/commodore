@@ -17,7 +17,7 @@ class Component(NamedTuple):
 
 class Config:
     # pylint: disable=too-many-arguments
-    def __init__(self, api_url, api_token, global_git, verbose):
+    def __init__(self, api_url=None, api_token=None, global_git=None, verbose=False):
         self.api_url = api_url
         self.api_token = None
         if api_token is not None:

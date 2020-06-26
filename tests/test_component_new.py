@@ -6,7 +6,7 @@ import yaml
 from pathlib import Path as P
 
 
-def test_run_newcomponent_command(tmp_path: P):
+def test_run_component_new_command(tmp_path: P):
     """
     Run the component new command
     """

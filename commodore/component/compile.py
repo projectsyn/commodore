@@ -17,7 +17,7 @@ libs = [{'name': 'kube-libsonnet',
          }]
 
 
-def render_component(config: Config, component_path, value_files, search_paths, output_path):
+def compile_component(config: Config, component_path, value_files, search_paths, output_path):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path).resolve()
     value_files = [P(f).resolve() for f in value_files]

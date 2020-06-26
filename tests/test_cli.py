@@ -24,7 +24,7 @@ def test_clean_command():
     """
     Is subcommand available?
     """
-    exit_status = os.system('commodore clean --help')
+    exit_status = os.system('commodore catalog clean --help')
     assert exit_status == 0
 
 
@@ -32,13 +32,20 @@ def test_compile_command():
     """
     Is subcommand available?
     """
-    exit_status = os.system('commodore compile --help')
+    exit_status = os.system('commodore catalog compile --help')
     assert exit_status == 0
 
 
-def test_newcomponent_command():
+def test_component_new_command():
     """
     Is subcommand available?
     """
     exit_status = os.system('commodore component new --help')
+    assert exit_status == 0
+
+def test_component_compile_command():
+    """
+    Is subcommand available?
+    """
+    exit_status = os.system('commodore component compile --help')
     assert exit_status == 0
