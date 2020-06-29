@@ -2,14 +2,14 @@
 Unit-tests for dependency management
 """
 
+import os
 import click
 import pytest
+from unittest.mock import patch
+from pathlib import Path
 
 from commodore import dependency_mgmt
 from commodore.config import Config, Component
-from unittest.mock import patch
-
-from pathlib import Path
 
 
 @pytest.fixture
@@ -22,12 +22,14 @@ def data():
 
 
 def test_symlink(tmp_path: Path):
+    os.chdir(tmp_path)
     test_file = tmp_path / 'test1'
     dependency_mgmt._relsymlink('./', test_file.name, tmp_path)
     assert test_file.is_symlink()
 
 
 def test_override_symlink(tmp_path: Path):
+    os.chdir(tmp_path)
     test_file = tmp_path / 'test2'
     test_file.touch()
     assert not test_file.is_symlink()
@@ -35,7 +37,8 @@ def test_override_symlink(tmp_path: Path):
     assert test_file.is_symlink()
 
 
-def test_create_component_symlinks_fails(data: Config):
+def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
+    os.chdir(tmp_path)
     component = Component(
         name='my-component',
         repo=None,
@@ -47,7 +50,8 @@ def test_create_component_symlinks_fails(data: Config):
     assert component.name in str(excinfo)
 
 
-def test_create_legacy_component_symlinks(capsys, data: Config):
+def test_create_legacy_component_symlinks(capsys, data: Config, tmp_path):
+    os.chdir(tmp_path)
     component = Component(
         name='my-component',
         repo=None,
@@ -62,7 +66,8 @@ def test_create_legacy_component_symlinks(capsys, data: Config):
     assert 'Old-style component detected.' in capture.out
 
 
-def test_create_component_symlinks(capsys, data: Config):
+def test_create_component_symlinks(capsys, data: Config, tmp_path):
+    os.chdir(tmp_path)
     component = Component(
         name='my-component',
         repo=None,
@@ -90,7 +95,8 @@ def test_read_component_urls_no_config(data: Config):
     assert 'inventory/classes/global/commodore.yml' in str(excinfo)
 
 
-def test_read_component_urls(data: Config):
+def test_read_component_urls(data: Config, tmp_path):
+    os.chdir(tmp_path)
     component_names = ['component-overwritten', 'component-default']
     inventory_global = Path('inventory/classes/global')
     inventory_global.mkdir(parents=True, exist_ok=True)
@@ -113,7 +119,8 @@ def test_read_component_urls(data: Config):
 @patch('commodore.dependency_mgmt._discover_components')
 @patch('commodore.dependency_mgmt._read_component_urls')
 @patch('commodore.git.clone_repository')
-def test_fetch_components(patch_discover, patch_urls, patch_clone, data: Config):
+def test_fetch_components(patch_discover, patch_urls, patch_clone, data: Config, tmp_path):
+    os.chdir(tmp_path)
     components = ['component-one', 'component-two']
     # Prepare minimum component directories
     for component in components:

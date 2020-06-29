@@ -6,12 +6,12 @@ import yaml
 from pathlib import Path as P
 
 
-def test_run_newcomponent_command(tmpdir: P):
+def test_run_newcomponent_command(tmp_path: P):
     """
     Run the new-component command
     """
 
-    os.chdir(tmpdir)
+    os.chdir(tmp_path)
 
     os.makedirs(P('inventory', 'classes', 'components'), exist_ok=True)
     os.makedirs(P('inventory', 'classes', 'defaults'), exist_ok=True)

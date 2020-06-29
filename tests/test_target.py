@@ -2,6 +2,7 @@
 Unit-tests for target generation
 """
 
+import os
 import click
 import pytest
 from commodore import cluster
@@ -78,6 +79,7 @@ def test_empty_facts(data):
 
 
 def test_reconstruct_api_response(tmp_path):
+    os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
         file.write('''classes:
@@ -106,6 +108,7 @@ parameters:
 
 
 def test_reconstruct_api_response_no_region(tmp_path):
+    os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
         file.write('''classes: []
@@ -125,6 +128,7 @@ parameters:
 
 
 def test_reconstruct_api_response_with_lieutenant_fact(tmp_path):
+    os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
         file.write('''classes:
@@ -145,6 +149,7 @@ parameters:
 
 
 def test_reconstruct_api_response_missing_fact(tmp_path):
+    os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
         file.write('''classes: []
