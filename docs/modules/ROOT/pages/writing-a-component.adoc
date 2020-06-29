@@ -14,7 +14,7 @@ environment for some cluster by running
 
 [source,bash]
 --
-poetry run commodore compile <cluster-id>
+poetry run commodore catalog compile <cluster-id>
 --
 
 Then you can bootstrap the repository for your new component by running

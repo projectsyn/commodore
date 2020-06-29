@@ -9,7 +9,7 @@ Local mode can be enabled with the `--local` flag of the `compile` command.
 
 [source,bash]
 --
-poetry run commodore compile <cluster-id> --local
+poetry run commodore catalog compile <cluster-id> --local
 --
 
 In local mode, the existing directory structure in the working directory is
@@ -21,5 +21,5 @@ compile the catalog for the selected cluster.
 
 [source,bash]
 --
-poetry run commodore compile <cluster-id>
+poetry run commodore catalog compile <cluster-id>
 --

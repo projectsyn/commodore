@@ -139,7 +139,7 @@ docker-compose build
 1. Run the built image:
 
 ```console
-docker-compose run commodore compile $CLUSTER_ID
+docker-compose run commodore catalog compile $CLUSTER_ID
 ```
 
 ## Documentation
