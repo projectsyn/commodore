@@ -13,7 +13,7 @@ local namespaced(ns, obj) =
  *
  * \deprecated Use `std.prune(a)` instead.
  */
-local filterNull(list) = std.filter(function(obj) obj != null, list);
+local filterNull(list) = std.trace('filterNull is deprecated, use std.prune(a) instead', std.filter(function(obj) obj != null, list));
 
 local yaml_load_all = std.native('yaml_load_all');
 
