@@ -1,0 +1,47 @@
+"""
+Tests for component compile command
+"""
+import os
+import yaml
+import pytest
+from click import ClickException
+from commodore.config import Config
+from commodore.component.compile import compile_component
+from test_component_new import test_run_component_new_command
+
+
+def test_run_component_compile_command(tmp_path):
+    """
+    Run the component compile command
+    """
+
+    os.chdir(tmp_path)
+    test_run_component_new_command(tmp_path=tmp_path)
+
+    component_name = 'test-component'
+    with open(tmp_path / 'dependencies' / component_name / 'component/main.jsonnet', 'a') as file:
+        file.write('''
+{
+  "test_service_account": kube.ServiceAccount('test') {
+    metadata+: {
+      namespace: params.namespace,
+    },
+  },
+}
+''')
+
+    exit_status = os.system(f"commodore component compile -o ./testdir dependencies/{component_name}")
+    assert exit_status == 0
+    assert os.path.exists(tmp_path / f"testdir/compiled/test/apps/{component_name}.yaml")
+    rendered_yaml = tmp_path / 'testdir/compiled/test' / component_name / 'test_service_account.yaml'
+    assert rendered_yaml.exists()
+    with open(rendered_yaml) as file:
+        target = yaml.safe_load(file)
+        assert target['kind'] == 'ServiceAccount'
+        assert target['metadata']['namespace'] == f"syn-{component_name}"
+
+
+def test_no_component_compile_command():
+    with pytest.raises(ClickException) as excinfo:
+        compile_component(Config(), './', [], [], './')
+    assert 'Could not find component class file' in str(excinfo)

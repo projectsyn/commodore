@@ -115,7 +115,7 @@ def component_new(config: Config, name, lib, pp, owner, copyright_holder, verbos
               help='Specify additional search paths.')
 @click.option('-o', '--output',
               default='./', show_default=True,
-              type=click.Path(exists=True, file_okay=False, dir_okay=True),
+              type=click.Path(file_okay=False, dir_okay=True),
               help='Specify output path for compiled component.')
 @verbosity
 @pass_config
