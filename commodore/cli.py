@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from importlib_metadata import version
 from commodore import __git_version__
 from .config import Config
-from .helpers import clean as _clean
+from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component_template import ComponentFactory
 
@@ -39,7 +39,7 @@ def commodore(ctx, api_url, api_token, global_git_base, verbose):
 @pass_config
 def clean(config, verbose):
     config.update_verbosity(verbose)
-    _clean(config)
+    clean_working_tree(config)
 
 
 @commodore.command(short_help='Compile inventory and catalog')

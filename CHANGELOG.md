@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 * Show some logs only in verbose mode ([#100])
+* Use Kapitan Python lib instead of running the binary ([#130])
 
 ### Added
 * Allow overwriting of component git repo URLs ([#100])
@@ -91,3 +92,4 @@ Initial implementation
 [#106]: https://github.com/projectsyn/commodore/pull/106
 [#125]: https://github.com/projectsyn/commodore/pull/125
 [#126]: https://github.com/projectsyn/commodore/pull/126
+[#130]: https://github.com/projectsyn/commodore/pull/130
