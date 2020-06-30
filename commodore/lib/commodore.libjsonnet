@@ -6,7 +6,14 @@ local namespaced(ns, obj) =
     metadata+: { namespace: ns },
   };
 
-local filterNull(list) = std.filter(function(obj) obj != null, list);
+/**
+ * \brief A function to filter NULL values.
+ *
+ * \arg `list` The array to filter
+ *
+ * \deprecated Use `std.prune(a)` instead.
+ */
+local filterNull(list) = std.trace('filterNull is deprecated, use std.prune(a) instead', std.filter(function(obj) obj != null, list));
 
 local yaml_load_all = std.native('yaml_load_all');
 
