@@ -130,7 +130,7 @@ local envList(map) = [
  * \arg field The name of a field.
  * \arg default The value to return if the field is not present on the dict.
  */
-local getValueOrDefault = function(dict, field, default)
+local getValueOrDefault(dict, field, default) =
   if std.objectHas(dict, field) then dict[field] else default;
 
 {
