@@ -10,6 +10,7 @@ from pathlib import Path
 
 from commodore import dependency_mgmt
 from commodore.config import Config, Component
+from commodore.helpers import relsymlink
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def data():
 def test_symlink(tmp_path: Path):
     os.chdir(tmp_path)
     test_file = tmp_path / 'test1'
-    dependency_mgmt._relsymlink('./', test_file.name, tmp_path)
+    relsymlink('./', test_file.name, tmp_path)
     assert test_file.is_symlink()
 
 
@@ -33,7 +34,7 @@ def test_override_symlink(tmp_path: Path):
     test_file = tmp_path / 'test2'
     test_file.touch()
     assert not test_file.is_symlink()
-    dependency_mgmt._relsymlink('./', test_file.name, tmp_path)
+    relsymlink('./', test_file.name, tmp_path)
     assert test_file.is_symlink()
 
 

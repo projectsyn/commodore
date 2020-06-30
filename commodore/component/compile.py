@@ -6,8 +6,8 @@ import tempfile
 import click
 
 from commodore.config import Config
-from commodore.dependency_mgmt import fetch_jsonnet_libs, _relsymlink
-from commodore.helpers import kapitan_compile
+from commodore.dependency_mgmt import fetch_jsonnet_libs
+from commodore.helpers import kapitan_compile, relsymlink
 
 
 libs = [{'name': 'kube-libsonnet',
@@ -39,25 +39,25 @@ def compile_component(config: Config, component_path, value_files, search_paths,
         dependencies_path = temp_dir / 'dependencies'
         dependencies_path.mkdir(exist_ok=True)
         # Create class symlink
-        _relsymlink(
+        relsymlink(
             component_class_file.parent,
             component_class_file.name,
             temp_dir / 'inventory/classes/components')
         # Create defaults symlink
-        _relsymlink(
+        relsymlink(
             component_defaults_file.parent,
             component_defaults_file.name,
             temp_dir / 'inventory/classes/defaults',
             f"{component_name}.yml")
         # Create component symlink
-        _relsymlink(
+        relsymlink(
             component_path.parent,
             component_path.name,
             dependencies_path,
             component_name)
         # Create value symlinks
         for file in value_files:
-            _relsymlink(file.parent, file.name, temp_dir / 'inventory/classes')
+            relsymlink(file.parent, file.name, temp_dir / 'inventory/classes')
 
         # Create class for fake parameters
         with open(temp_dir / 'inventory/classes/fake.yml', 'w') as file:

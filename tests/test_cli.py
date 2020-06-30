@@ -43,6 +43,7 @@ def test_component_new_command():
     exit_status = os.system('commodore component new --help')
     assert exit_status == 0
 
+
 def test_component_compile_command():
     """
     Is subcommand available?
