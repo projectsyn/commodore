@@ -133,6 +133,25 @@ local envList(map) = [
 local getValueOrDefault(dict, field, default) =
   if std.objectHas(dict, field) then dict[field] else default;
 
+/*
+ * \brief makes an object deep mergeable
+ *
+ * Builds a new object from its input.
+ * All keys which contain an object will be suffixed with `+` in the result.
+ *
+ * \arg o An arbitrary object.
+ * \return The transformed object.
+ */
+local makeMergeable(o) = {
+  [key]+: makeMergeable(o[key])
+  for key in std.objectFields(o)
+  if std.isObject(o[key])
+} + {
+  [key]: o[key]
+  for key in std.objectFields(o)
+  if !std.isObject(o[key])
+};
+
 {
   inventory: std.native('inventory'),
   yaml_load: std.native('yaml_load'),
@@ -144,4 +163,5 @@ local getValueOrDefault(dict, field, default) =
   proxyVars: proxyVars,
   envList: envList,
   getValueOrDefault: getValueOrDefault,
+  makeMergeable: makeMergeable,
 }

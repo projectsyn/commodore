@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * `getValueOrDefault` helper ([#125])
+* `makeMergeable` helper ([#126])
 
 ## [v0.1.6]
 
@@ -89,3 +90,4 @@ Initial implementation
 [#103]: https://github.com/projectsyn/commodore/pull/103
 [#106]: https://github.com/projectsyn/commodore/pull/106
 [#125]: https://github.com/projectsyn/commodore/pull/125
+[#126]: https://github.com/projectsyn/commodore/pull/126
