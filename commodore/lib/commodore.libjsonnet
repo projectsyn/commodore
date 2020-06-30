@@ -123,6 +123,16 @@ local envList(map) = [
   for x in std.objectFields(map)
 ];
 
+/*
+ * \brief Helper to get a fields value or a default.
+ *
+ * \arg dict An arbitrary dictionary data structure.
+ * \arg field The name of a field.
+ * \arg default The value to return if the field is not present on the dict.
+ */
+local getValueOrDefault = function(dict, field, default)
+  if std.objectHas(dict, field) then dict[field] else default;
+
 {
   inventory: std.native('inventory'),
   yaml_load: std.native('yaml_load'),
@@ -133,4 +143,5 @@ local envList(map) = [
   addNamespaceToHelmOutput: addNamespaceToHelmOutput,
   proxyVars: proxyVars,
   envList: envList,
+  getValueOrDefault: getValueOrDefault,
 }
