@@ -134,15 +134,15 @@ local getValueOrDefault(dict, field, default) =
   if std.objectHas(dict, field) then dict[field] else default;
 
 /*
- * \biref makes an object deep mergable
+ * \brief makes an object deep mergeable
  *
  * Builds a new object from its input.
- * Each key again containing an object, will be suffixed with `+` in the result.
+ * All keys which contain an object will be suffixed with `+` in the result.
  *
  * \arg o An arbitrary object.
  * \return The transformed object.
  */
-local makeMergeable = function(o) {
+local makeMergeable(o) = {
   [key]+: makeMergeable(o[key])
   for key in std.objectFields(o)
   if std.isObject(o[key])
