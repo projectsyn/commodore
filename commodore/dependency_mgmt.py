@@ -10,11 +10,11 @@ from .helpers import relsymlink, yaml_load
 
 def create_component_symlinks(cfg, component: Component):
     relsymlink(component.target_directory / 'class', f"{component.name}.yml",
-                'inventory/classes/components')
+               'inventory/classes/components')
     component_defaults_class = component.target_directory / 'class' / 'defaults.yml'
     if component_defaults_class.is_file():
         relsymlink(component.target_directory / 'class', 'defaults.yml',
-                    P('inventory/classes/defaults'), destname=f"{component.name}.yml")
+                   P('inventory/classes/defaults'), destname=f"{component.name}.yml")
     else:
         click.secho('     > Old-style component detected. Please move ' +
                     'component defaults to \'class/defaults.yml\'', fg='yellow')
@@ -163,4 +163,4 @@ def fetch_jsonnet_libs(config, libs):
         repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
             relsymlink(repo.working_tree_dir, file['libfile'],
-                        'dependencies/lib', destname=file['targetfile'])
+                       'dependencies/lib', destname=file['targetfile'])
