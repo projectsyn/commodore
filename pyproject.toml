@@ -4,7 +4,11 @@ version = "v0.0.0"
 description = "Commodore provides opinionated tenant-aware management of Kapitan inventories and templates. Commodore uses Kapitan for the heavy lifting of rendering templates and resolving a hierachical configuration structure."
 authors = ["VSHN AG <info@vshn.ch>"]
 license = "BSD-3-Clause"
-include = ["commodore/lib/commodore.libjsonnet", "commodore/filters/helm_namespace.jsonnet"]
+include = [
+    "commodore/component-template/**/*",
+    "commodore/lib/commodore.libjsonnet",
+    "commodore/filters/helm_namespace.jsonnet"
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
