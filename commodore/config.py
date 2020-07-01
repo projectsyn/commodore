@@ -26,6 +26,12 @@ class Config:
         self._components = {}
         self._config_repos = {}
         self._verbose = verbose
+        
+        self.username = None
+        self.usermail = None
+        if(username is not None and usermail is not None):
+            self.username = username
+            self.usermail = usermail
 
         self.username = username
         self.usermail = usermail
