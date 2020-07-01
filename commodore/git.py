@@ -56,7 +56,7 @@ def checkout_version(repo, ref):
         raise RefError(f"Revision '{ref}' not found in repository") from e
 
 
-def clone_repository(repository_url, directory):
+def clone_repository(repository_url, directory, cfg):
     try:
         repo = Repo.clone_from(_normalize_git_ssh(repository_url), directory)
     except Exception as e:
@@ -66,7 +66,7 @@ def clone_repository(repository_url, directory):
         _ = repo.head.commit
     except ValueError as e:
         click.echo(f" > {e}, creating initial commit for {directory}")
-        commit(repo, "Initial commit")
+        commit(repo, "Initial commit", cfg)
     return repo
 
 
@@ -185,8 +185,15 @@ def stage_all(repo):
     return '\n'.join(difftext), changed
 
 
-def commit(repo, commit_message):
-    author = Actor("Commodore", "commodore@vshn.net")
+def commit(repo, commit_message, cfg):
+    if cfg.username and cfg.usermail:
+        author = Actor(cfg.username, cfg.usermail)
+    else:
+        author = Actor.committer(repo.config_reader())
+
+    if cfg.trace:
+        click.echo(f' > Using "{author.name} <{author.email}>" as commit author')
+
     repo.index.commit(commit_message, author=author, committer=author)
 
 

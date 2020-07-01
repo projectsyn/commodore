@@ -71,6 +71,10 @@ using `helm template`.
    COMMODORE_GLOBAL_GIT_BASE=ssh://git@github.com/projectsyn
    # Your local user ID to be used in the container (optional, defaults to root)
    USER_ID=<your-user-id>
+   # Your username to be used in the commits (optional, defaults to your local git config)
+   COMMODORE_USERNAME=<your name>
+   # Your user email to be used in the commits (optional, defaults to your local git config)
+   COMMODORE_USERMAIL=<your email>
    ```
 
    For Commodore to work, you need to run an instance of the

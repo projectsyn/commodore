@@ -36,7 +36,7 @@ def _fetch_global_config(cfg, cluster):
     click.secho('Updating global config...', bold=True)
     repo = git.clone_repository(
         f"{cfg.global_git_base}/{config}.git",
-        'inventory/classes/global')
+        'inventory/classes/global', cfg)
     cfg.register_config('global', repo)
 
 
@@ -51,7 +51,9 @@ def _fetch_customer_config(cfg, customer_id):
             f" > API did not return a repository URL for customer '{customer_id}'")
     if cfg.debug:
         click.echo(f" > Cloning customer config {repopath}")
-    repo = git.clone_repository(repopath, P('inventory/classes') / customer_id)
+    repo = git.clone_repository(repopath,
+                                P('inventory/classes') / customer_id,
+                                cfg)
     cfg.register_config('customer', repo)
 
 
