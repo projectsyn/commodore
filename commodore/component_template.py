@@ -6,7 +6,7 @@ import click
 
 from cookiecutter.main import cookiecutter
 
-from . import git
+from . import git, __install_dir__
 from . import config as CommodoreConfig
 from .config import Component
 from .dependency_mgmt import create_component_symlinks
@@ -52,7 +52,8 @@ class ComponentFactory:
             raise click.ClickException(
                 f"Unable to add component {self.name}: {component.target_directory} already exists.")
         click.secho(f"Adding component {self.name}...", bold=True)
-        cookiecutter('component-template', no_input=True,
+        component_template = __install_dir__ / 'component-template'
+        cookiecutter(str(component_template.resolve()), no_input=True,
                      output_dir='dependencies',
                      extra_context=self.cookiecutter_args())
 
