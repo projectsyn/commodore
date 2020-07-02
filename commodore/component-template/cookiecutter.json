@@ -1,6 +1,6 @@
 {
-  "name": "The Component",
-  "slug": "{{ cookiecutter.name.lower().replace(' ', '-') }}",
+  "name": "{{ cookiecutter.slug }}",
+  "slug": "the-component",
   "parameter_key": "{{ cookiecutter.slug.replace('-', '_') }}",
 
   "add_lib": "n",

@@ -16,7 +16,6 @@ from commodore.helpers import yaml_load, yaml_dump
 class ComponentFactory:
     # pylint: disable=too-many-instance-attributes
     config: CommodoreConfig
-    name: str
     slug: str
     library: bool
     post_process: bool
@@ -24,11 +23,20 @@ class ComponentFactory:
     copyright_holder: str
     today: datetime
 
-    def __init__(self, config, name):
+    def __init__(self, config, slug):
         self.config = config
-        self.name = name
-        self.slug = name.lower().replace(' ', '-')
+        self.slug = slug
         self.today = datetime.date.today()
+
+    @property
+    def name(self):
+        if not isinstance(self._name, str) or len(self._name) == 0:
+            return self.slug
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
 
     def cookiecutter_args(self):
         return {
@@ -38,6 +46,7 @@ class ComponentFactory:
             'copyright_year': self.today.strftime("%Y"),
             'github_owner': self.github_owner,
             'name': self.name,
+            'slug': self.slug,
             'release_date': self.today.strftime("%Y-%m-%d"),
         }
 
