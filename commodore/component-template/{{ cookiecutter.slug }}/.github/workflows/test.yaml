@@ -14,5 +14,5 @@ jobs:
           - lint_yaml
     steps:
       - uses: actions/checkout@v2
-      - name: Run {% raw %}${{ matrix.command }}{{% endraw %}}
-        run: make {% raw %}${{ matrix.command }}{{% endraw %}}
+      - name: Run {% raw %}${{ matrix.command }}{% endraw %}
+        run: make {% raw %}${{ matrix.command }}{% endraw %}
