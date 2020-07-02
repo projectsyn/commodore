@@ -1,5 +1,6 @@
 import json
 import shutil
+import os
 from pathlib import Path as P
 
 import click
@@ -9,8 +10,27 @@ import yaml
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
+from kapitan import targets
+from kapitan import defaults
+from kapitan.cached import reset_cache as reset_reclass_cache
+from kapitan.refs.base import RefController, PlainRef
+from kapitan.refs.secrets.vaultkv import VaultBackend
 
 from commodore import __install_dir__
+from commodore.config import Config
+
+
+class FakeVaultBackend(VaultBackend):
+    def __init__(self):
+        "init FakeVaultBackend ref backend type"
+        super().__init__(None)
+
+    def __getitem__(self, ref_path):
+        return PlainRef(ref_path)
+
+
+class ApiError(Exception):
+    pass
 
 
 def yaml_load(file):
@@ -45,10 +65,6 @@ def yaml_dump_all(obj, file):
         yaml.dump_all(obj, outf)
 
 
-class ApiError(Exception):
-    pass
-
-
 def lieutenant_query(api_url, api_token, api_endpoint, api_id):
     try:
         r = requests.get(url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
@@ -75,8 +91,8 @@ def _verbose_rmtree(tree, *args, **kwargs):
     shutil.rmtree(tree, *args, **kwargs)
 
 
-def clean(cfg):
-    if cfg.debug:
+def clean_working_tree(config: Config):
+    if config.debug:
         rmtree = _verbose_rmtree
     else:
         rmtree = shutil.rmtree
@@ -87,15 +103,45 @@ def clean(cfg):
     rmtree('catalog', ignore_errors=True)
 
 
-def kapitan_compile():
-    # TODO: maybe use kapitan.targets.compile_targets directly?
-    # pylint: disable=import-outside-toplevel
-    import subprocess  # nosec
+# pylint: disable=too-many-arguments
+def kapitan_compile(config: Config,
+                    target='cluster',
+                    output_dir='./',
+                    search_paths=None,
+                    fake_refs=False,
+                    fetch_dependencies=True,
+                    reveal=False):
+    if not search_paths:
+        search_paths = []
+    search_paths = search_paths + [
+        './',
+        './dependencies/',
+        __install_dir__,
+    ]
+    reset_reclass_cache()
+    refController = RefController('./catalog/refs')
+    if fake_refs:
+        refController.register_backend(FakeVaultBackend())
     click.secho('Compiling catalog...', bold=True)
-    return subprocess.run(  # nosec
-        ['kapitan', 'compile', '--fetch', '-J', '.', __install_dir__,
-         'dependencies', '--refs-path', './catalog/refs'],
-        check=False)
+    targets.compile_targets(
+        inventory_path='./inventory',
+        search_paths=search_paths,
+        output_path=output_dir,
+        targets=[target],
+        parallel=4,
+        labels=None,
+        ref_controller=refController,
+        verbose=config.trace,
+        prune=False,
+        indent=2,
+        reveal=reveal,
+        cache=False,
+        cache_paths=None,
+        fetch_dependencies=fetch_dependencies,
+        validate=False,
+        schemas_path='./schemas',
+        jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
+    )
 
 
 def rm_tree_contents(basedir):
@@ -103,8 +149,6 @@ def rm_tree_contents(basedir):
     Delete all files in directory `basedir`, but do not delete the directory
     itself.
     """
-    # pylint: disable=import-outside-toplevel
-    import os
     basedir = P(basedir)
     if not basedir.is_dir():
         raise ValueError('Expected directory as argument')

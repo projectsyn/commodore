@@ -1,6 +1,7 @@
 from pathlib import Path as P
 
 import click
+from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.resources import inventory_reclass
 
 from . import git
@@ -22,7 +23,7 @@ from .dependency_mgmt import (
 )
 from .helpers import (
     ApiError,
-    clean,
+    clean_working_tree,
     kapitan_compile,
     lieutenant_query,
 )
@@ -107,7 +108,8 @@ def _local_setup(config, cluster_id):
         # Skip jsonnet libs when collecting components
         if c.name == 'lib' or c.name == 'libs':
             continue
-        click.echo(f" > {c}")
+        if config.debug:
+            click.echo(f" > {c}")
         repo = git.init_repository(c)
         component = Component(
             name=c.name,
@@ -128,7 +130,7 @@ def compile(config, cluster_id):
     if config.local:
         cluster, target_name, catalog_repo = _local_setup(config, cluster_id)
     else:
-        clean(config)
+        clean_working_tree(config)
         cluster, target_name, catalog_repo = _regular_setup(config, cluster_id)
 
     # Compile kapitan inventory to extract component versions. Component
@@ -139,7 +141,9 @@ def compile(config, cluster_id):
     if versions and not config.local:
         set_component_overrides(config, versions)
         update_target(config, cluster)
-
+    # Rebuild reclass inventory to use new version of components
+    reset_reclass_cache()
+    kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
     jsonnet_libs = kapitan_inventory['parameters'].get(
         'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
@@ -151,9 +155,7 @@ def compile(config, cluster_id):
     # parameters
     update_refs(config, kapitan_inventory['parameters'])
 
-    p = kapitan_compile()
-    if p.returncode != 0:
-        raise click.ClickException('Kapitan catalog compilation failed.')
+    kapitan_compile(config)
 
     postprocess_components(config, kapitan_inventory, target_name, config.get_components())
 
