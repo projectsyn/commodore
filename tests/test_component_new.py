@@ -1,14 +1,14 @@
 """
-Tests for new-component command
+Tests for component new command
 """
 import os
 import yaml
 from pathlib import Path as P
 
 
-def test_run_newcomponent_command(tmp_path: P):
+def test_run_component_new_command(tmp_path: P):
     """
-    Run the new-component command
+    Run the component new command
     """
 
     os.chdir(tmp_path)
@@ -22,7 +22,7 @@ def test_run_newcomponent_command(tmp_path: P):
         file.write('''classes:
         - test''')
     component_name = 'test-component'
-    exit_status = os.system(f"commodore -vvv new-component {component_name} --lib --pp")
+    exit_status = os.system(f"commodore -vvv component new {component_name} --lib --pp")
     assert exit_status == 0
     for file in [P('README.md'),
                  P('class', f"{component_name}.yml"),

@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * `getValueOrDefault` helper ([#125])
 * `makeMergeable` helper ([#126])
+* `commodore component compile` to compile a single component ([#122])
+
+### Changed
+
+* `compile` and `clean` commands were moved to the `catalog` command group ([#122])
+* `new-component` command was moved to the `component` command group ([#122])
 
 ## [v0.1.6]
 
@@ -90,6 +96,7 @@ Initial implementation
 [#100]: https://github.com/projectsyn/commodore/pull/100
 [#103]: https://github.com/projectsyn/commodore/pull/103
 [#106]: https://github.com/projectsyn/commodore/pull/106
+[#122]: https://github.com/projectsyn/commodore/pull/122
 [#125]: https://github.com/projectsyn/commodore/pull/125
 [#126]: https://github.com/projectsyn/commodore/pull/126
 [#130]: https://github.com/projectsyn/commodore/pull/130

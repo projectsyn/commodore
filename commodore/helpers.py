@@ -160,3 +160,19 @@ def rm_tree_contents(basedir):
             shutil.rmtree(f)
         else:
             os.unlink(f)
+
+
+def relsymlink(srcdir, srcname, destdir, destname=None):
+    if destname is None:
+        destname = srcname
+    # pathlib's relative_to() isn't suitable for this use case, since it only
+    # works for dropping a path's prefix according to the documentation. See
+    # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
+    link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
+    link_dst = P(destdir) / destname
+    try:
+        if link_dst.exists():
+            os.remove(link_dst)
+        os.symlink(link_src, link_dst)
+    except Exception as e:
+        raise click.ClickException(f"While setting up symlinks: {e}") from e

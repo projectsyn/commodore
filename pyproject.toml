@@ -25,6 +25,8 @@ importlib_metadata = "*"
 [tool.poetry.dev-dependencies]
 tox = "*"
 autopep8 = "*"
+pytest = "^5.4.3"
+pytest-xdist = "^1.32.0"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'

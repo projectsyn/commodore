@@ -5,32 +5,16 @@ import click
 
 from . import git
 from .config import Component
-from .helpers import yaml_load
-
-
-def _relsymlink(srcdir, srcname, destdir, destname=None):
-    if destname is None:
-        destname = srcname
-    # pathlib's relative_to() isn't suitable for this use case, since it only
-    # works for dropping a path's prefix according to the documentation. See
-    # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
-    link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
-    link_dst = P(destdir) / destname
-    try:
-        if link_dst.exists():
-            os.remove(link_dst)
-        os.symlink(link_src, link_dst)
-    except Exception as e:
-        raise click.ClickException(f"While setting up symlinks: {e}") from e
+from .helpers import relsymlink, yaml_load
 
 
 def create_component_symlinks(cfg, component: Component):
-    _relsymlink(component.target_directory / 'class', f"{component.name}.yml",
-                'inventory/classes/components')
+    relsymlink(component.target_directory / 'class', f"{component.name}.yml",
+               'inventory/classes/components')
     component_defaults_class = component.target_directory / 'class' / 'defaults.yml'
     if component_defaults_class.is_file():
-        _relsymlink(component.target_directory / 'class', 'defaults.yml',
-                    P('inventory/classes/defaults'), destname=f"{component.name}.yml")
+        relsymlink(component.target_directory / 'class', 'defaults.yml',
+                   P('inventory/classes/defaults'), destname=f"{component.name}.yml")
     else:
         click.secho('     > Old-style component detected. Please move ' +
                     'component defaults to \'class/defaults.yml\'', fg='yellow')
@@ -39,7 +23,7 @@ def create_component_symlinks(cfg, component: Component):
         for file in os.listdir(libdir):
             if cfg.debug:
                 click.echo(f"     > installing template library: {file}")
-            _relsymlink(libdir, file, 'dependencies/lib')
+            relsymlink(libdir, file, 'dependencies/lib')
 
 
 def _discover_components(cfg, inventory_path):
@@ -178,5 +162,5 @@ def fetch_jsonnet_libs(config, libs):
             click.echo(f" > {libname}: {filestext}")
         repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
         for file in lib['files']:
-            _relsymlink(repo.working_tree_dir, file['libfile'],
-                        'dependencies/lib', destname=file['targetfile'])
+            relsymlink(repo.working_tree_dir, file['libfile'],
+                       'dependencies/lib', destname=file['targetfile'])
