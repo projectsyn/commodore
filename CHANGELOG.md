@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `getValueOrDefault` helper ([#125])
 * `makeMergeable` helper ([#126])
 * `commodore component compile` to compile a single component ([#122])
+* Option to explicitly set a compnents display name ([#133])
 * labels to issue templates ([#134])
 
 ### Changed
@@ -101,4 +102,5 @@ Initial implementation
 [#125]: https://github.com/projectsyn/commodore/pull/125
 [#126]: https://github.com/projectsyn/commodore/pull/126
 [#130]: https://github.com/projectsyn/commodore/pull/130
+[#133]: https://github.com/projectsyn/commodore/pull/133
 [#134]: https://github.com/projectsyn/commodore/pull/134
