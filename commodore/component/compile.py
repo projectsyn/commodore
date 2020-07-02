@@ -34,30 +34,8 @@ def compile_component(config: Config, component_path, value_files, search_paths,
     try:
         if config.debug:
             click.echo(f"   > Created temp workspace: {temp_dir}")
-        for d in ['classes/components', 'classes/defaults', 'targets']:
-            os.makedirs(temp_dir / 'inventory' / d, exist_ok=True)
-        dependencies_path = temp_dir / 'dependencies'
-        dependencies_path.mkdir(exist_ok=True)
-        # Create class symlink
-        relsymlink(
-            component_class_file.parent,
-            component_class_file.name,
-            temp_dir / 'inventory/classes/components')
-        # Create defaults symlink
-        relsymlink(
-            component_defaults_file.parent,
-            component_defaults_file.name,
-            temp_dir / 'inventory/classes/defaults',
-            f"{component_name}.yml")
-        # Create component symlink
-        relsymlink(
-            component_path.parent,
-            component_path.name,
-            dependencies_path,
-            component_name)
-        # Create value symlinks
-        for file in value_files:
-            relsymlink(file.parent, file.name, temp_dir / 'inventory/classes')
+
+        _prepare_fake_inventory(temp_dir, component_name, component_path, value_files)
 
         # Create class for fake parameters
         with open(temp_dir / 'inventory/classes/fake.yml', 'w') as file:
@@ -124,3 +102,39 @@ local ArgoProject(name) = {};
             if config.debug:
                 click.echo(f" > Remove temp dir {temp_dir}")
             shutil.rmtree(temp_dir)
+
+
+def _prepare_fake_inventory(temp_dir: P, component_name, component_path, value_files):
+    component_class_file = component_path / 'class' / f"{component_name}.yml"
+    component_defaults_file = component_path / 'class' / 'defaults.yml'
+    if not component_class_file.exists():
+        raise click.ClickException(
+            f"Could not find component class file: {component_class_file}")
+    if not component_defaults_file.exists():
+        raise click.ClickException(
+            f"Could not find component default file: {component_defaults_file}")
+
+    for d in ['classes/components', 'classes/defaults', 'targets']:
+        os.makedirs(temp_dir / 'inventory' / d, exist_ok=True)
+    dependencies_path = temp_dir / 'dependencies'
+    dependencies_path.mkdir(exist_ok=True)
+    # Create class symlink
+    relsymlink(
+        component_class_file.parent,
+        component_class_file.name,
+        temp_dir / 'inventory/classes/components')
+    # Create defaults symlink
+    relsymlink(
+        component_defaults_file.parent,
+        component_defaults_file.name,
+        temp_dir / 'inventory/classes/defaults',
+        f"{component_name}.yml")
+    # Create component symlink
+    relsymlink(
+        component_path.parent,
+        component_path.name,
+        dependencies_path,
+        component_name)
+    # Create value symlinks
+    for file in value_files:
+        relsymlink(file.parent, file.name, temp_dir / 'inventory/classes')
