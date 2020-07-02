@@ -46,7 +46,7 @@ class ComponentFactory:
             name=self.slug,
             repo=None,
             version='master',
-            repo_url=f"git@github.com:{self.github_owner}/compontent-{self.slug}.git",
+            repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
         )
         if component.target_directory.exists():
             raise click.ClickException(
