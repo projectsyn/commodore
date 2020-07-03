@@ -1,7 +1,7 @@
 ---
 name: 🐜 Bug report
 about: Create a report to help us improve 🔧
-
+labels: bug
 ---
 
 <!-- Place a general description or your issue here. -->
