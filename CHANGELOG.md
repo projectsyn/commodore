@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `getValueOrDefault` helper ([#125])
 * `makeMergeable` helper ([#126])
 * `commodore component compile` to compile a single component ([#122])
-* Option to explicitly set a compnents display name ([#133])
+* Option to explicitly set a components display name ([#133])
 * labels to issue templates ([#134])
 
 ### Changed

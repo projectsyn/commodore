@@ -84,7 +84,7 @@ def component(config: Config, verbose):
 @component.command(name='new', short_help='Bootstrap a new component.')
 @click.argument('slug')
 @click.option('--name',
-              help='The compnents name as it will be written in the documentation. Defaults to the slug.')
+              help="The component's name as it will be written in the documentation. Defaults to the slug.")
 @click.option('--lib/--no-lib', default=False, show_default=True,
               help='Add a component library template.')
 @click.option('--pp/--no-pp', default=False, show_default=True,

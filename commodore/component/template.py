@@ -30,7 +30,7 @@ class ComponentFactory:
 
     @property
     def name(self):
-        if not isinstance(self._name, str) or len(self._name) == 0:
+        if not self._name:
             return self.slug
         return self._name
 
