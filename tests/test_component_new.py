@@ -35,14 +35,14 @@ def test_run_component_new_command(tmp_path: P):
                  P('class', f"{component_name}.yml"),
                  P('component', 'main.jsonnet'),
                  P('component', 'app.jsonnet'),
-                 P('lib', f"{component_name}.libjsonnet"),
+                 P('lib', f"{component_name}.libsonnet"),
                  P('postprocess', 'filters.yml'), ]:
         assert os.path.exists(P('dependencies', component_name, file))
     for file in [P('inventory', 'classes', 'components',
                    f"{component_name}.yml"),
                  P('inventory', 'classes', 'defaults',
                    f"{component_name}.yml"),
-                 P('dependencies', 'lib', f"{component_name}.libjsonnet")]:
+                 P('dependencies', 'lib', f"{component_name}.libsonnet")]:
         assert file.is_symlink()
     with open(targetyml) as file:
         target = yaml.safe_load(file)
