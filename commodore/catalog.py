@@ -38,8 +38,7 @@ def _render_catalog_commit_msg(cfg):
     config_commits = [_pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()]
     config_commits = '\n'.join(config_commits)
 
-    return f"""
-Automated catalog update from Commodore
+    return f"""Automated catalog update from Commodore
 
 Component commits:
 {component_commits}
