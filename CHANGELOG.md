@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `commodore component compile` to compile a single component ([#122])
 * Option to explicitly set a component's display name ([#133])
 * labels to issue templates ([#134])
+* Vale Makefile target in component template ([#137])
 
 ### Changed
 
@@ -104,3 +105,4 @@ Initial implementation
 [#130]: https://github.com/projectsyn/commodore/pull/130
 [#133]: https://github.com/projectsyn/commodore/pull/133
 [#134]: https://github.com/projectsyn/commodore/pull/134
+[#137]: https://github.com/projectsyn/commodore/pull/137
