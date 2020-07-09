@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `new-component` command was moved to the `component` command group ([#122])
 * Jsonnet library file extension to `.libsonnet` in component template ([#137])
 
+### Fixed
+
+* Commit messages from automated catalog updates do no longer contain a leading newline ([#136])
+
 ## [v0.1.6]
 
 ### Changed
@@ -106,4 +110,5 @@ Initial implementation
 [#130]: https://github.com/projectsyn/commodore/pull/130
 [#133]: https://github.com/projectsyn/commodore/pull/133
 [#134]: https://github.com/projectsyn/commodore/pull/134
+[#136]: https://github.com/projectsyn/commodore/issues/136
 [#137]: https://github.com/projectsyn/commodore/pull/137
