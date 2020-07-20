@@ -5,7 +5,7 @@ on:
     - master
 
 jobs:
-  tests:
+  lints:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -13,9 +13,6 @@ jobs:
           - lint_flake8
           - lint_pylint
           - lint_bandit
-          - test_py36
-          - test_py37
-          - test_py38
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -24,6 +21,24 @@ jobs:
         pip install poetry tox
     - name: Run ${{ matrix.command }}
       run: make ${{ matrix.command }}
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - '3.6'
+          - '3.7'
+          - '3.8'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      run: |
+        pip install poetry tox
+    - name: Run tests on Python ${{ matrix.python-version }}
+      run: make test_py${{ matrix.python-version }}
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -34,6 +49,7 @@ jobs:
       run: make docs
   build:
     needs:
+    - lints
     - tests
     runs-on: ubuntu-latest
     steps:

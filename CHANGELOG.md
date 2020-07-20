@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Option to explicitly set a component's display name ([#133])
 * labels to issue templates ([#134])
 * Vale Makefile target in component template ([#137])
+* Refactor tests to work with new setup-python ([#143])
 
 ### Changed
 
@@ -112,3 +113,4 @@ Initial implementation
 [#134]: https://github.com/projectsyn/commodore/pull/134
 [#136]: https://github.com/projectsyn/commodore/issues/136
 [#137]: https://github.com/projectsyn/commodore/pull/137
+[#137]: https://github.com/projectsyn/commodore/pull/143
