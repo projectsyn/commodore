@@ -18,11 +18,11 @@ lint: lint_flake8 lint_pylint lint_bandit
 
 .PHONY: test_py36 test_py37 test_py38
 
-test_py36:
+test_py3.6:
 	$(TOX_COMMAND) -e py36
 
-test_py37:
+test_py3.7:
 	$(TOX_COMMAND) -e py37
 
-test_py38:
+test_py3.8:
 	$(TOX_COMMAND) -e py38
