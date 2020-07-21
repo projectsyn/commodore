@@ -97,7 +97,7 @@ def fetch_components(cfg):
     for c in components:
         if cfg.debug:
             click.echo(f" > Fetching component {c.name}...")
-        repo = git.clone_repository(c.repo_url, c.target_directory)
+        repo = git.clone_repository(c.repo_url, c.target_directory, cfg)
         c = c._replace(repo=repo)
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
@@ -160,7 +160,9 @@ def fetch_jsonnet_libs(config, libs):
         filestext = ' '.join([f['targetfile'] for f in lib['files']])
         if config.debug:
             click.echo(f" > {libname}: {filestext}")
-        repo = git.clone_repository(lib['repository'], P('dependencies/libs') / libname)
+        repo = git.clone_repository(lib['repository'],
+                                    P('dependencies/libs') / libname,
+                                    config)
         for file in lib['files']:
             relsymlink(repo.working_tree_dir, file['libfile'],
                        'dependencies/lib', destname=file['targetfile'])

@@ -10,7 +10,7 @@ def fetch_customer_catalog(config, repoinfo):
     click.secho('Updating cluster catalog...', bold=True)
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repoinfo['url']}")
-    return git.clone_repository(repoinfo['url'], 'catalog')
+    return git.clone_repository(repoinfo['url'], 'catalog', config)
 
 
 def _pretty_print_component_commit(name, component):
@@ -86,7 +86,7 @@ def update_catalog(cfg, target_name, repo):
         if not cfg.local:
             if cfg.push:
                 click.echo(' > Commiting changes...')
-                git.commit(repo, commit_message)
+                git.commit(repo, commit_message, cfg)
                 click.echo(' > Pushing catalog to remote...')
                 repo.remotes.origin.push()
             else:

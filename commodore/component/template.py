@@ -73,7 +73,7 @@ class ComponentFactory:
         index.add('*')
         index.add('.github')
         index.add('.*.yml')
-        git.commit(repo, 'Initial commit')
+        git.commit(repo, 'Initial commit', self.config)
 
         click.echo(' > Installing component')
         create_component_symlinks(self.config, component)

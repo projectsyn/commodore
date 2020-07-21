@@ -10,3 +10,4 @@ services:
     - ./dependencies/:/app/dependencies/
     - ./inventory/:/app/inventory/
     - ~/.ssh/:/app/.ssh/:ro
+    - ~/.gitconfig:/app/.gitconfig:ro

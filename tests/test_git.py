@@ -19,7 +19,7 @@ def test_create_repository(tmp_path: Path):
 def test_clone_error(tmp_path: Path):
     inexistent_url = 'ssh://git@git.example.com/some/repo.git'
     with pytest.raises(click.ClickException) as excinfo:
-        git.clone_repository(inexistent_url, tmp_path)
+        git.clone_repository(inexistent_url, tmp_path, None)
     assert inexistent_url in str(excinfo.value)
 
 
