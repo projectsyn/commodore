@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `compile` and `clean` commands were moved to the `catalog` command group ([#122])
 * `new-component` command was moved to the `component` command group ([#122])
 * Jsonnet library file extension to `.libsonnet` in component template ([#137])
+* Applied the component template to Commodore itself [#145]
 
 ### Fixed
 
@@ -116,3 +117,4 @@ Initial implementation
 [#137]: https://github.com/projectsyn/commodore/pull/137
 [#140]: https://github.com/projectsyn/commodore/pull/140
 [#143]: https://github.com/projectsyn/commodore/pull/143
+[#145]: https://github.com/projectsyn/commodore/pull/145
