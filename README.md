@@ -1,5 +1,8 @@
 # Project Syn: Commodore
 
+This repository is part of Project Syn.
+For documentation on Project Syn and this component, see https://syn.tools.
+
 **Please note that this project is in its early stages and under active development**.
 
 See [CHANGELOG.md](/CHANGELOG.md) for changelogs of each release version of
@@ -148,6 +151,18 @@ docker-compose run commodore catalog compile $CLUSTER_ID
 
 ## Documentation
 
+Documentation for this component is written using [Asciidoc][asciidoc] and [Antora][antora].
+It is located in the [docs/](docs) folder.
+The [Divio documentation structure](https://documentation.divio.com/) is used to organize its content.
+
 Run the `make docs` command in the `docs` subfolder to generate the Antora documentation website locally. The website will be available at the `_antora/index.html` file.
 
 After writing the documentation, please use the `make check` command and correct any warnings raised by the tool.
+
+## Contributing and license
+
+This library is licensed under [BSD-3-Clause](LICENSE).
+For information about how to contribute see [CONTRIBUTING](CONTRIBUTING.md).
+
+[asciidoc]: https://asciidoctor.org/
+[antora]: https://antora.org/
