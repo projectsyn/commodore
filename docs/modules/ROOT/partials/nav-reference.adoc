@@ -1,1 +1,2 @@
+* xref:commodore:ROOT:reference/commands.adoc[Commands]
 * xref:commodore:ROOT:reference/cli.adoc[Command Line Options]
