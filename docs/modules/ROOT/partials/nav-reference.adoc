@@ -1,2 +1,4 @@
+* xref:commodore:ROOT:reference/concepts.adoc[Concepts]
+* xref:commodore:ROOT:reference/architecture.adoc[Architecture]
 * xref:commodore:ROOT:reference/commands.adoc[Commands]
 * xref:commodore:ROOT:reference/cli.adoc[Command Line Options]
