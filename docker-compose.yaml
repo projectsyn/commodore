@@ -1,4 +1,8 @@
 version: "3.0"
+networks:
+  default:
+    external:
+      name: host
 services:
   commodore:
     build: .
