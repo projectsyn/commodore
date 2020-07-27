@@ -21,16 +21,7 @@ class Config:
     def __init__(self, api_url=None, api_token=None, global_git=None, verbose=False, username=None, usermail=None):
         self.api_url = api_url
         self.api_token = None
-        if api_token is not None:
-            try:
-                p = P(api_token)
-                if p.is_file():
-                    with open(p) as apitoken:
-                        api_token = apitoken.read()
-            except OSError:
-                # Assume token is not configured as file
-                pass
-            self.api_token = api_token.strip()
+        self.api_token = api_token
         self.global_git_base = global_git
         self._components = {}
         self._config_repos = {}
@@ -58,6 +49,19 @@ class Config:
     @property
     def default_component_base(self):
         return f"{self.global_git_base}/commodore-components"
+
+    @property
+    def api_token(self):
+        return self._api_token
+
+    @api_token.setter
+    def api_token(self, api_token):
+        if api_token is not None:
+            p = P(api_token)
+            if p.is_file():
+                with open(p) as apitoken:
+                    api_token = apitoken.read()
+            self._api_token = api_token.strip()
 
     def update_verbosity(self, verbose):
         self._verbose += verbose

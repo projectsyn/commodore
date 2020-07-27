@@ -5,6 +5,12 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v0.2.1]
+
+### Fixed
+
+* Read token from file ([#146])
+
 ## [v0.2.0]
 
 ### Added
@@ -98,6 +104,7 @@ Initial implementation
 [v0.1.5]: https://github.com/projectsyn/commodore/releases/tag/v0.1.5
 [v0.1.6]: https://github.com/projectsyn/commodore/releases/tag/v0.1.6
 [v0.2.0]: https://github.com/projectsyn/commodore/releases/tag/v0.2.0
+[v0.2.1]: https://github.com/projectsyn/commodore/releases/tag/v0.2.1
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58
 [#81]: https://github.com/projectsyn/commodore/pull/81
@@ -120,3 +127,4 @@ Initial implementation
 [#140]: https://github.com/projectsyn/commodore/pull/140
 [#143]: https://github.com/projectsyn/commodore/pull/143
 [#145]: https://github.com/projectsyn/commodore/pull/145
+[#146]: https://github.com/projectsyn/commodore/pull/146
