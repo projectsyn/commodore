@@ -3,6 +3,8 @@ _antora
 
 ## Ignore commodore output
 compiled
+dependencies
+inventory
 ## From here: GitHub's gitignore template for Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
