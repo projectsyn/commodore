@@ -57,10 +57,17 @@ class Config:
     @api_token.setter
     def api_token(self, api_token):
         if api_token is not None:
-            p = P(api_token)
-            if p.is_file():
-                with open(p) as apitoken:
-                    api_token = apitoken.read()
+            try:
+                p = P(api_token)
+                if p.is_file():
+                    with open(p) as apitoken:
+                        api_token = apitoken.read()
+            except OSError as e:
+                # File name too long, assume token is not configured as file
+                if 'File name too long' in e.strerror:
+                    pass
+                else:
+                    raise
             self._api_token = api_token.strip()
 
     def update_verbosity(self, verbose):
