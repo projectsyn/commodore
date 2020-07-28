@@ -132,6 +132,8 @@ using `helm template`.
 
 ## Run Commodore in Docker
 
+NOTE: After checking out this project, run `mkdir -p catalog inventory dependencies` in it before running any Docker commands. This will ensure the folders are writable by the current user in the context of the Docker container.
+
 A docker-compose setup enables running Commodore in a container.
 The environment variables are picked up from the local `.env` file.
 By default your `~/.ssh/` directory is mounted into the container and an `ssh-agent` is started.
