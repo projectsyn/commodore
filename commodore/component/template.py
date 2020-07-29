@@ -29,6 +29,16 @@ class ComponentFactory:
         self.today = datetime.date.today()
 
     @property
+    def slug(self):
+        return self._slug
+
+    @slug.setter
+    def slug(self, slug):
+        if slug.startswith('component-'):
+            raise click.ClickException('The component slug may not start with "component-"')
+        self._slug = slug
+
+    @property
     def name(self):
         if not self._name:
             return self.slug

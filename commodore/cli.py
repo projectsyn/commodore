@@ -115,7 +115,7 @@ def component_new(config: Config, slug, name, lib, pp, owner, copyright_holder, 
     f.create()
 
 
-@component.command(name='compile', short_help='Compile a single component')
+@component.command(name='compile', short_help='Compile a single component.')
 @click.argument('path', type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.option('-f', '--values', multiple=True,
               type=click.Path(exists=True, file_okay=True, dir_okay=False),
