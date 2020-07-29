@@ -70,3 +70,14 @@ def test_run_component_new_command_with_name(tmp_path: P):
         data = file.read()
         assert component_name in data
         assert component_slug not in data
+
+
+def test_run_component_new_command_with_illegal_slug(tmp_path: P):
+    """
+    Run the component new command with an illegal slug
+    """
+
+    setup_directory(tmp_path)
+    component_slug = 'component-test-illegal'
+    exit_status = os.system(f"commodore -vvv component new {component_slug}")
+    assert exit_status != 0
