@@ -1,5 +1,4 @@
 import json
-import re
 
 from pathlib import Path as P
 
@@ -35,41 +34,9 @@ _builtin_filters = {
 }
 
 
-class InventoryError(Exception):
-    pass
-
-
-def _resolve_var(inv, m):
-    var = m.group(1)
-    invpath = var.split(':')
-    val = inv['parameters']
-    for elem in invpath:
-        val = val.get(elem, None)
-        if val is None:
-            raise InventoryError(f"Unable to resolve inventory reference {var}")
-    return val
-
-
-INV_REF = re.compile(r'\$\{([^}]+)\}')
-
-
-def _resolve_inventory_vars(inv, args):
-    resolved = {}
-    for k, v in args.items():
-        if isinstance(v, str):
-            resolved[k] = INV_REF.sub(lambda m: _resolve_var(inv, m), v)
-        else:
-            resolved[k] = v
-    return resolved
-
-
 def run_builtin_filter(inv, component, target, f):
     fname = f['filter']
     if fname not in _builtin_filters:
         click.secho(f"   > [ERR ] Unknown builtin filter {fname}", fg='red')
         return
-    try:
-        filterargs = _resolve_inventory_vars(inv, f['filterargs'])
-    except InventoryError as e:
-        raise click.ClickException(f"Failure in builtin filter: {e}") from e
-    _builtin_filters[fname](inv, component, target, f['path'], **filterargs)
+    _builtin_filters[fname](inv, component, target, f['path'], **f['filterargs'])
