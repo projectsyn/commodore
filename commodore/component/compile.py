@@ -5,9 +5,12 @@ import tempfile
 
 import click
 
-from commodore.config import Config
+from commodore.config import Config, Component
 from commodore.dependency_mgmt import fetch_jsonnet_libs
 from commodore.helpers import kapitan_compile, relsymlink
+from commodore.postprocess import postprocess_components
+from git import Repo
+from kapitan.resources import inventory_reclass
 
 
 libs = [{'name': 'kube-libsonnet',
@@ -94,6 +97,17 @@ local ArgoProject(name) = {};
                         fake_refs=True,
                         reveal=True)
         click.echo(f" > Component compiled to {output_path / 'compiled/test'}")
+
+        # prepare inventory and fake component object for postprocess
+        inventory = inventory_reclass(temp_dir / 'inventory')['nodes']['test']
+        component = Component(component_name, Repo(component_path),
+                              'https://fake.repo.url/', 'master')
+        # We change the working directory to the output_path directory here,
+        # as postprocess expects to find `compiled/<target>` in the working
+        # directory.
+        os.chdir(output_path)
+        postprocess_components(config, inventory, 'test',
+                               {component_name: component})
     finally:
         os.chdir(original_working_dir)
         if config.trace:

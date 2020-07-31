@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Validation of component slug ([#153])
+* `component compile` now applies postprocessing filters ([#154])
 
 ## [v0.2.2]
 
@@ -143,3 +144,4 @@ Initial implementation
 [#148]: https://github.com/projectsyn/commodore/pull/148
 [#151]: https://github.com/projectsyn/commodore/pull/151
 [#153]: https://github.com/projectsyn/commodore/pull/153
+[#154]: https://github.com/projectsyn/commodore/pull/154
