@@ -10,15 +10,9 @@ from commodore.component.compile import compile_component
 from test_component_new import test_run_component_new_command
 
 
-def test_run_component_compile_command(tmp_path):
-    """
-    Run the component compile command
-    """
-
-    os.chdir(tmp_path)
+def _prepare_component(tmp_path, component_name='test-component'):
     test_run_component_new_command(tmp_path=tmp_path)
 
-    component_name = 'test-component'
     with open(tmp_path / 'dependencies' / component_name / 'component/main.jsonnet', 'a') as file:
         file.write('''
 {
@@ -30,6 +24,33 @@ def test_run_component_compile_command(tmp_path):
 }
 ''')
 
+
+def _add_postprocessing_filter(tmp_path, component_name='test-component'):
+    with open(tmp_path / 'dependencies' / component_name / 'postprocess' /
+              'filters.yml', 'w') as file:
+        filters = {
+            'filters': [{
+                'path': component_name,
+                'type': 'builtin',
+                'filter': 'helm_namespace',
+                'filterargs': {
+                    'namespace': 'test-component-ns',
+                }
+            }]
+        }
+        yaml.dump(filters, file)
+
+
+def test_run_component_compile_command(tmp_path):
+    """
+    Run the component compile command
+    """
+
+    os.chdir(tmp_path)
+
+    component_name = 'test-component'
+    _prepare_component(tmp_path, component_name)
+
     exit_status = os.system(f"commodore component compile -o ./testdir dependencies/{component_name}")
     assert exit_status == 0
     assert os.path.exists(tmp_path / f"testdir/compiled/test/apps/{component_name}.yaml")
@@ -39,6 +60,29 @@ def test_run_component_compile_command(tmp_path):
         target = yaml.safe_load(file)
         assert target['kind'] == 'ServiceAccount'
         assert target['metadata']['namespace'] == f"syn-{component_name}"
+
+
+def test_run_component_compile_command_postprocess(tmp_path):
+    """
+    Run the component compile command for a component with a postprocessing
+    filter
+    """
+
+    os.chdir(tmp_path)
+
+    component_name = 'test-component'
+    _prepare_component(tmp_path, component_name)
+    _add_postprocessing_filter(tmp_path, component_name)
+
+    exit_status = os.system(f"commodore component compile -o ./testdir dependencies/{component_name}")
+    assert exit_status == 0
+    assert os.path.exists(tmp_path / f"testdir/compiled/test/apps/{component_name}.yaml")
+    rendered_yaml = tmp_path / 'testdir/compiled/test' / component_name / 'test_service_account.yaml'
+    assert rendered_yaml.exists()
+    with open(rendered_yaml) as file:
+        target = yaml.safe_load(file)
+        assert target['kind'] == 'ServiceAccount'
+        assert target['metadata']['namespace'] == 'test-component-ns'
 
 
 def test_no_component_compile_command():
