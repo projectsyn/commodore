@@ -104,14 +104,14 @@ def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **k
             yaml_dump(outcontents, outpath)
 
 
-def run_jsonnet_filter(inv, component, filterdir, f):
+def run_jsonnet_filter(inv, component, f):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
     if f["type"] != "jsonnet":
         raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
-    filterpath = filterdir / f["filter"]
+    filterpath = P("./dependencies") / f["filterpath"] / f["filter"]
     output_path = f["output_path"]
     # pylint: disable=c-extension-no-member
     jsonnet_runner(inv, component, output_path, _jsonnet.evaluate_file, filterpath)

@@ -10,6 +10,19 @@ from .builtin_filters import run_builtin_filter
 from .inventory import resolve_inventory_vars, InventoryError
 
 
+def _run_filter(f, inventory, component: str):
+    if not f["enabled"]:
+        click.secho(f"   > Skipping disabled filter {f['filter']} on path {f['path']}")
+        return
+
+    if f["type"] == "builtin":
+        run_builtin_filter(inventory, component, f)
+    elif f["type"] == "jsonnet":
+        run_jsonnet_filter(inventory, component, f)
+    else:
+        click.secho(f"   > [WARN] unknown filter type {f['type']}", fg="yellow")
+
+
 def postprocess_components(config, kapitan_inventory, components: Dict[str, Component]):
     click.secho("Postprocessing...", bold=True)
     for cn, c in components.items():
@@ -24,18 +37,27 @@ def postprocess_components(config, kapitan_inventory, components: Dict[str, Comp
                 click.echo(f" > {cn}...")
             filters = yaml_load(filters_file)
             for f in filters["filters"]:
+                # Add filterpath to filter dict
+                f["filterpath"] = filters_file.parent
+                # Add component name to filter dict
+                f["component"] = cn
+
+                # Add enabled flag if not present
+                if "enabled" not in f:
+                    f["enabled"] = True
+
                 # Resolve any inventory references in filter definition
                 try:
                     f = resolve_inventory_vars(inventory, f)
                 except InventoryError as e:
                     raise click.ClickException(
-                        f"Failed to resolve variables for old-style filter: {e}"
+                        f"Failed to resolve variables for non-inventory filter: {e}"
                     ) from e
 
                 # filters without 'type' are always 'jsonnet'
                 if "type" not in f:
                     click.secho(
-                        "   > [WARN] component uses old-style postprocess filters",
+                        "   > [WARN] component uses untyped non-inventory postprocess filter",
                         fg="yellow",
                     )
                     f["type"] = "jsonnet"
@@ -55,3 +77,4 @@ def postprocess_components(config, kapitan_inventory, components: Dict[str, Comp
                         f"   > [WARN] unknown builtin filter {f['filter']}",
                         fg="yellow",
                     )
+                _run_filter(f, inventory, cn)

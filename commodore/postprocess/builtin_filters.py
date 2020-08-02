@@ -16,6 +16,10 @@ def _builtin_filter_helm_namespace(inv, component, path, **kwargs):
             "Builtin filter 'helm_namespace': filter argument 'namespace' is required"
         )
     create_namespace = kwargs.get("create_namespace", "false")
+    # Transform create_namespace to string as jsonnet extvars can only be
+    # strings
+    if isinstance(create_namespace, bool):
+        create_namespace = "true" if create_namespace else "false"
     exclude_objects = kwargs.get("exclude_objects", [])
     exclude_objects = "|".join([json.dumps(e) for e in exclude_objects])
     output_dir = P("compiled", component, path)
