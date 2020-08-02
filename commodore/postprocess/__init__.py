@@ -5,9 +5,20 @@ import click
 from commodore.component import Component
 from commodore.helpers import yaml_load
 
-from .jsonnet import run_jsonnet_filter
-from .builtin_filters import run_builtin_filter
+from .jsonnet import run_jsonnet_filter, validate_jsonnet_filter
+from .builtin_filters import run_builtin_filter, validate_builtin_filter
 from .inventory import resolve_inventory_vars, InventoryError
+
+
+def _get_inventory_filters(inventory):
+    """
+    Return list of filters defined in inventory.
+
+    Inventory filters are expected to be defined as a list in
+    `parameters.commodore.postprocess.filters`.
+    """
+    commodore = inventory["parameters"].get("commodore", {})
+    return commodore.get("postprocess", {}).get("filters", [])
 
 
 def _run_filter(f, inventory, component: str):
@@ -23,14 +34,40 @@ def _run_filter(f, inventory, component: str):
         click.secho(f"   > [WARN] unknown filter type {f['type']}", fg="yellow")
 
 
+def _validate_filter(f):
+    if "type" not in f:
+        return False
+    if f["type"] == "jsonnet":
+        return validate_jsonnet_filter(f)
+    if f["type"] == "builtin":
+        return validate_builtin_filter(f)
+
+    return False
+
+
 def postprocess_components(config, kapitan_inventory, components: Dict[str, Component]):
     click.secho("Postprocessing...", bold=True)
+
     for cn, c in components.items():
         inventory = kapitan_inventory.get(cn)
         if not inventory:
             click.echo(f" > No target exists for component {cn}, skipping...")
             continue
 
+        # inventory filters
+        for f in _get_inventory_filters(inventory):
+            if not _validate_filter(f):
+                click.secho(
+                    f"   > [WARN] Skipping filter '{f['filter']}' with invalid definition on path {f['path']}",
+                    fg="yellow",
+                )
+                continue
+            # TODO: check for missing filterpath for jsonnet filters
+            if "enabled" not in f:
+                f["enabled"] = True
+            _run_filter(f, inventory, cn)
+
+        # old filters
         filters_file = c.filters_file
         if filters_file.is_file():
             if config.debug:

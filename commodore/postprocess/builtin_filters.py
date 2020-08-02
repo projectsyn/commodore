@@ -49,3 +49,7 @@ def run_builtin_filter(inv, component, f):
         click.secho(f"   > [ERR ] Unknown builtin filter {fname}", fg="red")
         return
     _builtin_filters[fname](inv, component, f["path"], **f["filterargs"])
+
+
+def validate_builtin_filter(f):
+    return "filter" in f and "path" in f and "filterargs" in f

@@ -111,7 +111,12 @@ def run_jsonnet_filter(inv, component, f):
     """
     if f["type"] != "jsonnet":
         raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
+    # TODO: how to handle search path?
     filterpath = P("./dependencies") / f["filterpath"] / f["filter"]
     output_path = f["output_path"]
     # pylint: disable=c-extension-no-member
     jsonnet_runner(inv, component, output_path, _jsonnet.evaluate_file, filterpath)
+
+
+def validate_jsonnet_filter(f):
+    return "filterpath" in f and "output_path" in f and "component" in f

@@ -27,7 +27,7 @@ def _make_ns_filter(ns, enabled=None):
     return filter
 
 
-def _setup(tmp_path, filter):
+def _setup(tmp_path, filter, invfilter=False):
     os.chdir(tmp_path)
 
     test_run_component_new_command(tmp_path=tmp_path)
@@ -48,11 +48,17 @@ def _setup(tmp_path, filter):
             },
         }
         yaml.dump(obj, objf)
-    with open(
-        tmp_path / "dependencies" / "test-component" / "postprocess" / "filters.yml",
-        "w",
-    ) as filterf:
-        yaml.dump(filter, filterf)
+
+    if not invfilter:
+        with open(
+            tmp_path
+            / "dependencies"
+            / "test-component"
+            / "postprocess"
+            / "filters.yml",
+            "w",
+        ) as filterf:
+            yaml.dump(filter, filterf)
 
     config = Config()
     component = Component("test-component", repo_url="https://fake.repo.url")
@@ -71,6 +77,12 @@ def _setup(tmp_path, filter):
             },
         },
     }
+
+    if invfilter:
+        inventory["test-component"]["parameters"]["commodore"] = {
+            "postprocess": filter,
+        }
+
     return testf, config, inventory, config.get_components()
 
 
@@ -133,3 +145,13 @@ def test_postprocess_components_disabledref(tmp_path, capsys):
         assert obj["metadata"]["namespace"] == "untouched"
     captured = capsys.readouterr()
     assert "Skipping disabled filter" in captured.out
+
+
+def test_postprocess_components_invfilter(tmp_path, capsys):
+    f = _make_ns_filter("myns")
+    testf, config, inventory, components = _setup(tmp_path, f, invfilter=True)
+    postprocess_components(config, inventory, components)
+    assert testf.exists()
+    with open(testf) as objf:
+        obj = yaml.safe_load(objf)
+        assert obj["metadata"]["namespace"] == "myns"
