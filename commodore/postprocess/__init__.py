@@ -6,6 +6,7 @@ from commodore.helpers import yaml_load
 
 from .jsonnet import run_jsonnet_filter
 from .builtin_filters import run_builtin_filter
+from .inventory import resolve_inventory_vars, InventoryError
 
 
 def postprocess_components(config, inventory, target, components):
@@ -20,11 +21,23 @@ def postprocess_components(config, inventory, target, components):
                 click.echo(f" > {cn}...")
             filters = yaml_load(filterdir / 'filters.yml')
             for f in filters['filters']:
-                # old-style filters are always 'jsonnet'
+                # Resolve any inventory references in filter definition
+                try:
+                    f = resolve_inventory_vars(inventory, f)
+                except InventoryError as e:
+                    raise click.ClickException(
+                        f"Failed to resolve variables for old-style filter: {e}") from e
+
+                # filters without 'type' are always 'jsonnet'
                 if 'type' not in f:
                     click.secho('   > [WARN] component uses old-style postprocess filters',
                                 fg='yellow')
                     f['type'] = 'jsonnet'
+                # Filters which aren't explicitly disabled are always enabled
+                if 'enabled' in f and not f['enabled']:
+                    click.secho('   > Skipping disabled filter' +
+                                f" {f['filter']} on path {f['path']}")
+                    continue
                 if f['type'] == 'jsonnet':
                     run_jsonnet_filter(inventory, cn, target, filterdir, f)
                 elif f['type'] == 'builtin':
