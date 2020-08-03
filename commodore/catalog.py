@@ -60,6 +60,24 @@ def clean_catalog(repo):
         click.echo(" > Converting old-style catalog")
         rm_tree_contents(repo.working_tree_dir)
 
+def charanswer(question):
+    click.secho(question, fg='blue', nl=False)
+    answer = click.getchar(echo=True)
+    answer.lower()
+    click.echo('')
+    return answer
+
+def yes_or_no(question):
+    answer = charanswer(' > ' + question + ' (y/n): ')
+
+    while not(answer == 'y' or answer == 'n'):
+        click.secho(' > Please answer yes or no', fg='blue')
+        answer = charanswer(' > ' + question + ' (y/n): ')
+
+    if answer == 'y':
+        return True
+    else:
+        return False
 
 def update_catalog(cfg, target_name, repo):
     click.secho('Updating catalog repository...', bold=True)
@@ -84,6 +102,12 @@ def update_catalog(cfg, target_name, repo):
         click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
+            if cfg.interactive:
+                if yes_or_no('Should the push be done?'):
+                    cfg.push = True
+                else:
+                    cfg.push = False
+
             if cfg.push:
                 click.echo(' > Commiting changes...')
                 git.commit(repo, commit_message, cfg)
@@ -91,7 +115,7 @@ def update_catalog(cfg, target_name, repo):
                 repo.remotes.origin.push()
             else:
                 click.echo(' > Skipping commit+push to catalog...')
-                click.echo(' > Use flag --push to commit and push the catalog repo')
+                click.echo(' > Use flag --push to commit and push the catalog repo or --interactive to show the diff and decide on the push')
         else:
             repo.head.reset(working_tree=False)
             click.echo(' > Skipping commit+push to catalog in local mode...')
