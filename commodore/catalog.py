@@ -60,6 +60,7 @@ def clean_catalog(repo):
         click.echo(" > Converting old-style catalog")
         rm_tree_contents(repo.working_tree_dir)
 
+
 def update_catalog(cfg, target_name, repo):
     click.secho('Updating catalog repository...', bold=True)
     # pylint: disable=import-outside-toplevel
@@ -93,7 +94,8 @@ def update_catalog(cfg, target_name, repo):
                 repo.remotes.origin.push()
             else:
                 click.echo(' > Skipping commit+push to catalog...')
-                click.echo(' > Use flag --push to commit and push the catalog repo and --interactive to show the diff and decide on the push')
+                click.echo(' > Use flag --push to commit and push the catalog repo')
+                click.echo(' > Add flag --interactive to show the diff and decide on the push')
         else:
             repo.head.reset(working_tree=False)
             click.echo(' > Skipping commit+push to catalog in local mode...')

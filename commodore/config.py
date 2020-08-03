@@ -26,7 +26,6 @@ class Config:
         self._components = {}
         self._config_repos = {}
         self._verbose = verbose
-        
         self.username = username
         self.usermail = usermail
 
