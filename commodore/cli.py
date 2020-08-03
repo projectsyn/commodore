@@ -61,7 +61,7 @@ def clean(config: Config, verbose):
                     'the Lieutenant API or fetch/push Git repositories.'))
 @click.option('--push', is_flag=True, default=False,
               help='Push catalog to remote repository.')
-@click.option('--interactive', is_flag=True, default=False)
+@click.option('-i', '--interactive', is_flag=True, default=False)
 @click.option('--git-author-name', envvar='GIT_AUTHOR_NAME', metavar='USERNAME', help='Name of catalog commit author')
 @click.option('--git-author-email', envvar='GIT_AUTHOR_EMAIL', metavar='EMAIL',
               help='E-mail address of catalog commit author')
