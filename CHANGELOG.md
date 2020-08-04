@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Validation of component slug ([#153])
-* `--interactive` option to prompt push confirmation 
+* `--interactive` option to prompt push confirmation ([#157])
 
 ## [v0.2.2]
 
