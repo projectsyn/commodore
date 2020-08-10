@@ -84,6 +84,9 @@ def update_catalog(cfg, target_name, repo):
         click.echo(textwrap.indent(commit_message, '   '))
     if changed:
         if not cfg.local:
+            if cfg.interactive and cfg.push:
+                cfg.push = click.confirm(' > Should the push be done?')
+
             if cfg.push:
                 click.echo(' > Commiting changes...')
                 git.commit(repo, commit_message, cfg)
@@ -92,6 +95,7 @@ def update_catalog(cfg, target_name, repo):
             else:
                 click.echo(' > Skipping commit+push to catalog...')
                 click.echo(' > Use flag --push to commit and push the catalog repo')
+                click.echo(' > Add flag --interactive to show the diff and decide on the push')
         else:
             repo.head.reset(working_tree=False)
             click.echo(' > Skipping commit+push to catalog in local mode...')

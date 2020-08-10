@@ -61,6 +61,8 @@ def clean(config: Config, verbose):
                     'the Lieutenant API or fetch/push Git repositories.'))
 @click.option('--push', is_flag=True, default=False,
               help='Push catalog to remote repository.')
+@click.option('-i', '--interactive', is_flag=True, default=False,
+              help='Prompt confirmation to push to remote repository.')
 @click.option('--git-author-name', envvar='GIT_AUTHOR_NAME', metavar='USERNAME', help='Name of catalog commit author')
 @click.option('--git-author-email', envvar='GIT_AUTHOR_EMAIL', metavar='EMAIL',
               help='E-mail address of catalog commit author')
@@ -68,7 +70,7 @@ def clean(config: Config, verbose):
 @pass_config
 # pylint: disable=too-many-arguments
 def compile_catalog(config: Config, cluster, api_url, api_token,
-                    global_git_base, local, push, verbose, git_author_name,
+                    global_git_base, local, push, interactive, verbose, git_author_name,
                     git_author_email):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -76,6 +78,7 @@ def compile_catalog(config: Config, cluster, api_url, api_token,
     config.global_git_base = global_git_base
     config.local = local
     config.push = push
+    config.interactive = interactive
     config.username = git_author_name
     config.usermail = git_author_email
     _compile(config, cluster)
