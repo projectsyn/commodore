@@ -1,0 +1,19 @@
+= Parameters
+
+The parent key for all of the following parameters is `{{ cookiecutter.parameter_key }}`.
+
+== `namespace`
+
+[horizontal]
+type:: string
+default:: `syn-{{ cookiecutter.slug }}`
+
+The namespace in which to deploy this component.
+
+
+== Example
+
+[source,yaml]
+----
+namespace: example-namespace
+----
