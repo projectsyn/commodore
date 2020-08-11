@@ -36,7 +36,10 @@ def test_run_component_new_command(tmp_path: P):
                  P('component', 'main.jsonnet'),
                  P('component', 'app.jsonnet'),
                  P('lib', f"{component_name}.libsonnet"),
-                 P('postprocess', 'filters.yml'), ]:
+                 P('postprocess', 'filters.yml'),
+                 P('docs', 'modules', 'ROOT', 'pages', 'references', 'parameters.adoc'),
+                 P('docs', 'modules', 'ROOT', 'pages', 'index.adoc'),
+                 ]:
         assert os.path.exists(P('dependencies', component_name, file))
     for file in [P('inventory', 'classes', 'components',
                    f"{component_name}.yml"),
