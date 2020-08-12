@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 * Reworked documentation ([#147])
+* Use Reclass to discover components ([#160])
 
 ## [v0.2.2]
 
@@ -159,4 +160,5 @@ Initial implementation
 [#155]: https://github.com/projectsyn/commodore/pull/155
 [#157]: https://github.com/projectsyn/commodore/pull/157
 [#158]: https://github.com/projectsyn/commodore/pull/158
+[#160]: https://github.com/projectsyn/commodore/pull/160
 [#161]: https://github.com/projectsyn/commodore/pull/161
