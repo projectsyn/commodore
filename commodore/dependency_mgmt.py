@@ -88,12 +88,12 @@ def fetch_components(cfg):
     """
 
     click.secho('Discovering components...', bold=True)
-    component_names = _discover_components(cfg, 'inventory')
-    components = _read_component_urls(cfg, component_names)
-    click.secho('Fetching components...', bold=True)
     os.makedirs('inventory/classes/components', exist_ok=True)
     os.makedirs('inventory/classes/defaults', exist_ok=True)
     os.makedirs('dependencies/lib', exist_ok=True)
+    component_names = _discover_components(cfg, 'inventory')
+    components = _read_component_urls(cfg, component_names)
+    click.secho('Fetching components...', bold=True)
     for c in components:
         if cfg.debug:
             click.echo(f" > Fetching component {c.name}...")
