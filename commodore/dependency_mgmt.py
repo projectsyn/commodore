@@ -3,6 +3,9 @@ from pathlib import Path as P
 
 import click
 
+from kapitan.cached import reset_cache as reset_reclass_cache
+from kapitan.resources import inventory_reclass
+
 from . import git
 from .config import Component
 from .helpers import relsymlink, yaml_load
@@ -31,19 +34,15 @@ def _discover_components(cfg, inventory_path):
     Discover components in `inventory_path/`. Parse all classes found in
     inventory_path and look for class includes starting with `components.`.
     """
+    reset_reclass_cache()
+    kapitan_inventory = inventory_reclass(inventory_path, ignore_class_notfound=True)['nodes']['cluster']
     components = set()
-    inventory = P(inventory_path)
-    for classfile in inventory.glob('**/*.yml'):
-        if cfg.trace:
-            click.echo(f" > Discovering components in {classfile}")
-        classyaml = yaml_load(classfile)
-        if classyaml is not None:
-            for kls in classyaml.get('classes', []):
-                if kls.startswith('components.'):
-                    component = kls.split('.')[1]
-                    if cfg.debug:
-                        click.echo(f"   > Found component {component}")
-                    components.add(component)
+    for kls in kapitan_inventory['classes']:
+        if kls.startswith('components.'):
+            component = kls.split('.')[1]
+            if cfg.debug:
+                click.echo(f"   > Found component {component}")
+            components.add(component)
     return sorted(components)
 
 

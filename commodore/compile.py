@@ -139,6 +139,7 @@ def compile(config, cluster_id):
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
+    reset_reclass_cache()
     kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:
