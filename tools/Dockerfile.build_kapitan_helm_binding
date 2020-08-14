@@ -5,3 +5,4 @@ ARG PY_VER='python3.6'
 WORKDIR /virtualenv
 COPY ./lib/${PY_VER}/site-packages/kapitan ./kapitan
 RUN ./kapitan/inputs/helm/build.sh
+RUN ./kapitan/dependency_manager/helm/build.sh
