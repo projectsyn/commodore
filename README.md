@@ -61,6 +61,7 @@ using `helm template`.
 
       ```console
       poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
+      poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/dependency_manager/helm/build.sh'
       ```
 
 1. Setup a `.env` file to configure Commodore (don't use quotes):

@@ -38,7 +38,8 @@ WORKDIR /virtualenv
 
 COPY --from=builder /usr/local/lib/python3.8/site-packages/kapitan ./kapitan
 
-RUN ./kapitan/inputs/helm/build.sh
+RUN ./kapitan/inputs/helm/build.sh \
+ && ./kapitan/dependency_manager/helm/build.sh
 
 FROM base AS runtime
 
@@ -60,6 +61,10 @@ COPY --from=helm_binding_builder \
       /virtualenv/kapitan/inputs/helm/libtemplate.so \
       /virtualenv/kapitan/inputs/helm/helm_binding.py \
       /usr/local/lib/python3.8/site-packages/kapitan/inputs/helm/
+
+COPY --from=helm_binding_builder \
+      /virtualenv/kapitan/dependency_manager/helm/helm_fetch.so \
+      /usr/local/lib/python3.8/site-packages/kapitan/dependency_manager/helm/
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
 
