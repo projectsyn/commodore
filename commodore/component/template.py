@@ -82,6 +82,7 @@ class ComponentFactory:
         index = repo.index
         index.add('*')
         index.add('.github')
+        index.add('.gitignore')
         index.add('.*.yml')
         git.commit(repo, 'Initial commit', self.config)
 

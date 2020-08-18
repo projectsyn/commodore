@@ -1,0 +1,5 @@
+_archive/
+_public/
+.cache/
+helmcharts/
+manifests/

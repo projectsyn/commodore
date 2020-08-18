@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `component compile` now applies postprocessing filters ([#154])
 * Option to disable postprocessing filters ([#155])
 * `--interactive` option to prompt push confirmation ([#157])
+* Extend component template with docs setup ([#158])
 * Build Helm bindings for native Helm dependencies ([#161])
 
 ## [v0.2.2]
@@ -122,6 +123,7 @@ Initial implementation
 [v0.2.0]: https://github.com/projectsyn/commodore/releases/tag/v0.2.0
 [v0.2.1]: https://github.com/projectsyn/commodore/releases/tag/v0.2.1
 [v0.2.2]: https://github.com/projectsyn/commodore/releases/tag/v0.2.2
+
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58
 [#81]: https://github.com/projectsyn/commodore/pull/81
@@ -150,4 +152,5 @@ Initial implementation
 [#154]: https://github.com/projectsyn/commodore/pull/154
 [#155]: https://github.com/projectsyn/commodore/pull/155
 [#157]: https://github.com/projectsyn/commodore/pull/157
+[#158]: https://github.com/projectsyn/commodore/pull/158
 [#161]: https://github.com/projectsyn/commodore/pull/161

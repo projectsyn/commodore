@@ -12,6 +12,7 @@ jobs:
         command:
           - lint_jsonnet
           - lint_yaml
+          - docs
     steps:
       - uses: actions/checkout@v2
       - name: Run {% raw %}${{ matrix.command }}{% endraw %}

@@ -1,3 +1,5 @@
-= {{ cookiecutter.name }}: A Commodore component to manage {{ cookiecutter.name }}
+= {{ cookiecutter.name }}
 
-{doctitle} is a Commodore component for Managing {{ cookiecutter.name }}.
+{{ cookiecutter.slug }} is a Commodore component to manage {{ cookiecutter.name }}.
+
+See the xref:references/parameters.adoc[parameters] reference for further details.
