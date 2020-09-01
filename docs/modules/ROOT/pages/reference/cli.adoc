@@ -18,7 +18,7 @@ flag is provided once or more, and trace verbosity is enabled when the flag
 is provided three times or more.
 
 *--help*::
-  Show a help message and exit.
+  Show help message for generic options and available commands then exit.
 
 == Catalog Clean
 
@@ -90,7 +90,7 @@ See also xref:local-mode.adoc[local mode documentation].
   E-mail address of catalog commit author
 
 *--help*::
-  Show a help message and exit.
+  Show catalog clean usage and options then exit.
 
 == Component Compile
 
@@ -106,7 +106,7 @@ See also xref:local-mode.adoc[local mode documentation].
   Specify output path for compiled component. Defaults to `./`.
 
 *--help*::
-  Show help message and exit.
+  Show catalog compile usage and options then exit.
 
 == Component New
 
@@ -127,5 +127,4 @@ See also xref:local-mode.adoc[local mode documentation].
   The copyright holder added to the license file. Defaults to "VSHN AG <info@vshn.ch>".
 
 *--help*::
-  Show this message and exit.
-
+  Show component new usage and options then exit.
