@@ -1,9 +1,13 @@
 MAKEFLAGS += -j4
 
-pages   := $(shell find docs -type f -name '*.adoc')
-
 docker_cmd  ?= docker
 docker_opts ?= --rm --tty --user "$$(id -u)"
+
+vale_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages vshn/vale:2.1.1 --minAlertLevel=error /pages
+
+.PHONY: check
+check:
+	$(vale_cmd)
 
 ###
 ### Section for Commodore linting and testing
