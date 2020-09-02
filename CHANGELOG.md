@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Build Helm bindings for native Helm dependencies ([#161])
 * Replaced playbook.yml with custom command ([#165])
 
+### Changed
+
+* Reworked documentation ([#147])
+
 ## [v0.2.2]
 
 ### Fixed
@@ -147,6 +151,7 @@ Initial implementation
 [#140]: https://github.com/projectsyn/commodore/pull/140
 [#143]: https://github.com/projectsyn/commodore/pull/143
 [#145]: https://github.com/projectsyn/commodore/pull/145
+[#147]: https://github.com/projectsyn/commodore/pull/153
 [#148]: https://github.com/projectsyn/commodore/pull/148
 [#151]: https://github.com/projectsyn/commodore/pull/151
 [#153]: https://github.com/projectsyn/commodore/pull/153

@@ -1,0 +1,71 @@
+= Commands
+
+== Catalog Compile
+
+  commodore catalog compile CLUSTER
+
+This command compiles a cluster catalog.
+This is the main mode of operation for Commodore when managing clusters.
+
+This command will first collect all required components and hierachical
+configuration and prepare the inventory for Kapitan.
+
+Then, the command will process the compiled inventory, and create secret
+references in `catalog/refs/` for any secret references it finds in the
+inventory.
+
+After the inventory and all references are in place, Kapitan is called to
+render the templates as specified by the compiled inventory.
+
+After Kapitan has rendered all templates, any defined postprocessing filters
+are applied to the output of Kapitan, before the fully processed manifests are
+copied into the cluster catalog at `catalog/manifests/`.
+
+== Catalog Clean
+
+  commodore catalog clean
+
+This command deletes all the data which is managed by Commodore, listed below.
+
+* the downloaded and potentially modified catalog in `catalog/`
+* all the downloaded and potentially modified components in `dependencies/`
+* the generated inventory in `inventory/`
+* Kapitan's output in `compiled/`
+
+This command doesn't check whether any local modifications exist and doesn't
+check with the user whether they really want to remove the items listed above.
+
+== Component New
+
+  commodore component new COMPONENT_NAME
+
+This command creates a new component from a Cookiecutter template in
+`dependencies/`.
+
+The command also provides skeleton files for the component class
+and templates.
+
+Optionally, the command will add a component library and postprocessing filter
+configuration.
+
+Additionally the command provides templates for many meta-files in the
+component repository, such as the readme and changelog, standardized license,
+contributing and code of conduct files, a documentation template, and GitHub
+issue and actions configurations.
+
+== Component Compile
+
+  commodore component compile PATH
+
+This command compiles a single component.
+
+This is the main mode of operation for developing new components, as it allows
+fast iteration while working on a component.
+
+This command will create a fake inventory which mocks out all the
+infrastructure which a component would expect to be available when it's
+included in a cluster's configuration.
+
+The command takes so called values files which provide custom configuration
+values for any configuration that could be provided from the hierarchical
+configuration repositories.
