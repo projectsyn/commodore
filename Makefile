@@ -1,8 +1,5 @@
 MAKEFLAGS += -j4
 
-pages   := $(shell find docs -type f -name '*.adoc')
-web_dir := ./_antora
-
 docker_cmd  ?= docker
 docker_opts ?= --rm --tty --user "$$(id -u)"
 
@@ -22,17 +19,12 @@ endif
 .PHONY: all
 all: docs
 
-# This will clean the Antora Artifacts, not the npm artifacts
-.PHONY: clean
-clean:
-	rm -rf $(web_dir)
-
-.PHONY: docs
-docs:
+.PHONY: docs-serve
+docs-serve:
 	$(antora_preview_cmd)
 
-.PHONY: check
-check:
+.PHONY: docs-vale
+docs-vale:
 	$(vale_cmd)
 
 
