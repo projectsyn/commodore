@@ -44,7 +44,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Check Docs
-      run: make check
+      run: make docs-vale
   build:
     needs:
     - lints
