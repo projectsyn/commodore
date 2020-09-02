@@ -22,27 +22,13 @@ YAMLLINT_DOCKER ?= $(DOCKER_CMD) $(DOCKER_ARGS) $(YAMLLINT_IMAGE)
 VALE_CMD  ?= $(DOCKER_CMD) $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules:/pages vshn/vale:2.1.1
 VALE_ARGS ?= --minAlertLevel=error --config=/pages/ROOT/pages/.vale.ini /pages
 
-PAGES   := $(shell find docs -type f -name '*.adoc')
-WEB_DIR := ./_public
-ANTORA_CMD  ?= $(DOCKER_CMD) $(DOCKER_ARGS) --volume "$${PWD}":/antora vshn/antora:2.3.0
-ANTORA_ARGS ?= --cache-dir=.cache/antora
-
-UNAME := $(shell uname)
-ifeq ($(UNAME), Linux)
-	OS = linux-x64
-	OPEN = xdg-open
-endif
-ifeq ($(UNAME), Darwin)
-	OS = darwin-x64
-	OPEN = open
-endif
-
+ANTORA_PREVIEW_CMD ?= $(DOCKER_CMD) run --rm --publish 2020:2020 --volume "${PWD}":/antora vshn/antora-preview:2.3.3 --style=syn --antora=docs
 
 .PHONY: all
-all: lint docs open
+all: lint open
 
 .PHONY: lint
-lint: lint_jsonnet lint_yaml lint_adoc
+lint: lint_jsonnet lint_yaml docs-vale
 
 .PHONY: lint_jsonnet
 lint_jsonnet: $(JSONNET_FILES)
@@ -52,10 +38,6 @@ lint_jsonnet: $(JSONNET_FILES)
 lint_yaml: $(YAML_FILES)
 	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
 
-.PHONY: lint_adoc
-lint_adoc:
-	$(VALE_CMD) $(VALE_ARGS)
-
 .PHONY: format
 format: format_jsonnet
 
@@ -63,12 +45,11 @@ format: format_jsonnet
 format_jsonnet: $(JSONNET_FILES)
 	$(JSONNET_DOCKER) $(JSONNETFMT_ARGS) -- $?
 
-.PHONY: open
-open: $(WEB_DIR)/index.html
-	-$(OPEN) $<
+.PHONY: docs-serve
+docs-serve:
+	$(ANTORA_PREVIEW_CMD)
 
-.PHONY: docs
-docs:    $(WEB_DIR)/index.html
+.PHONY: docs-vale
+docs-vale:
+	$(VALE_CMD) $(VALE_ARGS)
 
-$(WEB_DIR)/index.html: playbook.yml $(PAGES)
-	$(ANTORA_CMD) $(ANTORA_ARGS) $<
