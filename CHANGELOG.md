@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * `--interactive` option to prompt push confirmation ([#157])
 * Extend component template with docs setup ([#158])
 * Build Helm bindings for native Helm dependencies ([#161])
+* Replaced playbook.yml with custom command ([#165])
 
 ## [v0.2.2]
 
