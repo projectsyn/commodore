@@ -6,10 +6,8 @@ web_dir := ./_antora
 docker_cmd  ?= docker
 docker_opts ?= --rm --tty --user "$$(id -u)"
 
-antora_cmd  ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}":/antora vshn/antora:2.3.0
-antora_opts ?= --cache-dir=.cache/antora
-
-vale_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages vshn/vale:2.1.1 --minAlertLevel=error /pages
+vale_cmd           ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages vshn/vale:2.1.1 --minAlertLevel=error /pages
+antora_preview_cmd ?= $(docker_cmd) run --rm --publish 2020:2020 --volume "${PWD}":/antora vshn/antora-preview:2.3.3 --style=syn --antora=docs
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
@@ -30,10 +28,8 @@ clean:
 	rm -rf $(web_dir)
 
 .PHONY: docs
-docs:    $(web_dir)/index.html
-
-$(web_dir)/index.html: playbook.yml $(pages)
-	$(antora_cmd) $(antora_opts) $<
+docs:
+	$(antora_preview_cmd)
 
 .PHONY: check
 check:
