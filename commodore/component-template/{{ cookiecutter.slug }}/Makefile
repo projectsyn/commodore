@@ -28,7 +28,7 @@ ANTORA_PREVIEW_CMD ?= $(DOCKER_CMD) run --rm --publish 2020:2020 --volume "${PWD
 all: lint open
 
 .PHONY: lint
-lint: lint_jsonnet lint_yaml lint_adoc
+lint: lint_jsonnet lint_yaml docs-vale
 
 .PHONY: lint_jsonnet
 lint_jsonnet: $(JSONNET_FILES)
@@ -38,10 +38,6 @@ lint_jsonnet: $(JSONNET_FILES)
 lint_yaml: $(YAML_FILES)
 	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
 
-.PHONY: lint_adoc
-lint_adoc:
-	$(VALE_CMD) $(VALE_ARGS)
-
 .PHONY: format
 format: format_jsonnet
 
@@ -49,11 +45,11 @@ format: format_jsonnet
 format_jsonnet: $(JSONNET_FILES)
 	$(JSONNET_DOCKER) $(JSONNETFMT_ARGS) -- $?
 
-.PHONY: open
-open: $(WEB_DIR)/index.html
-	-$(OPEN) $<
-
-.PHONY: docs
-docs:
+.PHONY: docs-serve
+docs-serve:
 	$(ANTORA_PREVIEW_CMD)
+
+.PHONY: docs-vale
+docs-vale:
+	$(VALE_CMD) $(VALE_ARGS)
 
