@@ -3,3 +3,22 @@
 image::syn.png[]
 
 Welcome to the documentation of Commodore - a Project Syn tool.
+
+== Overview
+
+Commodore is a command line tool which provides opinionated tenant-aware
+management of https://kapitan.dev/[Kapitan] inventories and templates.
+
+Commodore uses Kapitan for the heavy lifting of rendering templates and
+resolving a hierachical configuration structure.
+
+Commodore introduces the concept of a component, which is a bundle of Kapitan
+templates and associated Kapitan classes which describe how to render the
+templates. Commodore sets up an https://kapitan.dev/inventory/[inventory] by
+downloading all required components and symlinking the relevant classes into
+the inventory structure which Kapitan understands.
+
+Additionally, Commodore allows post-processing the output of Kapitan. This
+functionality was first introduced to allow adding namespace information to
+the output of `helm template`, as this information isn't applied by Helm when
+only templating a chart.

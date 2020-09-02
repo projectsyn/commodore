@@ -1,0 +1,130 @@
+= Command Line Options
+
+== Generic Options
+
+Some command line options aren't associated with a specific command, but can
+provided to any command instead.
+
+*--version*::
+  Show the version and exit.
+
+*-v, --verbose*::
+  Control verbosity. Can be repeated for more verbose output. Can also be
+  provided after subcommands (for example `commodore catalog compile -v`).
++
+Currently three verbosity levels are implemented, regular operation is
+active when the flag isn't provided, debug verbosity is enabled when the
+flag is provided once or more, and trace verbosity is enabled when the flag
+is provided three times or more.
+
+*--help*::
+  Show help message for generic options and available commands then exit.
+
+== Catalog Clean
+
+This command doesn't have any command line options.
+
+== Catalog Compile
+
+*--api-url* URL::
+  xref:lieutenant:ROOT:index.adoc[Lieutenant] API URL.
+
+*--api-token* TOKEN::
+  Lieutenant API token.
+
+*--global-git-base* URL::
+  Base directory for global Git configuration repositories.
++
+The name of the global configuration repository is provided by the cluster
+definition returned by the Lieutenant API. Commodore will construct the global
+configuration repository URL `GLOBAL_GIT_BASE/<cluster_base_config>.git`,
+where `cluster_base_config` is the value provided by the cluster definition in
+field `base_config`.
++
+By default, Commodore also uses the global Git base URL when doing component
+autodiscovery. Components are searched in
+`GLOBAL_GIT_BASE/commodore-components`, unless specified otherwise in the
+configuration, see
+xref:reference/architecture.adoc#_component_discovery[Component discovery].
+
+*--local*::
+  Run in local mode. Intended to be used to test/verify local changes (for
+  example during component development) against an existing cluster inventory
+  and catalog.
++
+Local mode doesn't try to connect to the Lieutenant API or fetch/push Git
+repositories. However, local mode expects the working directory to contain a
+valid inventory in `inventory/` and all the dependencies (components and
+Jsonnet libraries) required by the
+inventory in `dependencies/`, with component classes symlinked to `inventory/`
+and component and 3rd party Jsonnet libraries symlinked to `dependencies/lib`.
++
+In local mode, uncommitted modifications to the inventory and dependencies are
+never discarded.
++
+Local mode will fail when the cluster id of the inventory differs from the
+cluster id for which compilation was requested.
++
+If `catalog/` is provided for a local mode compilation, Commodore will show a
+diff of the changes compared to the provided catalog. There's currently no
+mechanism that ensures that the provided cluster catalog actually matches the
+cluster for which compilation was requested.
++
+The quickest way to get a working directory setup for local mode is to run
+a "regular" `catalog compile` for the cluster you want to work against.
++
+See also xref:local-mode.adoc[local mode documentation].
+
+*--push*::
+  Push catalog to remote repository as discovered in the cluster configuration
+  fetched from the Lieutenant API.
+
+*--interactive*::
+  Show changes and prompt if they should be pushed to the remote repository.
+  This doesn't do anything unless `--push` is provided.
+
+*--git-author-name* USERNAME::
+  Name of catalog commit author
+
+*--git-author-email* EMAIL::
+  E-mail address of catalog commit author
+
+*--help*::
+  Show catalog clean usage and options then exit.
+
+== Component Compile
+
+*-f, --values* FILE::
+  Specify inventory class in a YAML file. This option can be repeated to
+  provide multiple files. Files specified later win when resolving inventory
+  values.
+
+*-J, --search-paths* DIRECTORY::
+  Specify additional search paths.
+
+*-o, --output* DIRECTORY::
+  Specify output path for compiled component. Defaults to `./`.
+
+*--help*::
+  Show catalog compile usage and options then exit.
+
+== Component New
+
+*--name* TEXT::
+  The component's name as it will be written in the documentation. Defaults to the slug.
+
+*--lib / --no-lib*::
+  Add a component library template. Defaults to _no_.
+
+*--pp / --no-pp*::
+  Add a component postprocessing template. Defaults to _no_.
+
+*--owner* TEXT::
+  The GitHub user or project name where the component will be hosted. Defaults
+  to _projectsyn_.
+
+*--copyright* TEXT::
+  The copyright holder added to the license file. Defaults to "VSHN AG <info@vshn.ch>".
+
+*--help*::
+  Show component new usage and options then exit.
