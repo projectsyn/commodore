@@ -13,7 +13,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.6"
 # Require kapitan >= 0.27 to help poetry to resolve dependencies
-kapitan = ">=0.27"
+kapitan = ">=0.29"
 click = "*"
 cookiecutter = "*"
 gitpython = "*"

@@ -64,15 +64,16 @@ def _regular_setup(config, cluster_id):
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
     customer_id = cluster['tenant']
 
-    # Fetch components and config
-    _fetch_global_config(config, cluster)
-    _fetch_customer_config(config, customer_id)
-    fetch_components(config)
     target_name = update_target(config, cluster)
     if target_name != 'cluster':
         raise click.ClickException(
             f"Only target with name 'cluster' is supported, got {target_name}")
 
+    # Fetch components and config
+    _fetch_global_config(config, cluster)
+    _fetch_customer_config(config, customer_id)
+    fetch_components(config)
+    update_target(config, cluster)
     # Fetch catalog
     catalog_repo = fetch_customer_catalog(config, cluster['gitRepo'])
 
@@ -138,6 +139,7 @@ def compile(config, cluster_id):
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
+    reset_reclass_cache()
     kapitan_inventory = inventory_reclass('inventory')['nodes'][target_name]
     versions = kapitan_inventory['parameters'].get('component_versions', None)
     if versions and not config.local:

@@ -24,9 +24,11 @@ Commodore fetches the following dependencies:
 
 === Component discovery
 
-By default, Commodore searches all the classes in the global and tenant
-configurations for includes which start with `components.`.
-All of these includes are considered to be components that need to be fetched.
+To discover all required components, Commodore searches the inventory for
+includes which start with `components.`. In order to use reclass for the
+discovery, it's run with a special option to
+https://github.com/salt-formulas/reclass/blob/develop/README-extensions.rst#ignore-class-not-found[ignore missing classes].
+This leads to many "[WARNING] Reclass class not found" logs which can be ignored.
 Unless instructed otherwise, Commodore will fetch components from subfolder
 `commodore-components` in the
 xref:reference/cli.adoc#_catalog_compile[global Git base].
