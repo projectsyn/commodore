@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Extend component template with docs setup ([#158])
 * Build Helm bindings for native Helm dependencies ([#161])
 * Replaced playbook.yml with custom command ([#165])
+* Rename component template GitHub workflow file ([#169])
 
 ### Changed
 
@@ -162,3 +163,4 @@ Initial implementation
 [#158]: https://github.com/projectsyn/commodore/pull/158
 [#160]: https://github.com/projectsyn/commodore/pull/160
 [#161]: https://github.com/projectsyn/commodore/pull/161
+[#169]: https://github.com/projectsyn/commodore/pull/169
