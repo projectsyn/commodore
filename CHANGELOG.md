@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Vault default values ([#176])
 
+### Fixed
+
+* Ignore component versions if not included ([#177])
 
 ## [v0.2.3]
 
@@ -171,3 +174,4 @@ Initial implementation
 [#160]: https://github.com/projectsyn/commodore/pull/160
 [#161]: https://github.com/projectsyn/commodore/pull/161
 [#176]: https://github.com/projectsyn/commodore/pull/176
+[#177]: https://github.com/projectsyn/commodore/pull/177
