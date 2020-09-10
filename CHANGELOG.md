@@ -5,6 +5,13 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+* Vault default values ([#176])
+
+
 ## [v0.2.3]
 
 ### Added
@@ -118,7 +125,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial implementation
 
-[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.2.3...HEAD
 [v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/v0.1.0
 [v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
 [v0.1.2]: https://github.com/projectsyn/commodore/releases/tag/v0.1.2
@@ -163,3 +170,4 @@ Initial implementation
 [#158]: https://github.com/projectsyn/commodore/pull/158
 [#160]: https://github.com/projectsyn/commodore/pull/160
 [#161]: https://github.com/projectsyn/commodore/pull/161
+[#176]: https://github.com/projectsyn/commodore/pull/176
