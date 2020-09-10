@@ -178,7 +178,7 @@ The address of the Vault instance and the name of the back-end are configurable:
 --
 parameters:
   secret_management:
-    vault_addr: https://vault.syn.vshn.net
+    vault_addr: https://vault-prod.syn.vshn.net
     # Name of the back-end (called mount in Vault)
     vault_mount: kv
 --
@@ -189,6 +189,6 @@ the reference to the Vault secret.
 
 Kapitan's `vaultkv` secret engine is configured in the class `global.common`
 under the dict `secret_management`.
-The configuration defaults to https://vault.syn.vshn.net and a back-end with
-name `kv`.
+The configuration defaults to https://vault-prod.syn.vshn.net and a back-end with
+name `clusters/kv`.
 This can be overridden at any level of the inventory.
