@@ -113,6 +113,8 @@ def set_component_overrides(cfg, versions):
 
     click.secho('Setting component overrides...', bold=True)
     for component_name, overrides in versions.items():
+        if component_name not in cfg.get_components():
+            continue
         component = cfg.get_components()[component_name]
         needs_checkout = False
         if 'url' in overrides:
