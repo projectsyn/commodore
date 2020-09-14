@@ -2,6 +2,7 @@ import json
 import shutil
 import os
 from pathlib import Path as P
+from typing import Callable
 
 import click
 import requests
@@ -9,7 +10,6 @@ import yaml
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
-from typing import Callable
 from url_normalize import url_normalize
 from kapitan import targets
 from kapitan import defaults
