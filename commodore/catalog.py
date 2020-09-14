@@ -111,5 +111,8 @@ def catalog_list(cfg):
     for cluster in clusters:
         display_name = cluster['displayName']
         catalog_id = cluster['id']
-        click.secho(catalog_id, nl=False, bold=True)
-        click.echo(f' - {display_name}')
+        if cfg.verbose:
+            click.secho(catalog_id, nl=False, bold=True)
+            click.echo(f' - {display_name}')
+        else:
+            click.echo(catalog_id)
