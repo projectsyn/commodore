@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
 
 ### Fixed

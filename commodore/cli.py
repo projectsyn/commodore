@@ -3,6 +3,7 @@ import click
 from dotenv import load_dotenv
 from importlib_metadata import version
 from commodore import __git_version__
+from .catalog import catalog_list
 from .config import Config
 from .helpers import clean_working_tree
 from .compile import compile as _compile
@@ -82,6 +83,22 @@ def compile_catalog(config: Config, cluster, api_url, api_token,
     config.username = git_author_name
     config.usermail = git_author_email
     _compile(config, cluster)
+
+
+@catalog.command(name='list', short_help='List available catalog cluster IDs')
+@click.option('--api-url',
+              envvar='COMMODORE_API_URL',
+              help='Lieutenant API URL.', metavar='URL')
+@click.option('--api-token',
+              envvar='COMMODORE_API_TOKEN',
+              help='Lieutenant API token.', metavar='TOKEN')
+@verbosity
+@pass_config
+def clusters_list_command(config: Config, api_url, api_token, verbose):
+    config.update_verbosity(verbose)
+    config.api_url = api_url
+    config.api_token = api_token
+    catalog_list(config)
 
 
 @commodore.group(short_help='Interact with components.')
