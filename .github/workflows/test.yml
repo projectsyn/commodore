@@ -13,6 +13,7 @@ jobs:
           - lint_flake8
           - lint_pylint
           - lint_bandit
+          - lint_mypy
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
