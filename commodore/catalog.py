@@ -3,7 +3,10 @@ from pathlib import Path as P
 import click
 
 from . import git
-from .helpers import rm_tree_contents
+from .helpers import (
+    rm_tree_contents,
+    lieutenant_query
+)
 
 
 def fetch_customer_catalog(config, repoinfo):
@@ -101,3 +104,15 @@ def update_catalog(cfg, target_name, repo):
             click.echo(' > Skipping commit+push to catalog in local mode...')
     else:
         click.echo(' > Skipping commit+push to catalog...')
+
+
+def catalog_list(cfg):
+    clusters = lieutenant_query(cfg.api_url, cfg.api_token, 'clusters', '')
+    for cluster in clusters:
+        display_name = cluster['displayName']
+        catalog_id = cluster['id']
+        if cfg.verbose:
+            click.secho(catalog_id, nl=False, bold=True)
+            click.echo(f' - {display_name}')
+        else:
+            click.echo(catalog_id)
