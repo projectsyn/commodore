@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+* New `commodore cluster list` command ([#135])
 * Validation of component slug ([#153])
 * `component compile` now applies postprocessing filters ([#154])
 * Option to disable postprocessing filters ([#155])

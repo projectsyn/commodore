@@ -92,6 +92,10 @@ See also xref:local-mode.adoc[local mode documentation].
 *--help*::
   Show catalog clean usage and options then exit.
 
+== Catalog Clean
+
+This command doesn't have any command line options.
+
 == Component Compile
 
 *-f, --values* FILE::
