@@ -13,7 +13,7 @@ from commodore.dependency_mgmt import create_component_symlinks
 from commodore.helpers import yaml_load, yaml_dump
 
 
-class ComponentFactory:
+class ComponentTemplater:
     # pylint: disable=too-many-instance-attributes
     config: CommodoreConfig
     slug: str
