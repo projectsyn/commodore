@@ -7,7 +7,7 @@ from .catalog import catalog_list
 from .config import Config
 from .helpers import clean_working_tree
 from .compile import compile as _compile
-from .component.template import ComponentFactory
+from .component.template import ComponentTemplater
 from .component.compile import compile_component
 
 pass_config = click.make_pass_decorator(Config)
@@ -126,7 +126,7 @@ def component(config: Config, verbose):
 # pylint: disable=too-many-arguments
 def component_new(config: Config, slug, name, lib, pp, owner, copyright_holder, verbose):
     config.update_verbosity(verbose)
-    f = ComponentFactory(config, slug)
+    f = ComponentTemplater(config, slug)
     f.name = name
     f.library = lib
     f.post_process = pp
