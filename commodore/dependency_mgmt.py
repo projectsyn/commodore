@@ -8,10 +8,16 @@ from kapitan.resources import inventory_reclass
 
 from . import git
 from .config import Component
-from .helpers import relsymlink, yaml_load
+from .helpers import relsymlink, yaml_load, delsymlink
 
 
 def create_component_symlinks(cfg, component: Component):
+    """
+    Create symlinks in the inventory subdirectory.
+
+    The actual code for components lives in the dependencies/ subdirectory, but
+    we want to access some of the file contents through the inventory.
+    """
     relsymlink(component.target_directory / 'class', f"{component.name}.yml",
                'inventory/classes/components')
     component_defaults_class = component.target_directory / 'class' / 'defaults.yml'
@@ -27,6 +33,28 @@ def create_component_symlinks(cfg, component: Component):
             if cfg.debug:
                 click.echo(f"     > installing template library: {file}")
             relsymlink(libdir, file, 'dependencies/lib')
+
+
+def delete_component_symlinks(cfg, component: Component):
+    """
+    Remove the component symlinks in the inventory subdirectory.
+
+    This is the reverse from the createa_component_symlinks method and is used
+    when deleting a component.
+    """
+
+    component_class = P(f"inventory/classes/components/{component.name}.yml")
+    component_default_class = P(f"inventory/classes/defaults/{component.name}.yml")
+
+    delsymlink(component_class, cfg.debug)
+    delsymlink(component_default_class, cfg.debug)
+
+    # If the component has a lib/ subdir, remove the links to the dependencies/lib.
+    libdir = component.target_directory / 'lib'
+
+    if libdir.is_dir():
+        for f in os.listdir(libdir):
+            delsymlink(P(f), cfg.debug)
 
 
 def _discover_components(cfg, inventory_path):

@@ -42,10 +42,8 @@ def test_run_component_new_command(tmp_path: P):
                  P('docs', 'modules', 'ROOT', 'pages', 'index.adoc'),
                  ]:
         assert os.path.exists(P('dependencies', component_name, file))
-    for file in [P('inventory', 'classes', 'components',
-                   f"{component_name}.yml"),
-                 P('inventory', 'classes', 'defaults',
-                   f"{component_name}.yml"),
+    for file in [P('inventory', 'classes', 'components', f"{component_name}.yml"),
+                 P('inventory', 'classes', 'defaults', f"{component_name}.yml"),
                  P('dependencies', 'lib', f"{component_name}.libsonnet")]:
         assert file.is_symlink()
     with open(targetyml) as file:
@@ -95,3 +93,42 @@ def test_run_component_new_command_with_illegal_slug(tmp_path: P, test_input):
     setup_directory(tmp_path)
     exit_status = os.system(f"commodore -vvv component new {test_input}")
     assert exit_status != 0
+
+
+def test_run_component_new_then_delete(tmp_path: P):
+    """
+    Create a new component, then immediately delete it.
+    """
+
+    targetyml = setup_directory(tmp_path)
+
+    component_name = 'test-component'
+    exit_status = os.system(f"commodore -vvv component new {component_name} --lib --pp")
+    assert exit_status == 0
+
+    exit_status = os.system(f"commodore -vvv component delete --force {component_name}")
+    assert exit_status == 0
+
+    # Ensure the dependencies folder is gone.
+    assert not P('dependencies', component_name).exists()
+
+    # Links in the inventory should be gone too.
+    for f in [P('inventory', 'classes', 'components', f"{component_name}.yml"),
+              P('inventory', 'classes', 'defaults', f"{component_name}.yml"),
+              P('dependencies', 'lib', f"{component_name}.libsonnet")]:
+        assert not f.exists()
+
+    with open(targetyml) as file:
+        target = yaml.safe_load(file)
+        classes = target['classes']
+        assert f"defaults.{component_name}" not in classes
+        assert f"components.{component_name}" not in classes
+
+        
+def test_deleting_inexistant_component(tmp_path: P):
+    
+    targetyml = setup_directory(tmp_path)
+    component_name = 'i-dont-exist'
+    
+    exit_status = os.system(f"commodore -vvv component delete --force {component_name}")
+    assert exit_status == 2

@@ -1,6 +1,7 @@
 import datetime
 
 from pathlib import Path as P
+from shutil import rmtree
 
 import click
 import re
@@ -10,7 +11,11 @@ from cookiecutter.main import cookiecutter
 from commodore import git, __install_dir__
 from commodore import config as CommodoreConfig
 from commodore.config import Component
-from commodore.dependency_mgmt import create_component_symlinks
+from commodore.dependency_mgmt import (
+    create_component_symlinks,
+    delete_component_symlinks
+)
+
 from commodore.helpers import yaml_load, yaml_dump
 
 
@@ -101,12 +106,68 @@ class ComponentTemplater:
             create_component_symlinks(self.config, component)
 
             targetfile = P('inventory', 'targets', 'cluster.yml')
-            target = yaml_load(targetfile)
-            target['classes'].append(f"components.{self.slug}")
-            target['classes'].insert(0, f"defaults.{self.slug}")
-            yaml_dump(target, targetfile)
+            insert_into_inventory_targets_cluster(targetfile, self.slug)
         except FileNotFoundError:
             # TODO: This should maybe cleanup the "dependencies" subdirectory (since we just created it).
             click.echo("Cannot find catalog files. Did you forget to run 'catalog compile' in the current directory?")
         else:
             click.secho(f"Component {self.name} successfully added 🎉", bold=True)
+
+    def delete(self):
+        component = Component(
+            name=self.slug,
+            repo=None,
+            repo_url="",
+        )
+
+        if component.target_directory.exists():
+
+            if not self.config.force:
+                click.confirm(f"Are you sure you want to delete component {self.slug}? "
+                              "This action cannot be undone", abort=True)
+            delete_component_symlinks(self.config, component)
+            rmtree(component.target_directory)
+
+            targetfile = P('inventory', 'targets', 'cluster.yml')
+            remove_from_inventory_targets_cluster(targetfile, self.slug)
+
+            click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
+            click.echo("Don't forget to re-run catalog compilation.")
+        else:
+            raise click.BadParameter(f"Cannot find component with slug '{self.slug}'.")
+
+
+def insert_into_inventory_targets_cluster(targetfile: P, slug: str):
+    """
+    Insert references to the component identified by the passed-in slug into the
+    inventory.
+    """
+    target = yaml_load(targetfile)
+    # Defaults need to be processed first, so we insert them at the head of the
+    # list.
+    target['classes'].insert(0, f"defaults.{slug}")
+    # The component class itself can be added as the last element.
+    target['classes'].append(f"components.{slug}")
+    yaml_dump(target, targetfile)
+
+
+def remove_from_inventory_targets_cluster(targetfile: P, slug: str):
+    """
+    Removed references to the component identified by the passed-in slug from
+    the inventory.
+    """
+    target = yaml_load(targetfile)
+    try:
+        target['classes'].remove(f"defaults.{slug}")
+    except ValueError:
+        # That component default is not in the list apparently, it's fine to
+        # ignore (it's already in the state we want).
+        pass
+
+    try:
+        target['classes'].remove(f"components.{slug}")
+    except ValueError:
+        # Again, if the component already doesn't appear in teh list, it's fine to ignore.
+        pass
+
+    yaml_dump(target, targetfile)

@@ -49,6 +49,16 @@ The command makes sure to create symlinks for the new component's classes and in
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 
+== Component Delete
+
+  commodore component delete COMPONENT_NAME
+
+This command removes a component directory from under `dependencies/` in Commodore's working directory.
+The command will ask for confirmation before performing destructive operations, unless it is passed the `--force` option.
+
+The command expects to run in a directory which already holds a Commodore directory structure.
+The command makes sure to remove symlinks for the new component's classes and removes the component defaults and component class in the cluster target class.
+
 == Component Compile
 
   commodore component compile PATH
