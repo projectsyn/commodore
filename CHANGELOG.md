@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
+* Improved `component new` documentation ([#182])
 
 ### Fixed
 
@@ -176,3 +177,4 @@ Initial implementation
 [#161]: https://github.com/projectsyn/commodore/pull/161
 [#176]: https://github.com/projectsyn/commodore/pull/176
 [#177]: https://github.com/projectsyn/commodore/pull/177
+[#182]: https://github.com/projectsyn/commodore/pull/182
