@@ -170,9 +170,6 @@ def relsymlink(srcdir, srcname, destdir, destname=None):
     # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
     link_src = os.path.relpath(P(srcdir) / srcname, start=destdir)
     link_dst = P(destdir) / destname
-    try:
-        if link_dst.exists():
-            os.remove(link_dst)
-        os.symlink(link_src, link_dst)
-    except Exception as e:
-        raise click.ClickException(f"While setting up symlinks: {e}") from e
+    if link_dst.exists():
+        os.remove(link_dst)
+    os.symlink(link_src, link_dst)

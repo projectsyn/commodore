@@ -46,9 +46,8 @@ def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
         version='master',
         repo_url=None,
     )
-    with pytest.raises(click.ClickException) as excinfo:
+    with pytest.raises(FileNotFoundError):
         dependency_mgmt.create_component_symlinks(data, component)
-    assert component.name in str(excinfo)
 
 
 def test_create_legacy_component_symlinks(capsys, data: Config, tmp_path):

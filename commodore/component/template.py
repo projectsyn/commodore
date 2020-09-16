@@ -87,12 +87,16 @@ class ComponentTemplater:
         git.commit(repo, 'Initial commit', self.config)
 
         click.echo(' > Installing component')
-        create_component_symlinks(self.config, component)
+        try:
+            create_component_symlinks(self.config, component)
 
-        targetfile = P('inventory', 'targets', 'cluster.yml')
-        target = yaml_load(targetfile)
-        target['classes'].append(f"components.{self.slug}")
-        target['classes'].insert(0, f"defaults.{self.slug}")
-        yaml_dump(target, targetfile)
-
-        click.secho(f"Component {self.name} successfully added 🎉", bold=True)
+            targetfile = P('inventory', 'targets', 'cluster.yml')
+            target = yaml_load(targetfile)
+            target['classes'].append(f"components.{self.slug}")
+            target['classes'].insert(0, f"defaults.{self.slug}")
+            yaml_dump(target, targetfile)
+        except FileNotFoundError:
+            # TODO: This should maybe cleanup the "dependencies" subdirectory (since we just created it).
+            click.echo("Cannot find catalog files. Did you forget to run 'catalog compile' in the current directory?")
+        else:
+            click.secho(f"Component {self.name} successfully added 🎉", bold=True)
