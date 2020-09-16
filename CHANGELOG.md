@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+* Mypy static type analysis to the tox/CI environments. ([#180])
+
 ### Changed
 
 * Slightly improved error message in case `commodore component new` is called in
@@ -179,5 +183,6 @@ Initial implementation
 [#161]: https://github.com/projectsyn/commodore/pull/161
 [#176]: https://github.com/projectsyn/commodore/pull/176
 [#177]: https://github.com/projectsyn/commodore/pull/177
+[#180]: https://github.com/projectsyn/commodore/pull/180
 [#182]: https://github.com/projectsyn/commodore/pull/182
 [#183]: https://github.com/projectsyn/commodore/pull/183
