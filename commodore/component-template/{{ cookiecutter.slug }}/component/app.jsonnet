@@ -6,5 +6,9 @@ local argocd = import 'lib/argocd.libjsonnet';
 local app = argocd.App('{{ cookiecutter.slug }}', params.namespace);
 
 {
-  '{{ cookiecutter.slug }}': app,
+  {% if '-' in cookiecutter.slug -%}
+  '{{ cookiecutter.slug }}'
+  {%- else -%}
+  {{ cookiecutter.slug }}
+  {%- endif -%}: app,
 }
