@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 * Slightly improved error message in case `commodore component new` is called in
-  a folder that is not a populated (compiled) catalog.
+  a folder that is not a populated (compiled) catalog ([#183])
 * New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
 * Improved `component new` documentation ([#182])
@@ -180,3 +180,4 @@ Initial implementation
 [#176]: https://github.com/projectsyn/commodore/pull/176
 [#177]: https://github.com/projectsyn/commodore/pull/177
 [#182]: https://github.com/projectsyn/commodore/pull/182
+[#183]: https://github.com/projectsyn/commodore/pull/183
