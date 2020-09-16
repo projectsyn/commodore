@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Slightly improved error message in case `commodore component new` is called in
+  a folder that is not a populated (compiled) catalog.
 * New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
 * Improved `component new` documentation ([#182])
