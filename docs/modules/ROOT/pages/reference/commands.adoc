@@ -39,19 +39,14 @@ check with the user whether they really want to remove the items listed above.
 
   commodore component new COMPONENT_NAME
 
-This command creates a new component from a Cookiecutter template in
-`dependencies/`.
+This command creates a new component repository under `dependencies/` in Commodore's working directory.
+The component repository is created using a Cookiecutter template which provides a skeleton for writing a new component.
+Optionally, the template can be used to add a component library and postprocessing filter configuration.
 
-The command also provides skeleton files for the component class
-and templates.
+The command expects to run in a directory which already holds a Commodore directory structure.
+The command makes sure to create symlinks for the new component's classes and includes the component defaults and component class in the cluster target class.
 
-Optionally, the command will add a component library and postprocessing filter
-configuration.
-
-Additionally the command provides templates for many meta-files in the
-component repository, such as the readme and changelog, standardized license,
-contributing and code of conduct files, a documentation template, and GitHub
-issue and actions configurations.
+The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 
 == Component Compile
 
