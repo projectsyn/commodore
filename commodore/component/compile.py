@@ -74,6 +74,8 @@ classes:
 """)
 
         # Fake Argo CD lib
+        # We plug "fake" Argo CD library here because every component relies on it
+        # and we don't want to provide it every time when compiling a single component.
         (temp_dir / 'dependencies/lib').mkdir(exist_ok=True)
         with open(temp_dir / 'dependencies/lib/argocd.libjsonnet', 'w') as file:
             file.write("""
