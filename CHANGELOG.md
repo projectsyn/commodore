@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Mypy static type analysis to the tox/CI environments. ([#180])
 * Add `--pad-arrays` to component template jsonnetfmt arguments ([#186])
 * New `commodore cluster list` command ([#135])
-* New `commodore component delete` command ([])
+* New `commodore component delete` command ([#188])
 
 ### Changed
 
@@ -193,4 +193,5 @@ Initial implementation
 [#183]: https://github.com/projectsyn/commodore/pull/183
 [#185]: https://github.com/projectsyn/commodore/pull/185
 [#186]: https://github.com/projectsyn/commodore/pull/186
+[#188]: https://github.com/projectsyn/commodore/pull/188
 [#189]: https://github.com/projectsyn/commodore/pull/189
