@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+* Fix failing bandit CI check ([#185])
 * Ignore component versions if not included ([#177])
 
 ## [v0.2.3]
@@ -186,3 +187,4 @@ Initial implementation
 [#180]: https://github.com/projectsyn/commodore/pull/180
 [#182]: https://github.com/projectsyn/commodore/pull/182
 [#183]: https://github.com/projectsyn/commodore/pull/183
+[#185]: https://github.com/projectsyn/commodore/pull/185
