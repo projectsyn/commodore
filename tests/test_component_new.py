@@ -5,6 +5,7 @@ import os
 import pytest
 import yaml
 from pathlib import Path as P
+from subprocess import call
 
 
 def setup_directory(tmp_path: P):
@@ -30,7 +31,7 @@ def test_run_component_new_command(tmp_path: P):
     targetyml = setup_directory(tmp_path)
 
     component_name = 'test-component'
-    exit_status = os.system(f"commodore -vvv component new {component_name} --lib --pp")
+    exit_status = call(f"commodore -vvv component new {component_name} --lib --pp", shell=True)
     assert exit_status == 0
     for file in [P('README.md'),
                  P('class', f"{component_name}.yml"),
@@ -63,7 +64,7 @@ def test_run_component_new_command_with_name(tmp_path: P):
     component_slug = 'named-component'
     readme_path = P('dependencies', component_slug, 'README.md')
 
-    exit_status = os.system(f"commodore -vvv component new --name '{component_name}' {component_slug}")
+    exit_status = call(f"commodore -vvv component new --name '{component_name}' {component_slug}", shell=True)
 
     assert exit_status == 0
     assert os.path.exists(readme_path)
@@ -89,9 +90,8 @@ def test_run_component_new_command_with_illegal_slug(tmp_path: P, test_input):
     """
     Run the component new command with an illegal slug
     """
-
     setup_directory(tmp_path)
-    exit_status = os.system(f"commodore -vvv component new {test_input}")
+    exit_status = call(f"commodore -vvv component new {test_input}", shell=True)
     assert exit_status != 0
 
 
@@ -99,14 +99,13 @@ def test_run_component_new_then_delete(tmp_path: P):
     """
     Create a new component, then immediately delete it.
     """
-
     targetyml = setup_directory(tmp_path)
 
     component_name = 'test-component'
-    exit_status = os.system(f"commodore -vvv component new {component_name} --lib --pp")
+    exit_status = call(f"commodore -vvv component new {component_name} --lib --pp", shell=True)
     assert exit_status == 0
 
-    exit_status = os.system(f"commodore -vvv component delete --force {component_name}")
+    exit_status = call(f"commodore -vvv component delete --force {component_name}", shell=True)
     assert exit_status == 0
 
     # Ensure the dependencies folder is gone.
@@ -124,11 +123,14 @@ def test_run_component_new_then_delete(tmp_path: P):
         assert f"defaults.{component_name}" not in classes
         assert f"components.{component_name}" not in classes
 
-        
+
 def test_deleting_inexistant_component(tmp_path: P):
-    
-    targetyml = setup_directory(tmp_path)
+    """
+    Trying to delete a component that does not exist results in a non-0 exit
+    code.
+    """
+    setup_directory(tmp_path)
     component_name = 'i-dont-exist'
-    
-    exit_status = os.system(f"commodore -vvv component delete --force {component_name}")
+
+    exit_status = call(f"commodore -vvv component delete --force {component_name}", shell=True)
     assert exit_status == 2
