@@ -28,6 +28,9 @@ class Config:
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
+        self.local = None
+        self.push = None
+        self.interactive = None
 
     @property
     def verbose(self):

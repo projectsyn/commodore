@@ -2,6 +2,7 @@ import json
 import shutil
 import os
 from pathlib import Path as P
+from typing import Callable
 
 import click
 import requests
@@ -92,6 +93,9 @@ def _verbose_rmtree(tree, *args, **kwargs):
 
 
 def clean_working_tree(config: Config):
+    # Defining rmtree as a naked Callable means that mypy won't complain about
+    # _verbose_rmtree and shutil.rmtree having slightly different signatures.
+    rmtree: Callable
     if config.debug:
         rmtree = _verbose_rmtree
     else:
