@@ -54,7 +54,7 @@ The template also provides many meta-files in the component repository, such as 
   commodore component delete COMPONENT_NAME
 
 This command removes a component directory from under `dependencies/` in Commodore's working directory.
-The command will ask for confirmation before performing destructive operations, unless it is passed the `--force` option.
+The command will require confirmation before performing destructive operations, unless it's passed the `--force` option.
 
 The command expects to run in a directory which already holds a Commodore directory structure.
 The command makes sure to remove symlinks for the new component's classes and removes the component defaults and component class in the cluster target class.
