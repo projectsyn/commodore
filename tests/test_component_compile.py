@@ -7,7 +7,7 @@ import pytest
 from click import ClickException
 from commodore.config import Config
 from commodore.component.compile import compile_component
-from test_component_new import test_run_component_new_command
+from test_component import test_run_component_new_command
 
 
 def _prepare_component(tmp_path, component_name='test-component'):

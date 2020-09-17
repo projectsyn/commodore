@@ -108,10 +108,13 @@ class ComponentTemplater:
             targetfile = P('inventory', 'targets', 'cluster.yml')
             insert_into_inventory_targets_cluster(targetfile, self.slug)
         except FileNotFoundError:
-            # TODO: This should maybe cleanup the "dependencies" subdirectory (since we just created it).
-            click.echo("Cannot find catalog files. Did you forget to run 'catalog compile' in the current directory?")
+            # TODO: This should maybe cleanup the "dependencies" subdirectory
+            # (since we just created it).
+            click.echo("Cannot find catalog files. Did you forget to run"
+                       "'catalog compile' in the current directory?")
         else:
-            click.secho(f"Component {self.name} successfully added 🎉", bold=True)
+            click.secho(f"Component {self.name} successfully added 🎉",
+                        bold=True)
 
     def delete(self):
         component = Component(
@@ -123,17 +126,20 @@ class ComponentTemplater:
         if component.target_directory.exists():
 
             if not self.config.force:
-                click.confirm(f"Are you sure you want to delete component {self.slug}? "
-                              "This action cannot be undone", abort=True)
+                click.confirm("Are you sure you want to delete component "
+                              f"{self.slug}? This action cannot be undone",
+                              abort=True)
             delete_component_symlinks(self.config, component)
             rmtree(component.target_directory)
 
             targetfile = P('inventory', 'targets', 'cluster.yml')
             remove_from_inventory_targets_cluster(targetfile, self.slug)
 
-            click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
+            click.secho(f"Component {self.slug} successfully deleted 🎉",
+                        bold=True)
         else:
-            raise click.BadParameter(f"Cannot find component with slug '{self.slug}'.")
+            raise click.BadParameter("Cannot find component with slug "
+                                     f"'{self.slug}'.")
 
 
 def insert_into_inventory_targets_cluster(targetfile: P, slug: str):
@@ -166,7 +172,8 @@ def remove_from_inventory_targets_cluster(targetfile: P, slug: str):
     try:
         target['classes'].remove(f"components.{slug}")
     except ValueError:
-        # Again, if the component already doesn't appear in teh list, it's fine to ignore.
+        # Again, if the component already doesn't appear in the list, it's fine
+        # to ignore.
         pass
 
     yaml_dump(target, targetfile)
