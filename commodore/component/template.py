@@ -132,7 +132,6 @@ class ComponentTemplater:
             remove_from_inventory_targets_cluster(targetfile, self.slug)
 
             click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
-            click.echo("Don't forget to re-run catalog compilation.")
         else:
             raise click.BadParameter(f"Cannot find component with slug '{self.slug}'.")
 
