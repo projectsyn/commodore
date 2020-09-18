@@ -2,6 +2,7 @@
 Tests for component new command
 """
 import os
+import pytest
 import yaml
 from pathlib import Path as P
 
@@ -75,12 +76,22 @@ def test_run_component_new_command_with_name(tmp_path: P):
         assert component_slug not in data
 
 
-def test_run_component_new_command_with_illegal_slug(tmp_path: P):
+@pytest.mark.parametrize(
+    "test_input",
+    [
+        'component-test-illegal',
+        'test-illegal-',
+        '-test-illegal',
+        '00-test-illegal',
+        'TestIllegal',
+        'test_illegal',
+    ]
+)
+def test_run_component_new_command_with_illegal_slug(tmp_path: P, test_input):
     """
     Run the component new command with an illegal slug
     """
 
     setup_directory(tmp_path)
-    component_slug = 'component-test-illegal'
-    exit_status = os.system(f"commodore -vvv component new {component_slug}")
+    exit_status = os.system(f"commodore -vvv component new {test_input}")
     assert exit_status != 0

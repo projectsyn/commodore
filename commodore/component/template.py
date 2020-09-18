@@ -3,6 +3,7 @@ import datetime
 from pathlib import Path as P
 
 import click
+import re
 
 from cookiecutter.main import cookiecutter
 
@@ -11,6 +12,9 @@ from commodore import config as CommodoreConfig
 from commodore.config import Component
 from commodore.dependency_mgmt import create_component_symlinks
 from commodore.helpers import yaml_load, yaml_dump
+
+
+slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
 
 class ComponentTemplater:
@@ -34,8 +38,14 @@ class ComponentTemplater:
 
     @slug.setter
     def slug(self, slug):
-        if slug.startswith('component-'):
-            raise click.ClickException('The component slug may not start with "component-"')
+        if slug.startswith("component-"):
+            raise click.ClickException(
+                'The component slug may not start with "component-"'
+            )
+        if not slug_regex.match(slug):
+            raise click.ClickException(
+                f"The component slug must match '{slug_regex.pattern}'"
+            )
         self._slug = slug
 
     @property

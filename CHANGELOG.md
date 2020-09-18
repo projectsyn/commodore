@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
 * Improved `component new` documentation ([#182])
+* `component new` restricts allowed component slugs ([#189])
 
 ### Fixed
 
@@ -191,3 +192,4 @@ Initial implementation
 [#183]: https://github.com/projectsyn/commodore/pull/183
 [#185]: https://github.com/projectsyn/commodore/pull/185
 [#186]: https://github.com/projectsyn/commodore/pull/186
+[#189]: https://github.com/projectsyn/commodore/pull/189
