@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Mypy static type analysis to the tox/CI environments. ([#180])
+* Add `--pad-arrays` to component template jsonnetfmt arguments ([#186])
 
 ### Changed
 
