@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Mypy static type analysis to the tox/CI environments. ([#180])
+* Add `--pad-arrays` to component template jsonnetfmt arguments ([#186])
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix failing bandit CI check ([#185])
 * Ignore component versions if not included ([#177])
+* Fix Jsonnet linting error in component template ([#186])
 
 ## [v0.2.3]
 
@@ -188,3 +190,4 @@ Initial implementation
 [#182]: https://github.com/projectsyn/commodore/pull/182
 [#183]: https://github.com/projectsyn/commodore/pull/183
 [#185]: https://github.com/projectsyn/commodore/pull/185
+[#186]: https://github.com/projectsyn/commodore/pull/186
