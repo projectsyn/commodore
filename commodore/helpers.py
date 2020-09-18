@@ -177,3 +177,21 @@ def relsymlink(srcdir, srcname, destdir, destname=None):
     if link_dst.exists():
         os.remove(link_dst)
     os.symlink(link_src, link_dst)
+
+
+def delsymlink(linkname: P, debug=False):
+    """
+    A convenience function to remove a symlink.
+
+    Ensures the target path actually exists and is a symlink before deleting, or
+    noops.
+    """
+
+    # This will also be False in case it doesn't exist.
+    if linkname.is_symlink():
+        if debug:
+            click.echo(f"Deleting symlink: {linkname}")
+        linkname.unlink()
+    else:
+        if debug:
+            click.echo(f"Trying to delete non-symlink path {linkname}. No deleting!")

@@ -11,12 +11,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Mypy static type analysis to the tox/CI environments. ([#180])
 * Add `--pad-arrays` to component template jsonnetfmt arguments ([#186])
+* New `commodore cluster list` command ([#135])
+* New `commodore component delete` command ([#188])
 
 ### Changed
 
 * Slightly improved error message in case `commodore component new` is called in
   a folder that is not a populated (compiled) catalog ([#183])
-* New `commodore cluster list` command ([#135])
 * Vault default values ([#176])
 * Improved `component new` documentation ([#182])
 * `component new` restricts allowed component slugs ([#189])
@@ -192,4 +193,5 @@ Initial implementation
 [#183]: https://github.com/projectsyn/commodore/pull/183
 [#185]: https://github.com/projectsyn/commodore/pull/185
 [#186]: https://github.com/projectsyn/commodore/pull/186
+[#188]: https://github.com/projectsyn/commodore/pull/188
 [#189]: https://github.com/projectsyn/commodore/pull/189

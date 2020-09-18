@@ -135,6 +135,20 @@ def component_new(config: Config, slug, name, lib, pp, owner, copyright_holder, 
     f.create()
 
 
+@component.command(name='delete', short_help='Remove component from inventory.')
+@click.argument('slug')
+@click.option('--force/--no-force', default=False, show_default=True,
+              help="Don't prompt for user confirmation when deleting.")
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def component_delete(config: Config, slug, force, verbose):
+    config.update_verbosity(verbose)
+    config.force = force
+    f = ComponentTemplater(config, slug)
+    f.delete()
+
+
 @component.command(name='compile', short_help='Compile a single component.')
 @click.argument('path', type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.option('-f', '--values', multiple=True,

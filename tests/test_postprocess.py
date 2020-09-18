@@ -6,7 +6,7 @@ import yaml
 from commodore.config import Config, Component
 from commodore.postprocess import postprocess_components
 from git import Repo
-from test_component_new import test_run_component_new_command
+from test_component import test_run_component_new_command
 
 
 def _make_ns_filter(ns, enabled=None):

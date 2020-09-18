@@ -31,6 +31,7 @@ class Config:
         self.local = None
         self.push = None
         self.interactive = None
+        self.force = False
 
     @property
     def verbose(self):
