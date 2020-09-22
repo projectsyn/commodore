@@ -159,7 +159,7 @@ def compile(config, cluster_id):
     # parameters
     update_refs(config, kapitan_inventory['parameters'])
 
-    kapitan_compile(config)
+    kapitan_compile(config, search_paths=['./vendor/'])
 
     postprocess_components(config, kapitan_inventory, target_name, config.get_components())
 
