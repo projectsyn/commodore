@@ -3,6 +3,12 @@ catalog
 compiled
 dependencies
 inventory
+
+## jsonnet-bundler
+
+jsonnetfile.*
+vendor/
+
 ## From here: GitHub's gitignore template for Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
