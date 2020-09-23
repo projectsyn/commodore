@@ -215,6 +215,15 @@ def fetch_jsonnet_libraries(config: Config):
             }
         })
 
+    # Defining the `lib` folder as a local dependency is just a cheap way to have a symlink to that folder.
+    dependencies.append({
+        "source": {
+            "local": {
+                "directory": "dependencies/lib",
+            }
+        }
+    })
+
     jsonnetfile = {
         "version": 1,
         "dependencies": dependencies,

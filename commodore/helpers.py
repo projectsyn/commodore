@@ -119,7 +119,6 @@ def kapitan_compile(config: Config,
         search_paths = []
     search_paths = search_paths + [
         './',
-        './dependencies/',
         __install_dir__,
     ]
     reset_reclass_cache()
