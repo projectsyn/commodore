@@ -52,4 +52,3 @@ docs-serve:
 .PHONY: docs-vale
 docs-vale:
 	$(VALE_CMD) $(VALE_ARGS)
-
