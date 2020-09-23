@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+* Ability to manage dependencies with jsonnet-bundler ([190])
 * Mypy static type analysis to the tox/CI environments. ([#180])
 * Add `--pad-arrays` to component template jsonnetfmt arguments ([#186])
 * New `commodore cluster list` command ([#135])
@@ -197,3 +198,4 @@ Initial implementation
 [#186]: https://github.com/projectsyn/commodore/pull/186
 [#188]: https://github.com/projectsyn/commodore/pull/188
 [#189]: https://github.com/projectsyn/commodore/pull/189
+[#190]: https://github.com/projectsyn/commodore/pull/190
