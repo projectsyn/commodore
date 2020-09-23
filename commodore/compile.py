@@ -19,6 +19,7 @@ from .config import Component
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
+    fetch_jsonnet_libraries,
     set_component_overrides
 )
 from .helpers import (
@@ -152,6 +153,9 @@ def compile(config, cluster_id):
         'commodore', {}).get('jsonnet_libs', None)
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)
+
+    if not config.local:
+        fetch_jsonnet_libraries(config)
 
     clean_catalog(catalog_repo)
 
