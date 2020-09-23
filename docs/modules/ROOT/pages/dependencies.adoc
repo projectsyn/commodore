@@ -1,0 +1,46 @@
+= Manage dependencies
+
+Commodore components can declare dependencies to Jsonnet libraries.
+Those dependencies are resolved and downloaded using https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler].
+
+Define dependencies in a `jsonnetfile.json` file.
+This file must be placed at the root of the components file structure.
+
+.Example `jsonnetfile.json`
+[source,json]
+----
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/coreos/kube-prometheus",
+          "subdir": "jsonnet/kube-prometheus"
+        }
+      },
+      "version": "release-0.3"
+    }
+  ],
+  "legacyImports": true
+}
+----
+
+[CAUTION]
+====
+If two components depend on the same Jsonnet library, they must require the same version.
+See https://github.com/jsonnet-bundler/jsonnet-bundler#current-limitations[jsonnet-bundler - Current Limitations]
+====
+
+[IMPORTANT]
+====
+Jsonnet-bundler uses the file `jsonnetfile.lock.json` to freeze dependency versions for a project.
+Lock files of libraries aren't taken into consideration and within this setup, components are libraries.
+If your component require a specific version, you have to declare this in the `version` field within `jsonnetfile.json`.
+====
+
+[TIP]
+====
+When compiling components with `commodore component compile`, jsonnet-bundler will create the file `jsonnetfile.lock.json` and the folder `vendor`.
+Add them to your `.gitignore`.
+====

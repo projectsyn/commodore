@@ -33,6 +33,7 @@ using `helm template`.
 * Python 3.6+, with `python3-dev` and `python3-venv` updated
 * [Poetry](https://github.com/python-poetry/poetry)
 * Docker
+* [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
 ## Getting started
 
@@ -63,6 +64,8 @@ using `helm template`.
       poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
       poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/dependency_manager/helm/build.sh'
       ```
+
+    Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
 1. Setup a `.env` file to configure Commodore (don't use quotes):
 

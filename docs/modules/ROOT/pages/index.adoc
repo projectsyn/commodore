@@ -18,6 +18,9 @@ templates. Commodore sets up an https://kapitan.dev/inventory/[inventory] by
 downloading all required components and symlinking the relevant classes into
 the inventory structure which Kapitan understands.
 
+Components can define dependencies to Jsonnet libraries using https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler].
+See xref:commodore:ROOT:dependencies.adoc[Manage Dependencies].
+
 Additionally, Commodore allows post-processing the output of Kapitan. This
 functionality was first introduced to allow adding namespace information to
 the output of `helm template`, as this information isn't applied by Helm when
