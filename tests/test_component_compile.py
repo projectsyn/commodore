@@ -20,11 +20,11 @@ def _prepare_component(tmp_path, component_name='test-component'):
     with open(tmp_path / 'dependencies' / component_name / 'component/main.jsonnet', 'a') as file:
         file.write(dedent('''
             {
-            "test_service_account": kube.ServiceAccount('test') {
+              "test_service_account": kube.ServiceAccount('test') {
                 metadata+: {
-                namespace: params.namespace,
+                  namespace: params.namespace,
                 },
-            },
+              },
             }'''))
 
 
