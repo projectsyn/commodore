@@ -19,7 +19,9 @@ from .config import Component
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
-    set_component_overrides
+    fetch_jsonnet_libraries,
+    set_component_overrides,
+    write_jsonnetfile,
 )
 from .helpers import (
     ApiError,
@@ -153,13 +155,17 @@ def compile(config, cluster_id):
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)
 
+    if not config.local:
+        write_jsonnetfile(config)
+        fetch_jsonnet_libraries()
+
     clean_catalog(catalog_repo)
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
     update_refs(config, kapitan_inventory['parameters'])
 
-    kapitan_compile(config)
+    kapitan_compile(config, search_paths=['./vendor/'])
 
     postprocess_components(config, kapitan_inventory, target_name, config.get_components())
 

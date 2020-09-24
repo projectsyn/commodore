@@ -1,5 +1,7 @@
 import os
+import json
 from pathlib import Path as P
+from subprocess import call  # nosec
 
 import click
 
@@ -7,7 +9,7 @@ from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.resources import inventory_reclass
 
 from . import git
-from .config import Component
+from .config import Component, Config
 from .helpers import relsymlink, yaml_load, delsymlink
 
 
@@ -195,3 +197,50 @@ def fetch_jsonnet_libs(config, libs):
         for file in lib['files']:
             relsymlink(repo.working_tree_dir, file['libfile'],
                        'dependencies/lib', destname=file['targetfile'])
+
+
+def write_jsonnetfile(config: Config):
+    """
+    Writes the file `jsonnetfile.json` containing all components as local dependencies.
+    """
+
+    dependencies = []
+
+    for component in config.get_components().values():
+        dependencies.append({
+            "source": {
+                "local": {
+                    "directory": str(component.target_directory),
+                }
+            }
+        })
+
+    # Defining the `lib` folder as a local dependency is just a cheap way to have a symlink to that folder.
+    dependencies.append({
+        "source": {
+            "local": {
+                "directory": "dependencies/lib",
+            }
+        }
+    })
+
+    jsonnetfile = {
+        "version": 1,
+        "dependencies": dependencies,
+        "legacyImports": True,
+    }
+
+    with open("jsonnetfile.json", "w") as file:
+        file.write(json.dumps(jsonnetfile, indent=4))
+
+
+def fetch_jsonnet_libraries(cwd: P = None):
+    """
+    Download Jsonnet libraries using Jsonnet-Bundler.
+    """
+
+    try:
+        if call(['jb', 'install'], cwd=cwd) != 0:
+            raise click.ClickException('jsonnet-bundler exited with error')
+    except FileNotFoundError as e:
+        raise click.ClickException('the jsonnet-bundler executable `jb` could not be found') from e

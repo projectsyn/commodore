@@ -44,6 +44,7 @@ RUN ./kapitan/inputs/helm/build.sh \
 FROM base AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl \
       git \
       libnss-wrapper \
       openssh-client \
@@ -65,6 +66,10 @@ COPY --from=helm_binding_builder \
 COPY --from=helm_binding_builder \
       /virtualenv/kapitan/dependency_manager/helm/helm_fetch.so \
       /usr/local/lib/python3.8/site-packages/kapitan/dependency_manager/helm/
+
+RUN curl -sLo /usr/local/bin/jb \
+  https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+  && chmod +x /usr/local/bin/jb
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
 

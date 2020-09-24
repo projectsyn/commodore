@@ -1,1 +1,2 @@
 * xref:commodore:ROOT:local-mode.adoc[Local Mode]
+* xref:commodore:ROOT:dependencies.adoc[Manage Dependencies]

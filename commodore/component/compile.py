@@ -6,7 +6,7 @@ import tempfile
 import click
 
 from commodore.config import Config, Component
-from commodore.dependency_mgmt import fetch_jsonnet_libs
+from commodore.dependency_mgmt import fetch_jsonnet_libs, fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.postprocess import postprocess_components
 from git import Repo
@@ -25,6 +25,8 @@ def compile_component(config: Config, component_path, value_files, search_paths,
     component_path = P(component_path).resolve()
     value_files = [P(f).resolve() for f in value_files]
     search_paths = [P(d).resolve() for d in search_paths]
+    search_paths.append('./dependencies/')
+    search_paths.append(component_path / 'vendor')
     output_path = P(output_path).resolve()
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace('component-', '')
@@ -90,6 +92,8 @@ local ArgoProject(name) = {};
 
         # Fetch Jsonnet libs
         fetch_jsonnet_libs(config, libs)
+        if (component_path / 'jsonnetfile.json').exists():
+            fetch_jsonnet_libraries(component_path)
 
         # Compile component
         kapitan_compile(config,
