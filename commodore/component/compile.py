@@ -84,8 +84,8 @@ def compile_component(config: Config, component_path, value_files, search_paths,
                 local ArgoProject(name) = {};
 
                 {
-                App: ArgoApp,
-                Project: ArgoProject,
+                  App: ArgoApp,
+                  Project: ArgoProject,
                 }"""))
 
         # Fetch Jsonnet libs
