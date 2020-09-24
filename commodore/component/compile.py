@@ -2,6 +2,7 @@ import os
 from pathlib import Path as P
 import shutil
 import tempfile
+from textwrap import dedent
 
 import click
 
@@ -44,51 +45,48 @@ def compile_component(config: Config, component_path, value_files, search_paths,
 
         # Create class for fake parameters
         with open(temp_dir / 'inventory/classes/fake.yml', 'w') as file:
-            file.write("""
-parameters:
-  cloud:
-    provider: cloudscale
-    region: rma1
-  cluster:
-    catalog_url: ssh://git@git.example.com/org/repo.git
-    dist: test-distribution
-    name: c-green-test-1234
-  customer:
-    name: t-silent-test-1234
-  argocd:
-    namespace: test
+            file.write(dedent("""
+                parameters:
+                  cloud:
+                    provider: cloudscale
+                    region: rma1
+                  cluster:
+                    catalog_url: ssh://git@git.example.com/org/repo.git
+                    dist: test-distribution
+                    name: c-green-test-1234
+                  customer:
+                    name: t-silent-test-1234
+                  argocd:
+                    namespace: test
 
-  kapitan:
-    vars:
-      target: test
-      namespace: test
-""")
+                  kapitan:
+                    vars:
+                        target: test
+                        namespace: test"""))
 
         # Create test target
         with open(temp_dir / 'inventory/targets/test.yml', 'w') as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
-            file.write(f"""
-classes:
-- fake
-- defaults.{component_name}
-- components.{component_name}
-{value_classes}
-""")
+            file.write(dedent(f"""
+                classes:
+                - fake
+                - defaults.{component_name}
+                - components.{component_name}
+                {value_classes}"""))
 
         # Fake Argo CD lib
         # We plug "fake" Argo CD library here because every component relies on it
         # and we don't want to provide it every time when compiling a single component.
         (temp_dir / 'dependencies/lib').mkdir(exist_ok=True)
         with open(temp_dir / 'dependencies/lib/argocd.libjsonnet', 'w') as file:
-            file.write("""
-local ArgoApp(component, namespace, project='', secrets=true) = {};
-local ArgoProject(name) = {};
+            file.write(dedent("""
+                local ArgoApp(component, namespace, project='', secrets=true) = {};
+                local ArgoProject(name) = {};
 
-{
-  App: ArgoApp,
-  Project: ArgoProject,
-}
-""")
+                {
+                App: ArgoApp,
+                Project: ArgoProject,
+                }"""))
 
         # Fetch Jsonnet libs
         fetch_jsonnet_libs(config, libs)

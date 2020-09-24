@@ -1,7 +1,6 @@
 """
 Tests for command line interface (CLI)
 """
-import os
 from subprocess import call
 
 
