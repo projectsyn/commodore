@@ -20,7 +20,8 @@ from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
-    set_component_overrides
+    set_component_overrides,
+    write_jsonnetfile,
 )
 from .helpers import (
     ApiError,
@@ -155,7 +156,8 @@ def compile(config, cluster_id):
         fetch_jsonnet_libs(config, jsonnet_libs)
 
     if not config.local:
-        fetch_jsonnet_libraries(config)
+        write_jsonnetfile(config)
+        fetch_jsonnet_libraries()
 
     clean_catalog(catalog_repo)
 

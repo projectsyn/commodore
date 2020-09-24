@@ -199,9 +199,9 @@ def fetch_jsonnet_libs(config, libs):
                        'dependencies/lib', destname=file['targetfile'])
 
 
-def fetch_jsonnet_libraries(config: Config):
+def write_jsonnetfile(config: Config):
     """
-    Download Jsonnet libraries using Jsonnet-Bundler.
+    Writes the file `jsonnetfile.json` containing all components as local dependencies.
     """
 
     dependencies = []
@@ -233,8 +233,14 @@ def fetch_jsonnet_libraries(config: Config):
     with open("jsonnetfile.json", "w") as file:
         file.write(json.dumps(jsonnetfile, indent=4))
 
+
+def fetch_jsonnet_libraries(cwd: P = None):
+    """
+    Download Jsonnet libraries using Jsonnet-Bundler.
+    """
+
     try:
-        if call(['jb', 'install']) != 0:
+        if call(['jb', 'install'], cwd=cwd) != 0:
             raise click.ClickException('jsonnet-bundler exited with error')
     except FileNotFoundError as e:
         raise click.ClickException('the jsonnet-bundler executable `jb` could not be found') from e
