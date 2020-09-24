@@ -6,6 +6,7 @@ import yaml
 import pytest
 
 from subprocess import call
+from textwrap import dedent
 
 from click import ClickException
 from commodore.config import Config
@@ -17,15 +18,14 @@ def _prepare_component(tmp_path, component_name='test-component'):
     test_run_component_new_command(tmp_path=tmp_path)
 
     with open(tmp_path / 'dependencies' / component_name / 'component/main.jsonnet', 'a') as file:
-        file.write('''
-{
-  "test_service_account": kube.ServiceAccount('test') {
-    metadata+: {
-      namespace: params.namespace,
-    },
-  },
-}
-''')
+        file.write(dedent('''
+            {
+            "test_service_account": kube.ServiceAccount('test') {
+                metadata+: {
+                namespace: params.namespace,
+                },
+            },
+            }'''))
 
 
 def _add_postprocessing_filter(tmp_path, component_name='test-component'):
