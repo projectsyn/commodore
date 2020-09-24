@@ -4,7 +4,7 @@ Commodore components can declare dependencies to Jsonnet libraries.
 Those dependencies are resolved and downloaded using https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler].
 
 Define dependencies in a `jsonnetfile.json` file.
-This file must be placed at the root of the components file structure.
+This file must be placed at the root of the component's file structure.
 
 .Example `jsonnetfile.json`
 [source,json]

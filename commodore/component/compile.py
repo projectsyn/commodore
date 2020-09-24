@@ -26,7 +26,7 @@ def compile_component(config: Config, component_path, value_files, search_paths,
     value_files = [P(f).resolve() for f in value_files]
     search_paths = [P(d).resolve() for d in search_paths]
     search_paths.append('./dependencies/')
-    search_paths.append(os.path.join(component_path, 'vendor'))
+    search_paths.append(component_path / 'vendor')
     output_path = P(output_path).resolve()
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace('component-', '')
@@ -92,7 +92,7 @@ local ArgoProject(name) = {};
 
         # Fetch Jsonnet libs
         fetch_jsonnet_libs(config, libs)
-        if os.path.exists(os.path.join(component_path, 'jsonnetfile.json')):
+        if (component_path / 'jsonnetfile.json').exists():
             fetch_jsonnet_libraries(component_path)
 
         # Compile component
