@@ -7,6 +7,7 @@ import click
 import pytest
 from unittest.mock import patch
 from pathlib import Path
+from textwrap import dedent
 
 from commodore import dependency_mgmt
 from commodore.config import Config, Component
@@ -103,10 +104,10 @@ def test_read_component_urls(data: Config, tmp_path):
     config_file = inventory_global / 'commodore.yml'
     override_url = 'ssh://git@git.acme.com/some/component.git'
     with open(config_file, 'w') as file:
-        file.write(f"""components:
-- name: component-overwritten
-  url: {override_url}
-""")
+        file.write(dedent(f"""
+            components:
+            - name: component-overwritten
+              url: {override_url}"""))
 
     components = dependency_mgmt._read_component_urls(data, component_names)
     override = components[0]

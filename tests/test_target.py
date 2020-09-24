@@ -5,6 +5,9 @@ Unit-tests for target generation
 import os
 import click
 import pytest
+
+from textwrap import dedent
+
 from commodore import cluster
 
 
@@ -82,23 +85,24 @@ def test_reconstruct_api_response(tmp_path):
     os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes:
-- defaults.argocd
-- global.common
-- global.distribution.k3d
-- global.cloud.localdev
-- t-delicate-pine-3938.c-twilight-water-9032
-parameters:
-  cloud:
-    provider: localdev
-    region: north
-  cluster:
-    catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
-    dist: k3d
-    name: c-twilight-water-9032
-  customer:
-    name: t-delicate-pine-3938
-  target_name: cluster ''')
+        file.write(dedent('''
+            classes:
+            - defaults.argocd
+            - global.common
+            - global.distribution.k3d
+            - global.cloud.localdev
+            - t-delicate-pine-3938.c-twilight-water-9032
+            parameters:
+              cloud:
+                provider: localdev
+                region: north
+              cluster:
+                catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
+                dist: k3d
+                name: c-twilight-water-9032
+              customer:
+                name: t-delicate-pine-3938
+              target_name: cluster'''))
 
     api_response = cluster.reconstruct_api_response(targetyml)
     assert api_response['id'] == 'c-twilight-water-9032'
@@ -111,17 +115,18 @@ def test_reconstruct_api_response_no_region(tmp_path):
     os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes: []
-parameters:
-  cloud:
-    provider: localdev
-  cluster:
-    catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
-    dist: k3d
-    name: c-twilight-water-9032
-  customer:
-    name: t-delicate-pine-3938
-  target_name: cluster ''')
+        file.write(dedent('''
+            classes: []
+            parameters:
+              cloud:
+                provider: localdev
+              cluster:
+                catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
+                dist: k3d
+                name: c-twilight-water-9032
+              customer:
+                name: t-delicate-pine-3938
+              target_name: cluster'''))
 
     api_response = cluster.reconstruct_api_response(targetyml)
     assert 'region' not in api_response['facts']
@@ -131,18 +136,19 @@ def test_reconstruct_api_response_with_lieutenant_fact(tmp_path):
     os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes:
-- global.lieutenant-instance.lieutenant-dev
-parameters:
-  cloud:
-    provider: localdev
-  cluster:
-    catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
-    dist: k3d
-    name: c-twilight-water-9032
-  customer:
-    name: t-delicate-pine-3938
-  target_name: cluster ''')
+        file.write(dedent('''
+            classes:
+            - global.lieutenant-instance.lieutenant-dev
+            parameters:
+              cloud:
+                provider: localdev
+              cluster:
+                catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
+                dist: k3d
+                name: c-twilight-water-9032
+              customer:
+                name: t-delicate-pine-3938
+              target_name: cluster'''))
 
     api_response = cluster.reconstruct_api_response(targetyml)
     assert api_response['facts']['lieutenant-instance'] == "lieutenant-dev"
@@ -152,17 +158,18 @@ def test_reconstruct_api_response_missing_fact(tmp_path):
     os.chdir(tmp_path)
     targetyml = tmp_path / 'cluster.yml'
     with open(targetyml, 'w') as file:
-        file.write('''classes: []
-parameters:
-  cloud:
-    region: north
-  cluster:
-    catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
-    dist: k3d
-    name: c-twilight-water-9032
-  customer:
-    name: t-delicate-pine-3938
-  target_name: cluster ''')
+        file.write(dedent('''
+            classes: []
+            parameters:
+              cloud:
+                region: north
+              cluster:
+                catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
+                dist: k3d
+                name: c-twilight-water-9032
+              customer:
+                name: t-delicate-pine-3938
+              target_name: cluster'''))
 
     with pytest.raises(KeyError):
         cluster.reconstruct_api_response(targetyml)
