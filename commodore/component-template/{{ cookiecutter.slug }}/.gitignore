@@ -3,3 +3,5 @@ _public/
 .cache/
 helmcharts/
 manifests/
+vendor/
+jsonnetfile.lock.json
