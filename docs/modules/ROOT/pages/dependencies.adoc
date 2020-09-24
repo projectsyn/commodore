@@ -36,7 +36,7 @@ See https://github.com/jsonnet-bundler/jsonnet-bundler#current-limitations[jsonn
 ====
 Jsonnet-bundler uses the file `jsonnetfile.lock.json` to freeze dependency versions for a project.
 Lock files of libraries aren't taken into consideration and within this setup, components are libraries.
-If your component require a specific version, you have to declare this in the `version` field within `jsonnetfile.json`.
+If your component requires a specific version, you have to declare this in the `version` field within `jsonnetfile.json`.
 ====
 
 [TIP]
