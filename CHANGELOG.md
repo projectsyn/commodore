@@ -17,11 +17,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Pass through facts from Lieutenant API to `parameters.facts` ([#192])
 * Slightly improved error message in case `commodore component new` is called in
   a folder that is not a populated (compiled) catalog ([#183])
 * Vault default values ([#176])
 * Improved `component new` documentation ([#182])
 * `component new` restricts allowed component slugs ([#189])
+
+### Deprecated
+
+* The following parameters will be removed in a future release.
+  They are replace with corresponding values within `parameters.facts` ([#192]).
+  * `parameters.cluster.dist` → `parameters.facts.distribution`
+  * `parameters.cluster.provider` → `parameters.facts.provider`
+  * `parameters.cluster.region` → `parameters.facts.region`
+  * `parameters.customer.name` → `parameters.cluster.tenant`
 
 ### Fixed
 
@@ -200,3 +210,4 @@ Initial implementation
 [#188]: https://github.com/projectsyn/commodore/pull/188
 [#189]: https://github.com/projectsyn/commodore/pull/189
 [#190]: https://github.com/projectsyn/commodore/pull/190
+[#192]: https://github.com/projectsyn/commodore/pull/190
