@@ -52,7 +52,7 @@ def _full_target(cluster, components, catalog):
     cluster_distro = cluster_facts['distribution']
     cloud_provider = cluster_facts['cloud']
     cluster_id = cluster['id']
-    customer = cluster['tenant']
+    tenant = cluster['tenant']
     component_defaults = [f"defaults.{cn}" for cn in components if
                           (P('inventory/classes/defaults') / f"{cn}.yml").is_file()]
     global_defaults = ['global.common',
@@ -60,29 +60,40 @@ def _full_target(cluster, components, catalog):
                        f"global.cloud.{cloud_provider}"]
     if 'region' in cluster_facts and cluster_facts['region']:
         global_defaults.append(f"global.cloud.{cloud_provider}.{cluster_facts['region']}")
+
     if 'lieutenant-instance' in cluster_facts and cluster_facts['lieutenant-instance']:
         global_defaults.append(
             f"global.lieutenant-instance.{cluster_facts['lieutenant-instance']}")
-    global_defaults.append(f"{customer}.{cluster_id}")
+    global_defaults.append(f"{tenant}.{cluster_id}")
+    commodore_facts = {
+        'target_name': 'cluster',
+        'cluster': {
+            'name': cluster_id,
+            'catalog_url': catalog,
+            'tenant': tenant,
+            # TODO Remove dist after deprecation phase.
+            'dist': cluster_distro,
+        },
+        # TODO Remove the facts below after deprecation phase.
+        'cloud': {
+            'provider': cloud_provider,
+        },
+        'customer': {
+            'name': tenant,
+        },
+    }
+    # TODO Remove after deprecation phase.
+    if 'region' in cluster_facts:
+        commodore_facts['cloud']['region'] = cluster_facts['region']
     target = {
         'classes': component_defaults + global_defaults,
         'parameters': {
-            'target_name': 'cluster',
-            'cluster': {
-                'name': f"{cluster_id}",
-                'dist': f"{cluster_distro}",
-                'catalog_url': f"{catalog}",
+            **commodore_facts,
+            **{
+                'facts': cluster_facts,
             },
-            'cloud': {
-                'provider': f"{cloud_provider}",
-            },
-            'customer': {
-                'name': f"{customer}"
-            },
-        }
+        },
     }
-    if 'region' in cluster_facts:
-        target['parameters']['cloud']['region'] = cluster_facts['region']
     return target
 
 
