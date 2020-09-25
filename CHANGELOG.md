@@ -27,10 +27,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Deprecated
 
 * The following parameters will be removed in a future release.
-  They are replace with corresponding values within `parameters.facts` ([#192]).
+  They are replaced with corresponding values within `parameters.facts` ([#192]).
   * `parameters.cluster.dist` → `parameters.facts.distribution`
-  * `parameters.cluster.provider` → `parameters.facts.provider`
-  * `parameters.cluster.region` → `parameters.facts.region`
+  * `parameters.cloud.provider` → `parameters.facts.cloud`
+  * `parameters.cloud.region` → `parameters.facts.region`
   * `parameters.customer.name` → `parameters.cluster.tenant`
 
 ### Fixed
