@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+* Inventory hierarchy is now dynamic ([#195])
+
+  A class hierarchy needs to be added.
+  Check the documentation for details.
+
 * Pass through facts from Lieutenant API to `parameters.facts` ([#192])
 * Slightly improved error message in case `commodore component new` is called in
   a folder that is not a populated (compiled) catalog ([#183])
@@ -210,4 +215,5 @@ Initial implementation
 [#188]: https://github.com/projectsyn/commodore/pull/188
 [#189]: https://github.com/projectsyn/commodore/pull/189
 [#190]: https://github.com/projectsyn/commodore/pull/190
-[#192]: https://github.com/projectsyn/commodore/pull/190
+[#192]: https://github.com/projectsyn/commodore/pull/192
+[#195]: https://github.com/projectsyn/commodore/pull/195
