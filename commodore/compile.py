@@ -12,7 +12,7 @@ from .catalog import (
 )
 from .cluster import (
     fetch_cluster,
-    reconstruct_api_response,
+    read_cluster_and_tenant,
     target_file,
     update_params,
     update_target,
@@ -92,21 +92,19 @@ def _local_setup(config, cluster_id, target):
         raise click.ClickException(f"Invalid target: {target}")
     click.echo(f" > Using target: {target}")
 
-    click.echo(' > Reconstructing Cluster API data from target')
-    cluster = reconstruct_api_response(target)
-    if cluster['id'] != cluster_id:
+    click.echo(' > Assert current target matches')
+    current_cluster_id, tenant = read_cluster_and_tenant(target)
+    if current_cluster_id != cluster_id:
         error = '[Local mode] Cluster ID mismatch: local state targets ' + \
-                f"{cluster['id']}, compilation was requested for {cluster_id}"
+                f"{current_cluster_id}, compilation was requested for {cluster_id}"
         raise click.ClickException(error)
-
-    customer_id = cluster['tenant']
 
     click.secho('Registering config...', bold=True)
     config.register_config('global',
                            git.init_repository('inventory/classes/global'))
     config.register_config('customer',
                            git.init_repository(P('inventory/classes/') /
-                                               customer_id))
+                                               tenant))
 
     click.secho('Registering components...', bold=True)
     for c in P('dependencies').iterdir():

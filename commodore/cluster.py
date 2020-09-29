@@ -2,7 +2,7 @@ import os
 
 from pathlib import Path as P
 
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import click
 
@@ -23,23 +23,17 @@ def fetch_cluster(cfg, clusterid):
     return cluster
 
 
-def reconstruct_api_response(target):
+def read_cluster_and_tenant(target: str) -> Tuple[str, str]:
+    """
+    Reads the cluster and tenant ID from the current target.
+    """
     file = params_file(target)
     if not file.is_file():
         raise click.ClickException(f"params file for target {target} does not exist")
 
     data = yaml_load(file)
-    parameters = data['parameters']
-    response = {
-        'id': parameters['cluster']['name'],
-        'facts': parameters['facts'],
-        'gitRepo': {
-            'url': parameters['cluster']['catalog_url'],
-        },
-        'tenant': parameters['cluster']['tenant'],
-    }
 
-    return response
+    return data['parameters']['cluster']['name'], data['parameters']['cluster']['tenant']
 
 
 def render_target(target: str, components: Iterable[str]):

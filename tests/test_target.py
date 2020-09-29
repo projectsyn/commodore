@@ -74,7 +74,7 @@ def test_empty_facts(data):
         cluster.render_params(data, 'foo')
 
 
-def test_reconstruct_api_response(tmp_path):
+def test_read_cluster_and_tenant(tmp_path):
     os.chdir(tmp_path)
     file = cluster.params_file('foo')
     os.makedirs(file.parent, exist_ok=True)
@@ -82,23 +82,15 @@ def test_reconstruct_api_response(tmp_path):
         f.write(dedent('''
             parameters:
               cluster:
-                catalog_url: ssh://git@git.vshn.net/syn-dev/cluster-catalogs/srueg-k3d-int.git
                 name: c-twilight-water-9032
-                tenant: t-delicate-pine-3938
-              facts:
-                cloud: localdev
-                distribution: k3d
-                region: north
-              target_name: cluster'''))
+                tenant: t-delicate-pine-3938'''))
 
-    api_response = cluster.reconstruct_api_response('foo')
-    assert api_response['id'] == 'c-twilight-water-9032'
-    assert api_response['tenant'] == 't-delicate-pine-3938'
-    assert api_response['facts']['distribution'] == 'k3d'
-    assert api_response['facts']['region'] == 'north'
+    cluster_id, tenant_id = cluster.read_cluster_and_tenant('foo')
+    assert cluster_id == 'c-twilight-water-9032'
+    assert tenant_id == 't-delicate-pine-3938'
 
 
-def test_reconstruct_api_response_missing_fact(tmp_path):
+def test_read_cluster_and_tenant_missing_fact(tmp_path):
     os.chdir(tmp_path)
     file = cluster.params_file('foo')
     os.makedirs(file.parent, exist_ok=True)
@@ -108,4 +100,4 @@ def test_reconstruct_api_response_missing_fact(tmp_path):
             parameters: {}'''))
 
     with pytest.raises(KeyError):
-        cluster.reconstruct_api_response('foo')
+        cluster.read_cluster_and_tenant('foo')
