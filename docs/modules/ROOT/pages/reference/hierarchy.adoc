@@ -39,7 +39,7 @@ inventory/
 
 == Available parameters
 
-To build up your configuration hierarchy, included classes in `common.yml` within your global configuration inventory.
+To build up your configuration hierarchy, include classes in `common.yml` within your global configuration inventory.
 The following parameters can be used to make your hierarchy dynamic based on cluster facts.
 
 [source,yaml]
@@ -113,7 +113,7 @@ classes:
 ----
 
 Reclass requires parameters to be defined when used in references.
-When building a hierarchy that have optional parts, one must be creative.
+When building a hierarchy that has optional parts, one must be creative.
 You might work with clouds that don't know the concept of a region.
 So instead of including the region in `common.yml`, include it only for those clouds that have regions.
 

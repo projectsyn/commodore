@@ -2,4 +2,4 @@
 * xref:commodore:ROOT:reference/architecture.adoc[Architecture]
 * xref:commodore:ROOT:reference/commands.adoc[Commands]
 * xref:commodore:ROOT:reference/cli.adoc[Command Line Options]
-* xref:commodore:ROOT:reference/hierarchy.adoc[Inventory hierarchy]
+* xref:commodore:ROOT:reference/hierarchy.adoc[Inventory Hierarchy]
