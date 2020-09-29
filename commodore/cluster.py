@@ -28,7 +28,7 @@ def reconstruct_api_response(target):
     if not file.is_file():
         raise click.ClickException(f"params file for target {target} does not exist")
 
-    data = yaml_load(params_file(target))
+    data = yaml_load(file)
     parameters = data['parameters']
     response = {
         'id': parameters['cluster']['name'],
@@ -46,7 +46,7 @@ def render_target(target: str, components: Iterable[str]):
     classes = [f"params.{target}"]
 
     for component in components:
-        defaults_file = P('inventory/classes/defaults') / f"{component}.yml"
+        defaults_file = P('inventory', 'classes', 'defaults') / f"{component}.yml"
         if defaults_file.is_file():
             classes.append(f"defaults.{component}")
 
@@ -58,7 +58,7 @@ def render_target(target: str, components: Iterable[str]):
 
 
 def target_file(target: str):
-    return P('inventory/targets') / f"{target}.yml"
+    return P('inventory', 'targets') / f"{target}.yml"
 
 
 def update_target(cfg: Config, target):
@@ -103,7 +103,7 @@ def render_params(cluster, target: str):
 
 
 def params_file(target: str):
-    return P('inventory/classes/params') / f"{target}.yml"
+    return P('inventory', 'classes', 'params') / f"{target}.yml"
 
 
 def update_params(cluster, target):
