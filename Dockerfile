@@ -1,6 +1,7 @@
 FROM docker.io/python:3.8.6-slim-buster AS base
 
 ENV HOME=/app
+ENV PATH=${PATH}:${HOME}/.poetry/bin
 
 WORKDIR ${HOME}
 
@@ -8,8 +9,9 @@ FROM base AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
+      curl \
  && rm -rf /var/lib/apt/lists/* \
- && pip install poetry \
+ && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - \
  && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./
