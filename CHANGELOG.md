@@ -5,7 +5,7 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [v0.3.0] - 2020-10-01
 
 ### Added
 
@@ -159,7 +159,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial implementation
 
-[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.3.0...HEAD
 [v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/v0.1.0
 [v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
 [v0.1.2]: https://github.com/projectsyn/commodore/releases/tag/v0.1.2
@@ -171,6 +171,7 @@ Initial implementation
 [v0.2.1]: https://github.com/projectsyn/commodore/releases/tag/v0.2.1
 [v0.2.2]: https://github.com/projectsyn/commodore/releases/tag/v0.2.2
 [v0.2.3]: https://github.com/projectsyn/commodore/releases/tag/v0.2.3
+[v0.3.0]: https://github.com/projectsyn/commodore/releases/tag/v0.3.0
 
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58
