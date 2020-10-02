@@ -6,18 +6,11 @@ Commodore uses the https://kapitan.dev/inventory/[Kapitan inventory], which
 uses https://reclass.pantsfullofunix.net/[reclass], to provide a hierarchical
 configuration lookup.
 
-Commodore defines the following hierarchy of configuration value sources (from
-low to high priority):
+Commodore doesn't assume how your configuration hierarchy will look like.
+Instead, the hierarchy can be configured within the hierarchy itself.
+Commodore only prepares the entrypoint of the hierarchy to build upon.
 
-* Component parameter default values
-* Global generic default values
-* Kubernetes distribution default values
-* Cloud provider default values
-* Cloud provider region default values
-* Customer- and cluster-specific configuration
-
-Commodore <<_components,components>> themselves are mostly included at the
-Kubernetes distribution level and the cloud provider level.
+See xref:commodore:ROOT:reference/hierarchy.adoc[inventory hierarchy] for further details.
 
 == Inventory
 
