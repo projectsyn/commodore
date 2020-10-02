@@ -6,6 +6,7 @@ import pytest
 import yaml
 from pathlib import Path as P
 from subprocess import call
+from git import Repo
 
 
 def setup_directory(tmp_path: P):
@@ -51,6 +52,10 @@ def test_run_component_new_command(tmp_path: P):
         target = yaml.safe_load(file)
         assert target['classes'][0] == f"defaults.{component_name}"
         assert target['classes'][-1] == f"components.{component_name}"
+    # Check that there are no uncommited files in the component repo
+    repo = Repo(P('dependencies', component_name))
+    assert not repo.is_dirty()
+    assert not repo.untracked_files
 
 
 def test_run_component_new_command_with_name(tmp_path: P):
