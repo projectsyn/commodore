@@ -99,6 +99,7 @@ class ComponentTemplater:
         index.add('.github')
         index.add('.gitignore')
         index.add('.*.yml')
+        index.add('.editorconfig')
         git.commit(repo, 'Initial commit', self.config)
 
         click.echo(' > Installing component')
