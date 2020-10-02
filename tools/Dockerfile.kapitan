@@ -2,7 +2,7 @@
 
 FROM docker.io/alpine:3.12
 
-ENV KAPITAN_VERSION=v0.29.1
+ENV KAPITAN_VERSION=v0.29.4
 
 RUN apk add --no-cache \
         ca-certificates \
