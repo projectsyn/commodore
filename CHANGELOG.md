@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Fix failing bandit CI check ([#185])
 * Ignore component versions if not included ([#177])
 * Fix Jsonnet linting error in component template ([#186])
+* Commit `.editorconfig` in initial commit for component repo ([#201])
 
 ## [v0.2.3]
 
@@ -217,3 +218,4 @@ Initial implementation
 [#190]: https://github.com/projectsyn/commodore/pull/190
 [#192]: https://github.com/projectsyn/commodore/pull/192
 [#195]: https://github.com/projectsyn/commodore/pull/195
+[#201]: https://github.com/projectsyn/commodore/pull/201
