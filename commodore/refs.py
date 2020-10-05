@@ -13,11 +13,12 @@ class SecretRef:
     Helper class for finding Kapitan secret ref strings and producing Kapitan
     secret ref files
     """
-    _SECRET_REF = re.compile(r'\?{([^}]+)\}')
+
+    _SECRET_REF = re.compile(r"\?{([^}]+)\}")
 
     def __init__(self, key, ref):
         self.keys = [key]
-        refelems = ref.split(':')
+        refelems = ref.split(":")
         self.type = refelems[0]
         self.ref = refelems[1]
 
@@ -49,9 +50,9 @@ class SecretRef:
 
         Currently only `vaultkv` references are supported.
         """
-        if self.type == 'vaultkv':
-            secret, key = self.ref.rsplit('/', 1)
-            return b64encode(f"{secret}:{key}".encode()).decode('utf-8')
+        if self.type == "vaultkv":
+            secret, key = self.ref.rsplit("/", 1)
+            return b64encode(f"{secret}:{key}".encode()).decode("utf-8")
 
         raise NotImplementedError(f"Ref type: {self.type}")
 
@@ -67,14 +68,14 @@ class SecretRef:
         reffile = P(refdir, self.ref)
         if debug:
             click.echo(f"    > Writing to file {reffile}")
-        if self.type != 'vaultkv':
+        if self.type != "vaultkv":
             raise NotImplementedError(f"ref type: {self.type}")
         params = ref_params[self.type]
         refdef = {
-            'data': self._mangle_ref(),
-            'encoding': 'original',
-            'type': self.type,
-            params['key']: params['values'],
+            "data": self._mangle_ref(),
+            "encoding": "original",
+            "type": self.type,
+            params["key"]: params["values"],
         }
         os.makedirs(reffile.parent, exist_ok=True)
         yaml_dump(refdef, reffile)
@@ -108,7 +109,7 @@ class RefBuilder:
                     click.echo(f"    > Found secret ref {r.refstr} in {value}")
                 if r.refstr in self._refs:
                     if self.trace:
-                        click.echo('    > Duplicate ref, adding key to list')
+                        click.echo("    > Duplicate ref, adding key to list")
                     self._refs[r.refstr].add_key(key)
                 else:
                     self._refs[r.refstr] = r
@@ -138,7 +139,7 @@ class RefBuilder:
         """
         Search for Kapitan secret refs in `self.parameters`
         """
-        self._find_refs('', self.parameters)
+        self._find_refs("", self.parameters)
 
     @property
     def refs(self):
@@ -147,12 +148,9 @@ class RefBuilder:
     @property
     def params(self):
         if self._ref_params is None:
-            kapitan_params = self.parameters['kapitan']['secrets']['vaultkv']
+            kapitan_params = self.parameters["kapitan"]["secrets"]["vaultkv"]
             self._ref_params = {
-                'vaultkv': {
-                    'key': 'vault_params',
-                    'values': kapitan_params
-                }
+                "vaultkv": {"key": "vault_params", "values": kapitan_params}
             }
         return self._ref_params
 
@@ -163,7 +161,7 @@ def update_refs(config, parameters):
     ?{...} found as values in the dict
     """
     click.secho("Updating Kapitan secret references...", bold=True)
-    refdir = P('catalog', 'refs')
+    refdir = P("catalog", "refs")
     os.makedirs(refdir, exist_ok=True)
     rm_tree_contents(refdir)
     # Find references

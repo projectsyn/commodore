@@ -38,7 +38,7 @@ def yaml_load(file):
     """
     Load single-document YAML and return document
     """
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         return yaml.safe_load(f)
 
 
@@ -46,7 +46,7 @@ def yaml_load_all(file):
     """
     Load multi-document YAML and return documents in list
     """
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         return list(yaml.safe_load_all(f))
 
 
@@ -54,7 +54,7 @@ def yaml_dump(obj, file):
     """
     Dump obj as single-document YAML
     """
-    with open(file, 'w') as outf:
+    with open(file, "w") as outf:
         yaml.dump(obj, outf)
 
 
@@ -62,24 +62,26 @@ def yaml_dump_all(obj, file):
     """
     Dump obj as multi-document YAML
     """
-    with open(file, 'w') as outf:
+    with open(file, "w") as outf:
         yaml.dump_all(obj, outf)
 
 
 def lieutenant_query(api_url, api_token, api_endpoint, api_id):
     try:
-        r = requests.get(url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
-                         headers={'Authorization': f"Bearer {api_token}"})
+        r = requests.get(
+            url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
+            headers={"Authorization": f"Bearer {api_token}"},
+        )
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
     try:
         resp = json.loads(r.text)
     except json.JSONDecodeError:
-        resp = {'message': 'Client error: Unable to parse JSON'}
+        resp = {"message": "Client error: Unable to parse JSON"}
     try:
         r.raise_for_status()
     except HTTPError as e:
-        extra_msg = '.'
+        extra_msg = "."
         if r.status_code >= 400:
             extra_msg = f": {resp['reason']}"
         raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
@@ -88,7 +90,7 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
 
 
 def _verbose_rmtree(tree, *args, **kwargs):
-    click.echo(f' > deleting {tree}/')
+    click.echo(f" > deleting {tree}/")
     shutil.rmtree(tree, *args, **kwargs)
 
 
@@ -100,34 +102,36 @@ def clean_working_tree(config: Config):
         rmtree = _verbose_rmtree
     else:
         rmtree = shutil.rmtree
-    click.secho('Cleaning working tree', bold=True)
-    rmtree('inventory', ignore_errors=True)
-    rmtree('dependencies', ignore_errors=True)
-    rmtree('compiled', ignore_errors=True)
-    rmtree('catalog', ignore_errors=True)
+    click.secho("Cleaning working tree", bold=True)
+    rmtree("inventory", ignore_errors=True)
+    rmtree("dependencies", ignore_errors=True)
+    rmtree("compiled", ignore_errors=True)
+    rmtree("catalog", ignore_errors=True)
 
 
 # pylint: disable=too-many-arguments
-def kapitan_compile(config: Config,
-                    target='cluster',
-                    output_dir='./',
-                    search_paths=None,
-                    fake_refs=False,
-                    fetch_dependencies=True,
-                    reveal=False):
+def kapitan_compile(
+    config: Config,
+    target="cluster",
+    output_dir="./",
+    search_paths=None,
+    fake_refs=False,
+    fetch_dependencies=True,
+    reveal=False,
+):
     if not search_paths:
         search_paths = []
     search_paths = search_paths + [
-        './',
+        "./",
         __install_dir__,
     ]
     reset_reclass_cache()
-    refController = RefController('./catalog/refs')
+    refController = RefController("./catalog/refs")
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
-    click.secho('Compiling catalog...', bold=True)
+    click.secho("Compiling catalog...", bold=True)
     targets.compile_targets(
-        inventory_path='./inventory',
+        inventory_path="./inventory",
         search_paths=search_paths,
         output_path=output_dir,
         targets=[target],
@@ -142,7 +146,7 @@ def kapitan_compile(config: Config,
         cache_paths=None,
         fetch_dependencies=fetch_dependencies,
         validate=False,
-        schemas_path='./schemas',
+        schemas_path="./schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
     )
 
@@ -154,9 +158,9 @@ def rm_tree_contents(basedir):
     """
     basedir = P(basedir)
     if not basedir.is_dir():
-        raise ValueError('Expected directory as argument')
-    for f in basedir.glob('*'):
-        if f.name.startswith('.'):
+        raise ValueError("Expected directory as argument")
+    for f in basedir.glob("*"):
+        if f.name.startswith("."):
             # pathlib's glob doesn't filter hidden files, skip them here
             continue
         if f.is_dir():

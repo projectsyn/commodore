@@ -20,21 +20,31 @@ def create_component_symlinks(cfg, component: Component):
     The actual code for components lives in the dependencies/ subdirectory, but
     we want to access some of the file contents through the inventory.
     """
-    relsymlink(component.target_directory / 'class', f"{component.name}.yml",
-               'inventory/classes/components')
-    component_defaults_class = component.target_directory / 'class' / 'defaults.yml'
+    relsymlink(
+        component.target_directory / "class",
+        f"{component.name}.yml",
+        "inventory/classes/components",
+    )
+    component_defaults_class = component.target_directory / "class" / "defaults.yml"
     if component_defaults_class.is_file():
-        relsymlink(component.target_directory / 'class', 'defaults.yml',
-                   P('inventory/classes/defaults'), destname=f"{component.name}.yml")
+        relsymlink(
+            component.target_directory / "class",
+            "defaults.yml",
+            P("inventory/classes/defaults"),
+            destname=f"{component.name}.yml",
+        )
     else:
-        click.secho('     > Old-style component detected. Please move ' +
-                    'component defaults to \'class/defaults.yml\'', fg='yellow')
-    libdir = component.target_directory / 'lib'
+        click.secho(
+            "     > Old-style component detected. Please move "
+            + "component defaults to 'class/defaults.yml'",
+            fg="yellow",
+        )
+    libdir = component.target_directory / "lib"
     if libdir.is_dir():
         for file in os.listdir(libdir):
             if cfg.debug:
                 click.echo(f"     > installing template library: {file}")
-            relsymlink(libdir, file, 'dependencies/lib')
+            relsymlink(libdir, file, "dependencies/lib")
 
 
 def delete_component_symlinks(cfg, component: Component):
@@ -52,7 +62,7 @@ def delete_component_symlinks(cfg, component: Component):
     delsymlink(component_default_class, cfg.debug)
 
     # If the component has a lib/ subdir, remove the links to the dependencies/lib.
-    libdir = component.target_directory / 'lib'
+    libdir = component.target_directory / "lib"
 
     if libdir.is_dir():
         for f in os.listdir(libdir):
@@ -65,11 +75,13 @@ def _discover_components(cfg, inventory_path):
     inventory_path and look for class includes starting with `components.`.
     """
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass(inventory_path, ignore_class_notfound=True)['nodes']['cluster']
+    kapitan_inventory = inventory_reclass(inventory_path, ignore_class_notfound=True)[
+        "nodes"
+    ]["cluster"]
     components = set()
-    for kls in kapitan_inventory['classes']:
-        if kls.startswith('components.'):
-            component = kls.split('.')[1]
+    for kls in kapitan_inventory["classes"]:
+        if kls.startswith("components."):
+            component = kls.split(".")[1]
             if cfg.debug:
                 click.echo(f"   > Found component {component}")
             components.add(component)
@@ -84,24 +96,27 @@ def _read_component_urls(cfg, component_names):
     try:
         commodore_config = yaml_load(cfg.config_file)
     except Exception as e:
-        raise click.ClickException(f"Could not read Commodore configuration: {e}") from e
+        raise click.ClickException(
+            f"Could not read Commodore configuration: {e}"
+        ) from e
     if commodore_config is None:
-        click.secho('Empty Commodore config file', fg='yellow')
+        click.secho("Empty Commodore config file", fg="yellow")
     else:
-        for component_override in commodore_config.get('components', []):
+        for component_override in commodore_config.get("components", []):
             if cfg.debug:
-                click.echo(f"   > Found override for component {component_override['name']}:")
+                click.echo(
+                    f"   > Found override for component {component_override['name']}:"
+                )
                 click.echo(f"     Using URL {component_override['url']}")
-            component_urls[component_override['name']] = component_override['url']
+            component_urls[component_override["name"]] = component_override["url"]
     for component_name in component_names:
-        repository_url = \
-            component_urls.get(
-                component_name,
-                f"{cfg.default_component_base}/{component_name}.git")
+        repository_url = component_urls.get(
+            component_name, f"{cfg.default_component_base}/{component_name}.git"
+        )
         component = Component(
             name=component_name,
             repo=None,
-            version='master',
+            version="master",
             repo_url=repository_url,
         )
         components.append(component)
@@ -116,13 +131,13 @@ def fetch_components(cfg):
     Component repos are searched in `GLOBAL_GIT_BASE/commodore_components`.
     """
 
-    click.secho('Discovering components...', bold=True)
-    os.makedirs('inventory/classes/components', exist_ok=True)
-    os.makedirs('inventory/classes/defaults', exist_ok=True)
-    os.makedirs('dependencies/lib', exist_ok=True)
-    component_names = _discover_components(cfg, 'inventory')
+    click.secho("Discovering components...", bold=True)
+    os.makedirs("inventory/classes/components", exist_ok=True)
+    os.makedirs("inventory/classes/defaults", exist_ok=True)
+    os.makedirs("dependencies/lib", exist_ok=True)
+    component_names = _discover_components(cfg, "inventory")
     components = _read_component_urls(cfg, component_names)
-    click.secho('Fetching components...', bold=True)
+    click.secho("Fetching components...", bold=True)
     for c in components:
         if cfg.debug:
             click.echo(f" > Fetching component {c.name}...")
@@ -141,20 +156,20 @@ def set_component_overrides(cfg, versions):
     specify the URL of the Git repo.
     """
 
-    click.secho('Setting component overrides...', bold=True)
+    click.secho("Setting component overrides...", bold=True)
     for component_name, overrides in versions.items():
         if component_name not in cfg.get_components():
             continue
         component = cfg.get_components()[component_name]
         needs_checkout = False
-        if 'url' in overrides:
-            url = overrides['url']
+        if "url" in overrides:
+            url = overrides["url"]
             if cfg.debug:
                 click.echo(f" > Set URL for {component.name}: {url}")
             needs_checkout = git.update_remote(component.repo, url)
             component = cfg.set_repo_url(component_name, url)
-        if 'version' in overrides:
-            version = overrides['version']
+        if "version" in overrides:
+            version = overrides["version"]
             if cfg.debug:
                 click.echo(f" > Set version for {component.name}: {version}")
             needs_checkout = True
@@ -163,7 +178,9 @@ def set_component_overrides(cfg, versions):
             try:
                 git.checkout_version(component.repo, component.version)
             except git.RefError as e:
-                raise click.ClickException(f"While setting component override: {e}") from e
+                raise click.ClickException(
+                    f"While setting component override: {e}"
+                ) from e
             # Create symlinks again with correctly checked out components
             create_component_symlinks(cfg, component)
 
@@ -183,20 +200,24 @@ def fetch_jsonnet_libs(config, libs):
                       installing the library
     """
 
-    click.secho('Updating Jsonnet libraries...', bold=True)
-    os.makedirs('dependencies/libs', exist_ok=True)
-    os.makedirs('dependencies/lib', exist_ok=True)
+    click.secho("Updating Jsonnet libraries...", bold=True)
+    os.makedirs("dependencies/libs", exist_ok=True)
+    os.makedirs("dependencies/lib", exist_ok=True)
     for lib in libs:
-        libname = lib['name']
-        filestext = ' '.join([f['targetfile'] for f in lib['files']])
+        libname = lib["name"]
+        filestext = " ".join([f["targetfile"] for f in lib["files"]])
         if config.debug:
             click.echo(f" > {libname}: {filestext}")
-        repo = git.clone_repository(lib['repository'],
-                                    P('dependencies/libs') / libname,
-                                    config)
-        for file in lib['files']:
-            relsymlink(repo.working_tree_dir, file['libfile'],
-                       'dependencies/lib', destname=file['targetfile'])
+        repo = git.clone_repository(
+            lib["repository"], P("dependencies/libs") / libname, config
+        )
+        for file in lib["files"]:
+            relsymlink(
+                repo.working_tree_dir,
+                file["libfile"],
+                "dependencies/lib",
+                destname=file["targetfile"],
+            )
 
 
 def write_jsonnetfile(config: Config):
@@ -207,22 +228,26 @@ def write_jsonnetfile(config: Config):
     dependencies = []
 
     for component in config.get_components().values():
-        dependencies.append({
-            "source": {
-                "local": {
-                    "directory": str(component.target_directory),
+        dependencies.append(
+            {
+                "source": {
+                    "local": {
+                        "directory": str(component.target_directory),
+                    }
                 }
             }
-        })
+        )
 
     # Defining the `lib` folder as a local dependency is just a cheap way to have a symlink to that folder.
-    dependencies.append({
-        "source": {
-            "local": {
-                "directory": "dependencies/lib",
+    dependencies.append(
+        {
+            "source": {
+                "local": {
+                    "directory": "dependencies/lib",
+                }
             }
         }
-    })
+    )
 
     jsonnetfile = {
         "version": 1,
@@ -240,7 +265,9 @@ def fetch_jsonnet_libraries(cwd: P = None):
     """
 
     try:
-        if call(['jb', 'install'], cwd=cwd) != 0:
-            raise click.ClickException('jsonnet-bundler exited with error')
+        if call(["jb", "install"], cwd=cwd) != 0:
+            raise click.ClickException("jsonnet-bundler exited with error")
     except FileNotFoundError as e:
-        raise click.ClickException('the jsonnet-bundler executable `jb` could not be found') from e
+        raise click.ClickException(
+            "the jsonnet-bundler executable `jb` could not be found"
+        ) from e

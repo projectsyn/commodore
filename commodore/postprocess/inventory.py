@@ -5,13 +5,13 @@ class InventoryError(Exception):
     pass
 
 
-INV_REF = re.compile(r'\$\{([^}]+)\}')
+INV_REF = re.compile(r"\$\{([^}]+)\}")
 
 
 def _resolve_var(inv, m):
     var = m.group(1)
-    invpath = var.split(':')
-    val = inv['parameters']
+    invpath = var.split(":")
+    val = inv["parameters"]
     for elem in invpath:
         val = val.get(elem, None)
         if val is None:
@@ -33,7 +33,7 @@ def resolve_inventory_vars(inv, args):
             try:
                 resolved[k] = INV_REF.sub(lambda m: _resolve_var(inv, m), v)
             except TypeError as e:
-                if v.startswith('${') and v.endswith('}'):
+                if v.startswith("${") and v.endswith("}"):
                     m = INV_REF.match(v)
                     if m is None:
                         raise InventoryError(f"Error replacing reference: {e}") from e

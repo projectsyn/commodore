@@ -12,14 +12,16 @@ from git import Repo
 def setup_directory(tmp_path: P):
     os.chdir(tmp_path)
 
-    os.makedirs(P('inventory', 'classes', 'components'), exist_ok=True)
-    os.makedirs(P('inventory', 'classes', 'defaults'), exist_ok=True)
-    os.makedirs(P('dependencies', 'lib'), exist_ok=True)
-    os.makedirs(P('inventory', 'targets'), exist_ok=True)
-    targetyml = P('inventory', 'targets', 'cluster.yml')
-    with open(targetyml, 'w') as file:
-        file.write('''classes:
-        - test''')
+    os.makedirs(P("inventory", "classes", "components"), exist_ok=True)
+    os.makedirs(P("inventory", "classes", "defaults"), exist_ok=True)
+    os.makedirs(P("dependencies", "lib"), exist_ok=True)
+    os.makedirs(P("inventory", "targets"), exist_ok=True)
+    targetyml = P("inventory", "targets", "cluster.yml")
+    with open(targetyml, "w") as file:
+        file.write(
+            """classes:
+        - test"""
+        )
 
     return targetyml
 
@@ -31,29 +33,34 @@ def test_run_component_new_command(tmp_path: P):
 
     targetyml = setup_directory(tmp_path)
 
-    component_name = 'test-component'
-    exit_status = call(f"commodore -vvv component new {component_name} --lib --pp", shell=True)
+    component_name = "test-component"
+    exit_status = call(
+        f"commodore -vvv component new {component_name} --lib --pp", shell=True
+    )
     assert exit_status == 0
-    for file in [P('README.md'),
-                 P('class', f"{component_name}.yml"),
-                 P('component', 'main.jsonnet'),
-                 P('component', 'app.jsonnet'),
-                 P('lib', f"{component_name}.libsonnet"),
-                 P('postprocess', 'filters.yml'),
-                 P('docs', 'modules', 'ROOT', 'pages', 'references', 'parameters.adoc'),
-                 P('docs', 'modules', 'ROOT', 'pages', 'index.adoc'),
-                 ]:
-        assert os.path.exists(P('dependencies', component_name, file))
-    for file in [P('inventory', 'classes', 'components', f"{component_name}.yml"),
-                 P('inventory', 'classes', 'defaults', f"{component_name}.yml"),
-                 P('dependencies', 'lib', f"{component_name}.libsonnet")]:
+    for file in [
+        P("README.md"),
+        P("class", f"{component_name}.yml"),
+        P("component", "main.jsonnet"),
+        P("component", "app.jsonnet"),
+        P("lib", f"{component_name}.libsonnet"),
+        P("postprocess", "filters.yml"),
+        P("docs", "modules", "ROOT", "pages", "references", "parameters.adoc"),
+        P("docs", "modules", "ROOT", "pages", "index.adoc"),
+    ]:
+        assert os.path.exists(P("dependencies", component_name, file))
+    for file in [
+        P("inventory", "classes", "components", f"{component_name}.yml"),
+        P("inventory", "classes", "defaults", f"{component_name}.yml"),
+        P("dependencies", "lib", f"{component_name}.libsonnet"),
+    ]:
         assert file.is_symlink()
     with open(targetyml) as file:
         target = yaml.safe_load(file)
-        assert target['classes'][0] == f"defaults.{component_name}"
-        assert target['classes'][-1] == f"components.{component_name}"
+        assert target["classes"][0] == f"defaults.{component_name}"
+        assert target["classes"][-1] == f"components.{component_name}"
     # Check that there are no uncommited files in the component repo
-    repo = Repo(P('dependencies', component_name))
+    repo = Repo(P("dependencies", component_name))
     assert not repo.is_dirty()
     assert not repo.untracked_files
 
@@ -65,16 +72,19 @@ def test_run_component_new_command_with_name(tmp_path: P):
 
     setup_directory(tmp_path)
 
-    component_name = 'Component with custom name'
-    component_slug = 'named-component'
-    readme_path = P('dependencies', component_slug, 'README.md')
+    component_name = "Component with custom name"
+    component_slug = "named-component"
+    readme_path = P("dependencies", component_slug, "README.md")
 
-    exit_status = call(f"commodore -vvv component new --name '{component_name}' {component_slug}", shell=True)
+    exit_status = call(
+        f"commodore -vvv component new --name '{component_name}' {component_slug}",
+        shell=True,
+    )
 
     assert exit_status == 0
     assert os.path.exists(readme_path)
 
-    with open(readme_path, 'r') as file:
+    with open(readme_path, "r") as file:
         data = file.read()
         assert component_name in data
         assert component_slug not in data
@@ -83,13 +93,13 @@ def test_run_component_new_command_with_name(tmp_path: P):
 @pytest.mark.parametrize(
     "test_input",
     [
-        'component-test-illegal',
-        'test-illegal-',
-        '-test-illegal',
-        '00-test-illegal',
-        'TestIllegal',
-        'test_illegal',
-    ]
+        "component-test-illegal",
+        "test-illegal-",
+        "-test-illegal",
+        "00-test-illegal",
+        "TestIllegal",
+        "test_illegal",
+    ],
 )
 def test_run_component_new_command_with_illegal_slug(tmp_path: P, test_input):
     """
@@ -106,25 +116,31 @@ def test_run_component_new_then_delete(tmp_path: P):
     """
     targetyml = setup_directory(tmp_path)
 
-    component_name = 'test-component'
-    exit_status = call(f"commodore -vvv component new {component_name} --lib --pp", shell=True)
+    component_name = "test-component"
+    exit_status = call(
+        f"commodore -vvv component new {component_name} --lib --pp", shell=True
+    )
     assert exit_status == 0
 
-    exit_status = call(f"commodore -vvv component delete --force {component_name}", shell=True)
+    exit_status = call(
+        f"commodore -vvv component delete --force {component_name}", shell=True
+    )
     assert exit_status == 0
 
     # Ensure the dependencies folder is gone.
-    assert not P('dependencies', component_name).exists()
+    assert not P("dependencies", component_name).exists()
 
     # Links in the inventory should be gone too.
-    for f in [P('inventory', 'classes', 'components', f"{component_name}.yml"),
-              P('inventory', 'classes', 'defaults', f"{component_name}.yml"),
-              P('dependencies', 'lib', f"{component_name}.libsonnet")]:
+    for f in [
+        P("inventory", "classes", "components", f"{component_name}.yml"),
+        P("inventory", "classes", "defaults", f"{component_name}.yml"),
+        P("dependencies", "lib", f"{component_name}.libsonnet"),
+    ]:
         assert not f.exists()
 
     with open(targetyml) as file:
         target = yaml.safe_load(file)
-        classes = target['classes']
+        classes = target["classes"]
         assert f"defaults.{component_name}" not in classes
         assert f"components.{component_name}" not in classes
 
@@ -135,7 +151,9 @@ def test_deleting_inexistant_component(tmp_path: P):
     code.
     """
     setup_directory(tmp_path)
-    component_name = 'i-dont-exist'
+    component_name = "i-dont-exist"
 
-    exit_status = call(f"commodore -vvv component delete --force {component_name}", shell=True)
+    exit_status = call(
+        f"commodore -vvv component delete --force {component_name}", shell=True
+    )
     assert exit_status == 2

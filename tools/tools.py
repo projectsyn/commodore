@@ -6,7 +6,7 @@ def build_kapitan_helm_binding():
 
 
 def autopep():
-    call(['autopep8', '--in-place', '--aggressive', '--recursive', '--verbose', './'])
+    call(["autopep8", "--in-place", "--aggressive", "--recursive", "--verbose", "./"])
 
 
 def local_reveal():
@@ -14,4 +14,14 @@ def local_reveal():
 
 
 def compile():
-    call(['kapitan', 'compile', '-J', '.', 'dependencies/', '--refs-path', './catalog/refs'])
+    call(
+        [
+            "kapitan",
+            "compile",
+            "-J",
+            ".",
+            "dependencies/",
+            "--refs-path",
+            "./catalog/refs",
+        ]
+    )

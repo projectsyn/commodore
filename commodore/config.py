@@ -8,17 +8,25 @@ class Component(NamedTuple):
     name: str
     repo: Repo
     repo_url: str
-    version: str = 'master'
+    version: str = "master"
 
     @property
     def target_directory(self):
-        return P('dependencies') / self.name
+        return P("dependencies") / self.name
 
 
 # pylint: disable=too-many-instance-attributes
 class Config:
     # pylint: disable=too-many-arguments
-    def __init__(self, api_url=None, api_token=None, global_git=None, verbose=False, username=None, usermail=None):
+    def __init__(
+        self,
+        api_url=None,
+        api_token=None,
+        global_git=None,
+        verbose=False,
+        username=None,
+        usermail=None,
+    ):
         self.api_url = api_url
         self.api_token = None
         self.api_token = api_token
@@ -47,7 +55,7 @@ class Config:
 
     @property
     def config_file(self):
-        return 'inventory/classes/global/commodore.yml'
+        return "inventory/classes/global/commodore.yml"
 
     @property
     def default_component_base(self):
@@ -67,7 +75,7 @@ class Config:
                         api_token = apitoken.read()
             except OSError as e:
                 # File name too long, assume token is not configured as file
-                if 'File name too long' in e.strerror:
+                if "File name too long" in e.strerror:
                     pass
                 else:
                     raise

@@ -14,27 +14,31 @@ from git import Repo
 from kapitan.resources import inventory_reclass
 
 
-libs = [{'name': 'kube-libsonnet',
-                 'repository': 'https://github.com/bitnami-labs/kube-libsonnet',
-                 'files': [{'libfile': 'kube.libsonnet',
-                            'targetfile': 'kube.libjsonnet'}],
-         }]
+libs = [
+    {
+        "name": "kube-libsonnet",
+        "repository": "https://github.com/bitnami-labs/kube-libsonnet",
+        "files": [{"libfile": "kube.libsonnet", "targetfile": "kube.libjsonnet"}],
+    }
+]
 
 
-def compile_component(config: Config, component_path, value_files, search_paths, output_path):
+def compile_component(
+    config: Config, component_path, value_files, search_paths, output_path
+):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path).resolve()
     value_files = [P(f).resolve() for f in value_files]
     search_paths = [P(d).resolve() for d in search_paths]
-    search_paths.append('./dependencies/')
-    search_paths.append(component_path / 'vendor')
+    search_paths.append("./dependencies/")
+    search_paths.append(component_path / "vendor")
     output_path = P(output_path).resolve()
     # Ignore 'component-' prefix in dir name
-    component_name = component_path.stem.replace('component-', '')
+    component_name = component_path.stem.replace("component-", "")
 
     click.secho(f"Compile component {component_name}...", bold=True)
 
-    temp_dir = P(tempfile.mkdtemp(prefix='component-')).resolve()
+    temp_dir = P(tempfile.mkdtemp(prefix="component-")).resolve()
     original_working_dir = os.getcwd()
     os.chdir(temp_dir)
     try:
@@ -44,8 +48,10 @@ def compile_component(config: Config, component_path, value_files, search_paths,
         _prepare_fake_inventory(temp_dir, component_name, component_path, value_files)
 
         # Create class for fake parameters
-        with open(temp_dir / 'inventory/classes/fake.yml', 'w') as file:
-            file.write(dedent("""
+        with open(temp_dir / "inventory/classes/fake.yml", "w") as file:
+            file.write(
+                dedent(
+                    """
                 parameters:
                   cloud:
                     provider: cloudscale
@@ -62,56 +68,68 @@ def compile_component(config: Config, component_path, value_files, search_paths,
                   kapitan:
                     vars:
                         target: test
-                        namespace: test"""))
+                        namespace: test"""
+                )
+            )
 
         # Create test target
-        with open(temp_dir / 'inventory/targets/test.yml', 'w') as file:
+        with open(temp_dir / "inventory/targets/test.yml", "w") as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
-            file.write(dedent(f"""
+            file.write(
+                dedent(
+                    f"""
                 classes:
                 - fake
                 - defaults.{component_name}
                 - components.{component_name}
-                {value_classes}"""))
+                {value_classes}"""
+                )
+            )
 
         # Fake Argo CD lib
         # We plug "fake" Argo CD library here because every component relies on it
         # and we don't want to provide it every time when compiling a single component.
-        (temp_dir / 'dependencies/lib').mkdir(exist_ok=True)
-        with open(temp_dir / 'dependencies/lib/argocd.libjsonnet', 'w') as file:
-            file.write(dedent("""
+        (temp_dir / "dependencies/lib").mkdir(exist_ok=True)
+        with open(temp_dir / "dependencies/lib/argocd.libjsonnet", "w") as file:
+            file.write(
+                dedent(
+                    """
                 local ArgoApp(component, namespace, project='', secrets=true) = {};
                 local ArgoProject(name) = {};
 
                 {
                   App: ArgoApp,
                   Project: ArgoProject,
-                }"""))
+                }"""
+                )
+            )
 
         # Fetch Jsonnet libs
         fetch_jsonnet_libs(config, libs)
-        if (component_path / 'jsonnetfile.json').exists():
+        if (component_path / "jsonnetfile.json").exists():
             fetch_jsonnet_libraries(component_path)
 
         # Compile component
-        kapitan_compile(config,
-                        target='test',
-                        output_dir=output_path,
-                        search_paths=search_paths,
-                        fake_refs=True,
-                        reveal=True)
+        kapitan_compile(
+            config,
+            target="test",
+            output_dir=output_path,
+            search_paths=search_paths,
+            fake_refs=True,
+            reveal=True,
+        )
         click.echo(f" > Component compiled to {output_path / 'compiled/test'}")
 
         # prepare inventory and fake component object for postprocess
-        inventory = inventory_reclass(temp_dir / 'inventory')['nodes']['test']
-        component = Component(component_name, Repo(component_path),
-                              'https://fake.repo.url/', 'master')
+        inventory = inventory_reclass(temp_dir / "inventory")["nodes"]["test"]
+        component = Component(
+            component_name, Repo(component_path), "https://fake.repo.url/", "master"
+        )
         # We change the working directory to the output_path directory here,
         # as postprocess expects to find `compiled/<target>` in the working
         # directory.
         os.chdir(output_path)
-        postprocess_components(config, inventory, 'test',
-                               {component_name: component})
+        postprocess_components(config, inventory, "test", {component_name: component})
     finally:
         os.chdir(original_working_dir)
         if config.trace:
@@ -123,36 +141,38 @@ def compile_component(config: Config, component_path, value_files, search_paths,
 
 
 def _prepare_fake_inventory(temp_dir: P, component_name, component_path, value_files):
-    component_class_file = component_path / 'class' / f"{component_name}.yml"
-    component_defaults_file = component_path / 'class' / 'defaults.yml'
+    component_class_file = component_path / "class" / f"{component_name}.yml"
+    component_defaults_file = component_path / "class" / "defaults.yml"
     if not component_class_file.exists():
         raise click.ClickException(
-            f"Could not find component class file: {component_class_file}")
+            f"Could not find component class file: {component_class_file}"
+        )
     if not component_defaults_file.exists():
         raise click.ClickException(
-            f"Could not find component default file: {component_defaults_file}")
+            f"Could not find component default file: {component_defaults_file}"
+        )
 
-    for d in ['classes/components', 'classes/defaults', 'targets']:
-        os.makedirs(temp_dir / 'inventory' / d, exist_ok=True)
-    dependencies_path = temp_dir / 'dependencies'
+    for d in ["classes/components", "classes/defaults", "targets"]:
+        os.makedirs(temp_dir / "inventory" / d, exist_ok=True)
+    dependencies_path = temp_dir / "dependencies"
     dependencies_path.mkdir(exist_ok=True)
     # Create class symlink
     relsymlink(
         component_class_file.parent,
         component_class_file.name,
-        temp_dir / 'inventory/classes/components')
+        temp_dir / "inventory/classes/components",
+    )
     # Create defaults symlink
     relsymlink(
         component_defaults_file.parent,
         component_defaults_file.name,
-        temp_dir / 'inventory/classes/defaults',
-        f"{component_name}.yml")
+        temp_dir / "inventory/classes/defaults",
+        f"{component_name}.yml",
+    )
     # Create component symlink
     relsymlink(
-        component_path.parent,
-        component_path.name,
-        dependencies_path,
-        component_name)
+        component_path.parent, component_path.name, dependencies_path, component_name
+    )
     # Create value symlinks
     for file in value_files:
-        relsymlink(file.parent, file.name, temp_dir / 'inventory/classes')
+        relsymlink(file.parent, file.name, temp_dir / "inventory/classes")
