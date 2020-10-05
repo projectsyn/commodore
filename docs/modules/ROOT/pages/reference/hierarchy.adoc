@@ -39,7 +39,7 @@ inventory/
 
 == Available parameters
 
-To build up your configuration hierarchy, include classes in `common.yml` within your global configuration inventory.
+To build up your configuration hierarchy, include classes in `commodore.yml` within your global configuration inventory.
 The following parameters can be used to make your hierarchy dynamic based on cluster facts.
 
 [source,yaml]
@@ -74,9 +74,9 @@ From commodore we get the following base hierarchy:
 
 * Component default parameter values
 * Cluster parameter values
-* `common.yml within the global configuration repository
+* `commodore.yml` within the global configuration repository
 
-Within `common.yml`, we then can include further classes and build up the hierarchy.
+Within `commodore.yml`, we then can include further classes and build up the hierarchy.
 The hierarchy could then be extended by configurations related to a:
 
 * Kubernetes distribution
@@ -115,7 +115,7 @@ classes:
 Reclass requires parameters to be defined when used in references.
 When building a hierarchy that has optional parts, one must be creative.
 You might work with clouds that don't know the concept of a region.
-So instead of including the region in `common.yml`, include it only for those clouds that have regions.
+So instead of including the region in `commodore.yml`, include it only for those clouds that have regions.
 
 .commodore.yml
 [source,yaml]

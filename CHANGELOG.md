@@ -5,6 +5,12 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+* Replace remaining references to `common.yml` with `commodore.yml` ([#204])
+
 ## [v0.3.0] - 2020-10-01
 
 ### Added
@@ -220,3 +226,4 @@ Initial implementation
 [#192]: https://github.com/projectsyn/commodore/pull/192
 [#195]: https://github.com/projectsyn/commodore/pull/195
 [#201]: https://github.com/projectsyn/commodore/pull/201
+[#204]: https://github.com/projectsyn/commodore/pull/204
