@@ -14,13 +14,13 @@ from commodore import __install_dir__
 
 def _try_path(basedir, rel):
     if not rel:
-        raise RuntimeError('Got invalid filename (empty string).')
-    if rel[0] == '/':
+        raise RuntimeError("Got invalid filename (empty string).")
+    if rel[0] == "/":
         full_path = P(rel)
     else:
         full_path = P(basedir) / rel
     if full_path.is_dir():
-        raise RuntimeError('Attempted to import a directory')
+        raise RuntimeError("Attempted to import a directory")
 
     if not full_path.is_file():
         return full_path.name, None
@@ -36,12 +36,16 @@ def _import_callback_with_searchpath(search, basedir, rel):
         full_path, content = _try_path(p, rel)
         if content:
             return full_path, content
-    raise RuntimeError('File not found')
+    raise RuntimeError("File not found")
 
 
 def _import_cb(basedir, rel):
     # Add current working dir to search path for Jsonnet import callback
-    search_path = [P('.').resolve(), __install_dir__.resolve(), P('./dependencies').resolve()]
+    search_path = [
+        P(".").resolve(),
+        __install_dir__.resolve(),
+        P("./dependencies").resolve(),
+    ]
     return _import_callback_with_searchpath(search_path, basedir, rel)
 
 
@@ -59,23 +63,31 @@ def _list_dir(basedir, basename):
 
 
 _native_callbacks = {
-    'yaml_load': (('file',), yaml_load),
-    'yaml_load_all': (('file',), yaml_load_all),
-    'list_dir': (('dir', 'basename',), _list_dir),
+    "yaml_load": (("file",), yaml_load),
+    "yaml_load_all": (("file",), yaml_load_all),
+    "list_dir": (
+        (
+            "dir",
+            "basename",
+        ),
+        _list_dir,
+    ),
 }
 
 
 # pylint: disable=too-many-arguments
-def jsonnet_runner(inv, component, target, output_path, jsonnet_func,
-                   jsonnet_input, **kwargs):
+def jsonnet_runner(
+    inv, component, target, output_path, jsonnet_func, jsonnet_input, **kwargs
+):
     def _inventory():
         return inv
+
     _native_cb = _native_callbacks
-    _native_cb['inventory'] = ((), _inventory)
-    kwargs['target'] = target
-    kwargs['component'] = component
-    output_dir = P('compiled', target, output_path)
-    kwargs['output_path'] = str(output_dir)
+    _native_cb["inventory"] = ((), _inventory)
+    kwargs["target"] = target
+    kwargs["component"] = component
+    output_dir = P("compiled", target, output_path)
+    kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
         import_callback=_import_cb,
@@ -99,10 +111,11 @@ def run_jsonnet_filter(inv, component, target, filterdir, f):
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    if f['type'] != 'jsonnet':
+    if f["type"] != "jsonnet":
         raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
-    filterpath = filterdir / f['filter']
-    output_path = f['output_path']
+    filterpath = filterdir / f["filter"]
+    output_path = f["output_path"]
     # pylint: disable=c-extension-no-member
-    jsonnet_runner(inv, component, target, output_path,
-                   _jsonnet.evaluate_file, filterpath)
+    jsonnet_runner(
+        inv, component, target, output_path, _jsonnet.evaluate_file, filterpath
+    )

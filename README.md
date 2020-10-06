@@ -111,6 +111,9 @@ using `helm template`.
    - Write a line of application code, make the test pass
    - Repeat
 
+   Note: Commodore uses the [Black](https://github.com/psf/black) code
+   formatter, and its formatting is encforced by CI.
+
 1. Run linting and tests
 
    Auto format with autopep8

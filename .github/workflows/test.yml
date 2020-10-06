@@ -14,6 +14,7 @@ jobs:
           - lint_pylint
           - lint_bandit
           - lint_mypy
+          - lint_black
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2

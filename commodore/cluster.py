@@ -16,10 +16,10 @@ from .config import Config
 
 
 def fetch_cluster(cfg, clusterid):
-    cluster = lieutenant_query(cfg.api_url, cfg.api_token, 'clusters', clusterid)
+    cluster = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", clusterid)
     # TODO: move Commodore global defaults repo name into Lieutenant
     # API/cluster facts
-    cluster['base_config'] = 'commodore-defaults'
+    cluster["base_config"] = "commodore-defaults"
     return cluster
 
 
@@ -33,75 +33,78 @@ def read_cluster_and_tenant(target: str) -> Tuple[str, str]:
 
     data = yaml_load(file)
 
-    return data['parameters']['cluster']['name'], data['parameters']['cluster']['tenant']
+    return (
+        data["parameters"]["cluster"]["name"],
+        data["parameters"]["cluster"]["tenant"],
+    )
 
 
 def render_target(target: str, components: Iterable[str]):
     classes = [f"params.{target}"]
 
     for component in components:
-        defaults_file = P('inventory', 'classes', 'defaults') / f"{component}.yml"
+        defaults_file = P("inventory", "classes", "defaults") / f"{component}.yml"
         if defaults_file.is_file():
             classes.append(f"defaults.{component}")
 
-    classes.append('global.commodore')
+    classes.append("global.commodore")
 
     return {
-        'classes': classes,
+        "classes": classes,
     }
 
 
 def target_file(target: str):
-    return P('inventory', 'targets') / f"{target}.yml"
+    return P("inventory", "targets") / f"{target}.yml"
 
 
 def update_target(cfg: Config, target):
-    click.secho('Updating Kapitan target...', bold=True)
+    click.secho("Updating Kapitan target...", bold=True)
     file = target_file(target)
     os.makedirs(file.parent, exist_ok=True)
     yaml_dump(render_target(target, cfg.get_components().keys()), file)
 
 
 def render_params(cluster, target: str):
-    facts = cluster['facts']
-    for fact in ['distribution', 'cloud']:
+    facts = cluster["facts"]
+    for fact in ["distribution", "cloud"]:
         if fact not in facts or not facts[fact]:
             raise click.ClickException(f"Required fact '{fact}' not set")
 
     data = {
-        'parameters': {
-            'target_name': target,
-            'cluster': {
-                'name': cluster['id'],
-                'catalog_url': cluster['gitRepo']['url'],
-                'tenant': cluster['tenant'],
+        "parameters": {
+            "target_name": target,
+            "cluster": {
+                "name": cluster["id"],
+                "catalog_url": cluster["gitRepo"]["url"],
+                "tenant": cluster["tenant"],
                 # TODO Remove dist after deprecation phase.
-                'dist': facts['distribution'],
+                "dist": facts["distribution"],
             },
-            'facts': facts,
+            "facts": facts,
             # TODO Remove the cloud and customer parameters after deprecation phase.
-            'cloud': {
-                'provider': facts['cloud'],
+            "cloud": {
+                "provider": facts["cloud"],
             },
-            'customer': {
-                'name': cluster['tenant'],
+            "customer": {
+                "name": cluster["tenant"],
             },
         },
     }
 
     # TODO Remove after deprecation phase.
-    if 'region' in facts:
-        data['parameters']['cloud']['region'] = facts['region']
+    if "region" in facts:
+        data["parameters"]["cloud"]["region"] = facts["region"]
 
     return data
 
 
 def params_file(target: str):
-    return P('inventory', 'classes', 'params') / f"{target}.yml"
+    return P("inventory", "classes", "params") / f"{target}.yml"
 
 
 def update_params(cluster, target):
-    click.secho('Updating cluster parameters...', bold=True)
+    click.secho("Updating cluster parameters...", bold=True)
     file = params_file(target)
     os.makedirs(file.parent, exist_ok=True)
     yaml_dump(render_params(cluster, target), file)
