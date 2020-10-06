@@ -1,0 +1,85 @@
+= Running Commodore
+
+Commodore is written in Python and it requires external dependencies.
+It also requires the compilation of some Golang bindings.
+A container image is provided to ease the use setup commodore on different platforms.
+
+[NOTE]
+====
+For local development, the procedure is documented in the https://github.com/projectsyn/commodore/blob/master/README.md[README].
+====
+
+Commodore interacts with git repositories that might require authorization.
+For this to work, the container needs to have access to an authorized SSH key.
+
+The following shell functions can be placed in your shells configuration file (for example `~/.profile`, `~/.bashrc`, `.zshrc` etc.).
+By doing so, you can run commodore as it would be any other executable on your system.
+
+== Linux
+
+On Linux it's possible to use SSH agent and mounting the agents socket into the container.
+
+[source,bash]
+----
+commodore() {
+  docker run \
+    --interactive=true \
+    --tty \
+    --rm \
+    --user="$(id -u)" \
+    --env COMMODORE_API_URL=$COMMODORE_API_URL \
+    --env COMMODORE_GLOBAL_GIT_BASE=$COMMODORE_GLOBAL_GIT_BASE \
+    --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
+    --env SSH_AUTH_SOCK=/tmp/ssh_agent.sock \
+    --volume "${SSH_AUTH_SOCK}:/tmp/ssh_agent.sock" \
+    --volume "${HOME}/.ssh/config:/app/.ssh/config:ro" \
+    --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
+    --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${PWD}:/app/data" \
+    --workdir /app/data \
+    projectsyn/commodore:${COMMODORE_VERSION:=latest} \
+    $*
+}
+----
+
+== macOS X
+
+On macOS with Docker for Mac mounting the SSH agents socket into a container doesn't work.
+Instead your SSH key needs to be mounted into the container.
+The container will pickup that key and add it do an SSH agent running inside the container.
+You will be prompted to insert your SSH keys password if it has one.
+
+[source,bash]
+----
+commodore() {
+  docker run \
+    --interactive=true \
+    --tty \
+    --rm \
+    --user="$(id -u)" \
+    --env COMMODORE_API_URL=$COMMODORE_API_URL \
+    --env COMMODORE_GLOBAL_GIT_BASE=$COMMODORE_GLOBAL_GIT_BASE \
+    --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
+    --volume "${HOME}/.ssh:/app/.ssh:ro" \
+    --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${PWD}:/app/data" \
+    --workdir /app/data \
+    projectsyn/commodore:latest \
+    $*
+}
+----
+
+[NOTE]
+====
+If you have multiple SSH keys, you can mount only the one you need for commodore.
+This will remove the password prompt for each and every SSH key.
+Do this by using the following volumes instead of the line `--volume "${HOME}/.ssh:/app/.ssh:ro" \`
+
+[source,bash]
+----
+    --volume "${HOME}/.ssh/config:/app/.ssh/config:ro" \
+    --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
+    --volume "/path/to/your/key:/app/.ssh/id_rsa:ro" \ <1>
+----
+<1> Replace `/path/to/your/key` according to your needs.
+====
