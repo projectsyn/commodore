@@ -46,6 +46,13 @@ jobs:
     - name: Install Poetry
       run: |
         pip install poetry tox
+    - name: Install jsonnet-bundler
+      run: |
+        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          && chmod +x /opt/bin/jb
+    - name: Update PATH
+      run: echo "/opt/bin" >> $GITHUB_PATH
     - name: Run tests on Python ${{ matrix.python-version }}
       run: make test_py${{ matrix.python-version }}
   docs:

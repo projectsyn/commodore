@@ -4,6 +4,7 @@ from pathlib import Path as P
 from shutil import rmtree
 
 import click
+import json
 import re
 
 from cookiecutter.main import cookiecutter
@@ -14,6 +15,7 @@ from commodore.config import Component
 from commodore.dependency_mgmt import (
     create_component_symlinks,
     delete_component_symlinks,
+    fetch_jsonnet_libraries,
 )
 
 from commodore.helpers import yaml_load, yaml_dump
@@ -112,11 +114,15 @@ class ComponentTemplater:
 
             targetfile = P("inventory", "targets", "cluster.yml")
             insert_into_inventory_targets_cluster(targetfile, self.slug)
+            insert_into_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
+            # call fetch_jsonnet_libraries after updating jsonnetfile to
+            # symlink new component into vendor/
+            fetch_jsonnet_libraries()
         except FileNotFoundError:
             # TODO: This should maybe cleanup the "dependencies" subdirectory
             # (since we just created it).
             click.echo(
-                "Cannot find catalog files. Did you forget to run"
+                "Cannot find catalog files. Did you forget to run "
                 "'catalog compile' in the current directory?"
             )
         else:
@@ -142,6 +148,10 @@ class ComponentTemplater:
 
             targetfile = P("inventory", "targets", "cluster.yml")
             remove_from_inventory_targets_cluster(targetfile, self.slug)
+            remove_from_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
+            # Fetch jsonnet libs after removing component from jsonnetfile to
+            # remove symlink to removed component in vendor/
+            fetch_jsonnet_libraries()
 
             click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
         else:
@@ -185,3 +195,38 @@ def remove_from_inventory_targets_cluster(targetfile: P, slug: str):
         pass
 
     yaml_dump(target, targetfile)
+
+
+def insert_into_jsonnetfile(jsonnetfile: P, componentdir: P):
+    """
+    Insert new component into jsonnetfile
+    """
+    with open(jsonnetfile, "r") as jf:
+        jsonnetf = json.load(jf)
+
+    jsonnetf["dependencies"].append(
+        {"source": {"local": {"directory": str(componentdir)}}}
+    )
+
+    with open(jsonnetfile, "w") as jf:
+        json.dump(jsonnetf, jf, indent=4)
+
+
+def remove_from_jsonnetfile(jsonnetfile: P, componentdir: P):
+    """
+    Remove component from jsonnetfile
+    """
+    with open(jsonnetfile, "r") as jf:
+        jsonnetf = json.load(jf)
+
+    deps = jsonnetf["dependencies"]
+    deps = list(
+        filter(
+            lambda d: d.get("source", {}).get("local", {}).get("directory", {})
+            != str(componentdir),
+            deps,
+        )
+    )
+    jsonnetf["dependencies"] = deps
+    with open(jsonnetfile, "w") as jf:
+        json.dump(jsonnetf, jf, indent=4)

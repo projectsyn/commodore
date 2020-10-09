@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 * Replace remaining references to `common.yml` with `commodore.yml` ([#204])
+* Adjust component new/delete to update `jsonnetfile.json` ([#211])
 * Provide `inventory_path` in Kapitan's argument cache ([#212])
 
 ## [v0.3.0] - 2020-10-01
@@ -228,4 +229,5 @@ Initial implementation
 [#195]: https://github.com/projectsyn/commodore/pull/195
 [#201]: https://github.com/projectsyn/commodore/pull/201
 [#204]: https://github.com/projectsyn/commodore/pull/204
+[#211]: https://github.com/projectsyn/commodore/pull/211
 [#212]: https://github.com/projectsyn/commodore/pull/212
