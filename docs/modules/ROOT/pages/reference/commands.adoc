@@ -46,6 +46,7 @@ Optionally, the template can be used to add a component library and postprocessi
 
 The command expects to run in a directory which already holds a Commodore directory structure.
 The command makes sure to create symlinks for the new component's classes and includes the component defaults and component class in the cluster target class.
+The command also adds the new component as a dependency in `jsonnetfile.json` and runs jsonnet-bundler to symlink the new component into `vendor/`.
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 
@@ -58,6 +59,7 @@ The command will require confirmation before performing destructive operations, 
 
 The command expects to run in a directory which already holds a Commodore directory structure.
 The command makes sure to remove symlinks for the new component's classes and removes the component defaults and component class in the cluster target class.
+The command also removes the deleted component as a dependency in `jsonnetfile.json` and runs jsonnet-bundler to remove the symlink to the deleted component in `vendor/`.
 
 == Component Compile
 
