@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 * Replace remaining references to `common.yml` with `commodore.yml` ([#204])
+* Provide `inventory_path` in Kapitan's argument cache ([#212])
 
 ## [v0.3.0] - 2020-10-01
 
@@ -227,3 +228,4 @@ Initial implementation
 [#195]: https://github.com/projectsyn/commodore/pull/195
 [#201]: https://github.com/projectsyn/commodore/pull/201
 [#204]: https://github.com/projectsyn/commodore/pull/204
+[#212]: https://github.com/projectsyn/commodore/pull/212
