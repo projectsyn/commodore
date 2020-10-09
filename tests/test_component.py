@@ -1,6 +1,7 @@
 """
 Tests for component new command
 """
+import json
 import os
 import pytest
 import yaml
@@ -22,6 +23,9 @@ def setup_directory(tmp_path: P):
             """classes:
         - test"""
         )
+    jsonnetfile = P("jsonnetfile.json")
+    with open(jsonnetfile, "w") as jf:
+        json.dump({"version": 1, "dependencies": [], "legacyImports": True}, jf)
 
     return targetyml
 
@@ -53,6 +57,7 @@ def test_run_component_new_command(tmp_path: P):
         P("inventory", "classes", "components", f"{component_name}.yml"),
         P("inventory", "classes", "defaults", f"{component_name}.yml"),
         P("dependencies", "lib", f"{component_name}.libsonnet"),
+        P("vendor", component_name),
     ]:
         assert file.is_symlink()
     with open(targetyml) as file:
@@ -135,6 +140,7 @@ def test_run_component_new_then_delete(tmp_path: P):
         P("inventory", "classes", "components", f"{component_name}.yml"),
         P("inventory", "classes", "defaults", f"{component_name}.yml"),
         P("dependencies", "lib", f"{component_name}.libsonnet"),
+        P("vendor", component_name),
     ]:
         assert not f.exists()
 
