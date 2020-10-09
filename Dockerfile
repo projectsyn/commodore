@@ -1,4 +1,4 @@
-FROM docker.io/python:3.8.6-slim-buster AS base
+FROM docker.io/python:3.9.0-slim-buster AS base
 
 ENV HOME=/app
 
