@@ -1,3 +1,4 @@
+import collections
 import json
 import shutil
 import os
@@ -11,6 +12,7 @@ import yaml
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
+from kapitan import cached
 from kapitan import targets
 from kapitan import defaults
 from kapitan.cached import reset_cache as reset_reclass_cache
@@ -19,6 +21,9 @@ from kapitan.refs.secrets.vaultkv import VaultBackend
 
 from commodore import __install_dir__
 from commodore.config import Config
+
+
+ArgumentCache = collections.namedtuple("ArgumentCache", ["inventory_path"])
 
 
 class FakeVaultBackend(VaultBackend):
@@ -130,6 +135,7 @@ def kapitan_compile(
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
+    cached.args["compile"] = ArgumentCache(inventory_path="./inventory")
     targets.compile_targets(
         inventory_path="./inventory",
         search_paths=search_paths,
