@@ -11,6 +11,7 @@ ENV PATH=${PATH}:${HOME}/.poetry/bin
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
+      libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.1.0 \
  && mkdir -p /app/.config
@@ -39,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /virtualenv
 
-COPY --from=builder /usr/local/lib/python3.8/site-packages/kapitan ./kapitan
+COPY --from=builder /usr/local/lib/python3.9/site-packages/kapitan ./kapitan
 
 RUN ./kapitan/inputs/helm/build.sh \
  && ./kapitan/dependency_manager/helm/build.sh
@@ -55,7 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.8/site-packages/ /usr/local/lib/python3.8/site-packages/
+      /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
@@ -64,11 +65,11 @@ COPY --from=builder \
 COPY --from=helm_binding_builder \
       /virtualenv/kapitan/inputs/helm/libtemplate.so \
       /virtualenv/kapitan/inputs/helm/helm_binding.py \
-      /usr/local/lib/python3.8/site-packages/kapitan/inputs/helm/
+      /usr/local/lib/python3.9/site-packages/kapitan/inputs/helm/
 
 COPY --from=helm_binding_builder \
       /virtualenv/kapitan/dependency_manager/helm/helm_fetch.so \
-      /usr/local/lib/python3.8/site-packages/kapitan/dependency_manager/helm/
+      /usr/local/lib/python3.9/site-packages/kapitan/dependency_manager/helm/
 
 RUN curl -sLo /usr/local/bin/jb \
   https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
