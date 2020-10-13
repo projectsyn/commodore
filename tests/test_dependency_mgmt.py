@@ -5,6 +5,7 @@ Unit-tests for dependency management
 import os
 import click
 import pytest
+import json
 from unittest.mock import patch
 from pathlib import Path
 from textwrap import dedent
@@ -152,3 +153,57 @@ def test_fetch_components(
         assert (Path("inventory/classes/components") / f"{component}.yml").is_symlink()
         assert (Path("inventory/classes/defaults") / f"{component}.yml").is_symlink()
         assert data.get_component_repo(component) is not None
+
+
+def test_clear_jsonnet_lock_file(tmp_path: Path):
+    os.chdir(tmp_path)
+    jsonnetfile = Path("jsonnetfile.json")
+    jsonnet_lock = Path("jsonnetfile.lock.json")
+    with open(jsonnetfile, "w") as jf:
+        json.dump(
+            {
+                "version": 1,
+                "dependencies": [
+                    {
+                        "source": {
+                            "git": {
+                                "remote": "https://github.com/brancz/kubernetes-grafana.git",
+                                "subdir": "grafana",
+                            }
+                        },
+                        "version": "master",
+                    }
+                ],
+                "legacyImports": True,
+            },
+            jf,
+        )
+    with open(jsonnet_lock, "w") as jl:
+        json.dump(
+            {
+                "version": 1,
+                "dependencies": [
+                    {
+                        "source": {
+                            "git": {
+                                "remote": "https://github.com/brancz/kubernetes-grafana.git",
+                                "subdir": "grafana",
+                            }
+                        },
+                        "version": "57b4365eacda291b82e0d55ba7eec573a8198dda",
+                        "sum": "92DWADwGjnCfpZaL7Q07C0GZayxBziGla/O03qWea34=",
+                    }
+                ],
+                "legacyImports": True,
+            },
+            jl,
+        )
+    dependency_mgmt.fetch_jsonnet_libraries()
+
+    assert jsonnet_lock.is_file()
+    with open(jsonnet_lock, "r") as file:
+        data = json.load(file)
+        assert (
+            data["dependencies"][0]["version"]
+            != "57b4365eacda291b82e0d55ba7eec573a8198dda"
+        )
