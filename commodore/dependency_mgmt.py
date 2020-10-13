@@ -265,6 +265,10 @@ def fetch_jsonnet_libraries(cwd: P = None):
     """
 
     try:
+        # To make sure we don't use any stale lock files
+        lock_file = P("jsonnetfile.lock.json")
+        if lock_file.exists():
+            lock_file.unlink()
         if call(["jb", "install"], cwd=cwd) != 0:
             raise click.ClickException("jsonnet-bundler exited with error")
     except FileNotFoundError as e:
