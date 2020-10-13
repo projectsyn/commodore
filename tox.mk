@@ -32,3 +32,6 @@ test_py3.7:
 
 test_py3.8:
 	$(TOX_COMMAND) -e py38
+
+test_py3.9:
+	$(TOX_COMMAND) -e py39
