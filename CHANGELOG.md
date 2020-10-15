@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Adjust component new/delete to update `jsonnetfile.json` ([#211])
 * Provide `inventory_path` in Kapitan's argument cache ([#212])
 * Clear Jsonnet lock file ([#215])
+* Also make arrays mergeable with `makeMergeable` helper ([#217])
 
 ## [v0.3.0] - 2020-10-01
 
@@ -233,3 +234,4 @@ Initial implementation
 [#211]: https://github.com/projectsyn/commodore/pull/211
 [#212]: https://github.com/projectsyn/commodore/pull/212
 [#215]: https://github.com/projectsyn/commodore/pull/215
+[#217]: https://github.com/projectsyn/commodore/pull/217

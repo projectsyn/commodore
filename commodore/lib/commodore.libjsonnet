@@ -137,7 +137,7 @@ local getValueOrDefault(dict, field, default) =
  * \brief makes an object deep mergeable
  *
  * Builds a new object from its input.
- * All keys which contain an object will be suffixed with `+` in the result.
+ * All keys which contain an object or array will be suffixed with `+` in the result.
  *
  * \arg o An arbitrary object.
  * \return The transformed object.
@@ -147,9 +147,13 @@ local makeMergeable(o) = {
   for key in std.objectFields(o)
   if std.isObject(o[key])
 } + {
+  [key]+: o[key]
+  for key in std.objectFields(o)
+  if std.isArray(o[key])
+} + {
   [key]: o[key]
   for key in std.objectFields(o)
-  if !std.isObject(o[key])
+  if !std.isObject(o[key]) && !std.isArray(o[key])
 };
 
 {
