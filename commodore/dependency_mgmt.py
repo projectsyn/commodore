@@ -71,20 +71,18 @@ def delete_component_symlinks(cfg, component: Component):
 
 def _discover_components(cfg, inventory_path):
     """
-    Discover components in `inventory_path/`. Parse all classes found in
-    inventory_path and look for class includes starting with `components.`.
+    Discover components in `inventory_path/` by extracting all entries from
+    the reclass applications dictionary.
     """
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass(inventory_path, ignore_class_notfound=True)[
-        "nodes"
-    ]["cluster"]
+    kapitan_applications = inventory_reclass(
+        inventory_path, ignore_class_notfound=True
+    )["applications"]
     components = set()
-    for kls in kapitan_inventory["classes"]:
-        if kls.startswith("components."):
-            component = kls.split(".")[1]
-            if cfg.debug:
-                click.echo(f"   > Found component {component}")
-            components.add(component)
+    for component in kapitan_applications.keys():
+        if cfg.debug:
+            click.echo(f"   > Found component {component}")
+        components.add(component)
     return sorted(components)
 
 

@@ -49,6 +49,9 @@ def render_target(target: str, components: Iterable[str]):
 
     classes.append("global.commodore")
 
+    for component in components:
+        classes.append(f"components.{component}")
+
     return {
         "classes": classes,
     }
