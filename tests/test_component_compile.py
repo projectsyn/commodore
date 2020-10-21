@@ -63,18 +63,21 @@ def test_run_component_compile_command(tmp_path):
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
 
-    # exit_status = os.system(f"commodore component compile -o ./testdir dependencies/{component_name}")
     exit_status = call(
         f"commodore component compile -o ./testdir dependencies/{component_name}",
         shell=True,
     )
     assert exit_status == 0
     assert os.path.exists(
-        tmp_path / f"testdir/compiled/test/apps/{component_name}.yaml"
+        tmp_path
+        / "testdir/standalone/compiled"
+        / component_name
+        / f"apps/{component_name}.yaml"
     )
     rendered_yaml = (
         tmp_path
-        / "testdir/compiled/test"
+        / "testdir/standalone/compiled"
+        / component_name
         / component_name
         / "test_service_account.yaml"
     )
@@ -103,11 +106,15 @@ def test_run_component_compile_command_postprocess(tmp_path):
     )
     assert exit_status == 0
     assert os.path.exists(
-        tmp_path / f"testdir/compiled/test/apps/{component_name}.yaml"
+        tmp_path
+        / "testdir/standalone/compiled"
+        / component_name
+        / f"apps/{component_name}.yaml"
     )
     rendered_yaml = (
         tmp_path
-        / "testdir/compiled/test"
+        / "testdir/standalone/compiled"
+        / component_name
         / component_name
         / "test_service_account.yaml"
     )

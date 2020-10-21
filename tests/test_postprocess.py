@@ -32,8 +32,7 @@ def _setup(tmp_path, filter):
 
     test_run_component_new_command(tmp_path=tmp_path)
 
-    target = "target"
-    targetdir = tmp_path / "compiled" / target / "test"
+    targetdir = tmp_path / "compiled" / "test-component" / "test"
     os.makedirs(targetdir, exist_ok=True)
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
@@ -62,25 +61,29 @@ def _setup(tmp_path, filter):
         "https://fake.repo.url",
         "master",
     )
+    config.register_component(component)
     inventory = {
-        "classes": {
-            "defaults.test-component",
-            "global.common",
-            "components.test-component",
-        },
-        "parameters": {
-            "test_component": {
-                "namespace": "syn-test-component",
+        "test-component": {
+            "classes": {
+                "defaults.test-component",
+                "global.common",
+                "components.test-component",
+            },
+            "parameters": {
+                "test_component": {
+                    "namespace": "syn-test-component",
+                },
             },
         },
     }
-    return testf, config, inventory, target, {"test-component": component}
+    return testf, config, inventory, config.get_components()
 
 
 def test_postprocess_components(tmp_path, capsys):
     filter = _make_ns_filter("myns")
-    testf, config, inventory, target, components = _setup(tmp_path, filter)
-    postprocess_components(config, inventory, target, components)
+    testf, config, inventory, components = _setup(tmp_path, filter)
+    config.update_verbosity(3)
+    postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
         obj = yaml.safe_load(objf)
@@ -89,8 +92,8 @@ def test_postprocess_components(tmp_path, capsys):
 
 def test_postprocess_components_enabled(tmp_path, capsys):
     filter = _make_ns_filter("myns", enabled=True)
-    testf, config, inventory, target, components = _setup(tmp_path, filter)
-    postprocess_components(config, inventory, target, components)
+    testf, config, inventory, components = _setup(tmp_path, filter)
+    postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
         obj = yaml.safe_load(objf)
@@ -99,8 +102,8 @@ def test_postprocess_components_enabled(tmp_path, capsys):
 
 def test_postprocess_components_disabled(tmp_path, capsys):
     filter = _make_ns_filter("myns", enabled=False)
-    testf, config, inventory, target, components = _setup(tmp_path, filter)
-    postprocess_components(config, inventory, target, components)
+    testf, config, inventory, components = _setup(tmp_path, filter)
+    postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
         obj = yaml.safe_load(objf)
@@ -111,11 +114,11 @@ def test_postprocess_components_disabled(tmp_path, capsys):
 
 def test_postprocess_components_enabledref(tmp_path, capsys):
     filter = _make_ns_filter("myns", enabled="${test_component:filter:enabled}")
-    testf, config, inventory, target, components = _setup(tmp_path, filter)
-    inventory["parameters"]["test_component"]["filter"] = {
+    testf, config, inventory, components = _setup(tmp_path, filter)
+    inventory["test-component"]["parameters"]["test_component"]["filter"] = {
         "enabled": True,
     }
-    postprocess_components(config, inventory, target, components)
+    postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
         obj = yaml.safe_load(objf)
@@ -124,11 +127,11 @@ def test_postprocess_components_enabledref(tmp_path, capsys):
 
 def test_postprocess_components_disabledref(tmp_path, capsys):
     filter = _make_ns_filter("myns", enabled="${test_component:filter:enabled}")
-    testf, config, inventory, target, components = _setup(tmp_path, filter)
-    inventory["parameters"]["test_component"]["filter"] = {
+    testf, config, inventory, components = _setup(tmp_path, filter)
+    inventory["test-component"]["parameters"]["test_component"]["filter"] = {
         "enabled": False,
     }
-    postprocess_components(config, inventory, target, components)
+    postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
         obj = yaml.safe_load(objf)

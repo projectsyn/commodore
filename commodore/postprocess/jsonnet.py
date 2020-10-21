@@ -76,17 +76,15 @@ _native_callbacks = {
 
 
 # pylint: disable=too-many-arguments
-def jsonnet_runner(
-    inv, component, target, output_path, jsonnet_func, jsonnet_input, **kwargs
-):
+def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **kwargs):
     def _inventory():
         return inv
 
     _native_cb = _native_callbacks
     _native_cb["inventory"] = ((), _inventory)
-    kwargs["target"] = target
+    kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = P("compiled", target, output_path)
+    output_dir = P("compiled", component, output_path)
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
@@ -106,7 +104,7 @@ def jsonnet_runner(
             yaml_dump(outcontents, outpath)
 
 
-def run_jsonnet_filter(inv, component, target, filterdir, f):
+def run_jsonnet_filter(inv, component, filterdir, f):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
@@ -116,6 +114,4 @@ def run_jsonnet_filter(inv, component, target, filterdir, f):
     filterpath = filterdir / f["filter"]
     output_path = f["output_path"]
     # pylint: disable=c-extension-no-member
-    jsonnet_runner(
-        inv, component, target, output_path, _jsonnet.evaluate_file, filterpath
-    )
+    jsonnet_runner(inv, component, output_path, _jsonnet.evaluate_file, filterpath)
