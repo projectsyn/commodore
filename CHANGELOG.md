@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Clear Jsonnet lock file ([#215])
 * Also make arrays mergeable with `makeMergeable` helper ([#217])
 
+### Changed
+- Git repository urls are now retrieved from the Lieutenant API ([#226])
+
 ## [v0.3.0] - 2020-10-01
 
 ### Added
@@ -235,3 +238,4 @@ Initial implementation
 [#212]: https://github.com/projectsyn/commodore/pull/212
 [#215]: https://github.com/projectsyn/commodore/pull/215
 [#217]: https://github.com/projectsyn/commodore/pull/217
+[#226]: https://github.com/projectsyn/commodore/pull/226
