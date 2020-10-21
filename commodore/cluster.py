@@ -37,6 +37,17 @@ class Cluster:
             return f"{self._cfg.global_git_base}/commodore-defaults.git"
         return self._tenant[field]
 
+    def _extract_field(self, field: str, default) -> str:
+        """
+        Extract `field` from the tenant and cluster data, preferring the value present in the cluster data over the
+        value in the tenant data. If field is not present in both tenant and cluster data, return `default`.
+        """
+        return self._cluster.get(field, self._tenant.get(field, default))
+
+    @property
+    def global_git_repo_revision(self) -> str:
+        return self._extract_field("globalGitRepoRevision", None)
+
     @property
     def config_repo_url(self) -> str:
         repo_url = self._tenant.get("gitRepo", {}).get("url", None)
@@ -46,6 +57,10 @@ class Cluster:
                 % self._cluster["tenant"]
             )
         return repo_url
+
+    @property
+    def config_git_repo_revision(self) -> str:
+        return self._extract_field("gitRepoRevision", None)
 
     @property
     def catalog_repo_url(self) -> str:

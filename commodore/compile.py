@@ -38,6 +38,9 @@ def _fetch_global_config(cfg, cluster: Cluster):
     repo = git.clone_repository(
         cluster.global_git_repo_url, "inventory/classes/global", cfg
     )
+    rev = cluster.global_git_repo_revision
+    if rev:
+        git.checkout_version(repo, rev)
     cfg.register_config("global", repo)
 
 
@@ -47,6 +50,9 @@ def _fetch_customer_config(cfg, cluster: Cluster):
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
     repo = git.clone_repository(repo_url, P("inventory/classes") / cluster.tenant, cfg)
+    rev = cluster.config_git_repo_revision
+    if rev:
+        git.checkout_version(repo, rev)
     cfg.register_config("customer", repo)
 
 

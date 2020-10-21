@@ -9,7 +9,7 @@ from .cluster import Cluster
 
 def fetch_customer_catalog(config, cluster: Cluster):
     click.secho("Updating cluster catalog...", bold=True)
-    repo_url = cluster.catalog_repo_url()
+    repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
     return git.clone_repository(repo_url, "catalog", config)
