@@ -7,7 +7,7 @@ from kapitan.resources import inventory_reclass
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
-    fetch_cluster,
+    Cluster,
     read_cluster_and_tenant,
     target_file,
     update_params,
@@ -25,7 +25,6 @@ from .helpers import (
     ApiError,
     clean_working_tree,
     kapitan_compile,
-    lieutenant_query,
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
@@ -34,10 +33,11 @@ from .refs import update_refs
 TARGET = "cluster"
 
 
-def _fetch_global_config(cfg, cluster):
+def _fetch_global_config(cfg, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
-    url = f"{cfg.global_git_base}/commodore-defaults.git"
-    repo = git.clone_repository(url, "inventory/classes/global", cfg)
+    repo = git.clone_repository(
+        cluster.global_git_repo_url, "inventory/classes/global", cfg
+    )
     cfg.register_config("global", repo)
 
 
@@ -59,21 +59,21 @@ def _fetch_customer_config(cfg, customer_id):
 
 def _regular_setup(config, cluster_id, target):
     try:
-        cluster = fetch_cluster(config, cluster_id)
+        cluster = Cluster(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
     update_target(config, target)
-    update_params(cluster, target)
+    update_params(cluster.cluster_response(), target)
 
     # Fetch components and config
     _fetch_global_config(config, cluster)
-    _fetch_customer_config(config, cluster["tenant"])
+    _fetch_customer_config(config, cluster.cluster_response()["tenant"])
     fetch_components(config)
     update_target(config, target)
 
     # Fetch catalog
-    return fetch_customer_catalog(config, cluster["gitRepo"])
+    return fetch_customer_catalog(config, cluster.cluster_response()["gitRepo"])
 
 
 def _local_setup(config, cluster_id, target):

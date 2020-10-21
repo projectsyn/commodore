@@ -2,7 +2,7 @@ import os
 
 from pathlib import Path as P
 
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Dict
 
 import click
 
@@ -15,8 +15,28 @@ from .helpers import (
 from .config import Config
 
 
-def fetch_cluster(cfg, clusterid):
-    return lieutenant_query(cfg.api_url, cfg.api_token, "clusters", clusterid)
+class Cluster:
+    def __init__(self, cfg: Config, cluster_id: str):
+        self._cfg = cfg
+        self._cluster = lieutenant_query(
+            cfg.api_url, cfg.api_token, "clusters", cluster_id
+        )
+        self._tenant = lieutenant_query(
+            cfg.api_url, cfg.api_token, "tenants", self._cluster["tenant"]
+        )
+
+    @property
+    def global_git_repo_url(self) -> str:
+        field = "globalGitRepoURL"
+        if field not in self._tenant:
+            return f"{self._cfg.global_git_base}/commodore-defaults.git"
+        return self._tenant[field]
+
+    def cluster_response(self) -> Dict[str, str]:
+        return self._cluster
+
+    def tenant_response(self) -> Dict[str, str]:
+        return self._tenant
 
 
 def read_cluster_and_tenant(target: str) -> Tuple[str, str]:
