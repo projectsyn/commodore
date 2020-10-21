@@ -16,11 +16,7 @@ from .config import Config
 
 
 def fetch_cluster(cfg, clusterid):
-    cluster = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", clusterid)
-    # TODO: move Commodore global defaults repo name into Lieutenant
-    # API/cluster facts
-    cluster["base_config"] = "commodore-defaults"
-    return cluster
+    return lieutenant_query(cfg.api_url, cfg.api_token, "clusters", clusterid)
 
 
 def read_cluster_and_tenant(target: str) -> Tuple[str, str]:

@@ -35,11 +35,7 @@ This command doesn't have any command line options.
 *--global-git-base* URL::
   Base directory for global Git configuration repositories.
 +
-The name of the global configuration repository is provided by the cluster
-definition returned by the Lieutenant API. Commodore will construct the global
-configuration repository URL `GLOBAL_GIT_BASE/<cluster_base_config>.git`,
-where `cluster_base_config` is the value provided by the cluster definition in
-field `base_config`.
+Commodore will construct the global configuration repository URL `GLOBAL_GIT_BASE/commodore-defaults.git`.
 +
 By default, Commodore also uses the global Git base URL when doing component
 autodiscovery. Components are searched in

@@ -35,11 +35,9 @@ TARGET = "cluster"
 
 
 def _fetch_global_config(cfg, cluster):
-    config = cluster["base_config"]
     click.secho("Updating global config...", bold=True)
-    repo = git.clone_repository(
-        f"{cfg.global_git_base}/{config}.git", "inventory/classes/global", cfg
-    )
+    url = f"{cfg.global_git_base}/commodore-defaults.git"
+    repo = git.clone_repository(url, "inventory/classes/global", cfg)
     cfg.register_config("global", repo)
 
 
