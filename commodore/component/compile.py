@@ -32,7 +32,7 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths]
     search_paths.append("./dependencies/")
     search_paths.append(component_path / "vendor")
-    output_path = P(output_path).resolve()
+    output_path = P(output_path, "standalone").resolve()
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace("component-", "")
 
@@ -51,7 +51,7 @@ def compile_component(
         with open(temp_dir / "inventory/classes/fake.yml", "w") as file:
             file.write(
                 dedent(
-                    """
+                    f"""
                 parameters:
                   cloud:
                     provider: cloudscale
@@ -67,13 +67,13 @@ def compile_component(
 
                   kapitan:
                     vars:
-                        target: test
+                        target: {component_name}
                         namespace: test"""
                 )
             )
 
         # Create test target
-        with open(temp_dir / "inventory/targets/test.yml", "w") as file:
+        with open(temp_dir / f"inventory/targets/{component_name}.yml", "w") as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
             file.write(
                 dedent(
@@ -112,24 +112,27 @@ def compile_component(
         # Compile component
         kapitan_compile(
             config,
-            target="test",
+            [component_name],
             output_dir=output_path,
             search_paths=search_paths,
             fake_refs=True,
             reveal=True,
         )
-        click.echo(f" > Component compiled to {output_path / 'compiled/test'}")
+        click.echo(
+            f" > Component compiled to {output_path / 'compiled' / component_name}"
+        )
 
         # prepare inventory and fake component object for postprocess
-        inventory = inventory_reclass(temp_dir / "inventory")["nodes"]["test"]
+        inventory = inventory_reclass(temp_dir / "inventory")["nodes"]
         component = Component(
             component_name, Repo(component_path), "https://fake.repo.url/", "master"
         )
+        config.register_component(component)
         # We change the working directory to the output_path directory here,
         # as postprocess expects to find `compiled/<target>` in the working
         # directory.
         os.chdir(output_path)
-        postprocess_components(config, inventory, "test", {component_name: component})
+        postprocess_components(config, inventory, config.get_components())
     finally:
         os.chdir(original_working_dir)
         if config.trace:

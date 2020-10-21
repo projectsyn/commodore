@@ -1,4 +1,5 @@
 from pathlib import Path as P
+from typing import Iterable
 
 import click
 
@@ -65,15 +66,15 @@ def clean_catalog(repo):
         rm_tree_contents(repo.working_tree_dir)
 
 
-def update_catalog(cfg, target_name, repo):
+def update_catalog(cfg, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
     from distutils import dir_util
     import textwrap
 
     catalogdir = P(repo.working_tree_dir, "manifests")
-    # copy compiled catalog into catalog directory
-    dir_util.copy_tree(P("compiled") / target_name, str(catalogdir))
+    for target_name in targets:
+        dir_util.copy_tree(str(P("compiled") / target_name), str(catalogdir))
 
     difftext, changed = git.stage_all(repo)
     if changed:

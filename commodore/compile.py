@@ -31,9 +31,6 @@ from .postprocess import postprocess_components
 from .refs import update_refs
 
 
-TARGET = "cluster"
-
-
 def _fetch_global_config(cfg, cluster):
     config = cluster["base_config"]
     click.secho("Updating global config...", bold=True)
@@ -59,36 +56,39 @@ def _fetch_customer_config(cfg, customer_id):
     cfg.register_config("customer", repo)
 
 
-def _regular_setup(config, cluster_id, target):
+def _regular_setup(config, cluster_id):
     try:
         cluster = fetch_cluster(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    update_target(config, target)
-    update_params(cluster, target)
+    update_target(config, "cluster", bootstrap=True)
+    update_params(cluster)
 
     # Fetch components and config
     _fetch_global_config(config, cluster)
     _fetch_customer_config(config, cluster["tenant"])
     fetch_components(config)
-    update_target(config, target)
+
+    update_target(config, "cluster", bootstrap=True)
+    for component in config.get_components().keys():
+        update_target(config, component)
 
     # Fetch catalog
     return fetch_customer_catalog(config, cluster["gitRepo"])
 
 
-def _local_setup(config, cluster_id, target):
+def _local_setup(config, cluster_id):
     click.secho("Running in local mode", bold=True)
     click.echo(" > Will use existing inventory, dependencies, and catalog")
 
-    # Currently, a target name other than "cluster" is not supported
-    if not target_file(target).is_file():
-        raise click.ClickException(f"Invalid target: {target}")
-    click.echo(f" > Using target: {target}")
+    if not target_file("cluster").is_file():
+        raise click.ClickException(
+            "Invalid working dir state: 'inventory/targets/cluster.yml' is missing"
+        )
 
-    click.echo(" > Assert current target matches")
-    current_cluster_id, tenant = read_cluster_and_tenant(target)
+    click.echo(" > Assert current working dir state matches requested compilation")
+    current_cluster_id, tenant = read_cluster_and_tenant()
     if current_cluster_id != cluster_id:
         error = (
             "[Local mode] Cluster ID mismatch: local state targets "
@@ -125,25 +125,26 @@ def _local_setup(config, cluster_id, target):
 # pylint: disable=redefined-builtin
 def compile(config, cluster_id):
     if config.local:
-        catalog_repo = _local_setup(config, cluster_id, TARGET)
+        catalog_repo = _local_setup(config, cluster_id)
     else:
         clean_working_tree(config)
-        catalog_repo = _regular_setup(config, cluster_id, TARGET)
+        catalog_repo = _regular_setup(config, cluster_id)
 
     # Compile kapitan inventory to extract component versions. Component
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass("inventory")["nodes"][TARGET]
-    versions = kapitan_inventory["parameters"].get("component_versions", None)
+    cluster_inventory = inventory_reclass("inventory")["nodes"]["cluster"]
+    versions = cluster_inventory["parameters"].get("component_versions", None)
     if versions and not config.local:
         set_component_overrides(config, versions)
-        update_target(config, TARGET)
     # Rebuild reclass inventory to use new version of components
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass("inventory")["nodes"][TARGET]
+    kapitan_inventory = inventory_reclass("inventory")["nodes"]
     jsonnet_libs = (
-        kapitan_inventory["parameters"].get("commodore", {}).get("jsonnet_libs", None)
+        kapitan_inventory["cluster"]["parameters"]
+        .get("commodore", {})
+        .get("jsonnet_libs", None)
     )
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)
@@ -156,12 +157,14 @@ def compile(config, cluster_id):
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
-    update_refs(config, kapitan_inventory["parameters"])
+    update_refs(config, kapitan_inventory["cluster"]["parameters"])
 
-    kapitan_compile(config, search_paths=["./vendor/"])
+    components = config.get_components()
+    component_names = components.keys()
+    kapitan_compile(config, component_names, search_paths=["./vendor/"])
 
-    postprocess_components(config, kapitan_inventory, TARGET, config.get_components())
+    postprocess_components(config, kapitan_inventory, components)
 
-    update_catalog(config, TARGET, catalog_repo)
+    update_catalog(config, component_names, catalog_repo)
 
     click.secho("Catalog compiled! 🎉", bold=True)

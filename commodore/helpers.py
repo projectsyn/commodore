@@ -3,7 +3,7 @@ import json
 import shutil
 import os
 from pathlib import Path as P
-from typing import Callable
+from typing import Callable, Iterable
 
 import click
 import requests
@@ -13,7 +13,7 @@ import yaml
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
 from kapitan import cached
-from kapitan import targets
+from kapitan import targets as kapitan_targets
 from kapitan import defaults
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.refs.base import RefController, PlainRef
@@ -117,7 +117,7 @@ def clean_working_tree(config: Config):
 # pylint: disable=too-many-arguments
 def kapitan_compile(
     config: Config,
-    target="cluster",
+    targets: Iterable[str],
     output_dir="./",
     search_paths=None,
     fake_refs=False,
@@ -136,11 +136,11 @@ def kapitan_compile(
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
     cached.args["compile"] = ArgumentCache(inventory_path="./inventory")
-    targets.compile_targets(
+    kapitan_targets.compile_targets(
         inventory_path="./inventory",
         search_paths=search_paths,
         output_path=output_dir,
-        targets=[target],
+        targets=targets,
         parallel=4,
         labels=None,
         ref_controller=refController,
