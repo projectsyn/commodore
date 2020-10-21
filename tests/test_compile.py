@@ -11,7 +11,7 @@ from commodore.config import Config
 
 
 @patch("commodore.compile.lieutenant_query")
-def test_no_customer_repo(test_patch):
+def test_no_tenant_repo(test_patch):
     customer_id = "t-wild-fire-234"
     config = Config(
         "https://syn.example.com", "token", "ssh://git@git.example.com", False

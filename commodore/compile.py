@@ -41,19 +41,12 @@ def _fetch_global_config(cfg, cluster: Cluster):
     cfg.register_config("global", repo)
 
 
-def _fetch_customer_config(cfg, customer_id):
+def _fetch_customer_config(cfg, cluster: Cluster):
     click.secho("Updating customer config...", bold=True)
-    customer = lieutenant_query(cfg.api_url, cfg.api_token, "tenants", customer_id)
-    if customer["id"] != customer_id:
-        raise click.ClickException("Customer id mismatch")
-    repopath = customer.get("gitRepo", {}).get("url", None)
-    if repopath is None:
-        raise click.ClickException(
-            f" > API did not return a repository URL for customer '{customer_id}'"
-        )
+    repo_url = cluster.config_repo_url
     if cfg.debug:
-        click.echo(f" > Cloning customer config {repopath}")
-    repo = git.clone_repository(repopath, P("inventory/classes") / customer_id, cfg)
+        click.echo(f" > Cloning customer config {repo_url}")
+    repo = git.clone_repository(repo_url, P("inventory/classes") / cluster.tenant, cfg)
     cfg.register_config("customer", repo)
 
 
@@ -64,16 +57,16 @@ def _regular_setup(config, cluster_id, target):
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
     update_target(config, target)
-    update_params(cluster.cluster_response(), target)
+    update_params(cluster, target)
 
     # Fetch components and config
     _fetch_global_config(config, cluster)
-    _fetch_customer_config(config, cluster.cluster_response()["tenant"])
+    _fetch_customer_config(config, cluster)
     fetch_components(config)
     update_target(config, target)
 
     # Fetch catalog
-    return fetch_customer_catalog(config, cluster.cluster_response()["gitRepo"])
+    return fetch_customer_catalog(config, cluster)
 
 
 def _local_setup(config, cluster_id, target):

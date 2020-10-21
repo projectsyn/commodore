@@ -24,6 +24,11 @@ class Cluster:
         self._tenant = lieutenant_query(
             cfg.api_url, cfg.api_token, "tenants", self._cluster["tenant"]
         )
+        if self._cluster["tenant"] != self._tenant["id"]:
+            raise click.ClickException("Customer id mismatch")
+
+    def id(self) -> str:
+        return self._cluster["id"]
 
     @property
     def global_git_repo_url(self) -> str:
@@ -32,11 +37,33 @@ class Cluster:
             return f"{self._cfg.global_git_base}/commodore-defaults.git"
         return self._tenant[field]
 
-    def cluster_response(self) -> Dict[str, str]:
-        return self._cluster
+    @property
+    def config_repo_url(self) -> str:
+        repo_url = self._tenant.get("gitRepo", {}).get("url", None)
+        if repo_url is None:
+            raise click.ClickException(
+                " > API did not return a repository URL for tenant '%s'"
+                % self._cluster["tenant"]
+            )
+        return repo_url
 
-    def tenant_response(self) -> Dict[str, str]:
-        return self._tenant
+    @property
+    def catalog_repo_url(self) -> str:
+        repo_url = self._cluster.get("gitRepo", {}).get("url", None)
+        if repo_url is None:
+            raise click.ClickException(
+                " > API did not return a repository URL for cluster '%s'"
+                % self._cluster["id"]
+            )
+        return repo_url
+
+    @property
+    def tenant(self) -> str:
+        return self._tenant["id"]
+
+    @property
+    def facts(self) -> Dict[str, str]:
+        return self._cluster["facts"]
 
 
 def read_cluster_and_tenant(target: str) -> Tuple[str, str]:
@@ -81,36 +108,38 @@ def update_target(cfg: Config, target):
     yaml_dump(render_target(target, cfg.get_components().keys()), file)
 
 
-def render_params(cluster, target: str):
-    facts = cluster["facts"]
+def render_params(cluster: Cluster, target: str):
+    facts = cluster.facts
     for fact in ["distribution", "cloud"]:
         if fact not in facts or not facts[fact]:
             raise click.ClickException(f"Required fact '{fact}' not set")
+
+    cloud = {
+        "provider": facts["cloud"],
+    }
+
+    # TODO Remove after deprecation phase.
+    if "region" in facts:
+        cloud["region"] = facts["region"]
 
     data = {
         "parameters": {
             "target_name": target,
             "cluster": {
-                "name": cluster["id"],
-                "catalog_url": cluster["gitRepo"]["url"],
-                "tenant": cluster["tenant"],
+                "name": cluster.id(),
+                "catalog_url": cluster.catalog_repo_url,
+                "tenant": cluster.tenant,
                 # TODO Remove dist after deprecation phase.
                 "dist": facts["distribution"],
             },
             "facts": facts,
             # TODO Remove the cloud and customer parameters after deprecation phase.
-            "cloud": {
-                "provider": facts["cloud"],
-            },
+            "cloud": cloud,
             "customer": {
-                "name": cluster["tenant"],
+                "name": cluster.tenant,
             },
         },
     }
-
-    # TODO Remove after deprecation phase.
-    if "region" in facts:
-        data["parameters"]["cloud"]["region"] = facts["region"]
 
     return data
 
@@ -119,7 +148,7 @@ def params_file(target: str):
     return P("inventory", "classes", "params") / f"{target}.yml"
 
 
-def update_params(cluster, target):
+def update_params(cluster: Cluster, target):
     click.secho("Updating cluster parameters...", bold=True)
     file = params_file(target)
     os.makedirs(file.parent, exist_ok=True)
