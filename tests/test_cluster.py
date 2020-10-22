@@ -137,3 +137,13 @@ def test_catalog_repo_url(data):
     }
     cluster = Cluster(data["config"], data["cluster"], data["tenant"])
     assert "ssh://git@example.com/catalog.git" == cluster.catalog_repo_url
+
+
+def test_tenant(data):
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert "t-foo" == cluster.tenant
+
+
+def test_id(data):
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert "c-bar" == cluster.id
