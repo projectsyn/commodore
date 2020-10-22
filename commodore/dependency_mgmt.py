@@ -271,3 +271,25 @@ def fetch_jsonnet_libraries(cwd: P = None):
         raise click.ClickException(
             "the jsonnet-bundler executable `jb` could not be found"
         ) from e
+
+
+def register_components(cfg: Config):
+    """
+    Register all components which are currently checked out in dependencies/
+    in the Commodore config.
+    """
+    click.secho("Registering components...", bold=True)
+    for c in P("dependencies").iterdir():
+        # Skip jsonnet libs when collecting components
+        if c.name == "lib" or c.name == "libs":
+            continue
+        if cfg.debug:
+            click.echo(f" > {c}")
+        repo = git.init_repository(c)
+        component = Component(
+            name=c.name,
+            repo=repo,
+            version="master",
+            repo_url=repo.remotes.origin.url,
+        )
+        cfg.register_component(component)

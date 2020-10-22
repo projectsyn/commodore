@@ -15,11 +15,11 @@ from .cluster import (
     update_params,
     update_target,
 )
-from .config import Component
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
+    register_components,
     set_component_overrides,
     write_jsonnetfile,
 )
@@ -101,21 +101,7 @@ def _local_setup(config, cluster_id):
         "customer", git.init_repository(P("inventory/classes/") / tenant)
     )
 
-    click.secho("Registering components...", bold=True)
-    for c in P("dependencies").iterdir():
-        # Skip jsonnet libs when collecting components
-        if c.name == "lib" or c.name == "libs":
-            continue
-        if config.debug:
-            click.echo(f" > {c}")
-        repo = git.init_repository(c)
-        component = Component(
-            name=c.name,
-            repo=repo,
-            version="master",
-            repo_url=repo.remotes.origin.url,
-        )
-        config.register_component(component)
+    register_components(config)
 
     click.secho("Configuring catalog repo...", bold=True)
     return git.init_repository("catalog")
