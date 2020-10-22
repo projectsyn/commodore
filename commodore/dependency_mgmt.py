@@ -75,9 +75,7 @@ def _discover_components(cfg, inventory_path):
     the reclass applications dictionary.
     """
     reset_reclass_cache()
-    kapitan_applications = inventory_reclass(
-        inventory_path, ignore_class_notfound=True
-    )["applications"]
+    kapitan_applications = inventory_reclass(inventory_path)["applications"]
     components = set()
     for component in kapitan_applications.keys():
         if cfg.debug:
