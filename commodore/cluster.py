@@ -16,15 +16,14 @@ from .config import Config
 
 
 class Cluster:
-    def __init__(self, cfg: Config, cluster_id: str):
+    def __init__(self, cfg: Config, cluster_response: Dict, tenant_response: Dict):
         self._cfg = cfg
-        self._cluster = lieutenant_query(
-            cfg.api_url, cfg.api_token, "clusters", cluster_id
-        )
-        self._tenant = lieutenant_query(
-            cfg.api_url, cfg.api_token, "tenants", self._cluster["tenant"]
-        )
-        if self._cluster["tenant"] != self._tenant["id"]:
+        self._cluster = cluster_response
+        self._tenant = tenant_response
+        if (
+            "tenant" not in self._cluster
+            or self._cluster["tenant"] != self._tenant["id"]
+        ):
             raise click.ClickException("Customer id mismatch")
 
     def id(self) -> str:
@@ -79,6 +78,18 @@ class Cluster:
     @property
     def facts(self) -> Dict[str, str]:
         return self._cluster["facts"]
+
+
+def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
+    cluster_response = lieutenant_query(
+        cfg.api_url, cfg.api_token, "clusters", cluster_id
+    )
+    if "tenant" not in cluster_response:
+        raise click.ClickException("cluster does not have a tenant reference")
+    tenant_response = lieutenant_query(
+        cfg.api_url, cfg.api_token, "tenants", cluster_response["tenant"]
+    )
+    return Cluster(cfg, cluster_response, tenant_response)
 
 
 def read_cluster_and_tenant(target: str) -> Tuple[str, str]:

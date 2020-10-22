@@ -8,6 +8,7 @@ from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
+    load_cluster_from_api,
     read_cluster_and_tenant,
     target_file,
     update_params,
@@ -58,7 +59,7 @@ def _fetch_customer_config(cfg, cluster: Cluster):
 
 def _regular_setup(config, cluster_id, target):
     try:
-        cluster = Cluster(config, cluster_id)
+        cluster = load_cluster_from_api(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
