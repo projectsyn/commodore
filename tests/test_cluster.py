@@ -147,3 +147,16 @@ def test_tenant(data):
 def test_id(data):
     cluster = Cluster(data["config"], data["cluster"], data["tenant"])
     assert "c-bar" == cluster.id
+
+
+def test_facts(data):
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert {} == cluster.facts
+
+    facts = {
+        "fact_a": "value_a",
+        "fact_b": "value_b",
+    }
+    data["cluster"]["facts"] = facts.copy()
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert facts == cluster.facts

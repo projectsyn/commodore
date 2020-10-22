@@ -78,6 +78,8 @@ class Cluster:
 
     @property
     def facts(self) -> Dict[str, str]:
+        if "facts" not in self._cluster:
+            return {}
         return self._cluster["facts"]
 
 
