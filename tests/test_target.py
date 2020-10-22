@@ -66,12 +66,13 @@ def test_render_target(tmp_path):
 def test_render_params(data):
     params = cluster.render_params(cluster_from_data(data))
     assert params["parameters"]["cluster"]["name"] == "mycluster"
+    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["name"] == "mycluster"
     assert (
-        params["parameters"]["cluster"]["catalog_url"]
+        params["parameters"][cluster.BOOTSTRAP_TARGET]["catalog_url"]
         == "ssh://git@git.example.com/cluster-catalogs/mycluster"
     )
-    assert params["parameters"]["cluster"]["tenant"] == "mytenant"
-    assert params["parameters"]["cluster"]["dist"] == "rancher"
+    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["tenant"] == "mytenant"
+    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["dist"] == "rancher"
     assert params["parameters"]["facts"] == data["facts"]
     assert params["parameters"]["cloud"]["provider"] == "cloudscale"
     assert params["parameters"]["customer"]["name"] == "mytenant"

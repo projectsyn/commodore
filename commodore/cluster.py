@@ -15,6 +15,9 @@ from .helpers import (
 from .config import Config
 
 
+BOOTSTRAP_TARGET = "cluster"
+
+
 class Cluster:
     _cfg: Config
     _cluster_response: Dict
@@ -110,8 +113,8 @@ def read_cluster_and_tenant() -> Tuple[str, str]:
     data = yaml_load(file)
 
     return (
-        data["parameters"]["cluster"]["name"],
-        data["parameters"]["cluster"]["tenant"],
+        data["parameters"][BOOTSTRAP_TARGET]["name"],
+        data["parameters"][BOOTSTRAP_TARGET]["tenant"],
     )
 
 
@@ -119,7 +122,7 @@ def render_target(target: str, components: Iterable[str], bootstrap=False):
     if not bootstrap and target not in components:
         raise click.ClickException(f"Target {target} is not a component")
 
-    classes = ["params.cluster"]
+    classes = [f"params.{BOOTSTRAP_TARGET}"]
     parameters = {}
 
     for component in components:
@@ -178,7 +181,7 @@ def render_params(cluster: Cluster):
 
     data = {
         "parameters": {
-            "cluster": {
+            BOOTSTRAP_TARGET: {
                 "name": cluster.id,
                 "catalog_url": cluster.catalog_repo_url,
                 "tenant": cluster.tenant,
@@ -198,7 +201,7 @@ def render_params(cluster: Cluster):
 
 
 def params_file():
-    return P("inventory", "classes", "params", "cluster.yml")
+    return P("inventory", "classes", "params", f"{BOOTSTRAP_TARGET}.yml")
 
 
 def update_params(cluster: Cluster):

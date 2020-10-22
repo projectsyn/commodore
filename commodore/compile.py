@@ -7,6 +7,7 @@ from kapitan.resources import inventory_reclass
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
+    BOOTSTRAP_TARGET,
     Cluster,
     load_cluster_from_api,
     read_cluster_and_tenant,
@@ -60,7 +61,7 @@ def _regular_setup(config, cluster_id):
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    update_target(config, "cluster", bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
     update_params(cluster)
 
     # Fetch components and config
@@ -68,7 +69,7 @@ def _regular_setup(config, cluster_id):
     _fetch_customer_config(config, cluster)
     fetch_components(config)
 
-    update_target(config, "cluster", bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
     for component in config.get_components().keys():
         update_target(config, component)
 
@@ -80,7 +81,7 @@ def _local_setup(config, cluster_id):
     click.secho("Running in local mode", bold=True)
     click.echo(" > Will use existing inventory, dependencies, and catalog")
 
-    if not target_file("cluster").is_file():
+    if not target_file(BOOTSTRAP_TARGET).is_file():
         raise click.ClickException(
             "Invalid working dir state: 'inventory/targets/cluster.yml' is missing"
         )
@@ -132,7 +133,7 @@ def compile(config, cluster_id):
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     reset_reclass_cache()
-    cluster_inventory = inventory_reclass("inventory")["nodes"]["cluster"]
+    cluster_inventory = inventory_reclass("inventory")["nodes"][BOOTSTRAP_TARGET]
     versions = cluster_inventory["parameters"].get("component_versions", None)
     if versions and not config.local:
         set_component_overrides(config, versions)
@@ -140,7 +141,7 @@ def compile(config, cluster_id):
     reset_reclass_cache()
     kapitan_inventory = inventory_reclass("inventory")["nodes"]
     jsonnet_libs = (
-        kapitan_inventory["cluster"]["parameters"]
+        kapitan_inventory[BOOTSTRAP_TARGET]["parameters"]
         .get("commodore", {})
         .get("jsonnet_libs", None)
     )
@@ -155,7 +156,7 @@ def compile(config, cluster_id):
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
-    update_refs(config, kapitan_inventory["cluster"]["parameters"])
+    update_refs(config, kapitan_inventory[BOOTSTRAP_TARGET]["parameters"])
 
     components = config.get_components()
     component_names = components.keys()
