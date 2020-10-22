@@ -84,3 +84,16 @@ def test_global_git_repo_revision(data):
         set_on_both["config"], set_on_both["cluster"], set_on_both["tenant"]
     )
     assert "v2.3.1" == cluster.global_git_repo_revision
+
+
+def test_config_repo_url(data):
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    with pytest.raises(click.ClickException) as err:
+        cluster.config_repo_url
+    assert " > API did not return a repository URL for tenant 't-foo'" in str(err)
+
+    data["tenant"]["gitRepo"] = {
+        "url": "ssh://git@example.com/tenant.git",
+    }
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert "ssh://git@example.com/tenant.git" == cluster.config_repo_url
