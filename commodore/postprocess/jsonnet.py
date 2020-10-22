@@ -76,7 +76,7 @@ _native_callbacks = {
 
 
 # pylint: disable=too-many-arguments
-def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **kwargs):
+def jsonnet_runner(inv, component, path, jsonnet_func, jsonnet_input, **kwargs):
     def _inventory():
         return inv
 
@@ -84,7 +84,7 @@ def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **k
     _native_cb["inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = P("compiled", component, output_path)
+    output_dir = P("compiled", component, path)
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
@@ -112,11 +112,11 @@ def run_jsonnet_filter(inv, component, f):
     if f["type"] != "jsonnet":
         raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
     # TODO: how to handle search path?
-    filterpath = P("./dependencies") / f["filterpath"] / f["filter"]
-    output_path = f["output_path"]
+    filterpath = P("./dependencies") / component / f["filter"]
+    path = f["path"]
     # pylint: disable=c-extension-no-member
-    jsonnet_runner(inv, component, output_path, _jsonnet.evaluate_file, filterpath)
+    jsonnet_runner(inv, component, path, _jsonnet.evaluate_file, filterpath)
 
 
 def validate_jsonnet_filter(f):
-    return "filterpath" in f and "output_path" in f and "component" in f
+    return "filter" in f and "path" in f

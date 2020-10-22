@@ -22,7 +22,7 @@ def _get_inventory_filters(inventory):
 
 
 def _run_filter(f, inventory, component: str):
-    if not f["enabled"]:
+    if "enabled" in f and not f["enabled"]:
         click.secho(f"   > Skipping disabled filter {f['filter']} on path {f['path']}")
         return
 
@@ -45,6 +45,36 @@ def _validate_filter(f):
     return False
 
 
+def _get_external_filters(inventory, c: Component):
+    filters_file = c.filters_file
+    filters = []
+    if filters_file.is_file():
+        _filters = yaml_load(filters_file).get("filters", [])
+        for f in _filters:
+            # Resolve any inventory references in filter definition
+            try:
+                f = resolve_inventory_vars(inventory, f)
+            except InventoryError as e:
+                raise click.ClickException(
+                    f"Failed to resolve variables for external filter: {e}"
+                ) from e
+
+            # external filters without 'type' are always 'jsonnet'
+            if "type" not in f:
+                click.secho(
+                    "   > [WARN] component uses untyped external postprocessing filter",
+                    fg="yellow",
+                )
+                f["type"] = "jsonnet"
+
+            if f["type"] == "jsonnet":
+                f["path"] = f["output_path"]
+                del f["output_path"]
+                f["filter"] = str(P("postprocess") / f["filter"])
+            filters.append(f)
+    return filters
+
+
 def postprocess_components(config, kapitan_inventory, components: Dict[str, Component]):
     click.secho("Postprocessing...", bold=True)
 
@@ -55,63 +85,24 @@ def postprocess_components(config, kapitan_inventory, components: Dict[str, Comp
             continue
 
         # inventory filters
-        for f in _get_inventory_filters(inventory):
+        invfilters = _get_inventory_filters(inventory)
+
+        # "old", external filters
+        extfilters = _get_external_filters(inventory, c)
+
+        filters = invfilters + extfilters
+
+        if len(filters) > 0 and config.debug:
+            click.echo(f" > {cn}...")
+
+        for f in filters:
             if not _validate_filter(f):
                 click.secho(
-                    f"   > [WARN] Skipping filter '{f['filter']}' with invalid definition on path {f['path']}",
+                    f"   > [WARN] Skipping filter '{f['filter']}' with invalid definition {f}",
                     fg="yellow",
                 )
                 continue
-            # TODO: check for missing filterpath for jsonnet filters
-            if "enabled" not in f:
-                f["enabled"] = True
-            _run_filter(f, inventory, cn)
 
-        # old filters
-        filters_file = c.filters_file
-        if filters_file.is_file():
             if config.debug:
-                click.echo(f" > {cn}...")
-            filters = yaml_load(filters_file)
-            for f in filters["filters"]:
-                # Add filterpath to filter dict
-                f["filterpath"] = filters_file.parent
-                # Add component name to filter dict
-                f["component"] = cn
-
-                # Add enabled flag if not present
-                if "enabled" not in f:
-                    f["enabled"] = True
-
-                # Resolve any inventory references in filter definition
-                try:
-                    f = resolve_inventory_vars(inventory, f)
-                except InventoryError as e:
-                    raise click.ClickException(
-                        f"Failed to resolve variables for non-inventory filter: {e}"
-                    ) from e
-
-                # filters without 'type' are always 'jsonnet'
-                if "type" not in f:
-                    click.secho(
-                        "   > [WARN] component uses untyped non-inventory postprocess filter",
-                        fg="yellow",
-                    )
-                    f["type"] = "jsonnet"
-                # Filters which aren't explicitly disabled are always enabled
-                if "enabled" in f and not f["enabled"]:
-                    click.secho(
-                        "   > Skipping disabled filter"
-                        + f" {f['filter']} on path {f['path']}"
-                    )
-                    continue
-                if f["type"] == "jsonnet":
-                    run_jsonnet_filter(inventory, cn, filters_file.parent, f)
-                elif f["type"] == "builtin":
-                    run_builtin_filter(inventory, cn, f)
-                else:
-                    click.secho(
-                        f"   > [WARN] unknown builtin filter {f['filter']}",
-                        fg="yellow",
-                    )
-                _run_filter(f, inventory, cn)
+                click.secho(f"   > Executing filter '{f['type']}:{f['filter']}'")
+            _run_filter(f, inventory, cn)
