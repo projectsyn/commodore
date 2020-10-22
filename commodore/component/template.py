@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from pathlib import Path as P
 from shutil import rmtree
@@ -12,13 +13,13 @@ from cookiecutter.main import cookiecutter
 from commodore import git, __install_dir__
 from commodore import config as CommodoreConfig
 from commodore.config import Component
+from commodore.cluster import update_target
 from commodore.dependency_mgmt import (
     create_component_symlinks,
     delete_component_symlinks,
     fetch_jsonnet_libraries,
+    register_components,
 )
-
-from commodore.helpers import yaml_load, yaml_dump
 
 
 slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
@@ -108,12 +109,12 @@ class ComponentTemplater:
         index.add(".editorconfig")
         git.commit(repo, "Initial commit", self.config)
 
+        register_components(self.config)
+
         click.echo(" > Installing component")
         try:
             create_component_symlinks(self.config, component)
-
-            targetfile = P("inventory", "targets", "cluster.yml")
-            insert_into_inventory_targets_cluster(targetfile, self.slug)
+            update_target(self.config, self.slug)
             insert_into_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
             # call fetch_jsonnet_libraries after updating jsonnetfile to
             # symlink new component into vendor/
@@ -146,8 +147,8 @@ class ComponentTemplater:
             delete_component_symlinks(self.config, component)
             rmtree(component.target_directory)
 
-            targetfile = P("inventory", "targets", "cluster.yml")
-            remove_from_inventory_targets_cluster(targetfile, self.slug)
+            targetfile = P("inventory", "targets", f"{self.slug}.yml")
+            os.unlink(targetfile)
             remove_from_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
             # Fetch jsonnet libs after removing component from jsonnetfile to
             # remove symlink to removed component in vendor/
@@ -158,43 +159,6 @@ class ComponentTemplater:
             raise click.BadParameter(
                 "Cannot find component with slug " f"'{self.slug}'."
             )
-
-
-def insert_into_inventory_targets_cluster(targetfile: P, slug: str):
-    """
-    Insert references to the component identified by the passed-in slug into the
-    inventory.
-    """
-    target = yaml_load(targetfile)
-    # Defaults need to be processed first, so we insert them at the head of the
-    # list.
-    target["classes"].insert(0, f"defaults.{slug}")
-    # The component class itself can be added as the last element.
-    target["classes"].append(f"components.{slug}")
-    yaml_dump(target, targetfile)
-
-
-def remove_from_inventory_targets_cluster(targetfile: P, slug: str):
-    """
-    Removed references to the component identified by the passed-in slug from
-    the inventory.
-    """
-    target = yaml_load(targetfile)
-    try:
-        target["classes"].remove(f"defaults.{slug}")
-    except ValueError:
-        # That component default is not in the list apparently, it's fine to
-        # ignore (it's already in the state we want).
-        pass
-
-    try:
-        target["classes"].remove(f"components.{slug}")
-    except ValueError:
-        # Again, if the component already doesn't appear in the list, it's fine
-        # to ignore.
-        pass
-
-    yaml_dump(target, targetfile)
 
 
 def insert_into_jsonnetfile(jsonnetfile: P, componentdir: P):
