@@ -26,6 +26,7 @@ class Cluster:
         ):
             raise click.ClickException("Customer id mismatch")
 
+    @property
     def id(self) -> str:
         return self._cluster["id"]
 
@@ -152,7 +153,7 @@ def render_params(cluster: Cluster, target: str):
         "parameters": {
             "target_name": target,
             "cluster": {
-                "name": cluster.id(),
+                "name": cluster.id,
                 "catalog_url": cluster.catalog_repo_url,
                 "tenant": cluster.tenant,
                 # TODO Remove dist after deprecation phase.
