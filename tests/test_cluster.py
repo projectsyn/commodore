@@ -17,7 +17,7 @@ def data():
         "config": Config(
             "https://syn.example.com", "token", "ssh://git@git.example.com", False
         ),
-        "cluster": {"tenant": "t-foo"},
+        "cluster": {"id": "c-bar", "tenant": "t-foo"},
         "tenant": {"id": "t-foo"},
     }
 
@@ -124,3 +124,16 @@ def test_config_git_repo_revision(data):
         set_on_both["config"], set_on_both["cluster"], set_on_both["tenant"]
     )
     assert "v2.3.1" == cluster.config_git_repo_revision
+
+
+def test_catalog_repo_url(data):
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    with pytest.raises(click.ClickException) as err:
+        cluster.catalog_repo_url
+    assert " > API did not return a repository URL for cluster 'c-bar'" in str(err)
+
+    data["cluster"]["gitRepo"] = {
+        "url": "ssh://git@example.com/catalog.git",
+    }
+    cluster = Cluster(data["config"], data["cluster"], data["tenant"])
+    assert "ssh://git@example.com/catalog.git" == cluster.catalog_repo_url
