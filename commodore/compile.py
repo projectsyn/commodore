@@ -7,7 +7,8 @@ from kapitan.resources import inventory_reclass
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
-    fetch_cluster,
+    Cluster,
+    load_cluster_from_api,
     read_cluster_and_tenant,
     target_file,
     update_params,
@@ -25,7 +26,6 @@ from .helpers import (
     ApiError,
     clean_working_tree,
     kapitan_compile,
-    lieutenant_query,
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
@@ -34,34 +34,32 @@ from .refs import update_refs
 TARGET = "cluster"
 
 
-def _fetch_global_config(cfg, cluster):
-    config = cluster["base_config"]
+def _fetch_global_config(cfg, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
     repo = git.clone_repository(
-        f"{cfg.global_git_base}/{config}.git", "inventory/classes/global", cfg
+        cluster.global_git_repo_url, "inventory/classes/global", cfg
     )
+    rev = cluster.global_git_repo_revision
+    if rev:
+        git.checkout_version(repo, rev)
     cfg.register_config("global", repo)
 
 
-def _fetch_customer_config(cfg, customer_id):
+def _fetch_customer_config(cfg, cluster: Cluster):
     click.secho("Updating customer config...", bold=True)
-    customer = lieutenant_query(cfg.api_url, cfg.api_token, "tenants", customer_id)
-    if customer["id"] != customer_id:
-        raise click.ClickException("Customer id mismatch")
-    repopath = customer.get("gitRepo", {}).get("url", None)
-    if repopath is None:
-        raise click.ClickException(
-            f" > API did not return a repository URL for customer '{customer_id}'"
-        )
+    repo_url = cluster.config_repo_url
     if cfg.debug:
-        click.echo(f" > Cloning customer config {repopath}")
-    repo = git.clone_repository(repopath, P("inventory/classes") / customer_id, cfg)
+        click.echo(f" > Cloning customer config {repo_url}")
+    repo = git.clone_repository(repo_url, P("inventory/classes") / cluster.tenant, cfg)
+    rev = cluster.config_git_repo_revision
+    if rev:
+        git.checkout_version(repo, rev)
     cfg.register_config("customer", repo)
 
 
 def _regular_setup(config, cluster_id, target):
     try:
-        cluster = fetch_cluster(config, cluster_id)
+        cluster = load_cluster_from_api(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
@@ -70,12 +68,12 @@ def _regular_setup(config, cluster_id, target):
 
     # Fetch components and config
     _fetch_global_config(config, cluster)
-    _fetch_customer_config(config, cluster["tenant"])
+    _fetch_customer_config(config, cluster)
     fetch_components(config)
     update_target(config, target)
 
     # Fetch catalog
-    return fetch_customer_catalog(config, cluster["gitRepo"])
+    return fetch_customer_catalog(config, cluster)
 
 
 def _local_setup(config, cluster_id, target):

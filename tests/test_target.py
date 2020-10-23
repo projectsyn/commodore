@@ -31,6 +31,10 @@ def data():
     }
 
 
+def cluster_from_data(data) -> cluster.Cluster:
+    return cluster.Cluster(None, data, {"id": data["tenant"]})
+
+
 def test_render_target(tmp_path):
     os.chdir(tmp_path)
     bar_defaults = P("inventory/classes/defaults/bar.yml")
@@ -52,7 +56,7 @@ def test_render_target(tmp_path):
 
 
 def test_render_params(data):
-    params = cluster.render_params(data, "foo")
+    params = cluster.render_params(cluster_from_data(data), "foo")
     assert params["parameters"]["target_name"] == "foo"
     assert params["parameters"]["cluster"]["name"] == "mycluster"
     assert (
@@ -69,13 +73,13 @@ def test_render_params(data):
 def test_missing_facts(data):
     data["facts"].pop("cloud")
     with pytest.raises(click.ClickException):
-        cluster.render_params(data, "foo")
+        cluster.render_params(cluster_from_data(data), "foo")
 
 
 def test_empty_facts(data):
     data["facts"]["cloud"] = ""
     with pytest.raises(click.ClickException):
-        cluster.render_params(data, "foo")
+        cluster.render_params(cluster_from_data(data), "foo")
 
 
 def test_read_cluster_and_tenant(tmp_path):

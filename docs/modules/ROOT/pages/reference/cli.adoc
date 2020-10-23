@@ -33,19 +33,14 @@ This command doesn't have any command line options.
   Lieutenant API token.
 
 *--global-git-base* URL::
-  Base directory for global Git configuration repositories.
+  Base directory for discovering components.
 +
-The name of the global configuration repository is provided by the cluster
-definition returned by the Lieutenant API. Commodore will construct the global
-configuration repository URL `GLOBAL_GIT_BASE/<cluster_base_config>.git`,
-where `cluster_base_config` is the value provided by the cluster definition in
-field `base_config`.
+Commodore uses the global Git base URL when doing component autodiscovery.
+Components are searched in `GLOBAL_GIT_BASE/commodore-components`, unless specified otherwise in the configuration, see xref:reference/architecture.adoc#_component_discovery[Component discovery].
 +
-By default, Commodore also uses the global Git base URL when doing component
-autodiscovery. Components are searched in
-`GLOBAL_GIT_BASE/commodore-components`, unless specified otherwise in the
-configuration, see
-xref:reference/architecture.adoc#_component_discovery[Component discovery].
+If the Lieutenant API doesn't return the global Git repository URL, the global Git base will also be used to determine the URL of that repository.
+The fallback global repository URL is `GLOBAL_GIT_BASE/commodore-defaults.git`.
+The fallback behavior is in place to ensure Commodore remains backwards compatible with older versions of the Lieutenant API.
 
 *--local*::
   Run in local mode. Intended to be used to test/verify local changes (for
