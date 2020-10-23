@@ -16,6 +16,10 @@ from .config import Config
 
 
 class Cluster:
+    _cfg: Config
+    _cluster_response: Dict
+    _tenant_response: Dict
+
     def __init__(self, cfg: Config, cluster_response: Dict, tenant_response: Dict):
         self._cfg = cfg
         self._cluster = cluster_response
@@ -24,7 +28,7 @@ class Cluster:
             "tenant" not in self._cluster
             or self._cluster["tenant"] != self._tenant["id"]
         ):
-            raise click.ClickException("Customer id mismatch")
+            raise click.ClickException("Tenant ID mismatch")
 
     @property
     def id(self) -> str:

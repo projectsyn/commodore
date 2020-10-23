@@ -38,9 +38,9 @@ This command doesn't have any command line options.
 Commodore uses the global Git base URL when doing component autodiscovery.
 Components are searched in `GLOBAL_GIT_BASE/commodore-components`, unless specified otherwise in the configuration, see xref:reference/architecture.adoc#_component_discovery[Component discovery].
 +
-In case, the Lieutenant API doesn't return the global Git repository URL, the global git base will also be used to determine URL of that repository.
-It URL will be discovered as `GLOBAL_GIT_BASE/commodore-defaults.git`.
-This behaviour is to remain backwards compatible with older versions of the Lieutenant API.
+If the Lieutenant API doesn't return the global Git repository URL, the global Git base will also be used to determine the URL of that repository.
+The fallback global repository URL is `GLOBAL_GIT_BASE/commodore-defaults.git`.
+The fallback behavior is in place to ensure Commodore remains backwards compatible with older versions of the Lieutenant API.
 
 *--local*::
   Run in local mode. Intended to be used to test/verify local changes (for

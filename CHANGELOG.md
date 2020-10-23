@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Also make arrays mergeable with `makeMergeable` helper ([#217])
 
 ### Changed
-- Git repository urls are now retrieved from the Lieutenant API ([#226])
+- Git repository URLs are now retrieved from the Lieutenant API ([#226])
 
 ## [v0.3.0] - 2020-10-01
 
