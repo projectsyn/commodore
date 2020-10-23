@@ -45,7 +45,46 @@ commodore() {
 == macOS X
 
 On macOS with Docker for Mac mounting the SSH agents socket into a container doesn't work.
-Instead your SSH key needs to be mounted into the container.
+Instead you need to mount as magic path that's provided by Docker for Mac.
+
+[NOTE]
+====
+This only works for the stock ssh-agent coming along with macOS.
+If you use any other agent, you might be out of luck.
+Docker for mac doesn't support mounting sockets.
+====
+
+[CAUTION]
+====
+That magic socket path belongs to root.
+One must run a container with `--user=0` in order to access it.
+This doesn't mess up your file permissions thanks to the magic of how volume mount work on Docker for Mac.
+====
+
+[source,bash]
+----
+commodore() {
+  docker run \
+    --interactive=true \
+    --tty \
+    --rm \
+    --user="0" \
+    --env COMMODORE_API_URL=$COMMODORE_API_URL \
+    --env COMMODORE_GLOBAL_GIT_BASE=$COMMODORE_GLOBAL_GIT_BASE \
+    --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
+    --env SSH_AUTH_SOCK=/tmp/ssh_agent.sock \
+    --volume "/run/host-services/ssh-auth.sock:/tmp/ssh_agent.sock" \
+    --volume "${HOME}/.ssh/config:/app/.ssh/config:ro" \
+    --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
+    --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${PWD}:/app/data" \
+    --workdir /app/data \
+    projectsyn/commodore:latest \
+    $*
+}
+----
+
+Instead you can also mount your SSH key into the container.
 The container will pickup that key and add it do an SSH agent running inside the container.
 You will be prompted to insert your SSH keys password if it has one.
 
@@ -68,7 +107,6 @@ commodore() {
     $*
 }
 ----
-
 [NOTE]
 ====
 If you have multiple SSH keys, you can mount only the one you need for commodore.
