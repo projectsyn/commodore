@@ -2,23 +2,24 @@ import json
 import os
 
 from pathlib import Path as P
-from typing import Dict
+from typing import Any, Callable, Dict, Iterable
 
 import _jsonnet
 
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
 
-#  Returns content if worked, None if file not found, or throws an exception
 
-
-def _try_path(basedir, rel):
+def _try_path(basedir: P, rel: str):
+    """
+    Returns content of file basedir/rel if it exists, None if file not found, or throws an exception
+    """
     if not rel:
         raise RuntimeError("Got invalid filename (empty string).")
     if rel[0] == "/":
         full_path = P(rel)
     else:
-        full_path = P(basedir) / rel
+        full_path = basedir / rel
     if full_path.is_dir():
         raise RuntimeError("Attempted to import a directory")
 
@@ -28,7 +29,7 @@ def _try_path(basedir, rel):
         return full_path.name, f.read()
 
 
-def _import_callback_with_searchpath(search, basedir, rel):
+def _import_callback_with_searchpath(search: Iterable[P], basedir: P, rel: str):
     full_path, content = _try_path(basedir, rel)
     if content:
         return full_path, content
@@ -39,17 +40,17 @@ def _import_callback_with_searchpath(search, basedir, rel):
     raise RuntimeError("File not found")
 
 
-def _import_cb(basedir, rel):
+def _import_cb(basedir: str, rel: str):
     # Add current working dir to search path for Jsonnet import callback
     search_path = [
         P(".").resolve(),
         __install_dir__.resolve(),
         P("./dependencies").resolve(),
     ]
-    return _import_callback_with_searchpath(search_path, basedir, rel)
+    return _import_callback_with_searchpath(search_path, P(basedir), rel)
 
 
-def _list_dir(basedir, basename):
+def _list_dir(basedir: os.PathLike, basename: bool):
     """
     Non-recursively list files in directory `basedir`. If `basename` is set to
     True, only return the file name itself and not the full path.
@@ -76,8 +77,15 @@ _native_callbacks = {
 
 
 # pylint: disable=too-many-arguments
-def jsonnet_runner(inv, component, path, jsonnet_func, jsonnet_input, **kwargs):
-    def _inventory():
+def jsonnet_runner(
+    inv: Dict[str, Any],
+    component: str,
+    path: os.PathLike,
+    jsonnet_func: Callable,
+    jsonnet_input: os.PathLike,
+    **kwargs: str,
+):
+    def _inventory() -> Dict[str, Any]:
         return inv
 
     _native_cb = _native_callbacks
