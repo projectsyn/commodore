@@ -50,7 +50,7 @@ Instead you need to mount as magic path that's provided by Docker for Mac.
 [NOTE]
 ====
 This only works for the stock ssh-agent coming along with macOS.
-If you use any other agent, you are out of luck.
+If you use any other agent, you might be out of luck.
 Docker for mac doesn't support mounting sockets.
 ====
 
