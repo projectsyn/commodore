@@ -2,9 +2,9 @@ import json
 import os
 
 from pathlib import Path as P
+from typing import Dict
 
 import _jsonnet
-import click
 
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
@@ -104,19 +104,26 @@ def jsonnet_runner(inv, component, path, jsonnet_func, jsonnet_input, **kwargs):
             yaml_dump(outcontents, outpath)
 
 
-def run_jsonnet_filter(inv, component, f):
+def _filter_file(component: str, filterpath: str) -> P:
+    # TODO: Do we need to handle search path better?
+    return P("dependencies") / component / filterpath
+
+
+def run_jsonnet_filter(
+    inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    if f["type"] != "jsonnet":
-        raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
-    # TODO: how to handle search path?
-    filterpath = P("./dependencies") / component / f["filter"]
-    path = f["path"]
+    filterfile = _filter_file(component, filterid)
     # pylint: disable=c-extension-no-member
-    jsonnet_runner(inv, component, path, _jsonnet.evaluate_file, filterpath)
+    jsonnet_runner(
+        inventory, component, path, _jsonnet.evaluate_file, filterfile, **filterargs
+    )
 
 
-def validate_jsonnet_filter(f):
-    return "filter" in f and "path" in f
+def validate_jsonnet_filter(cn: str, fd: Dict):
+    filterfile = _filter_file(cn, fd["filter"])
+    if not filterfile.is_file():
+        raise ValueError("Jsonnet filter definition does not exist")

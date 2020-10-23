@@ -1,6 +1,7 @@
 import json
 
 from pathlib import Path as P
+from typing import Dict
 
 import _jsonnet
 import click
@@ -10,7 +11,11 @@ from commodore import __install_dir__
 from .jsonnet import jsonnet_runner
 
 
-def _builtin_filter_helm_namespace(inv, component, path, **kwargs):
+def _output_dir(component: str, path):
+    return P("compiled", component, path)
+
+
+def _builtin_filter_helm_namespace(inv, component: str, path, **kwargs):
     if "namespace" not in kwargs:
         raise click.ClickException(
             "Builtin filter 'helm_namespace': filter argument 'namespace' is required"
@@ -22,7 +27,7 @@ def _builtin_filter_helm_namespace(inv, component, path, **kwargs):
         create_namespace = "true" if create_namespace else "false"
     exclude_objects = kwargs.get("exclude_objects", [])
     exclude_objects = "|".join([json.dumps(e) for e in exclude_objects])
-    output_dir = P("compiled", component, path)
+    output_dir = _output_dir(component, path)
 
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
@@ -43,13 +48,27 @@ _builtin_filters = {
 }
 
 
-def run_builtin_filter(inv, component, f):
-    fname = f["filter"]
-    if fname not in _builtin_filters:
-        click.secho(f"   > [ERR ] Unknown builtin filter {fname}", fg="red")
-        return
-    _builtin_filters[fname](inv, component, f["path"], **f["filterargs"])
+class UnknownBuiltinFilter(ValueError):
+    def __init__(self, filtername):
+        super().__init__(f"Unknown builtin filter: {filtername}")
+        self.filtername = filtername
 
 
-def validate_builtin_filter(f):
-    return "filter" in f and "path" in f and "filterargs" in f
+def run_builtin_filter(
+    inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+):
+    if filterid not in _builtin_filters:
+        raise UnknownBuiltinFilter(filterid)
+    _builtin_filters[filterid](inventory, component, path, **filterargs)
+
+
+def validate_builtin_filter(cn: str, fd: Dict):
+    if fd["filter"] not in _builtin_filters:
+        raise UnknownBuiltinFilter(fd["filter"])
+
+    if "filterargs" not in fd:
+        raise KeyError("Builtin filter is missing required key 'filterargs'")
+
+    fpath = _output_dir(cn, fd["path"])
+    if not fpath.exists():
+        raise ValueError("Builtin filter called on path which doesn't exist")
