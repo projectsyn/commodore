@@ -56,7 +56,7 @@ def _setup(tmp_path, filter, invfilter=False):
         with open(pp_file, "w") as filterf:
             yaml.dump(filter, filterf)
 
-    config = Config()
+    config = Config(work_dir=tmp_path)
     component = Component("test-component", repo_url="https://fake.repo.url")
     config.register_component(component)
     inventory = {

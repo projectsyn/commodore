@@ -19,13 +19,17 @@ from commodore.inventory import Inventory
 
 
 @pytest.fixture
-def data():
+def data(tmp_path):
     """
     Setup test data
     """
 
     return Config(
-        "https://syn.example.com", "token", "ssh://git@git.example.com", False
+        tmp_path,
+        api_url="https://syn.example.com",
+        api_token="token",
+        global_git="ssh://git@git.example.com",
+        verbose=False,
     )
 
 

@@ -130,5 +130,5 @@ def test_run_component_compile_command_postprocess(tmp_path):
 
 def test_no_component_compile_command(tmp_path):
     with pytest.raises(ClickException) as excinfo:
-        compile_component(Config(), tmp_path / "foo", [], [], "./")
+        compile_component(Config(tmp_path), tmp_path / "foo", [], [], "./")
     assert "Could not find component class file" in str(excinfo)
