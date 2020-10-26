@@ -5,13 +5,14 @@ import tempfile
 from textwrap import dedent
 
 import click
+from git import Repo
+from kapitan.resources import inventory_reclass
 
-from commodore.config import Config, Component
+from commodore.config import Config
+from commodore.component import Component
 from commodore.dependency_mgmt import fetch_jsonnet_libs, fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.postprocess import postprocess_components
-from git import Repo
-from kapitan.resources import inventory_reclass
 
 
 libs = [

@@ -9,7 +9,8 @@ from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.resources import inventory_reclass
 
 from . import git
-from .config import Component, Config
+from .config import Config
+from .component import Component
 from .helpers import relsymlink, yaml_load, delsymlink
 
 

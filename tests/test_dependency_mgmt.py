@@ -12,7 +12,8 @@ from pathlib import Path
 from textwrap import dedent
 
 from commodore import dependency_mgmt
-from commodore.config import Config, Component
+from commodore.config import Config
+from commodore.component import Component
 from commodore.helpers import relsymlink
 
 
