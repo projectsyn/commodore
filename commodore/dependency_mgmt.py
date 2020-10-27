@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
+from typing import Dict
 
 import click
 
@@ -76,9 +77,9 @@ def _discover_components(cfg, inventory_path):
     return sorted(components)
 
 
-def _read_component_urls(cfg, component_names):
-    components = []
+def _read_component_urls(cfg: Config, component_names) -> Dict[str, str]:
     component_urls = {}
+
     if cfg.debug:
         click.echo(f"   > Read commodore config file {cfg.config_file}")
     try:
@@ -87,6 +88,12 @@ def _read_component_urls(cfg, component_names):
         raise click.ClickException(
             f"Could not read Commodore configuration: {e}"
         ) from e
+
+    for component_name in component_names:
+        component_urls[
+            component_name
+        ] = f"{cfg.default_component_base}/{component_name}.git"
+
     if commodore_config is None:
         click.secho("Empty Commodore config file", fg="yellow")
     else:
@@ -97,13 +104,8 @@ def _read_component_urls(cfg, component_names):
                 )
                 click.echo(f"     Using URL {component_override['url']}")
             component_urls[component_override["name"]] = component_override["url"]
-    for component_name in component_names:
-        repository_url = component_urls.get(
-            component_name, f"{cfg.default_component_base}/{component_name}.git"
-        )
-        component = Component(component_name, repo_url=repository_url)
-        components.append(component)
-    return components
+
+    return component_urls
 
 
 def fetch_components(cfg):
@@ -119,12 +121,13 @@ def fetch_components(cfg):
     os.makedirs("inventory/classes/defaults", exist_ok=True)
     os.makedirs("dependencies/lib", exist_ok=True)
     component_names = _discover_components(cfg, "inventory")
-    components = _read_component_urls(cfg, component_names)
+    urls = _read_component_urls(cfg, component_names)
     click.secho("Fetching components...", bold=True)
-    for c in components:
+    for name, url in urls.items():
         if cfg.debug:
-            click.echo(f" > Fetching component {c.name}...")
-        c.repo = git.clone_repository(c.repo_url, c.target_directory, cfg)
+            click.echo(f" > Fetching component {name}...")
+        c = Component(name, repo_url=url)
+        c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
 
@@ -269,6 +272,5 @@ def register_components(cfg: Config):
             continue
         if cfg.debug:
             click.echo(f" > {c}")
-        repo = git.init_repository(c)
-        component = Component(c.name, repo=repo, repo_url=repo.remotes.origin.url)
+        component = Component(c.name)
         cfg.register_component(component)

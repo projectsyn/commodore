@@ -6,7 +6,6 @@ import yaml
 from commodore.config import Config
 from commodore.component import Component
 from commodore.postprocess import postprocess_components
-from git import Repo
 from test_component import test_run_component_new_command
 
 
@@ -56,11 +55,7 @@ def _setup(tmp_path, filter):
         yaml.dump(filter, filterf)
 
     config = Config()
-    component = Component(
-        "test-component",
-        repo=Repo(tmp_path / "dependencies" / "test-component"),
-        repo_url="https://fake.repo.url",
-    )
+    component = Component("test-component", repo_url="https://fake.repo.url")
     config.register_component(component)
     inventory = {
         "test-component": {

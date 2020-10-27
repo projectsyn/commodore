@@ -5,7 +5,6 @@ import tempfile
 from textwrap import dedent
 
 import click
-from git import Repo
 from kapitan.resources import inventory_reclass
 
 from commodore.config import Config
@@ -125,9 +124,7 @@ def compile_component(
 
         # prepare inventory and fake component object for postprocess
         inventory = inventory_reclass(temp_dir / "inventory")["nodes"]
-        component = Component(
-            component_name, repo=Repo(component_path), repo_url="https://fake.repo.url/"
-        )
+        component = Component(component_name, repo_url="https://fake.repo.url/")
         config.register_component(component)
         # We change the working directory to the output_path directory here,
         # as postprocess expects to find `compiled/<target>` in the working
