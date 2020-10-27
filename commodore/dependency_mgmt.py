@@ -22,17 +22,16 @@ def create_component_symlinks(cfg, component: Component):
     we want to access some of the file contents through the inventory.
     """
     relsymlink(
-        component.target_directory / "class",
-        f"{component.name}.yml",
-        "inventory/classes/components",
+        component.target_directory / "class" / f"{component.name}.yml",
+        P("inventory/classes/components"),
     )
+
     component_defaults_class = component.target_directory / "class" / "defaults.yml"
     if component_defaults_class.is_file():
         relsymlink(
-            component.target_directory / "class",
-            "defaults.yml",
+            component_defaults_class,
             P("inventory/classes/defaults"),
-            destname=f"{component.name}.yml",
+            dest_name=f"{component.name}.yml",
         )
     else:
         click.secho(
@@ -40,12 +39,13 @@ def create_component_symlinks(cfg, component: Component):
             + "component defaults to 'class/defaults.yml'",
             fg="yellow",
         )
+
     libdir = component.target_directory / "lib"
     if libdir.is_dir():
         for file in os.listdir(libdir):
             if cfg.debug:
                 click.echo(f"     > installing template library: {file}")
-            relsymlink(libdir, file, "dependencies/lib")
+            relsymlink(libdir / file, P("dependencies/lib"))
 
 
 def delete_component_symlinks(cfg, component: Component):
@@ -210,10 +210,9 @@ def fetch_jsonnet_libs(config, libs):
         )
         for file in lib["files"]:
             relsymlink(
-                repo.working_tree_dir,
-                file["libfile"],
-                "dependencies/lib",
-                destname=file["targetfile"],
+                P(repo.working_tree_dir) / file["libfile"],
+                P("dependencies/lib"),
+                dest_name=file["targetfile"],
             )
 
 
