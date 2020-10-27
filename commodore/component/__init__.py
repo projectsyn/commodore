@@ -1,18 +1,52 @@
 from pathlib import Path as P
-from typing import NamedTuple
 
 from git import Repo
 
 
-# Python 3.9 changed typing.NamedTuple to be a function that can be inherited
-# from. This trips up pylint, cf. https://github.com/PyCQA/pylint/issues/3876.
-# pylint: disable=inherit-non-class
-# pylint: disable=too-few-public-methods
-class Component(NamedTuple):
-    name: str
-    repo: Repo
-    repo_url: str
-    version: str = "master"
+class Component:
+    _name: str
+    _repo: Repo
+    _repo_url: str
+    _version: str = "master"
+
+    def __init__(
+        self, name: str, repo: Repo = None, repo_url: str = None, version: str = None
+    ):
+        self._name = name
+        if repo:
+            self._repo = repo
+        if repo_url:
+            self._repo_url = repo_url
+        if version:
+            self._version = version
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def repo(self) -> Repo:
+        return self._repo
+
+    @repo.setter
+    def repo(self, repo: Repo):
+        self._repo = repo
+
+    @property
+    def repo_url(self) -> str:
+        return self._repo_url
+
+    @repo_url.setter
+    def repo_url(self, repo_url: str):
+        self._repo_url = repo_url
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @version.setter
+    def version(self, version: str):
+        self._version = version
 
     @property
     def target_directory(self) -> P:

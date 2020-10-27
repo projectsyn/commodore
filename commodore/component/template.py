@@ -80,9 +80,7 @@ class ComponentTemplater:
 
     def create(self):
         component = Component(
-            name=self.slug,
-            repo=None,
-            version="master",
+            self.slug,
             repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
         )
         if component.target_directory.exists():
@@ -99,7 +97,7 @@ class ComponentTemplater:
         )
 
         repo = git.create_repository(component.target_directory)
-        component = component._replace(repo=repo)
+        component.repo = repo
         git.add_remote(repo, "origin", component.repo_url)
         index = repo.index
         index.add("*")
@@ -130,11 +128,7 @@ class ComponentTemplater:
             click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 
     def delete(self):
-        component = Component(
-            name=self.slug,
-            repo=None,
-            repo_url="",
-        )
+        component = Component(self.slug)
 
         if component.target_directory.exists():
 

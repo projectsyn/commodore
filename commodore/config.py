@@ -77,18 +77,6 @@ class Config:
     def register_component(self, component: Component):
         self._components[component.name] = component
 
-    def set_component_version(self, component_name, version):
-        c = self._components[component_name]
-        c = c._replace(version=version)
-        self._components[component_name] = c
-        return c
-
-    def set_repo_url(self, component_name, repo_url):
-        c = self._components[component_name]
-        c = c._replace(repo_url=repo_url)
-        self._components[component_name] = c
-        return c
-
     def get_component_repo(self, component_name):
         return self._components[component_name].repo
 
