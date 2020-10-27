@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+* Git repository URLs are now retrieved from the Lieutenant API ([#226])
+* Create a Kapitan target for each component ([#227])
+
+  This requires a refactored hierarchy which replaces class includes of
+  components with entries in `applications`.
+  `classes: [ "components.argocd" ]` becomes `applications: [ "argocd" ]`.
+
 ### Fixed
 
 * Replace remaining references to `common.yml` with `commodore.yml` ([#204])
@@ -14,9 +23,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Provide `inventory_path` in Kapitan's argument cache ([#212])
 * Clear Jsonnet lock file ([#215])
 * Also make arrays mergeable with `makeMergeable` helper ([#217])
-
-### Changed
-- Git repository URLs are now retrieved from the Lieutenant API ([#226])
 
 ## [v0.3.0] - 2020-10-01
 
@@ -239,3 +245,4 @@ Initial implementation
 [#215]: https://github.com/projectsyn/commodore/pull/215
 [#217]: https://github.com/projectsyn/commodore/pull/217
 [#226]: https://github.com/projectsyn/commodore/pull/226
+[#227]: https://github.com/projectsyn/commodore/pull/227

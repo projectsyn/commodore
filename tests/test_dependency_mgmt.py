@@ -4,6 +4,7 @@ Unit-tests for dependency management
 
 import os
 import click
+import git
 import pytest
 import json
 from unittest.mock import patch
@@ -207,3 +208,22 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
             data["dependencies"][0]["version"]
             != "57b4365eacda291b82e0d55ba7eec573a8198dda"
         )
+
+
+def test_register_components(data: Config, tmp_path: Path):
+    os.chdir(tmp_path)
+    component_dirs = ["foo", "bar", "baz"]
+    other_dirs = ["lib", "libs"]
+    for directory in component_dirs + other_dirs:
+        cpath = Path("dependencies", directory)
+        os.makedirs(cpath, exist_ok=True)
+        r = git.Repo.init(cpath)
+        r.create_remote("origin", f"ssh://git@example.com/git/{directory}")
+
+    dependency_mgmt.register_components(data)
+
+    component_names = data.get_components().keys()
+    for c in component_dirs:
+        assert c in component_names
+    for c in other_dirs:
+        assert c not in component_names

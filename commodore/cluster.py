@@ -15,6 +15,9 @@ from .helpers import (
 from .config import Config
 
 
+BOOTSTRAP_TARGET = "cluster"
+
+
 class Cluster:
     _cfg: Config
     _cluster_response: Dict
@@ -99,24 +102,28 @@ def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     return Cluster(cfg, cluster_response, tenant_response)
 
 
-def read_cluster_and_tenant(target: str) -> Tuple[str, str]:
+def read_cluster_and_tenant() -> Tuple[str, str]:
     """
     Reads the cluster and tenant ID from the current target.
     """
-    file = params_file(target)
+    file = params_file()
     if not file.is_file():
-        raise click.ClickException(f"params file for target {target} does not exist")
+        raise click.ClickException(f"params file for {file.stem} does not exist")
 
     data = yaml_load(file)
 
     return (
-        data["parameters"]["cluster"]["name"],
-        data["parameters"]["cluster"]["tenant"],
+        data["parameters"][BOOTSTRAP_TARGET]["name"],
+        data["parameters"][BOOTSTRAP_TARGET]["tenant"],
     )
 
 
-def render_target(target: str, components: Iterable[str]):
-    classes = [f"params.{target}"]
+def render_target(target: str, components: Iterable[str], bootstrap=False):
+    if not bootstrap and target not in components:
+        raise click.ClickException(f"Target {target} is not a component")
+
+    classes = [f"params.{BOOTSTRAP_TARGET}"]
+    parameters = {}
 
     for component in components:
         defaults_file = P("inventory", "classes", "defaults") / f"{component}.yml"
@@ -125,8 +132,24 @@ def render_target(target: str, components: Iterable[str]):
 
     classes.append("global.commodore")
 
+    if not bootstrap:
+        component_file = P("inventory", "classes", "components") / f"{target}.yml"
+        if not component_file.is_file():
+            raise click.ClickException(
+                f"Target rendering failed for {target}: component class is missing"
+            )
+        classes.append(f"components.{target}")
+        parameters = {
+            "kapitan": {
+                "vars": {
+                    "target": target,
+                }
+            }
+        }
+
     return {
         "classes": classes,
+        "parameters": parameters,
     }
 
 
@@ -134,14 +157,15 @@ def target_file(target: str):
     return P("inventory", "targets") / f"{target}.yml"
 
 
-def update_target(cfg: Config, target):
-    click.secho("Updating Kapitan target...", bold=True)
+def update_target(cfg: Config, target: str, bootstrap=False):
+    click.secho(f"Updating Kapitan target for {target}...", bold=True)
     file = target_file(target)
     os.makedirs(file.parent, exist_ok=True)
-    yaml_dump(render_target(target, cfg.get_components().keys()), file)
+    targetdata = render_target(target, cfg.get_components().keys(), bootstrap=bootstrap)
+    yaml_dump(targetdata, file)
 
 
-def render_params(cluster: Cluster, target: str):
+def render_params(cluster: Cluster):
     facts = cluster.facts
     for fact in ["distribution", "cloud"]:
         if fact not in facts or not facts[fact]:
@@ -157,8 +181,7 @@ def render_params(cluster: Cluster, target: str):
 
     data = {
         "parameters": {
-            "target_name": target,
-            "cluster": {
+            BOOTSTRAP_TARGET: {
                 "name": cluster.id,
                 "catalog_url": cluster.catalog_repo_url,
                 "tenant": cluster.tenant,
@@ -177,12 +200,12 @@ def render_params(cluster: Cluster, target: str):
     return data
 
 
-def params_file(target: str):
-    return P("inventory", "classes", "params") / f"{target}.yml"
+def params_file():
+    return P("inventory", "classes", "params", f"{BOOTSTRAP_TARGET}.yml")
 
 
-def update_params(cluster: Cluster, target):
+def update_params(cluster: Cluster):
     click.secho("Updating cluster parameters...", bold=True)
-    file = params_file(target)
+    file = params_file()
     os.makedirs(file.parent, exist_ok=True)
-    yaml_dump(render_params(cluster, target), file)
+    yaml_dump(render_params(cluster), file)

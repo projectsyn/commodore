@@ -24,21 +24,14 @@ Commodore fetches the following dependencies:
 
 === Component discovery
 
-To discover all required components, Commodore searches the inventory for
-includes which start with `components.`. In order to use reclass for the
-discovery, it's run with a special option to
-https://github.com/salt-formulas/reclass/blob/develop/README-extensions.rst#ignore-class-not-found[ignore missing classes].
-This leads to many "[WARNING] Reclass class not found" logs which can be ignored.
-Unless instructed otherwise, Commodore will fetch components from subfolder
-`commodore-components` in the
-xref:reference/cli.adoc#_catalog_compile[global Git base].
+To discover all required components, Commodore reads the https://reclass.pantsfullofunix.net/operations.html#yaml-fs-storage[`applications` array] which is made available by reclass.
+Unless instructed otherwise, Commodore will fetch components from subfolder `commodore-components` in the xref:reference/cli.adoc#_catalog_compile[global Git base].
 
-The file `commodore.yml` in the root of the Global configuration repository
-can be used to override the repository autodiscovery for components.
-The file must contain a key `components` which holds an array of dictionaries
-with keys `name` and `url`.
+The file `commodore.yml` in the root of the Global configuration repository can be used to override the repository autodiscovery for components.
+The file must contain a key `components` which holds an array of dictionaries with keys `name` and `url`.
 Each array entry specifies the repository URL of a single component.
 A sample `commodore.yml` can be found below.
+The file `commodore.yml` is also used to define the xref:commodore:ROOT:reference:hierarchy.adoc[Commodore class hierarchy].
 
 .commodore.yml
 [source,yaml]
@@ -101,15 +94,12 @@ configuration hierarchy.
 == Catalog Compilation
 
 Commodore uses https://kapitan.dev[Kapitan] to compile the cluster catalog.
+Commodore defines a https://kapitan.dev/inventory/#inventory-targets[Kapitan target] per component.
 Kapitan is called with a few options enabled.
-Most importantly, Kapitan is configured to support fetching dependencies of
-components, such as Helm charts.
-Further, Kapitan is configured with an extended search path to support
-component libraries and the builtin `commodore.libjsonnet`.
-Finally, Kapitan is also configured to search for secret reference files in
-`catalog/refs` during compilation.
-See section <<_secrets_management>> for more details on the secrets management
-implemented with Commodore and Kapitan.
+Most importantly, Kapitan is configured to support fetching dependencies of components, such as Helm charts.
+Further, Kapitan is configured with an extended search path to support component libraries and the builtin `commodore.libjsonnet`.
+Finally, Kapitan is also configured to search for secret reference files in `catalog/refs` during compilation.
+See section <<_secrets_management>> for more details on the secrets management implemented with Commodore and Kapitan.
 
 === Postprocessing filters
 

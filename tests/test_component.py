@@ -17,17 +17,9 @@ def setup_directory(tmp_path: P):
     os.makedirs(P("inventory", "classes", "defaults"), exist_ok=True)
     os.makedirs(P("dependencies", "lib"), exist_ok=True)
     os.makedirs(P("inventory", "targets"), exist_ok=True)
-    targetyml = P("inventory", "targets", "cluster.yml")
-    with open(targetyml, "w") as file:
-        file.write(
-            """classes:
-        - test"""
-        )
     jsonnetfile = P("jsonnetfile.json")
     with open(jsonnetfile, "w") as jf:
         json.dump({"version": 1, "dependencies": [], "legacyImports": True}, jf)
-
-    return targetyml
 
 
 def test_run_component_new_command(tmp_path: P):
@@ -35,7 +27,7 @@ def test_run_component_new_command(tmp_path: P):
     Run the component new command
     """
 
-    targetyml = setup_directory(tmp_path)
+    setup_directory(tmp_path)
 
     component_name = "test-component"
     exit_status = call(
@@ -52,7 +44,7 @@ def test_run_component_new_command(tmp_path: P):
         P("docs", "modules", "ROOT", "pages", "references", "parameters.adoc"),
         P("docs", "modules", "ROOT", "pages", "index.adoc"),
     ]:
-        assert os.path.exists(P("dependencies", component_name, file))
+        assert P("dependencies", component_name, file).exists()
     for file in [
         P("inventory", "classes", "components", f"{component_name}.yml"),
         P("inventory", "classes", "defaults", f"{component_name}.yml"),
@@ -60,10 +52,13 @@ def test_run_component_new_command(tmp_path: P):
         P("vendor", component_name),
     ]:
         assert file.is_symlink()
+    targetyml = P("inventory", "targets", f"{component_name}.yml")
+    assert targetyml.exists()
     with open(targetyml) as file:
         target = yaml.safe_load(file)
-        assert target["classes"][0] == f"defaults.{component_name}"
+        assert f"defaults.{component_name}" in target["classes"]
         assert target["classes"][-1] == f"components.{component_name}"
+        assert target["parameters"]["kapitan"]["vars"]["target"] == component_name
     # Check that there are no uncommited files in the component repo
     repo = Repo(P("dependencies", component_name))
     assert not repo.is_dirty()
@@ -119,7 +114,7 @@ def test_run_component_new_then_delete(tmp_path: P):
     """
     Create a new component, then immediately delete it.
     """
-    targetyml = setup_directory(tmp_path)
+    setup_directory(tmp_path)
 
     component_name = "test-component"
     exit_status = call(
@@ -144,11 +139,8 @@ def test_run_component_new_then_delete(tmp_path: P):
     ]:
         assert not f.exists()
 
-    with open(targetyml) as file:
-        target = yaml.safe_load(file)
-        classes = target["classes"]
-        assert f"defaults.{component_name}" not in classes
-        assert f"components.{component_name}" not in classes
+    targetyml = P("inventory", "targets", f"{component_name}.yml")
+    assert not targetyml.exists()
 
 
 def test_deleting_inexistant_component(tmp_path: P):

@@ -9,11 +9,14 @@ from .builtin_filters import run_builtin_filter
 from .inventory import resolve_inventory_vars, InventoryError
 
 
-def postprocess_components(config, inventory, target, components):
+def postprocess_components(config, kapitan_inventory, components):
     click.secho("Postprocessing...", bold=True)
     for cn, c in components.items():
-        if f"components.{cn}" not in inventory["classes"]:
+        inventory = kapitan_inventory.get(cn)
+        if not inventory:
+            click.echo(f" > No target exists for component {cn}, skipping...")
             continue
+
         repodir = P(c.repo.working_tree_dir)
         filterdir = repodir / "postprocess"
         if filterdir.is_dir():
@@ -44,10 +47,11 @@ def postprocess_components(config, inventory, target, components):
                     )
                     continue
                 if f["type"] == "jsonnet":
-                    run_jsonnet_filter(inventory, cn, target, filterdir, f)
+                    run_jsonnet_filter(inventory, cn, filterdir, f)
                 elif f["type"] == "builtin":
-                    run_builtin_filter(inventory, cn, target, f)
+                    run_builtin_filter(inventory, cn, f)
                 else:
                     click.secho(
-                        f"   > [WARN] unknown builtin filter {f['filter']}", fg="yellow"
+                        f"   > [WARN] unknown builtin filter {f['filter']}",
+                        fg="yellow",
                     )

@@ -71,20 +71,16 @@ def delete_component_symlinks(cfg, component: Component):
 
 def _discover_components(cfg, inventory_path):
     """
-    Discover components in `inventory_path/`. Parse all classes found in
-    inventory_path and look for class includes starting with `components.`.
+    Discover components in `inventory_path/` by extracting all entries from
+    the reclass applications dictionary.
     """
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass(inventory_path, ignore_class_notfound=True)[
-        "nodes"
-    ]["cluster"]
+    kapitan_applications = inventory_reclass(inventory_path)["applications"]
     components = set()
-    for kls in kapitan_inventory["classes"]:
-        if kls.startswith("components."):
-            component = kls.split(".")[1]
-            if cfg.debug:
-                click.echo(f"   > Found component {component}")
-            components.add(component)
+    for component in kapitan_applications.keys():
+        if cfg.debug:
+            click.echo(f"   > Found component {component}")
+        components.add(component)
     return sorted(components)
 
 
@@ -275,3 +271,25 @@ def fetch_jsonnet_libraries(cwd: P = None):
         raise click.ClickException(
             "the jsonnet-bundler executable `jb` could not be found"
         ) from e
+
+
+def register_components(cfg: Config):
+    """
+    Register all components which are currently checked out in dependencies/
+    in the Commodore config.
+    """
+    click.secho("Registering components...", bold=True)
+    for c in P("dependencies").iterdir():
+        # Skip jsonnet libs when collecting components
+        if c.name == "lib" or c.name == "libs":
+            continue
+        if cfg.debug:
+            click.echo(f" > {c}")
+        repo = git.init_repository(c)
+        component = Component(
+            name=c.name,
+            repo=repo,
+            version="master",
+            repo_url=repo.remotes.origin.url,
+        )
+        cfg.register_component(component)
