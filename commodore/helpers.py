@@ -108,8 +108,8 @@ def clean_working_tree(config: Config):
     else:
         rmtree = shutil.rmtree
     click.secho("Cleaning working tree", bold=True)
-    rmtree("inventory", ignore_errors=True)
-    rmtree("dependencies", ignore_errors=True)
+    rmtree(config.inventory.inventory_dir, ignore_errors=True)
+    rmtree(config.inventory.dependencies_dir, ignore_errors=True)
     rmtree("compiled", ignore_errors=True)
     rmtree("catalog", ignore_errors=True)
 

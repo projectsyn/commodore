@@ -20,7 +20,7 @@ from commodore.dependency_mgmt import (
     fetch_jsonnet_libraries,
     register_components,
 )
-
+from commodore.inventory import Inventory
 
 slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
@@ -130,6 +130,7 @@ class ComponentTemplater:
             click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 
     def delete(self):
+        inv = Inventory()
         if component_dir(self.slug).exists():
             component = Component(self.slug)
 
@@ -142,8 +143,7 @@ class ComponentTemplater:
             delete_component_symlinks(self.config, component)
             rmtree(component.target_directory)
 
-            targetfile = P("inventory", "targets", f"{self.slug}.yml")
-            os.unlink(targetfile)
+            os.unlink(inv.target_file(component))
             remove_from_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
             # Fetch jsonnet libs after removing component from jsonnetfile to
             # remove symlink to removed component in vendor/

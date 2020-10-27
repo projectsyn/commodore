@@ -1,9 +1,12 @@
 from pathlib import Path as P
 from commodore.component import Component
+from .inventory import Inventory
 
 
 # pylint: disable=too-many-instance-attributes
 class Config:
+    _inventory: Inventory
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -27,6 +30,7 @@ class Config:
         self.push = None
         self.interactive = None
         self.force = False
+        self._inventory = Inventory()
 
     @property
     def verbose(self):
@@ -42,7 +46,7 @@ class Config:
 
     @property
     def config_file(self):
-        return "inventory/classes/global/commodore.yml"
+        return self._inventory.global_config_dir / "commodore.yml"
 
     @property
     def default_component_base(self):
@@ -67,6 +71,10 @@ class Config:
                 else:
                     raise
             self._api_token = api_token.strip()
+
+    @property
+    def inventory(self):
+        return self._inventory
 
     def update_verbosity(self, verbose):
         self._verbose += verbose
