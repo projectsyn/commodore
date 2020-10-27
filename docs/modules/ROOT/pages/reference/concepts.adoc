@@ -42,11 +42,12 @@ https://kapitan.dev/inventory/#inventory-classes[classes] which define how to
 install the software. The classes must be included somewhere in the Kapitan
 inventory to install the software.
 
-Additionally, components can provide postprocessing filters which
-are applied on the compiled Kapitan catalog and Jsonnet libraries which can be
-used by other components.
-If a component defines postprocessing filters, it must have a file `postprocess/filters.yml`.
-This file defines which postprocessing filters Commodore should apply.
+Components can optionally provide Jsonnet libraries which can be used by other components.
+To allow Commodore to make component libraries available to other components, they must be placed in directory `lib/`.
+
+Components can define and use postprocessing filters which are applied on the result of the component's compiled Kapitan catalog.
+Components define postprocessing filters in the <<_inventory,inventory>> in key `parameters.commodore.postprocess.filters`.
+Details of the filter definition format and the postprocessing process can be found in the xref:commodore:ROOT:reference/architecture.adoc#_postprocessing_filters[architecture documentation].
 
 Component parameters expose a limited set of configuration options for the
 software managed by the component.
