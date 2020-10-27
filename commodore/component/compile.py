@@ -161,22 +161,15 @@ def _prepare_fake_inventory(temp_dir: P, component_name, component_path, value_f
     dependencies_path = temp_dir / "dependencies"
     dependencies_path.mkdir(exist_ok=True)
     # Create class symlink
-    relsymlink(
-        component_class_file.parent,
-        component_class_file.name,
-        temp_dir / "inventory/classes/components",
-    )
+    relsymlink(component_class_file, temp_dir / "inventory/classes/components")
     # Create defaults symlink
     relsymlink(
-        component_defaults_file.parent,
-        component_defaults_file.name,
+        component_defaults_file,
         temp_dir / "inventory/classes/defaults",
-        f"{component_name}.yml",
+        dest_name=f"{component_name}.yml",
     )
     # Create component symlink
-    relsymlink(
-        component_path.parent, component_path.name, dependencies_path, component_name
-    )
+    relsymlink(component_path, dependencies_path, component_name)
     # Create value symlinks
     for file in value_files:
-        relsymlink(file.parent, file.name, temp_dir / "inventory/classes")
+        relsymlink(file.parent / file.name, temp_dir / "inventory/classes")
