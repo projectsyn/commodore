@@ -1,4 +1,8 @@
 from pathlib import Path as P
+from typing import Dict
+
+import click
+
 from commodore.component import Component
 from .inventory import Inventory
 
@@ -23,6 +27,7 @@ class Config:
         self.global_git_base = global_git
         self._components = {}
         self._config_repos = {}
+        self._component_aliases = {}
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
@@ -93,3 +98,17 @@ class Config:
 
     def register_config(self, level, repo):
         self._config_repos[level] = repo
+
+    def get_component_aliases(self):
+        return self._component_aliases
+
+    def register_component_aliases(self, aliases: Dict[str, str]):
+        self._component_aliases = aliases
+
+    def verify_component_aliases(self, cluster_parameters: Dict):
+        for alias, cn in self._component_aliases.items():
+            ckey = cn.replace("-", "_")
+            if "_instance" not in cluster_parameters[ckey]:
+                raise click.ClickException(
+                    f"Component {cn} with alias {alias} does not support instantiation."
+                )

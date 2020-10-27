@@ -110,6 +110,7 @@ class ComponentTemplater:
         git.commit(repo, "Initial commit", self.config)
 
         register_components(self.config)
+        self.config.register_component(component)
 
         click.echo(" > Installing component")
         try:
