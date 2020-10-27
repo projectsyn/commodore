@@ -1,18 +1,18 @@
 import datetime
+import json
 import os
+import re
 
 from pathlib import Path as P
 from shutil import rmtree
 
 import click
-import json
-import re
 
 from cookiecutter.main import cookiecutter
 
 from commodore import git, __install_dir__
 from commodore import config as CommodoreConfig
-from commodore.config import Component
+from commodore.component import Component
 from commodore.cluster import update_target
 from commodore.dependency_mgmt import (
     create_component_symlinks,
@@ -27,13 +27,13 @@ slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
 class ComponentTemplater:
     # pylint: disable=too-many-instance-attributes
-    config: CommodoreConfig
-    slug: str
+    config: CommodoreConfig.Config
+    _slug: str
     library: bool
     post_process: bool
     github_owner: str
     copyright_holder: str
-    today: datetime
+    today: datetime.date
 
     def __init__(self, config, slug):
         self.config = config

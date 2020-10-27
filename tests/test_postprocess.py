@@ -3,7 +3,8 @@ Tests for postprocessing
 """
 import os
 import yaml
-from commodore.config import Config, Component
+from commodore.config import Config
+from commodore.component import Component
 from commodore.postprocess import postprocess_components
 from git import Repo
 from test_component import test_run_component_new_command
