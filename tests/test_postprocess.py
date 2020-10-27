@@ -58,9 +58,8 @@ def _setup(tmp_path, filter):
     config = Config()
     component = Component(
         "test-component",
-        Repo(tmp_path / "dependencies" / "test-component"),
-        "https://fake.repo.url",
-        "master",
+        repo=Repo(tmp_path / "dependencies" / "test-component"),
+        repo_url="https://fake.repo.url",
     )
     config.register_component(component)
     inventory = {

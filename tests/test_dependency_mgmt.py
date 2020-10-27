@@ -46,24 +46,14 @@ def test_override_symlink(tmp_path: Path):
 
 def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
     os.chdir(tmp_path)
-    component = Component(
-        name="my-component",
-        repo=None,
-        version="master",
-        repo_url=None,
-    )
+    component = Component("my-component")
     with pytest.raises(FileNotFoundError):
         dependency_mgmt.create_component_symlinks(data, component)
 
 
 def test_create_legacy_component_symlinks(capsys, data: Config, tmp_path):
     os.chdir(tmp_path)
-    component = Component(
-        name="my-component",
-        repo=None,
-        version="master",
-        repo_url=None,
-    )
+    component = Component("my-component")
     target_dir = Path("inventory/classes/components")
     target_dir.mkdir(parents=True, exist_ok=True)
     dependency_mgmt.create_component_symlinks(data, component)
@@ -74,12 +64,7 @@ def test_create_legacy_component_symlinks(capsys, data: Config, tmp_path):
 
 def test_create_component_symlinks(capsys, data: Config, tmp_path):
     os.chdir(tmp_path)
-    component = Component(
-        name="my-component",
-        repo=None,
-        version="master",
-        repo_url=None,
-    )
+    component = Component("my-component")
     class_dir = Path("dependencies") / component.name / "class"
     class_dir.mkdir(parents=True, exist_ok=True)
     (class_dir / f"{component.name}.yml").touch()
@@ -139,15 +124,7 @@ def test_fetch_components(
         class_dir.mkdir(parents=True, exist_ok=True)
         (class_dir / "defaults.yml").touch(exist_ok=True)
     patch_discover.return_value = components
-    patch_urls.return_value = [
-        Component(
-            name=c,
-            repo=None,
-            repo_url="mock-url",
-            version="master",
-        )
-        for c in components
-    ]
+    patch_urls.return_value = [Component(c, repo_url="mock-url") for c in components]
     dependency_mgmt.fetch_components(data)
     print(data._components)
     for component in components:

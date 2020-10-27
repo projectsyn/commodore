@@ -110,12 +110,7 @@ def _read_component_urls(cfg, component_names):
         repository_url = component_urls.get(
             component_name, f"{cfg.default_component_base}/{component_name}.git"
         )
-        component = Component(
-            name=component_name,
-            repo=None,
-            version="master",
-            repo_url=repository_url,
-        )
+        component = Component(component_name, repo_url=repository_url)
         components.append(component)
     return components
 
@@ -138,8 +133,7 @@ def fetch_components(cfg):
     for c in components:
         if cfg.debug:
             click.echo(f" > Fetching component {c.name}...")
-        repo = git.clone_repository(c.repo_url, c.target_directory, cfg)
-        c = c._replace(repo=repo)
+        c.repo = git.clone_repository(c.repo_url, c.target_directory, cfg)
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
 
@@ -164,13 +158,12 @@ def set_component_overrides(cfg, versions):
             if cfg.debug:
                 click.echo(f" > Set URL for {component.name}: {url}")
             needs_checkout = git.update_remote(component.repo, url)
-            component = cfg.set_repo_url(component_name, url)
+            component.repo_url = url
         if "version" in overrides:
-            version = overrides["version"]
+            component.version = overrides["version"]
             if cfg.debug:
-                click.echo(f" > Set version for {component.name}: {version}")
+                click.echo(f" > Set version for {component.name}: {component.version}")
             needs_checkout = True
-            component = cfg.set_component_version(component_name, version)
         if needs_checkout:
             try:
                 git.checkout_version(component.repo, component.version)
@@ -286,10 +279,5 @@ def register_components(cfg: Config):
         if cfg.debug:
             click.echo(f" > {c}")
         repo = git.init_repository(c)
-        component = Component(
-            name=c.name,
-            repo=repo,
-            version="master",
-            repo_url=repo.remotes.origin.url,
-        )
+        component = Component(c.name, repo=repo, repo_url=repo.remotes.origin.url)
         cfg.register_component(component)
