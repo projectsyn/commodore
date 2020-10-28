@@ -119,7 +119,7 @@ def test_run_component_compile_command_postprocess(tmp_path):
         assert target["metadata"]["namespace"] == "test-component-ns"
 
 
-def test_no_component_compile_command():
+def test_no_component_compile_command(tmp_path):
     with pytest.raises(ClickException) as excinfo:
-        compile_component(Config(), "./", [], [], "./")
+        compile_component(Config(), tmp_path / "foo", [], [], "./")
     assert "Could not find component class file" in str(excinfo)

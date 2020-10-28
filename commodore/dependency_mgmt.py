@@ -22,22 +22,17 @@ def create_component_symlinks(cfg, component: Component):
     The actual code for components lives in the dependencies/ subdirectory, but
     we want to access some of the file contents through the inventory.
     """
+    relsymlink(component.class_file, P("inventory/classes/components"))
     relsymlink(
-        component.target_directory / "class" / f"{component.name}.yml",
-        P("inventory/classes/components"),
-    )
-    relsymlink(
-        component.target_directory / "class" / "defaults.yml",
+        component.defaults_file,
         P("inventory/classes/defaults"),
         dest_name=f"{component.name}.yml",
     )
 
-    libdir = component.target_directory / "lib"
-    if libdir.is_dir():
-        for file in os.listdir(libdir):
-            if cfg.debug:
-                click.echo(f"     > installing template library: {file}")
-            relsymlink(libdir / file, P("dependencies/lib"))
+    for file in component.lib_files:
+        if cfg.debug:
+            click.echo(f"     > installing template library: {file}")
+        relsymlink(file, P("dependencies/lib"))
 
 
 def delete_component_symlinks(cfg, component: Component):
@@ -55,11 +50,8 @@ def delete_component_symlinks(cfg, component: Component):
     delsymlink(component_default_class, cfg.debug)
 
     # If the component has a lib/ subdir, remove the links to the dependencies/lib.
-    libdir = component.target_directory / "lib"
-
-    if libdir.is_dir():
-        for f in os.listdir(libdir):
-            delsymlink(P(f), cfg.debug)
+    for file in component.lib_files:
+        delsymlink(file, cfg.debug)
 
 
 def _discover_components(cfg, inventory_path):
