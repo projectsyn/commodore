@@ -20,7 +20,7 @@ lint_mypy:
 lint_black:
 	$(TOX_COMMAND) -e black
 
-lint: lint_flake8 lint_pylint lint_bandit lint_mypy link_black
+lint: lint_flake8 lint_pylint lint_bandit lint_mypy lint_black
 
 .PHONY: test_py36 test_py37 test_py38
 
