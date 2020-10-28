@@ -255,7 +255,7 @@ def write_jsonnetfile(file: P, deps: Iterable):
         f.write(json.dumps(data, indent=4))
 
 
-def fetch_jsonnet_libraries(cwd: P = P(".")):
+def fetch_jsonnet_libraries(cwd: P):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """
@@ -319,7 +319,9 @@ def register_components(cfg: Config):
     in the Commodore config.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(cfg, "inventory")
+    components, component_aliases = _discover_components(
+        cfg, cfg.inventory.inventory_dir
+    )
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:

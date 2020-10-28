@@ -60,6 +60,10 @@ class Config:
         return self._inventory.global_config_dir / "commodore.yml"
 
     @property
+    def jsonnet_file(self) -> P:
+        return self._work_dir / "jsonnetfile.json"
+
+    @property
     def default_component_base(self):
         return f"{self.global_git_base}/commodore-components"
 

@@ -147,7 +147,7 @@ def compile(config, cluster_id):
 
     if not config.local:
         write_jsonnetfile(P("jsonnetfile.json"), jsonnet_dependencies(config))
-        fetch_jsonnet_libraries()
+        fetch_jsonnet_libraries(config.work_dir)
 
     clean_catalog(catalog_repo)
 
