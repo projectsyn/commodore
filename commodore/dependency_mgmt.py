@@ -25,20 +25,11 @@ def create_component_symlinks(cfg, component: Component):
         component.target_directory / "class" / f"{component.name}.yml",
         P("inventory/classes/components"),
     )
-
-    component_defaults_class = component.target_directory / "class" / "defaults.yml"
-    if component_defaults_class.is_file():
-        relsymlink(
-            component_defaults_class,
-            P("inventory/classes/defaults"),
-            dest_name=f"{component.name}.yml",
-        )
-    else:
-        click.secho(
-            "     > Old-style component detected. Please move "
-            + "component defaults to 'class/defaults.yml'",
-            fg="yellow",
-        )
+    relsymlink(
+        component.target_directory / "class" / "defaults.yml",
+        P("inventory/classes/defaults"),
+        dest_name=f"{component.name}.yml",
+    )
 
     libdir = component.target_directory / "lib"
     if libdir.is_dir():
