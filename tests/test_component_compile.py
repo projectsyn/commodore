@@ -69,14 +69,11 @@ def test_run_component_compile_command(tmp_path):
     )
     assert exit_status == 0
     assert os.path.exists(
-        tmp_path
-        / "testdir/standalone/compiled"
-        / component_name
-        / f"apps/{component_name}.yaml"
+        tmp_path / "testdir/compiled" / component_name / f"apps/{component_name}.yaml"
     )
     rendered_yaml = (
         tmp_path
-        / "testdir/standalone/compiled"
+        / "testdir/compiled"
         / component_name
         / component_name
         / "test_service_account.yaml"
@@ -106,14 +103,11 @@ def test_run_component_compile_command_postprocess(tmp_path):
     )
     assert exit_status == 0
     assert os.path.exists(
-        tmp_path
-        / "testdir/standalone/compiled"
-        / component_name
-        / f"apps/{component_name}.yaml"
+        tmp_path / "testdir/compiled" / component_name / f"apps/{component_name}.yaml"
     )
     rendered_yaml = (
         tmp_path
-        / "testdir/standalone/compiled"
+        / "testdir/compiled"
         / component_name
         / component_name
         / "test_service_account.yaml"

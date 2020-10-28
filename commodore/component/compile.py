@@ -32,7 +32,7 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths]
     search_paths.append("./dependencies/")
     search_paths.append(component_path / "vendor")
-    output_path = P(output_path, "standalone").resolve()
+    output_path = P(output_path).resolve()
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace("component-", "")
 
