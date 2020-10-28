@@ -12,7 +12,7 @@ from cookiecutter.main import cookiecutter
 
 from commodore import git, __install_dir__
 from commodore import config as CommodoreConfig
-from commodore.component import Component
+from commodore.component import Component, component_dir
 from commodore.cluster import update_target
 from commodore.dependency_mgmt import (
     create_component_symlinks,
@@ -79,14 +79,12 @@ class ComponentTemplater:
         }
 
     def create(self):
-        component = Component(
-            self.slug,
-            repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
-        )
-        if component.target_directory.exists():
+        path = component_dir(self.slug)
+        if path.exists():
             raise click.ClickException(
-                f"Unable to add component {self.name}: {component.target_directory} already exists."
+                f"Unable to add component {self.name}: {path} already exists."
             )
+
         click.secho(f"Adding component {self.name}...", bold=True)
         component_template = __install_dir__ / "component-template"
         cookiecutter(
@@ -96,9 +94,13 @@ class ComponentTemplater:
             extra_context=self.cookiecutter_args(),
         )
 
-        repo = git.create_repository(component.target_directory)
-        component.repo = repo
-        git.add_remote(repo, "origin", component.repo_url)
+        component = Component(
+            self.slug,
+            repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
+            force_init=True,
+        )
+
+        repo = component.repo
         index = repo.index
         index.add("*")
         index.add(".github")
@@ -128,9 +130,8 @@ class ComponentTemplater:
             click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 
     def delete(self):
-        component = Component(self.slug)
-
-        if component.target_directory.exists():
+        if component_dir(self.slug).exists():
+            component = Component(self.slug)
 
             if not self.config.force:
                 click.confirm(

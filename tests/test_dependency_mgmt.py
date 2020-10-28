@@ -93,34 +93,43 @@ def test_read_component_urls(data: Config, tmp_path):
         )
 
     components = dependency_mgmt._read_component_urls(data, component_names)
-    override = components[0]
-    default = components[1]
-    assert override.repo_url == override_url
-    assert default.repo_url == f"{data.default_component_base}/{default.name}.git"
+
+    assert components["component-overwritten"] == override_url
+    assert (
+        components["component-default"]
+        == f"{data.default_component_base}/component-default.git"
+    )
 
 
-@patch("commodore.dependency_mgmt._discover_components")
 @patch("commodore.dependency_mgmt._read_component_urls")
-@patch("commodore.git.clone_repository")
-def test_fetch_components(
-    patch_discover, patch_urls, patch_clone, data: Config, tmp_path
-):
+@patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
     os.chdir(tmp_path)
     components = ["component-one", "component-two"]
+    patch_discover.return_value = components
+    patch_urls.return_value = {}
+
     # Prepare minimum component directories
+    upstream = Path("upstream")
     for component in components:
-        class_dir = Path("dependencies") / component / "class"
+        repo_path = upstream / component
+        patch_urls.return_value[component] = f"file://#{repo_path.resolve()}"
+        repo = git.Repo.init(repo_path)
+
+        class_dir = repo_path / "class"
         class_dir.mkdir(parents=True, exist_ok=True)
         (class_dir / "defaults.yml").touch(exist_ok=True)
-    patch_discover.return_value = components
-    patch_urls.return_value = [Component(c, repo_url="mock-url") for c in components]
+
+        repo.index.add(["class/defaults.yml"])
+        repo.index.commit("component defaults")
+
     dependency_mgmt.fetch_components(data)
-    print(data._components)
+
     for component in components:
         assert component in data._components
         assert (Path("inventory/classes/components") / f"{component}.yml").is_symlink()
         assert (Path("inventory/classes/defaults") / f"{component}.yml").is_symlink()
-        assert data.get_component_repo(component) is not None
+        assert Path("dependencies", component).is_dir()
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):

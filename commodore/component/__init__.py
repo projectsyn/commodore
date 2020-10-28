@@ -6,19 +6,28 @@ from git import Repo
 class Component:
     _name: str
     _repo: Repo
-    _repo_url: str
     _version: str = "master"
 
     def __init__(
-        self, name: str, repo: Repo = None, repo_url: str = None, version: str = None
+        self,
+        name: str,
+        repo_url: str = None,
+        version: str = None,
+        force_init: bool = False,
     ):
         self._name = name
-        if repo:
-            self._repo = repo
+        self._init_repo(force_init)
         if repo_url:
-            self._repo_url = repo_url
+            self.repo_url = repo_url
         if version:
-            self._version = version
+            self.version = version
+
+    def _init_repo(self, force: bool):
+        path = self.target_directory
+        if not force and path.exists():
+            self._repo = Repo(path)
+        else:
+            self._repo = Repo.init(path)
 
     @property
     def name(self) -> str:
@@ -28,17 +37,16 @@ class Component:
     def repo(self) -> Repo:
         return self._repo
 
-    @repo.setter
-    def repo(self, repo: Repo):
-        self._repo = repo
-
     @property
     def repo_url(self) -> str:
-        return self._repo_url
+        return self._repo.remote().url
 
     @repo_url.setter
-    def repo_url(self, repo_url: str):
-        self._repo_url = repo_url
+    def repo_url(self, url: str):
+        try:
+            self._repo.remote().set_url(url)
+        except ValueError:
+            self._repo.create_remote("origin", url)
 
     @property
     def version(self) -> str:
@@ -50,4 +58,14 @@ class Component:
 
     @property
     def target_directory(self) -> P:
-        return P("dependencies") / self.name
+        return component_dir(self.name)
+
+    def checkout(self):
+        self._repo.remote().fetch()
+        self._repo.git.checkout(self.version)
+        if not self._repo.head.is_detached:
+            self._repo.git.pull()
+
+
+def component_dir(name: str) -> P:
+    return P("dependencies") / name
