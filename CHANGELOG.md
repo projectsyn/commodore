@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Clear Jsonnet lock file ([#215])
 * Also make arrays mergeable with `makeMergeable` helper ([#217])
 
+### Removed
+
+* Check for "Old-style" components ([#237])
+
 ## [v0.3.0] - 2020-10-01
 
 ### Added
@@ -246,3 +250,4 @@ Initial implementation
 [#217]: https://github.com/projectsyn/commodore/pull/217
 [#226]: https://github.com/projectsyn/commodore/pull/226
 [#227]: https://github.com/projectsyn/commodore/pull/227
+[#237]: https://github.com/projectsyn/commodore/pull/237
