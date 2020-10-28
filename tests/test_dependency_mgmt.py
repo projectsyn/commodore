@@ -51,17 +51,6 @@ def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
         dependency_mgmt.create_component_symlinks(data, component)
 
 
-def test_create_legacy_component_symlinks(capsys, data: Config, tmp_path):
-    os.chdir(tmp_path)
-    component = Component("my-component")
-    target_dir = Path("inventory/classes/components")
-    target_dir.mkdir(parents=True, exist_ok=True)
-    dependency_mgmt.create_component_symlinks(data, component)
-    capture = capsys.readouterr()
-    assert (target_dir / f"{component.name}.yml").is_symlink()
-    assert "Old-style component detected." in capture.out
-
-
 def test_create_component_symlinks(capsys, data: Config, tmp_path):
     os.chdir(tmp_path)
     component = Component("my-component")

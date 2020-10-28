@@ -184,6 +184,10 @@ def relsymlink(src: P, dest_dir: P, dest_name: Optional[str] = None):
     # https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.relative_to
     link_src = os.path.relpath(src, start=dest_dir)
     link_dst = dest_dir / dest_name
+    if not P(link_src).exists():
+        click.ClickException(
+            f"Can't link {link_src} to {link_dst}. Source does not exist."
+        )
     if link_dst.exists():
         os.remove(link_dst)
     os.symlink(link_src, link_dst)
