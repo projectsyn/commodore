@@ -71,7 +71,7 @@ def test_component_file(tmp_path: P):
         str(Inventory().component_file("foo")) == "inventory/classes/components/foo.yml"
     )
     assert (
-        str(Inventory().component_file(Component("baz")))
+        str(Inventory().component_file(Component("baz", work_dir=tmp_path)))
         == "inventory/classes/components/baz.yml"
     )
     assert (
@@ -83,7 +83,7 @@ def test_component_file(tmp_path: P):
 def test_defaults_file(tmp_path: P):
     assert str(Inventory().defaults_file("foo")) == "inventory/classes/defaults/foo.yml"
     assert (
-        str(Inventory().defaults_file(Component("baz")))
+        str(Inventory().defaults_file(Component("baz", work_dir=tmp_path)))
         == "inventory/classes/defaults/baz.yml"
     )
     assert (
@@ -94,7 +94,10 @@ def test_defaults_file(tmp_path: P):
 
 def test_target_file(tmp_path: P):
     assert str(Inventory().target_file("foo")) == "inventory/targets/foo.yml"
-    assert str(Inventory().target_file(Component("baz"))) == "inventory/targets/baz.yml"
+    assert (
+        str(Inventory().target_file(Component("baz", work_dir=tmp_path)))
+        == "inventory/targets/baz.yml"
+    )
     assert (
         str(Inventory(work_dir=P("./baz")).target_file("bar"))
         == "baz/inventory/targets/bar.yml"

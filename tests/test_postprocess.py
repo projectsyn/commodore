@@ -57,7 +57,9 @@ def _setup(tmp_path, filter, invfilter=False):
             yaml.dump(filter, filterf)
 
     config = Config(work_dir=tmp_path)
-    component = Component("test-component", repo_url="https://fake.repo.url")
+    component = Component(
+        "test-component", work_dir=tmp_path, repo_url="https://fake.repo.url"
+    )
     config.register_component(component)
     inventory = {
         "test-component": {

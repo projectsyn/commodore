@@ -79,7 +79,7 @@ class ComponentTemplater:
         }
 
     def create(self):
-        path = component_dir(self.slug)
+        path = component_dir(self.config.work_dir, self.slug)
         if path.exists():
             raise click.ClickException(
                 f"Unable to add component {self.name}: {path} already exists."
@@ -96,6 +96,7 @@ class ComponentTemplater:
 
         component = Component(
             self.slug,
+            work_dir=self.config.work_dir,
             repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
             force_init=True,
         )
@@ -132,8 +133,8 @@ class ComponentTemplater:
 
     def delete(self):
         inv = Inventory()
-        if component_dir(self.slug).exists():
-            component = Component(self.slug)
+        if component_dir(self.config.work_dir, self.slug).exists():
+            component = Component(self.slug, work_dir=self.config.work_dir)
 
             if not self.config.force:
                 click.confirm(
