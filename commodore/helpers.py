@@ -186,7 +186,7 @@ def relsymlink(src: P, dest_dir: P, dest_name: Optional[str] = None):
     link_dst = dest_dir / dest_name
     if not P(link_src).exists():
         click.ClickException(
-            f"Can not lin {link_src} to {link_dst}. Source does not exist."
+            f"Can't link {link_src} to {link_dst}. Source does not exist."
         )
     if link_dst.exists():
         os.remove(link_dst)
