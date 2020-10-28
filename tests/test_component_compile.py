@@ -8,7 +8,10 @@ import pytest
 from subprocess import call
 from textwrap import dedent
 
+
 from click import ClickException
+from git import Repo
+
 from commodore.config import Config
 from commodore.component.compile import compile_component
 from test_component import test_run_component_new_command
@@ -63,6 +66,9 @@ def test_run_component_compile_command(tmp_path):
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
 
+    component_repo = Repo(tmp_path / "dependencies" / component_name)
+    orig_remote_urls = list(component_repo.remote().urls)
+
     exit_status = call(
         f"commodore component compile -o ./testdir dependencies/{component_name}",
         shell=True,
@@ -83,6 +89,8 @@ def test_run_component_compile_command(tmp_path):
         target = yaml.safe_load(file)
         assert target["kind"] == "ServiceAccount"
         assert target["metadata"]["namespace"] == f"syn-{component_name}"
+
+    assert list(component_repo.remote().urls) == orig_remote_urls
 
 
 def test_run_component_compile_command_postprocess(tmp_path):

@@ -46,6 +46,7 @@ def compile_component(
             click.echo(f"   > Created temp workspace: {temp_dir}")
 
         component = Component(component_name, directory=component_path)
+        config.register_component(component)
         _prepare_fake_inventory(temp_dir, component, value_files)
 
         # Create class for fake parameters
@@ -125,8 +126,6 @@ def compile_component(
 
         # prepare inventory and fake component object for postprocess
         inventory = inventory_reclass(temp_dir / "inventory")["nodes"]
-        component = Component(component_name, repo_url="https://fake.repo.url/")
-        config.register_component(component)
         # We change the working directory to the output_path directory here,
         # as postprocess expects to find `compiled/<target>` in the working
         # directory.
