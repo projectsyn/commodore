@@ -9,6 +9,8 @@ from pathlib import Path as P
 from subprocess import call
 from git import Repo
 
+from commodore.component import Component, component_dir
+
 
 def setup_directory(tmp_path: P):
     os.chdir(tmp_path)
@@ -155,3 +157,20 @@ def test_deleting_inexistant_component(tmp_path: P):
         f"commodore -vvv component delete --force {component_name}", shell=True
     )
     assert exit_status == 2
+
+
+def _init_repo(tmp_path: P, cn: str, url: str):
+    setup_directory(tmp_path)
+    cr = Repo.init(component_dir(cn))
+    cr.create_remote("origin", url)
+
+
+def test_init_existing_component(tmp_path: P):
+    cn = "test-component"
+    orig_url = "git@github.com:projectsyn/commodore.git"
+    _init_repo(tmp_path, cn, orig_url)
+
+    c = Component(cn)
+
+    for url in c.repo.remote().urls:
+        assert url == orig_url
