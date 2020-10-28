@@ -1,7 +1,8 @@
-from pathlib import Path as P
+from typing import Dict
 
 import click
 
+from commodore.component import Component
 from commodore.helpers import yaml_load
 
 from .jsonnet import run_jsonnet_filter
@@ -9,7 +10,7 @@ from .builtin_filters import run_builtin_filter
 from .inventory import resolve_inventory_vars, InventoryError
 
 
-def postprocess_components(config, kapitan_inventory, components):
+def postprocess_components(config, kapitan_inventory, components: Dict[str, Component]):
     click.secho("Postprocessing...", bold=True)
     for cn, c in components.items():
         inventory = kapitan_inventory.get(cn)
@@ -17,12 +18,11 @@ def postprocess_components(config, kapitan_inventory, components):
             click.echo(f" > No target exists for component {cn}, skipping...")
             continue
 
-        repodir = P(c.repo.working_tree_dir)
-        filterdir = repodir / "postprocess"
-        if filterdir.is_dir():
+        filters_file = c.filters_file
+        if filters_file.is_file():
             if config.debug:
                 click.echo(f" > {cn}...")
-            filters = yaml_load(filterdir / "filters.yml")
+            filters = yaml_load(filters_file)
             for f in filters["filters"]:
                 # Resolve any inventory references in filter definition
                 try:
@@ -47,7 +47,7 @@ def postprocess_components(config, kapitan_inventory, components):
                     )
                     continue
                 if f["type"] == "jsonnet":
-                    run_jsonnet_filter(inventory, cn, filterdir, f)
+                    run_jsonnet_filter(inventory, cn, filters_file.parent, f)
                 elif f["type"] == "builtin":
                     run_builtin_filter(inventory, cn, f)
                 else:

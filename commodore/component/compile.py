@@ -45,7 +45,8 @@ def compile_component(
         if config.debug:
             click.echo(f"   > Created temp workspace: {temp_dir}")
 
-        _prepare_fake_inventory(temp_dir, component_name, component_path, value_files)
+        component = Component(component_name, directory=component_path)
+        _prepare_fake_inventory(temp_dir, component, value_files)
 
         # Create class for fake parameters
         with open(temp_dir / "inventory/classes/fake.yml", "w") as file:
@@ -141,9 +142,9 @@ def compile_component(
             shutil.rmtree(temp_dir)
 
 
-def _prepare_fake_inventory(temp_dir: P, component_name, component_path, value_files):
-    component_class_file = component_path / "class" / f"{component_name}.yml"
-    component_defaults_file = component_path / "class" / "defaults.yml"
+def _prepare_fake_inventory(temp_dir: P, component: Component, value_files):
+    component_class_file = component.class_file
+    component_defaults_file = component.defaults_file
     if not component_class_file.exists():
         raise click.ClickException(
             f"Could not find component class file: {component_class_file}"
@@ -163,10 +164,10 @@ def _prepare_fake_inventory(temp_dir: P, component_name, component_path, value_f
     relsymlink(
         component_defaults_file,
         temp_dir / "inventory/classes/defaults",
-        dest_name=f"{component_name}.yml",
+        dest_name=f"{component.name}.yml",
     )
     # Create component symlink
-    relsymlink(component_path, dependencies_path, component_name)
+    relsymlink(component.target_directory, dependencies_path, component.name)
     # Create value symlinks
     for file in value_files:
         relsymlink(file.parent / file.name, temp_dir / "inventory/classes")
