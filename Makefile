@@ -44,7 +44,7 @@ BINARY_NAME ?= commodore
 GITVERSION ?= $(shell git describe --tags --always --match=v* --dirty=+dirty || (echo "command failed $?"; exit 1))
 PYVERSION ?= $(shell git describe --tags --always --abbrev=0 --match=v* || (echo "command failed $?"; exit 1))
 
-IMAGE_NAME ?= docker.io/vshn/$(BINARY_NAME):test
+IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):test
 
 .PHONY: docker
 
