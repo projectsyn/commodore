@@ -1,4 +1,3 @@
-import os
 from pathlib import Path as P
 
 from commodore.component import Component
@@ -68,7 +67,6 @@ def test_tenant_config_dir():
 
 
 def test_component_file(tmp_path: P):
-    os.chdir(tmp_path)
     assert (
         str(Inventory().component_file("foo")) == "inventory/classes/components/foo.yml"
     )
@@ -83,7 +81,6 @@ def test_component_file(tmp_path: P):
 
 
 def test_defaults_file(tmp_path: P):
-    os.chdir(tmp_path)
     assert str(Inventory().defaults_file("foo")) == "inventory/classes/defaults/foo.yml"
     assert (
         str(Inventory().defaults_file(Component("baz")))
@@ -96,7 +93,6 @@ def test_defaults_file(tmp_path: P):
 
 
 def test_target_file(tmp_path: P):
-    os.chdir(tmp_path)
     assert str(Inventory().target_file("foo")) == "inventory/targets/foo.yml"
     assert str(Inventory().target_file(Component("baz"))) == "inventory/targets/baz.yml"
     assert (

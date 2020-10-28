@@ -47,7 +47,6 @@ def _setup_working_dir(tmp_path: P, inv: Inventory, components):
 
 
 def test_render_bootstrap_target(tmp_path: P):
-    os.chdir(tmp_path)
     components = ["foo", "bar"]
     inv = Inventory()
     _setup_working_dir(tmp_path, inv, components)
@@ -71,7 +70,6 @@ def test_render_bootstrap_target(tmp_path: P):
 
 
 def test_render_target(tmp_path: P):
-    os.chdir(tmp_path)
     components = ["foo", "bar"]
     inv = Inventory()
     _setup_working_dir(tmp_path, inv, components)
@@ -97,7 +95,6 @@ def test_render_target(tmp_path: P):
 
 
 def test_render_aliased_target(tmp_path: P):
-    os.chdir(tmp_path)
     components = ["foo", "bar"]
     inv = Inventory()
     _setup_working_dir(tmp_path, inv, components)
@@ -124,7 +121,6 @@ def test_render_aliased_target(tmp_path: P):
 
 
 def test_render_aliased_target_with_dash(tmp_path: P):
-    os.chdir(tmp_path)
     components = ["foo-comp", "bar"]
     inv = Inventory()
     _setup_working_dir(tmp_path, inv, components)
@@ -180,7 +176,6 @@ def test_empty_facts(data):
 
 
 def test_read_cluster_and_tenant(tmp_path):
-    os.chdir(tmp_path)
     file = cluster.params_file()
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:
@@ -200,7 +195,6 @@ def test_read_cluster_and_tenant(tmp_path):
 
 
 def test_read_cluster_and_tenant_missing_fact(tmp_path):
-    os.chdir(tmp_path)
     file = cluster.params_file()
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:

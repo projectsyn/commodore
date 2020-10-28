@@ -67,9 +67,6 @@ def test_run_component_compile_command(tmp_path):
     """
     Run the component compile command
     """
-
-    os.chdir(tmp_path)
-
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
 
@@ -105,9 +102,6 @@ def test_run_component_compile_command_postprocess(tmp_path):
     Run the component compile command for a component with a postprocessing
     filter
     """
-
-    os.chdir(tmp_path)
-
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
     _add_postprocessing_filter(tmp_path, component_name)

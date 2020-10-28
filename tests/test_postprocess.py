@@ -28,8 +28,6 @@ def _make_ns_filter(ns, enabled=None):
 
 
 def _setup(tmp_path, filter, invfilter=False):
-    os.chdir(tmp_path)
-
     test_run_component_new_command(tmp_path=tmp_path)
 
     targetdir = tmp_path / "compiled" / "test-component" / "test"

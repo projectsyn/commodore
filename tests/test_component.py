@@ -10,8 +10,6 @@ from commodore.inventory import Inventory
 
 
 def setup_directory(tmp_path: P):
-    os.chdir(tmp_path)
-
     inv = Inventory(work_dir=tmp_path)
     inv.ensure_dirs()
 
