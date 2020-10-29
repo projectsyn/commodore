@@ -2,23 +2,24 @@ import json
 import os
 
 from pathlib import Path as P
+from typing import Any, Callable, Dict, Iterable
 
 import _jsonnet
-import click
 
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
 
-#  Returns content if worked, None if file not found, or throws an exception
 
-
-def _try_path(basedir, rel):
+def _try_path(basedir: P, rel: str):
+    """
+    Returns content of file basedir/rel if it exists, None if file not found, or throws an exception
+    """
     if not rel:
         raise RuntimeError("Got invalid filename (empty string).")
     if rel[0] == "/":
         full_path = P(rel)
     else:
-        full_path = P(basedir) / rel
+        full_path = basedir / rel
     if full_path.is_dir():
         raise RuntimeError("Attempted to import a directory")
 
@@ -28,7 +29,7 @@ def _try_path(basedir, rel):
         return full_path.name, f.read()
 
 
-def _import_callback_with_searchpath(search, basedir, rel):
+def _import_callback_with_searchpath(search: Iterable[P], basedir: P, rel: str):
     full_path, content = _try_path(basedir, rel)
     if content:
         return full_path, content
@@ -39,17 +40,17 @@ def _import_callback_with_searchpath(search, basedir, rel):
     raise RuntimeError("File not found")
 
 
-def _import_cb(basedir, rel):
+def _import_cb(basedir: str, rel: str):
     # Add current working dir to search path for Jsonnet import callback
     search_path = [
         P(".").resolve(),
         __install_dir__.resolve(),
         P("./dependencies").resolve(),
     ]
-    return _import_callback_with_searchpath(search_path, basedir, rel)
+    return _import_callback_with_searchpath(search_path, P(basedir), rel)
 
 
-def _list_dir(basedir, basename):
+def _list_dir(basedir: os.PathLike, basename: bool):
     """
     Non-recursively list files in directory `basedir`. If `basename` is set to
     True, only return the file name itself and not the full path.
@@ -76,15 +77,22 @@ _native_callbacks = {
 
 
 # pylint: disable=too-many-arguments
-def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **kwargs):
-    def _inventory():
+def jsonnet_runner(
+    inv: Dict[str, Any],
+    component: str,
+    path: os.PathLike,
+    jsonnet_func: Callable,
+    jsonnet_input: os.PathLike,
+    **kwargs: str,
+):
+    def _inventory() -> Dict[str, Any]:
         return inv
 
     _native_cb = _native_callbacks
     _native_cb["inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = P("compiled", component, output_path)
+    output_dir = P("compiled", component, path)
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
@@ -104,14 +112,26 @@ def jsonnet_runner(inv, component, output_path, jsonnet_func, jsonnet_input, **k
             yaml_dump(outcontents, outpath)
 
 
-def run_jsonnet_filter(inv, component, filterdir, f):
+def _filter_file(component: str, filterpath: str) -> P:
+    # TODO: Do we need to handle search path better?
+    return P("dependencies") / component / filterpath
+
+
+def run_jsonnet_filter(
+    inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    if f["type"] != "jsonnet":
-        raise click.ClickException(f"Only type 'jsonnet' is supported, got {f['type']}")
-    filterpath = filterdir / f["filter"]
-    output_path = f["output_path"]
+    filterfile = _filter_file(component, filterid)
     # pylint: disable=c-extension-no-member
-    jsonnet_runner(inv, component, output_path, _jsonnet.evaluate_file, filterpath)
+    jsonnet_runner(
+        inventory, component, path, _jsonnet.evaluate_file, filterfile, **filterargs
+    )
+
+
+def validate_jsonnet_filter(cn: str, fd: Dict):
+    filterfile = _filter_file(cn, fd["filter"])
+    if not filterfile.is_file():
+        raise ValueError("Jsonnet filter definition does not exist")

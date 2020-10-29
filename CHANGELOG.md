@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   components with entries in `applications`.
   `classes: [ "components.argocd" ]` becomes `applications: [ "argocd" ]`.
 
+* Add option to define postprocessing filters in the Kapitan inventory ([#222]).
+
 ### Fixed
 
 * Replace remaining references to `common.yml` with `commodore.yml` ([#204])
@@ -248,6 +250,7 @@ Initial implementation
 [#212]: https://github.com/projectsyn/commodore/pull/212
 [#215]: https://github.com/projectsyn/commodore/pull/215
 [#217]: https://github.com/projectsyn/commodore/pull/217
+[#222]: https://github.com/projectsyn/commodore/pull/222
 [#226]: https://github.com/projectsyn/commodore/pull/226
 [#227]: https://github.com/projectsyn/commodore/pull/227
 [#237]: https://github.com/projectsyn/commodore/pull/237
