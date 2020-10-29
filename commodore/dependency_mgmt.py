@@ -1,3 +1,4 @@
+import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
@@ -221,7 +222,9 @@ def jsonnet_dependencies(config: Config) -> Iterable:
             {
                 "source": {
                     "local": {
-                        "directory": str(component.target_directory),
+                        "directory": os.path.relpath(
+                            component.target_directory, start=config.work_dir
+                        ),
                     }
                 }
             }
@@ -232,7 +235,9 @@ def jsonnet_dependencies(config: Config) -> Iterable:
         {
             "source": {
                 "local": {
-                    "directory": str(config.inventory.lib_dir),
+                    "directory": os.path.relpath(
+                        config.inventory.lib_dir, start=config.work_dir
+                    ),
                 }
             }
         }
