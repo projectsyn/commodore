@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   This requires a refactored hierarchy which replaces class includes of
   components with entries in `applications`.
   `classes: [ "components.argocd" ]` becomes `applications: [ "argocd" ]`.
+* Pull essential libraries with Jsonnet Bundler ([#246])
 
 * Add option to define postprocessing filters in the Kapitan inventory ([#222]).
 
@@ -254,3 +255,4 @@ Initial implementation
 [#226]: https://github.com/projectsyn/commodore/pull/226
 [#227]: https://github.com/projectsyn/commodore/pull/227
 [#237]: https://github.com/projectsyn/commodore/pull/237
+[#246]: https://github.com/projectsyn/commodore/pull/246
