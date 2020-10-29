@@ -210,7 +210,7 @@ def write_jsonnetfile(config: Config):
         {
             "source": {
                 "local": {
-                    "directory": config.inventory.lib_dir,
+                    "directory": str(config.inventory.lib_dir),
                 }
             }
         }
