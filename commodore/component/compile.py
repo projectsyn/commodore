@@ -114,10 +114,7 @@ def compile_component(
 
         # prepare inventory and fake component object for postprocess
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
-        # We change the working directory to the output_path directory here,
-        # as postprocess expects to find `compiled/<target>` in the working
-        # directory.
-        os.chdir(output_path)
+        config.work_dir = output_path
         postprocess_components(config, nodes, config.get_components())
     finally:
         if config.trace:

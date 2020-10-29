@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, Iterable
 
 import _jsonnet
 
+from commodore.config import Config
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
 
@@ -78,6 +79,7 @@ _native_callbacks = {
 
 # pylint: disable=too-many-arguments
 def jsonnet_runner(
+    work_dir: P,
     inv: Dict[str, Any],
     component: str,
     path: os.PathLike,
@@ -92,7 +94,7 @@ def jsonnet_runner(
     _native_cb["inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = P("compiled", component, path)
+    output_dir = work_dir / "compiled" / component / path
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
@@ -103,6 +105,7 @@ def jsonnet_runner(
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
         outpath = output_dir / f"{outobj}.yaml"
+        print(outpath)
         if not outpath.exists():
             print(f"   > {outpath} doesn't exist, creating...")
             os.makedirs(outpath.parent, exist_ok=True)
@@ -118,7 +121,12 @@ def _filter_file(component: str, filterpath: str) -> P:
 
 
 def run_jsonnet_filter(
-    inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+    config: Config,
+    inventory: Dict,
+    component: str,
+    filterid: str,
+    path: P,
+    **filterargs: str,
 ):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
@@ -127,11 +135,18 @@ def run_jsonnet_filter(
     filterfile = _filter_file(component, filterid)
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
-        inventory, component, path, _jsonnet.evaluate_file, filterfile, **filterargs
+        config.work_dir,
+        inventory,
+        component,
+        path,
+        _jsonnet.evaluate_file,
+        filterfile,
+        **filterargs,
     )
 
 
-def validate_jsonnet_filter(cn: str, fd: Dict):
+# pylint: disable=unused-argument
+def validate_jsonnet_filter(config: Config, cn: str, fd: Dict):
     filterfile = _filter_file(cn, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")

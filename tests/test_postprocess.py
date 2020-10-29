@@ -88,6 +88,8 @@ def test_postprocess_components(tmp_path, capsys):
     filter = _make_ns_filter("myns")
     testf, config, inventory, components = _setup(tmp_path, filter)
     config.update_verbosity(3)
+    print(testf)
+    print(testf.resolve())
     postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
