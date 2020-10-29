@@ -138,8 +138,7 @@ def render_target(
     }
 
     for c in components:
-        defaults_file = inv.defaults_dir / f"{c}.yml"
-        if defaults_file.is_file():
+        if inv.defaults_file(c).is_file():
             classes.append(f"defaults.{c}")
 
     classes.append("global.commodore")
