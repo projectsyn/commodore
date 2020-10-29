@@ -174,6 +174,26 @@ def test_fetch_components_is_minimal(
         assert not (tmp_path / "dependencies" / component).exists()
 
 
+def test_write_jsonnetfile(data: Config, tmp_path: Path):
+    data.register_component(Component("test-component"))
+    data.register_component(Component("test-component-2"))
+    dirs = [
+        "dependencies/test-component",
+        "dependencies/test-component-2",
+        "dependencies/lib",
+    ]
+
+    dependency_mgmt.write_jsonnetfile(data)
+
+    with open("jsonnetfile.json") as jf:
+        jf_contents = json.load(jf)
+        assert jf_contents["version"] == 1
+        assert jf_contents["legacyImports"]
+        deps = jf_contents["dependencies"]
+        for dep in deps:
+            assert dep["source"]["local"]["directory"] in dirs
+
+
 def test_clear_jsonnet_lock_file(tmp_path: Path):
     os.chdir(tmp_path)
     jsonnetfile = Path("jsonnetfile.json")
