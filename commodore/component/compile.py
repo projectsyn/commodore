@@ -9,19 +9,10 @@ from kapitan.resources import inventory_reclass
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.dependency_mgmt import fetch_jsonnet_libs, fetch_jsonnet_libraries
+from commodore.dependency_mgmt import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
-
-
-libs = [
-    {
-        "name": "kube-libsonnet",
-        "repository": "https://github.com/bitnami-labs/kube-libsonnet",
-        "files": [{"libfile": "kube.libsonnet", "targetfile": "kube.libjsonnet"}],
-    }
-]
 
 
 def compile_component(
@@ -109,9 +100,7 @@ def compile_component(
             )
 
         # Fetch Jsonnet libs
-        fetch_jsonnet_libs(config, libs)
-        if (component_path / "jsonnetfile.json").exists():
-            fetch_jsonnet_libraries(component_path)
+        fetch_jsonnet_libraries(component_path)
 
         # Compile component
         kapitan_compile(

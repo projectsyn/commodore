@@ -1,7 +1,7 @@
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
-from typing import Dict
+from typing import Dict, Iterable
 
 import click
 
@@ -187,11 +187,10 @@ def fetch_jsonnet_libs(config: Config, libs):
             )
 
 
-def write_jsonnetfile(config: Config):
+def jsonnet_dependencies(config: Config) -> Iterable:
     """
-    Writes the file `jsonnetfile.json` containing all components as local dependencies.
+    Creates a list of Jsonnet dependencies for the given Components.
     """
-
     dependencies = []
 
     for component in config.get_components().values():
@@ -216,24 +215,36 @@ def write_jsonnetfile(config: Config):
         }
     )
 
-    jsonnetfile = {
+    return dependencies
+
+
+def write_jsonnetfile(file: P, deps: Iterable):
+    """
+    Writes the file `jsonnetfile.json` containing all provides dependencies.
+    """
+    data = {
         "version": 1,
-        "dependencies": dependencies,
+        "dependencies": deps,
         "legacyImports": True,
     }
 
-    with open("jsonnetfile.json", "w") as file:
-        file.write(json.dumps(jsonnetfile, indent=4))
+    with open(file, "w") as f:
+        f.write(json.dumps(data, indent=4))
 
 
-def fetch_jsonnet_libraries(cwd: P = None):
+def fetch_jsonnet_libraries(cwd: P = P(".")):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """
+    jsonnetfile = cwd / "jsonnetfile.json"
+    if not jsonnetfile.exists():
+        write_jsonnetfile(jsonnetfile, [])
+
+    inject_essential_libraries(jsonnetfile)
 
     try:
         # To make sure we don't use any stale lock files
-        lock_file = P("jsonnetfile.lock.json")
+        lock_file = cwd / "jsonnetfile.lock.json"
         if lock_file.exists():
             lock_file.unlink()
         if call(["jb", "install"], cwd=cwd) != 0:
@@ -242,6 +253,41 @@ def fetch_jsonnet_libraries(cwd: P = None):
         raise click.ClickException(
             "the jsonnet-bundler executable `jb` could not be found"
         ) from e
+
+    # Link essential libraries for backwards compatibility.
+    lib_dir = (cwd / "vendor" / "lib").resolve()
+    lib_dir.mkdir(exist_ok=True)
+    relsymlink(
+        cwd / "vendor" / "kube-libsonnet" / "kube.libsonnet", lib_dir, "kube.libjsonnet"
+    )
+
+
+def inject_essential_libraries(file: P):
+    """
+    Ensures essential libraries are contained within `jsonnetfile.json`.
+    :param file: The path to `jsonnetfile.json`.
+    """
+    with open(file, "r") as f:
+        data = json.load(f)
+
+    deps = data["dependencies"]
+    has_kube = False
+    for dep in deps:
+        remote = dep.get("source", {}).get("git", {}).get("remote", "")
+        has_kube = has_kube or "kube-libsonnet" in remote
+
+    if not has_kube:
+        deps.append(
+            {
+                "source": {
+                    "git": {"remote": "https://github.com/bitnami-labs/kube-libsonnet"}
+                },
+                "version": "master",
+            },
+        )
+
+    with open(file, "w") as j:
+        json.dump(data, j, indent=4)
 
 
 def register_components(cfg: Config):
