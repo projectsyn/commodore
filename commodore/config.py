@@ -74,6 +74,7 @@ class Config:
     @work_dir.setter
     def work_dir(self, d: P):
         self._work_dir = d
+        self.inventory.work_dir = d
 
     @property
     def api_token(self):
