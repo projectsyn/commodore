@@ -133,7 +133,9 @@ def render_target(
         raise click.ClickException(f"Target {target} is not a component")
 
     classes = [f"params.{BOOTSTRAP_TARGET}"]
-    parameters: Dict[str, Union[Dict, str]] = {}
+    parameters: Dict[str, Union[Dict, str]] = {
+        "_instance": target,
+    }
 
     for c in components:
         defaults_file = inv.defaults_dir / f"{c}.yml"
@@ -148,11 +150,9 @@ def render_target(
                 f"Target rendering failed for {target}: component class is missing"
             )
         classes.append(f"components.{component}")
-        parameters = {
-            "kapitan": {
-                "vars": {
-                    "target": target,
-                }
+        parameters["kapitan"] = {
+            "vars": {
+                "target": target,
             },
         }
 
@@ -162,7 +162,6 @@ def render_target(
             ckey = component.replace("-", "_")
             tkey = target.replace("-", "_")
             parameters[ckey] = f"${{{tkey}}}"
-            parameters[tkey] = {"_instance": target}
 
     return {
         "classes": classes,

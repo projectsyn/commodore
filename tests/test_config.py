@@ -15,7 +15,7 @@ def config():
 def test_verify_component_aliases(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"_instance": "default", "namespace": "syn-bar"}}
+    params = {"bar": {"multi_instance": True, "namespace": "syn-bar"}}
 
     config.verify_component_aliases(params)
 

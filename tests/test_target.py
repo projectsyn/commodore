@@ -69,6 +69,7 @@ def test_render_target(tmp_path: P):
     for i in range(len(classes)):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo"
+    assert target["parameters"]["_instance"] == "foo"
 
 
 def test_render_aliased_target(tmp_path: P):
@@ -95,7 +96,7 @@ def test_render_aliased_target(tmp_path: P):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["kapitan"]["vars"]["target"] == "fooer"
     assert target["parameters"]["foo"] == "${fooer}"
-    assert target["parameters"]["fooer"]["_instance"] == "fooer"
+    assert target["parameters"]["_instance"] == "fooer"
 
 
 def test_render_aliased_target_with_dash(tmp_path: P):
@@ -124,7 +125,7 @@ def test_render_aliased_target_with_dash(tmp_path: P):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo-1"
     assert target["parameters"]["foo_comp"] == "${foo_1}"
-    assert target["parameters"]["foo_1"]["_instance"] == "foo-1"
+    assert target["parameters"]["_instance"] == "foo-1"
 
 
 def test_render_params(data):
