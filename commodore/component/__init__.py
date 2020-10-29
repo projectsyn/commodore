@@ -1,5 +1,3 @@
-import os
-
 from pathlib import Path as P
 from typing import Iterable
 
@@ -80,12 +78,11 @@ class Component:
 
     @property
     def lib_files(self) -> Iterable[P]:
-        files = []
         lib_dir = self.target_directory / "lib"
         if lib_dir.exists():
-            for file in os.listdir(lib_dir):
-                files.append(P(file))
-        return files
+            return lib_dir.iterdir()
+
+        return []
 
     @property
     def filters_file(self) -> P:
