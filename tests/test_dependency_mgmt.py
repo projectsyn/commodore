@@ -204,9 +204,11 @@ def test_write_jsonnetfile(data: Config, tmp_path: Path):
         "dependencies/lib",
     ]
 
-    dependency_mgmt.write_jsonnetfile(data)
+    file = tmp_path / "jsonnetfile.json"
 
-    with open("jsonnetfile.json") as jf:
+    dependency_mgmt.write_jsonnetfile(file, dependency_mgmt.jsonnet_dependencies(data))
+
+    with open(file) as jf:
         jf_contents = json.load(jf)
         assert jf_contents["version"] == 1
         assert jf_contents["legacyImports"]
