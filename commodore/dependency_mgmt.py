@@ -106,7 +106,7 @@ def fetch_components(cfg):
 
     click.secho("Discovering components...", bold=True)
     cfg.inventory.ensure_dirs()
-    component_names = _discover_components(cfg, "inventory")
+    component_names = _discover_components(cfg, cfg.inventory.inventory_dir)
     urls = _read_component_urls(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for name, url in urls.items():
