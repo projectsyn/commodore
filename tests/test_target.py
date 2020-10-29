@@ -49,7 +49,7 @@ def _setup_working_dir(tmp_path: P, inv: Inventory, components):
 
 def test_render_bootstrap_target(tmp_path: P):
     components = ["foo", "bar"]
-    inv = Inventory()
+    inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(tmp_path, inv, components)
 
     target = cluster.render_target(inv, "cluster", ["foo", "bar", "baz"])
@@ -72,7 +72,7 @@ def test_render_bootstrap_target(tmp_path: P):
 
 def test_render_target(tmp_path: P):
     components = ["foo", "bar"]
-    inv = Inventory()
+    inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(tmp_path, inv, components)
 
     target = cluster.render_target(inv, "foo", ["foo", "bar", "baz"])
@@ -97,7 +97,7 @@ def test_render_target(tmp_path: P):
 
 def test_render_aliased_target(tmp_path: P):
     components = ["foo", "bar"]
-    inv = Inventory()
+    inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(tmp_path, inv, components)
 
     target = cluster.render_target(inv, "fooer", ["foo", "bar", "baz"], component="foo")
@@ -123,7 +123,7 @@ def test_render_aliased_target(tmp_path: P):
 
 def test_render_aliased_target_with_dash(tmp_path: P):
     components = ["foo-comp", "bar"]
-    inv = Inventory()
+    inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(tmp_path, inv, components)
 
     target = cluster.render_target(
