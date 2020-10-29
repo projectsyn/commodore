@@ -56,19 +56,40 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
     os.chdir(tmp_path)
     component = Component("my-component")
     component.class_file.parent.mkdir(parents=True, exist_ok=True)
-    component.class_file.touch()
-    component.defaults_file.touch()
+    with open(component.class_file, "w") as f:
+        f.writelines(["class"])
+    with open(component.defaults_file, "w") as f:
+        f.writelines(["default"])
+    lib_dir = component.target_directory / "lib"
+    lib_dir.mkdir(parents=True, exist_ok=True)
+    lib_file = lib_dir / "my-component.libjsonnet"
+    with open(lib_file, "w") as f:
+        f.writelines(["lib"])
+
     inv = Inventory(work_dir=tmp_path)
     inv.ensure_dirs()
 
     dependency_mgmt.create_component_symlinks(data, component)
 
-    assert (
-        tmp_path / "inventory" / "classes" / "components" / f"{component.name}.yml"
-    ).is_symlink()
-    assert (
-        tmp_path / "inventory" / "classes" / "defaults" / f"{component.name}.yml"
-    ).is_symlink()
+    for path, marker in [
+        (
+            tmp_path / "inventory" / "classes" / "components" / f"{component.name}.yml",
+            "class",
+        ),
+        (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{component.name}.yml",
+            "default",
+        ),
+        (tmp_path / "dependencies" / "lib" / "my-component.libjsonnet", "lib"),
+    ]:
+        # Ensure symlinks exist
+        assert path.is_symlink()
+        # Ensure symlink targets exist
+        assert path.resolve().is_file()
+        # Ensure symlinked file contains correct marker content
+        with open(path) as f:
+            fcontents = f.readlines()
+            assert fcontents[0] == marker
     assert capsys.readouterr().out == ""
 
 
