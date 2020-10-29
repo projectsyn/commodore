@@ -46,6 +46,32 @@ def _setup_working_dir(tmp_path: P, inv: Inventory, components):
         component.touch()
 
 
+def test_render_bootstrap_target(tmp_path: P):
+    os.chdir(tmp_path)
+    components = ["foo", "bar"]
+    inv = Inventory()
+    _setup_working_dir(tmp_path, inv, components)
+
+    target = cluster.render_target(
+        inv, "cluster", ["foo", "bar", "baz"], bootstrap=True
+    )
+
+    classes = [
+        "params.cluster",
+        "defaults.foo",
+        "defaults.bar",
+        "global.commodore",
+    ]
+    assert target != ""
+    print(target)
+    assert len(target["classes"]) == len(
+        classes
+    ), "rendered target includes different amount of classes"
+    for i in range(len(classes)):
+        assert target["classes"][i] == classes[i]
+    assert target["parameters"]["_instance"] == "cluster"
+
+
 def test_render_target(tmp_path: P):
     os.chdir(tmp_path)
     components = ["foo", "bar"]
