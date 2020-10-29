@@ -338,7 +338,7 @@ def register_components(cfg: Config):
     pruned_aliases = {
         a: c for a, c in component_aliases.items() if c in registered_components
     }
-    pruned = set(component_aliases.keys()) - set(pruned_aliases.keys())
+    pruned = sorted(set(component_aliases.keys()) - set(pruned_aliases.keys()))
     if len(pruned) > 0:
         click.secho(
             f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"

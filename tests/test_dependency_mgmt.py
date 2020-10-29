@@ -351,7 +351,7 @@ def test_register_dangling_aliases(
     # add some dangling aliases
     alias_data = {"quxer": "qux", "quuxer": "quux"}
     # generate expected output
-    should_miss = set(alias_data.keys())
+    should_miss = sorted(set(alias_data.keys()))
     # add an alias that should work
     alias_data["bazzer"] = "baz"
 
