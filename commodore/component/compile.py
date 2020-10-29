@@ -11,6 +11,7 @@ from commodore.config import Config
 from commodore.component import Component
 from commodore.dependency_mgmt import fetch_jsonnet_libs, fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink
+from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
@@ -45,12 +46,13 @@ def compile_component(
         if config.debug:
             click.echo(f"   > Created temp workspace: {temp_dir}")
 
+        inv = Inventory(work_dir=temp_dir)
         component = Component(component_name, directory=component_path)
         config.register_component(component)
-        _prepare_fake_inventory(temp_dir, component, value_files)
+        _prepare_fake_inventory(inv, component, value_files)
 
         # Create class for fake parameters
-        with open(temp_dir / "inventory/classes/fake.yml", "w") as file:
+        with open(inv.classes_dir / "fake.yml", "w") as file:
             file.write(
                 dedent(
                     f"""
@@ -75,7 +77,7 @@ def compile_component(
             )
 
         # Create test target
-        with open(temp_dir / f"inventory/targets/{component_name}.yml", "w") as file:
+        with open(inv.target_file(component), "w") as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
             file.write(
                 dedent(
@@ -91,8 +93,8 @@ def compile_component(
         # Fake Argo CD lib
         # We plug "fake" Argo CD library here because every component relies on it
         # and we don't want to provide it every time when compiling a single component.
-        (temp_dir / "dependencies/lib").mkdir(exist_ok=True)
-        with open(temp_dir / "dependencies/lib/argocd.libjsonnet", "w") as file:
+        inv.lib_dir.mkdir(exist_ok=True)
+        with open(inv.lib_dir / "argocd.libjsonnet", "w") as file:
             file.write(
                 dedent(
                     """
@@ -125,12 +127,12 @@ def compile_component(
         )
 
         # prepare inventory and fake component object for postprocess
-        inventory = inventory_reclass(temp_dir / "inventory")["nodes"]
+        nodes = inventory_reclass(inv.inventory_dir)["nodes"]
         # We change the working directory to the output_path directory here,
         # as postprocess expects to find `compiled/<target>` in the working
         # directory.
         os.chdir(output_path)
-        postprocess_components(config, inventory, config.get_components())
+        postprocess_components(config, nodes, config.get_components())
     finally:
         os.chdir(original_working_dir)
         if config.trace:
@@ -141,7 +143,7 @@ def compile_component(
             shutil.rmtree(temp_dir)
 
 
-def _prepare_fake_inventory(temp_dir: P, component: Component, value_files):
+def _prepare_fake_inventory(inv: Inventory, component: Component, value_files):
     component_class_file = component.class_file
     component_defaults_file = component.defaults_file
     if not component_class_file.exists():
@@ -153,20 +155,23 @@ def _prepare_fake_inventory(temp_dir: P, component: Component, value_files):
             f"Could not find component default file: {component_defaults_file}"
         )
 
-    for d in ["classes/components", "classes/defaults", "targets"]:
-        os.makedirs(temp_dir / "inventory" / d, exist_ok=True)
-    dependencies_path = temp_dir / "dependencies"
-    dependencies_path.mkdir(exist_ok=True)
+    for d in [
+        inv.components_dir,
+        inv.defaults_dir,
+        inv.targets_dir,
+        inv.dependencies_dir,
+    ]:
+        os.makedirs(d, exist_ok=True)
     # Create class symlink
-    relsymlink(component_class_file, temp_dir / "inventory/classes/components")
+    relsymlink(component_class_file, inv.components_dir)
     # Create defaults symlink
     relsymlink(
         component_defaults_file,
-        temp_dir / "inventory/classes/defaults",
+        inv.defaults_dir,
         dest_name=f"{component.name}.yml",
     )
     # Create component symlink
-    relsymlink(component.target_directory, dependencies_path, component.name)
+    relsymlink(component.target_directory, inv.dependencies_dir, component.name)
     # Create value symlinks
     for file in value_files:
-        relsymlink(file.parent / file.name, temp_dir / "inventory/classes")
+        relsymlink(file.parent / file.name, inv.classes_dir)

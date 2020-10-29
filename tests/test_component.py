@@ -10,16 +10,16 @@ from subprocess import call
 from git import Repo
 
 from commodore.component import Component, component_dir
+from commodore.inventory import Inventory
 
 
 def setup_directory(tmp_path: P):
     os.chdir(tmp_path)
 
-    os.makedirs(P("inventory", "classes", "components"), exist_ok=True)
-    os.makedirs(P("inventory", "classes", "defaults"), exist_ok=True)
-    os.makedirs(P("dependencies", "lib"), exist_ok=True)
-    os.makedirs(P("inventory", "targets"), exist_ok=True)
-    jsonnetfile = P("jsonnetfile.json")
+    inv = Inventory(work_dir=tmp_path)
+    inv.ensure_dirs()
+
+    jsonnetfile = tmp_path / "jsonnetfile.json"
     with open(jsonnetfile, "w") as jf:
         json.dump({"version": 1, "dependencies": [], "legacyImports": True}, jf)
 

@@ -15,6 +15,7 @@ from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
 from commodore.helpers import relsymlink
+from commodore.inventory import Inventory
 
 
 @pytest.fixture
@@ -54,19 +55,21 @@ def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
 def test_create_component_symlinks(capsys, data: Config, tmp_path):
     os.chdir(tmp_path)
     component = Component("my-component")
-    class_dir = Path("dependencies") / component.name / "class"
-    class_dir.mkdir(parents=True, exist_ok=True)
-    (class_dir / f"{component.name}.yml").touch()
-    (class_dir / "defaults.yml").touch()
-    target_dir = Path("inventory/classes/components")
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target_defaults = Path("inventory/classes/defaults")
-    target_defaults.mkdir(parents=True, exist_ok=True)
+    component.class_file.parent.mkdir(parents=True, exist_ok=True)
+    component.class_file.touch()
+    component.defaults_file.touch()
+    inv = Inventory(work_dir=tmp_path)
+    inv.ensure_dirs()
+
     dependency_mgmt.create_component_symlinks(data, component)
-    capture = capsys.readouterr()
-    assert (target_dir / f"{component.name}.yml").is_symlink()
-    assert (target_defaults / f"{component.name}.yml").is_symlink()
-    assert capture.out == ""
+
+    assert (
+        tmp_path / "inventory" / "classes" / "components" / f"{component.name}.yml"
+    ).is_symlink()
+    assert (
+        tmp_path / "inventory" / "classes" / "defaults" / f"{component.name}.yml"
+    ).is_symlink()
+    assert capsys.readouterr().out == ""
 
 
 def test_read_component_urls_no_config(data: Config):
@@ -127,9 +130,13 @@ def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Pa
 
     for component in components:
         assert component in data._components
-        assert (Path("inventory/classes/components") / f"{component}.yml").is_symlink()
-        assert (Path("inventory/classes/defaults") / f"{component}.yml").is_symlink()
-        assert Path("dependencies", component).is_dir()
+        assert (
+            tmp_path / "inventory" / "classes" / "components" / f"{component}.yml"
+        ).is_symlink()
+        assert (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{component}.yml"
+        ).is_symlink()
+        assert (tmp_path / "dependencies" / component).is_dir()
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):
@@ -188,10 +195,12 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
 
 def test_register_components(data: Config, tmp_path: Path):
     os.chdir(tmp_path)
+    inv = Inventory(tmp_path)
+    inv.ensure_dirs()
     component_dirs = ["foo", "bar", "baz"]
     other_dirs = ["lib", "libs"]
     for directory in component_dirs + other_dirs:
-        cpath = Path("dependencies", directory)
+        cpath = tmp_path / "dependencies" / directory
         os.makedirs(cpath, exist_ok=True)
         r = git.Repo.init(cpath)
         r.create_remote("origin", f"ssh://git@example.com/git/{directory}")

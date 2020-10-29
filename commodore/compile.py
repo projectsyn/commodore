@@ -1,5 +1,3 @@
-from pathlib import Path as P
-
 import click
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.resources import inventory_reclass
@@ -11,10 +9,10 @@ from .cluster import (
     Cluster,
     load_cluster_from_api,
     read_cluster_and_tenant,
-    target_file,
     update_params,
     update_target,
 )
+from .config import Config
 from .dependency_mgmt import (
     fetch_components,
     fetch_jsonnet_libs,
@@ -32,10 +30,10 @@ from .postprocess import postprocess_components
 from .refs import update_refs
 
 
-def _fetch_global_config(cfg, cluster: Cluster):
+def _fetch_global_config(cfg: Config, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
     repo = git.clone_repository(
-        cluster.global_git_repo_url, "inventory/classes/global", cfg
+        cluster.global_git_repo_url, cfg.inventory.global_config_dir, cfg
     )
     rev = cluster.global_git_repo_revision
     if rev:
@@ -43,12 +41,14 @@ def _fetch_global_config(cfg, cluster: Cluster):
     cfg.register_config("global", repo)
 
 
-def _fetch_customer_config(cfg, cluster: Cluster):
+def _fetch_customer_config(cfg: Config, cluster: Cluster):
     click.secho("Updating customer config...", bold=True)
     repo_url = cluster.config_repo_url
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
-    repo = git.clone_repository(repo_url, P("inventory/classes") / cluster.tenant, cfg)
+    repo = git.clone_repository(
+        repo_url, cfg.inventory.tenant_config_dir(cluster.tenant), cfg
+    )
     rev = cluster.config_git_repo_revision
     if rev:
         git.checkout_version(repo, rev)
@@ -77,14 +77,13 @@ def _regular_setup(config, cluster_id):
     return fetch_customer_catalog(config, cluster)
 
 
-def _local_setup(config, cluster_id):
+def _local_setup(config: Config, cluster_id):
     click.secho("Running in local mode", bold=True)
     click.echo(" > Will use existing inventory, dependencies, and catalog")
 
-    if not target_file(BOOTSTRAP_TARGET).is_file():
-        raise click.ClickException(
-            "Invalid working dir state: 'inventory/targets/cluster.yml' is missing"
-        )
+    file = config.inventory.target_file(BOOTSTRAP_TARGET)
+    if not file.is_file():
+        raise click.ClickException(f"Invalid working dir state: '{file}' is missing")
 
     click.echo(" > Assert current working dir state matches requested compilation")
     current_cluster_id, tenant = read_cluster_and_tenant()
@@ -96,9 +95,11 @@ def _local_setup(config, cluster_id):
         raise click.ClickException(error)
 
     click.secho("Registering config...", bold=True)
-    config.register_config("global", git.init_repository("inventory/classes/global"))
     config.register_config(
-        "customer", git.init_repository(P("inventory/classes/") / tenant)
+        "global", git.init_repository(config.inventory.global_config_dir)
+    )
+    config.register_config(
+        "customer", git.init_repository(config.inventory.tenant_config_dir(tenant))
     )
 
     register_components(config)

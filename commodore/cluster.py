@@ -13,6 +13,7 @@ from .helpers import (
 )
 
 from .config import Config
+from .inventory import Inventory
 
 
 BOOTSTRAP_TARGET = "cluster"
@@ -118,7 +119,9 @@ def read_cluster_and_tenant() -> Tuple[str, str]:
     )
 
 
-def render_target(target: str, components: Iterable[str], bootstrap=False):
+def render_target(
+    inv: Inventory, target: str, components: Iterable[str], bootstrap=False
+):
     if not bootstrap and target not in components:
         raise click.ClickException(f"Target {target} is not a component")
 
@@ -126,15 +129,14 @@ def render_target(target: str, components: Iterable[str], bootstrap=False):
     parameters = {}
 
     for component in components:
-        defaults_file = P("inventory", "classes", "defaults") / f"{component}.yml"
+        defaults_file = inv.defaults_dir / f"{component}.yml"
         if defaults_file.is_file():
             classes.append(f"defaults.{component}")
 
     classes.append("global.commodore")
 
     if not bootstrap:
-        component_file = P("inventory", "classes", "components") / f"{target}.yml"
-        if not component_file.is_file():
+        if not inv.component_file(target).is_file():
             raise click.ClickException(
                 f"Target rendering failed for {target}: component class is missing"
             )
@@ -153,15 +155,13 @@ def render_target(target: str, components: Iterable[str], bootstrap=False):
     }
 
 
-def target_file(target: str):
-    return P("inventory", "targets") / f"{target}.yml"
-
-
 def update_target(cfg: Config, target: str, bootstrap=False):
     click.secho(f"Updating Kapitan target for {target}...", bold=True)
-    file = target_file(target)
+    file = cfg.inventory.target_file(target)
     os.makedirs(file.parent, exist_ok=True)
-    targetdata = render_target(target, cfg.get_components().keys(), bootstrap=bootstrap)
+    targetdata = render_target(
+        cfg.inventory, target, cfg.get_components().keys(), bootstrap=bootstrap
+    )
     yaml_dump(targetdata, file)
 
 

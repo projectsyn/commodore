@@ -1,4 +1,3 @@
-import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
@@ -22,17 +21,18 @@ def create_component_symlinks(cfg, component: Component):
     The actual code for components lives in the dependencies/ subdirectory, but
     we want to access some of the file contents through the inventory.
     """
-    relsymlink(component.class_file, P("inventory/classes/components"))
+    relsymlink(component.class_file, cfg.inventory.components_dir)
+    inventory_default = cfg.inventory.defaults_file(component)
     relsymlink(
         component.defaults_file,
-        P("inventory/classes/defaults"),
-        dest_name=f"{component.name}.yml",
+        inventory_default.parent,
+        dest_name=inventory_default.name,
     )
 
     for file in component.lib_files:
         if cfg.debug:
             click.echo(f"     > installing template library: {file}")
-        relsymlink(file, P("dependencies/lib"))
+        relsymlink(file, cfg.inventory.lib_dir)
 
 
 def delete_component_symlinks(cfg, component: Component):
@@ -42,12 +42,8 @@ def delete_component_symlinks(cfg, component: Component):
     This is the reverse from the createa_component_symlinks method and is used
     when deleting a component.
     """
-
-    component_class = P(f"inventory/classes/components/{component.name}.yml")
-    component_default_class = P(f"inventory/classes/defaults/{component.name}.yml")
-
-    delsymlink(component_class, cfg.debug)
-    delsymlink(component_default_class, cfg.debug)
+    delsymlink(cfg.inventory.component_file(component), cfg.debug)
+    delsymlink(cfg.inventory.defaults_file(component), cfg.debug)
 
     # If the component has a lib/ subdir, remove the links to the dependencies/lib.
     for file in component.lib_files:
@@ -109,10 +105,8 @@ def fetch_components(cfg):
     """
 
     click.secho("Discovering components...", bold=True)
-    os.makedirs("inventory/classes/components", exist_ok=True)
-    os.makedirs("inventory/classes/defaults", exist_ok=True)
-    os.makedirs("dependencies/lib", exist_ok=True)
-    component_names = _discover_components(cfg, "inventory")
+    cfg.inventory.ensure_dirs()
+    component_names = _discover_components(cfg, cfg.inventory.inventory_dir)
     urls = _read_component_urls(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for name, url in urls.items():
@@ -161,7 +155,7 @@ def set_component_overrides(cfg, versions):
             create_component_symlinks(cfg, component)
 
 
-def fetch_jsonnet_libs(config, libs):
+def fetch_jsonnet_libs(config: Config, libs):
     """
     Download all libraries specified in list `libs`.
     Each entry in `libs` is assumed to be a dict with keys
@@ -177,20 +171,18 @@ def fetch_jsonnet_libs(config, libs):
     """
 
     click.secho("Updating Jsonnet libraries...", bold=True)
-    os.makedirs("dependencies/libs", exist_ok=True)
-    os.makedirs("dependencies/lib", exist_ok=True)
+    config.inventory.ensure_dirs()
     for lib in libs:
         libname = lib["name"]
-        filestext = " ".join([f["targetfile"] for f in lib["files"]])
         if config.debug:
+            filestext = " ".join([f["targetfile"] for f in lib["files"]])
             click.echo(f" > {libname}: {filestext}")
-        repo = git.clone_repository(
-            lib["repository"], P("dependencies/libs") / libname, config
-        )
+        library_dir = config.inventory.libs_dir / libname
+        git.clone_repository(lib["repository"], library_dir, config)
         for file in lib["files"]:
             relsymlink(
-                P(repo.working_tree_dir) / file["libfile"],
-                P("dependencies/lib"),
+                library_dir / file["libfile"],
+                config.inventory.lib_dir,
                 dest_name=file["targetfile"],
             )
 
@@ -218,7 +210,7 @@ def write_jsonnetfile(config: Config):
         {
             "source": {
                 "local": {
-                    "directory": "dependencies/lib",
+                    "directory": config.inventory.lib_dir,
                 }
             }
         }
@@ -258,7 +250,7 @@ def register_components(cfg: Config):
     in the Commodore config.
     """
     click.secho("Registering components...", bold=True)
-    for c in P("dependencies").iterdir():
+    for c in cfg.inventory.dependencies_dir.iterdir():
         # Skip jsonnet libs when collecting components
         if c.name == "lib" or c.name == "libs":
             continue

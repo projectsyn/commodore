@@ -6,10 +6,10 @@ import os
 import click
 import pytest
 
-from pathlib import Path as P
 from textwrap import dedent
 
 from commodore import cluster
+from commodore.inventory import Inventory
 
 
 @pytest.fixture
@@ -37,15 +37,15 @@ def cluster_from_data(data) -> cluster.Cluster:
 
 def test_render_target(tmp_path):
     os.chdir(tmp_path)
-    classdir = P("inventory/classes")
+    inv = Inventory()
     for cls in ["foo", "bar"]:
-        defaults = classdir / "defaults" / f"{cls}.yml"
+        defaults = inv.defaults_file(cls)
         os.makedirs(defaults.parent, exist_ok=True)
         defaults.touch()
-        component = classdir / "components" / f"{cls}.yml"
+        component = inv.component_file(cls)
         os.makedirs(component.parent, exist_ok=True)
         component.touch()
-    target = cluster.render_target("foo", ["foo", "bar", "baz"])
+    target = cluster.render_target(inv, "foo", ["foo", "bar", "baz"])
     classes = [
         "params.cluster",
         "defaults.foo",
