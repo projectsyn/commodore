@@ -220,7 +220,7 @@ def jsonnet_dependencies(config: Config) -> Iterable:
 
 def write_jsonnetfile(file: P, deps: Iterable):
     """
-    Writes the file `jsonnetfile.json` containing all provides dependencies.
+    Writes the file `jsonnetfile.json` containing all provided dependencies.
     """
     data = {
         "version": 1,
@@ -264,7 +264,7 @@ def fetch_jsonnet_libraries(cwd: P = P(".")):
 
 def inject_essential_libraries(file: P):
     """
-    Ensures essential libraries are contained within `jsonnetfile.json`.
+    Ensures essential libraries are added to `jsonnetfile.json`.
     :param file: The path to `jsonnetfile.json`.
     """
     with open(file, "r") as f:
@@ -282,7 +282,7 @@ def inject_essential_libraries(file: P):
                 "source": {
                     "git": {"remote": "https://github.com/bitnami-labs/kube-libsonnet"}
                 },
-                "version": "master",
+                "version": "v1.14.6",
             },
         )
 
