@@ -123,12 +123,12 @@ def render_target(
     inv: Inventory,
     target: str,
     components: Iterable[str],
-    bootstrap: bool = False,
     # pylint: disable=unsubscriptable-object
     component: Optional[str] = None,
 ):
     if not component:
         component = target
+    bootstrap = target == BOOTSTRAP_TARGET
     if not bootstrap and component not in components:
         raise click.ClickException(f"Target {target} is not a component")
 
@@ -168,22 +168,13 @@ def render_target(
     }
 
 
-def update_target(
-    cfg: Config,
-    target: str,
-    bootstrap=False,
-    # pylint: disable=unsubscriptable-object
-    component: Optional[str] = None,
-):
+# pylint: disable=unsubscriptable-object
+def update_target(cfg: Config, target: str, component: Optional[str] = None):
     click.secho(f"Updating Kapitan target for {target}...", bold=True)
     file = cfg.inventory.target_file(target)
     os.makedirs(file.parent, exist_ok=True)
     targetdata = render_target(
-        cfg.inventory,
-        target,
-        cfg.get_components().keys(),
-        bootstrap=bootstrap,
-        component=component,
+        cfg.inventory, target, cfg.get_components().keys(), component=component
     )
     yaml_dump(targetdata, file)
 

@@ -52,9 +52,7 @@ def test_render_bootstrap_target(tmp_path: P):
     inv = Inventory()
     _setup_working_dir(tmp_path, inv, components)
 
-    target = cluster.render_target(
-        inv, "cluster", ["foo", "bar", "baz"], bootstrap=True
-    )
+    target = cluster.render_target(inv, "cluster", ["foo", "bar", "baz"])
 
     classes = [
         "params.cluster",

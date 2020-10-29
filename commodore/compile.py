@@ -64,7 +64,7 @@ def _regular_setup(config, cluster_id):
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET)
     update_params(cluster)
 
     # Fetch components and config
@@ -72,7 +72,7 @@ def _regular_setup(config, cluster_id):
     _fetch_customer_config(config, cluster)
     fetch_components(config)
 
-    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET)
     for component in config.get_components().keys():
         update_target(config, component)
 
