@@ -104,14 +104,8 @@ def test_read_component_urls(data: Config, tmp_path):
     )
 
 
-@patch("commodore.dependency_mgmt._read_component_urls")
-@patch("commodore.dependency_mgmt._discover_components")
-def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
+def _setup_component_upstream(tmp_path: Path, patch_urls, components):
     os.chdir(tmp_path)
-    components = ["component-one", "component-two"]
-    patch_discover.return_value = components
-    patch_urls.return_value = {}
-
     # Prepare minimum component directories
     upstream = Path("upstream")
     for component in components:
@@ -126,6 +120,16 @@ def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Pa
         repo.index.add(["class/defaults.yml"])
         repo.index.commit("component defaults")
 
+
+@patch("commodore.dependency_mgmt._read_component_urls")
+@patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
+    os.chdir(tmp_path)
+    components = ["component-one", "component-two"]
+    patch_discover.return_value = components
+    patch_urls.return_value = {}
+    _setup_component_upstream(tmp_path, patch_urls, components)
+
     dependency_mgmt.fetch_components(data)
 
     for component in components:
@@ -137,6 +141,57 @@ def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Pa
             tmp_path / "inventory" / "classes" / "defaults" / f"{component}.yml"
         ).is_symlink()
         assert (tmp_path / "dependencies" / component).is_dir()
+
+
+@patch("commodore.dependency_mgmt._read_component_urls")
+@patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components_is_minimal(
+    patch_discover, patch_urls, data: Config, tmp_path: Path
+):
+    os.chdir(tmp_path)
+    components = ["component-one", "component-two"]
+    other_components = ["component-three", "component-four"]
+    patch_discover.return_value = components
+    patch_urls.return_value = {}
+    _setup_component_upstream(tmp_path, patch_urls, components)
+    # Setup upstreams for components which are not included
+    _setup_component_upstream(tmp_path, patch_urls, other_components)
+
+    dependency_mgmt.fetch_components(data)
+
+    for component in components:
+        assert component in data._components
+        assert (
+            tmp_path / "inventory" / "classes" / "components" / f"{component}.yml"
+        ).is_symlink()
+        assert (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{component}.yml"
+        ).is_symlink()
+        assert (tmp_path / "dependencies" / component).is_dir()
+
+    for component in other_components:
+        assert component not in data._components
+        assert not (tmp_path / "dependencies" / component).exists()
+
+
+def test_write_jsonnetfile(data: Config, tmp_path: Path):
+    data.register_component(Component("test-component"))
+    data.register_component(Component("test-component-2"))
+    dirs = [
+        "dependencies/test-component",
+        "dependencies/test-component-2",
+        "dependencies/lib",
+    ]
+
+    dependency_mgmt.write_jsonnetfile(data)
+
+    with open("jsonnetfile.json") as jf:
+        jf_contents = json.load(jf)
+        assert jf_contents["version"] == 1
+        assert jf_contents["legacyImports"]
+        deps = jf_contents["dependencies"]
+        for dep in deps:
+            assert dep["source"]["local"]["directory"] in dirs
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):

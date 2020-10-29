@@ -109,10 +109,10 @@ def fetch_components(cfg):
     component_names = _discover_components(cfg, cfg.inventory.inventory_dir)
     urls = _read_component_urls(cfg, component_names)
     click.secho("Fetching components...", bold=True)
-    for name, url in urls.items():
+    for cn in component_names:
         if cfg.debug:
-            click.echo(f" > Fetching component {name}...")
-        c = Component(name, repo_url=url)
+            click.echo(f" > Fetching component {cn}...")
+        c = Component(cn, repo_url=urls[cn])
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
@@ -210,7 +210,7 @@ def write_jsonnetfile(config: Config):
         {
             "source": {
                 "local": {
-                    "directory": config.inventory.lib_dir,
+                    "directory": str(config.inventory.lib_dir),
                 }
             }
         }
