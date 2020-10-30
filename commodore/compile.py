@@ -158,7 +158,7 @@ def compile(config, cluster_id):
     components = config.get_components()
     aliases = config.get_component_aliases()
     targets = list(components.keys()) + list(aliases.keys())
-    kapitan_compile(config, targets, search_paths=["./vendor/"])
+    kapitan_compile(config, targets, search_paths=[config.vendor_dir])
 
     postprocess_components(config, kapitan_inventory, components)
 

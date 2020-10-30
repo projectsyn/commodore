@@ -77,6 +77,10 @@ class Config:
         self.inventory.work_dir = d
 
     @property
+    def vendor_dir(self) -> P:
+        return self.work_dir / "vendor"
+
+    @property
     def api_token(self):
         return self._api_token
 
