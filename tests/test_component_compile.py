@@ -14,7 +14,7 @@ from git import Repo
 
 from commodore.config import Config
 from commodore.component.compile import compile_component
-from test_component import test_run_component_new_command
+from test_component_template import test_run_component_new_command
 
 
 def _prepare_component(tmp_path, component_name="test-component"):
@@ -38,22 +38,29 @@ def _prepare_component(tmp_path, component_name="test-component"):
 
 
 def _add_postprocessing_filter(tmp_path, component_name="test-component"):
-    with open(
-        tmp_path / "dependencies" / component_name / "postprocess" / "filters.yml", "w"
-    ) as file:
-        filters = {
-            "filters": [
-                {
-                    "path": component_name,
-                    "type": "builtin",
-                    "filter": "helm_namespace",
-                    "filterargs": {
-                        "namespace": "test-component-ns",
-                    },
-                }
-            ]
+    component_class = (
+        tmp_path / "dependencies" / component_name / "class" / f"{component_name}.yml"
+    )
+    with open(component_class, "r") as file:
+        file_contents = yaml.safe_load(file)
+
+    filters = [
+        {
+            "path": component_name,
+            "type": "builtin",
+            "filter": "helm_namespace",
+            "filterargs": {
+                "namespace": "test-component-ns",
+            },
         }
-        yaml.dump(filters, file)
+    ]
+    file_contents["parameters"]["commodore"] = {
+        "postprocess": {
+            "filters": filters,
+        }
+    }
+    with open(component_class, "w") as file:
+        yaml.dump(file_contents, file)
 
 
 def test_run_component_compile_command(tmp_path):

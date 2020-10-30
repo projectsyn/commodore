@@ -42,7 +42,6 @@ def test_run_component_new_command(tmp_path: P):
         P("component", "main.jsonnet"),
         P("component", "app.jsonnet"),
         P("lib", f"{component_name}.libsonnet"),
-        P("postprocess", "filters.yml"),
         P("docs", "modules", "ROOT", "pages", "references", "parameters.adoc"),
         P("docs", "modules", "ROOT", "pages", "index.adoc"),
     ]:
@@ -61,10 +60,22 @@ def test_run_component_new_command(tmp_path: P):
         assert f"defaults.{component_name}" in target["classes"]
         assert target["classes"][-1] == f"components.{component_name}"
         assert target["parameters"]["kapitan"]["vars"]["target"] == component_name
-    # Check that there are no uncommited files in the component repo
+    # Check that there are no uncommitted files in the component repo
     repo = Repo(P("dependencies", component_name))
     assert not repo.is_dirty()
     assert not repo.untracked_files
+    # Verify component class
+    with open(
+        P("dependencies", component_name, "class", f"{component_name}.yml")
+    ) as cclass:
+        class_contents = yaml.safe_load(cclass)
+        assert "parameters" in class_contents
+        params = class_contents["parameters"]
+        assert "kapitan" in params
+        assert "commodore" in params
+        assert "postprocess" in params["commodore"]
+        assert "filters" in params["commodore"]["postprocess"]
+        assert isinstance(params["commodore"]["postprocess"]["filters"], list)
 
 
 def test_run_component_new_command_with_name(tmp_path: P):

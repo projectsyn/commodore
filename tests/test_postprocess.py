@@ -6,7 +6,7 @@ import yaml
 from commodore.config import Config
 from commodore.component import Component
 from commodore.postprocess import postprocess_components
-from test_component import test_run_component_new_command
+from test_component_template import test_run_component_new_command
 
 
 def _make_ns_filter(ns, enabled=None):
@@ -49,15 +49,13 @@ def _setup(tmp_path, filter, invfilter=False):
         }
         yaml.dump(obj, objf)
 
+    # Create external pp filter file
+    pp_file = (
+        tmp_path / "dependencies" / "test-component" / "postprocess" / "filters.yml"
+    )
+    os.makedirs(pp_file.parent, exist_ok=True)
     if not invfilter:
-        with open(
-            tmp_path
-            / "dependencies"
-            / "test-component"
-            / "postprocess"
-            / "filters.yml",
-            "w",
-        ) as filterf:
+        with open(pp_file, "w") as filterf:
             yaml.dump(filter, filterf)
 
     config = Config()
