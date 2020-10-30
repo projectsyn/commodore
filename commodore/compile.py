@@ -110,7 +110,7 @@ def _local_setup(config: Config, cluster_id):
     register_components(config)
 
     click.secho("Configuring catalog repo...", bold=True)
-    return git.init_repository("catalog")
+    return git.init_repository(config.catalog_dir)
 
 
 # pylint: disable=redefined-builtin

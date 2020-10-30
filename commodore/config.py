@@ -81,6 +81,10 @@ class Config:
         return self.work_dir / "vendor"
 
     @property
+    def catalog_dir(self) -> P:
+        return self.work_dir / "catalog"
+
+    @property
     def api_token(self):
         return self._api_token
 

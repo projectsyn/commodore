@@ -6,14 +6,15 @@ import click
 from . import git
 from .helpers import rm_tree_contents, lieutenant_query
 from .cluster import Cluster
+from .config import Config
 
 
-def fetch_customer_catalog(config, cluster: Cluster):
+def fetch_customer_catalog(config: Config, cluster: Cluster):
     click.secho("Updating cluster catalog...", bold=True)
     repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
-    return git.clone_repository(repo_url, "catalog", config)
+    return git.clone_repository(repo_url, config.catalog_dir, config)
 
 
 def _pretty_print_component_commit(name, component):

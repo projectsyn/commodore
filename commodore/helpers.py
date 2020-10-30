@@ -111,7 +111,7 @@ def clean_working_tree(config: Config):
     rmtree(config.inventory.inventory_dir, ignore_errors=True)
     rmtree(config.inventory.dependencies_dir, ignore_errors=True)
     rmtree("compiled", ignore_errors=True)
-    rmtree("catalog", ignore_errors=True)
+    rmtree(config.catalog_dir, ignore_errors=True)
 
 
 # pylint: disable=too-many-arguments
