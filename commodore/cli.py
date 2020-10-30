@@ -38,7 +38,10 @@ def _version():
     default="./",
     show_default=True,
     type=click.Path(file_okay=False, dir_okay=True),
-    help="Working directory where all the output will be written to.",
+    help=(
+        "The directory in which Commodore will fetch dependencies, "
+        "inventory and catalog, and store intermediate outputs"
+    ),
 )
 @click.pass_context
 def commodore(ctx, working_dir, verbose):
