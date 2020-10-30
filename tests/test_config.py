@@ -12,7 +12,6 @@ def config(tmp_path: P):
         tmp_path,
         api_url="https://syn.example.com",
         api_token="token",
-        global_git="ssh://git@git.example.com",
     )
 
 

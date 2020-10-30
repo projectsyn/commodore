@@ -11,8 +11,6 @@ def test_catalog_commit_message(tmp_path):
         tmp_path,
         api_url="https://syn.example.com",
         api_token="token",
-        global_git="ssh://git@git.example.com",
-        verbose=False,
     )
 
     commit_message = _render_catalog_commit_msg(config)
