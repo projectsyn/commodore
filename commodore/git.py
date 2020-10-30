@@ -201,3 +201,19 @@ def commit(repo, commit_message, cfg):
 
 def add_remote(repo, name, url):
     return repo.create_remote(name, _normalize_git_ssh(url))
+
+
+def current_revision(repo):
+    """
+    Find list of potential names for current HEAD.
+    Return a name, if found. Commit SHA otherwise.
+    """
+    try:
+        hc = repo.head.commit
+        potential_branches = [h.name for h in repo.heads if h.commit == hc]
+        if len(potential_branches) > 0:
+            return potential_branches[0]
+        return hc
+    except ValueError:
+        # Return "master" for repos which have no commits yet
+        return "master"

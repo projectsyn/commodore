@@ -91,6 +91,53 @@ The version specification is parsed from the inventory using Kapitan's
 inventory parsing, allowing the version to be overridden at any point in the
 configuration hierarchy.
 
+=== Component instantiation
+
+With https://syn.tools/syn/SDDs/0025-commodore-component-instantiation.html[SDD0025], we've introduced support for instantiating components multiple times.
+As discussed in the design document, component authors must explicitly declare that their component supports instantiation.
+Components declare that they support instantiation by setting the field `multi_instance` in `parameters.<component_name>` to `true`.
+Commodore will exit with an error if a hierarchy tries to instantiate a component which hasn't declared that it supports instantiation.
+
+Component instance names aren't namespaced per component, but must be globally unique.
+Commodore will exit with an error if the hierarchy uses the same instance name twice.
+
+Component instances are declared in the `applications` array using `as` as the instantiation keyword.
+The current implementation of instances can be seen as a mechanism for introducing aliases for a component.
+Commodore supports hierarchies which include the same component non-aliased and aliased.
+
+The merged content of `parameters.<component_name>` in the configuration hierarchy is used as the base configuration for each instance.
+If an instance-aware component is included non-aliased, that "instance" sees the merged content of `parameters.<component_name>` in the hierarchy.
+For all other instances of a component, the content of `parameters.<instance_name>` is merged into `parameters.<component_name>`.
+Commodore always sets the meta-parameter `parameters._instance` to the instance name.
+For non-aliased instances of instance-aware components, `parameters._instance` is set to the component name.
+
+Let's take the configuration below, which includes component `nfs-client-provisioner` twice, once non-aliased, and once aliased to `nfs-2`, as an example.
+In this example, we'll end up with two instances of nfs-client-provisioner, which create volumes on `nfs.example.org:/path/to/share-1` and `nfs.example.org:/path/to/share-2` respectively.
+
+[NOTE]
+====
+Commodore will apply the usual rules for the relationship between alias name and alias parameters key.
+Therefore the parameters key for an aliased component is the alias name, but with all dashes replaced by underscores.
+====
+
+.tenant/common.yml
+[source,yaml]
+----
+applications:
+  - nfs-client-provisioner
+  - nfs-client-provisioner as nfs-2
+parameters:
+  nfs_client_provisioner:
+    server: nfs.example.org
+    path: /path/to/share-1
+  nfs_2:
+    path: /path/to/share-2
+----
+
+Similar to Helm charts, the components themselves must make sure to not cause any naming collisions of objects belonging to different instances.
+This is required both for namespaced and non-namespaced resources.
+Components can make use of the meta-parameter `_instance` to ensure objects don't collide, as that parameter is guaranteed to be unique to each instance.
+
 == Catalog Compilation
 
 Commodore uses https://kapitan.dev[Kapitan] to compile the cluster catalog.

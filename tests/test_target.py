@@ -6,6 +6,7 @@ import os
 import click
 import pytest
 
+from pathlib import Path as P
 from textwrap import dedent
 
 from commodore import cluster
@@ -35,17 +36,48 @@ def cluster_from_data(data) -> cluster.Cluster:
     return cluster.Cluster(None, data, {"id": data["tenant"]})
 
 
-def test_render_target(tmp_path):
-    os.chdir(tmp_path)
-    inv = Inventory()
-    for cls in ["foo", "bar"]:
+def _setup_working_dir(tmp_path: P, inv: Inventory, components):
+    for cls in components:
         defaults = inv.defaults_file(cls)
         os.makedirs(defaults.parent, exist_ok=True)
         defaults.touch()
         component = inv.component_file(cls)
         os.makedirs(component.parent, exist_ok=True)
         component.touch()
+
+
+def test_render_bootstrap_target(tmp_path: P):
+    os.chdir(tmp_path)
+    components = ["foo", "bar"]
+    inv = Inventory()
+    _setup_working_dir(tmp_path, inv, components)
+
+    target = cluster.render_target(inv, "cluster", ["foo", "bar", "baz"])
+
+    classes = [
+        "params.cluster",
+        "defaults.foo",
+        "defaults.bar",
+        "global.commodore",
+    ]
+    assert target != ""
+    print(target)
+    assert len(target["classes"]) == len(
+        classes
+    ), "rendered target includes different amount of classes"
+    for i in range(len(classes)):
+        assert target["classes"][i] == classes[i]
+    assert target["parameters"]["_instance"] == "cluster"
+
+
+def test_render_target(tmp_path: P):
+    os.chdir(tmp_path)
+    components = ["foo", "bar"]
+    inv = Inventory()
+    _setup_working_dir(tmp_path, inv, components)
+
     target = cluster.render_target(inv, "foo", ["foo", "bar", "baz"])
+
     classes = [
         "params.cluster",
         "defaults.foo",
@@ -61,6 +93,63 @@ def test_render_target(tmp_path):
     for i in range(len(classes)):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo"
+    assert target["parameters"]["_instance"] == "foo"
+
+
+def test_render_aliased_target(tmp_path: P):
+    os.chdir(tmp_path)
+    components = ["foo", "bar"]
+    inv = Inventory()
+    _setup_working_dir(tmp_path, inv, components)
+
+    target = cluster.render_target(inv, "fooer", ["foo", "bar", "baz"], component="foo")
+
+    classes = [
+        "params.cluster",
+        "defaults.foo",
+        "defaults.bar",
+        "global.commodore",
+        "components.foo",
+    ]
+    assert target != ""
+    print(target)
+    assert len(target["classes"]) == len(
+        classes
+    ), "rendered target includes different amount of classes"
+    for i in range(len(classes)):
+        assert target["classes"][i] == classes[i]
+    assert target["parameters"]["kapitan"]["vars"]["target"] == "fooer"
+    assert target["parameters"]["foo"] == "${fooer}"
+    assert target["parameters"]["_instance"] == "fooer"
+
+
+def test_render_aliased_target_with_dash(tmp_path: P):
+    os.chdir(tmp_path)
+    components = ["foo-comp", "bar"]
+    inv = Inventory()
+    _setup_working_dir(tmp_path, inv, components)
+
+    target = cluster.render_target(
+        inv, "foo-1", ["foo-comp", "bar", "baz"], component="foo-comp"
+    )
+
+    classes = [
+        "params.cluster",
+        "defaults.foo-comp",
+        "defaults.bar",
+        "global.commodore",
+        "components.foo-comp",
+    ]
+    assert target != ""
+    print(target)
+    assert len(target["classes"]) == len(
+        classes
+    ), "rendered target includes different amount of classes"
+    for i in range(len(classes)):
+        assert target["classes"][i] == classes[i]
+    assert target["parameters"]["kapitan"]["vars"]["target"] == "foo-1"
+    assert target["parameters"]["foo_comp"] == "${foo_1}"
+    assert target["parameters"]["_instance"] == "foo-1"
 
 
 def test_render_params(data):

@@ -147,7 +147,7 @@ def _setup_component_upstream(tmp_path: Path, patch_urls, components):
 def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
     os.chdir(tmp_path)
     components = ["component-one", "component-two"]
-    patch_discover.return_value = components
+    patch_discover.return_value = (components, {})
     patch_urls.return_value = {}
     _setup_component_upstream(tmp_path, patch_urls, components)
 
@@ -172,7 +172,7 @@ def test_fetch_components_is_minimal(
     os.chdir(tmp_path)
     components = ["component-one", "component-two"]
     other_components = ["component-three", "component-four"]
-    patch_discover.return_value = components
+    patch_discover.return_value = (components, {})
     patch_urls.return_value = {}
     _setup_component_upstream(tmp_path, patch_urls, components)
     # Setup upstreams for components which are not included
@@ -271,7 +271,7 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
         )
 
 
-def test_register_components(data: Config, tmp_path: Path):
+def _setup_register_components(tmp_path: Path):
     os.chdir(tmp_path)
     inv = Inventory(tmp_path)
     inv.ensure_dirs()
@@ -283,6 +283,15 @@ def test_register_components(data: Config, tmp_path: Path):
         r = git.Repo.init(cpath)
         r.create_remote("origin", f"ssh://git@example.com/git/{directory}")
 
+    return component_dirs, other_dirs
+
+
+@patch("commodore.dependency_mgmt._discover_components")
+def test_register_components(patch_discover, data: Config, tmp_path: Path):
+    os.chdir(tmp_path)
+    component_dirs, other_dirs = _setup_register_components(tmp_path)
+    patch_discover.return_value = (component_dirs, {})
+
     dependency_mgmt.register_components(data)
 
     component_names = data.get_components().keys()
@@ -290,3 +299,67 @@ def test_register_components(data: Config, tmp_path: Path):
         assert c in component_names
     for c in other_dirs:
         assert c not in component_names
+
+
+@patch("commodore.dependency_mgmt._discover_components")
+def test_register_components_and_aliases(patch_discover, data: Config, tmp_path: Path):
+    os.chdir(tmp_path)
+    component_dirs, other_dirs = _setup_register_components(tmp_path)
+    alias_data = {"fooer": "foo"}
+    patch_discover.return_value = (component_dirs, alias_data)
+
+    dependency_mgmt.register_components(data)
+
+    component_names = data.get_components().keys()
+    for c in component_dirs:
+        assert c in component_names
+    for c in other_dirs:
+        assert c not in component_names
+
+    aliases = data.get_component_aliases()
+    for alias, cn in alias_data.items():
+        if cn in component_dirs:
+            assert alias in aliases
+            assert aliases[alias] == cn
+        else:
+            assert alias not in aliases
+
+
+@patch("commodore.dependency_mgmt._discover_components")
+def test_register_unknown_components(
+    patch_discover, data: Config, tmp_path: Path, capsys
+):
+    os.chdir(tmp_path)
+    component_dirs, other_dirs = _setup_register_components(tmp_path)
+    unknown_components = ["qux", "quux"]
+    component_dirs.extend(unknown_components)
+    patch_discover.return_value = (component_dirs, {})
+
+    dependency_mgmt.register_components(data)
+
+    captured = capsys.readouterr()
+    for cn in unknown_components:
+        assert f"Skipping registration of component {cn}" in captured.out
+
+
+@patch("commodore.dependency_mgmt._discover_components")
+def test_register_dangling_aliases(
+    patch_discover, data: Config, tmp_path: Path, capsys
+):
+    os.chdir(tmp_path)
+    component_dirs, other_dirs = _setup_register_components(tmp_path)
+    # add some dangling aliases
+    alias_data = {"quxer": "qux", "quuxer": "quux"}
+    # generate expected output
+    should_miss = sorted(set(alias_data.keys()))
+    # add an alias that should work
+    alias_data["bazzer"] = "baz"
+
+    patch_discover.return_value = (component_dirs, alias_data)
+
+    dependency_mgmt.register_components(data)
+
+    captured = capsys.readouterr()
+    assert (
+        f"Dropping alias(es) {should_miss} with missing component(s)." in captured.out
+    )

@@ -64,7 +64,7 @@ def _regular_setup(config, cluster_id):
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET)
     update_params(cluster)
 
     # Fetch components and config
@@ -72,9 +72,12 @@ def _regular_setup(config, cluster_id):
     _fetch_customer_config(config, cluster)
     fetch_components(config)
 
-    update_target(config, BOOTSTRAP_TARGET, bootstrap=True)
+    update_target(config, BOOTSTRAP_TARGET)
     for component in config.get_components().keys():
         update_target(config, component)
+
+    for alias, component in config.get_component_aliases().items():
+        update_target(config, alias, component=component)
 
     # Fetch catalog
     return fetch_customer_catalog(config, cluster)
@@ -130,11 +133,12 @@ def compile(config, cluster_id):
     # Rebuild reclass inventory to use new version of components
     reset_reclass_cache()
     kapitan_inventory = inventory_reclass("inventory")["nodes"]
-    jsonnet_libs = (
-        kapitan_inventory[BOOTSTRAP_TARGET]["parameters"]
-        .get("commodore", {})
-        .get("jsonnet_libs", None)
-    )
+    cluster_parameters = kapitan_inventory[BOOTSTRAP_TARGET]["parameters"]
+
+    # Verify that all aliased components support instantiation after resolving component version overrides.
+    config.verify_component_aliases(cluster_parameters)
+
+    jsonnet_libs = cluster_parameters.get("commodore", {}).get("jsonnet_libs", None)
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)
 
@@ -146,14 +150,15 @@ def compile(config, cluster_id):
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
-    update_refs(config, kapitan_inventory[BOOTSTRAP_TARGET]["parameters"])
+    update_refs(config, cluster_parameters)
 
     components = config.get_components()
-    component_names = components.keys()
-    kapitan_compile(config, component_names, search_paths=["./vendor/"])
+    aliases = config.get_component_aliases()
+    targets = list(components.keys()) + list(aliases.keys())
+    kapitan_compile(config, targets, search_paths=["./vendor/"])
 
     postprocess_components(config, kapitan_inventory, components)
 
-    update_catalog(config, component_names, catalog_repo)
+    update_catalog(config, targets, catalog_repo)
 
     click.secho("Catalog compiled! 🎉", bold=True)

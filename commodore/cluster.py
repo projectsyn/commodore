@@ -2,7 +2,7 @@ import os
 
 from pathlib import Path as P
 
-from typing import Iterable, Tuple, Dict
+from typing import Iterable, Tuple, Dict, Optional, Union
 
 import click
 
@@ -120,34 +120,47 @@ def read_cluster_and_tenant() -> Tuple[str, str]:
 
 
 def render_target(
-    inv: Inventory, target: str, components: Iterable[str], bootstrap=False
+    inv: Inventory,
+    target: str,
+    components: Iterable[str],
+    # pylint: disable=unsubscriptable-object
+    component: Optional[str] = None,
 ):
-    if not bootstrap and target not in components:
+    if not component:
+        component = target
+    bootstrap = target == BOOTSTRAP_TARGET
+    if not bootstrap and component not in components:
         raise click.ClickException(f"Target {target} is not a component")
 
     classes = [f"params.{BOOTSTRAP_TARGET}"]
-    parameters = {}
+    parameters: Dict[str, Union[Dict, str]] = {
+        "_instance": target,
+    }
 
-    for component in components:
-        defaults_file = inv.defaults_dir / f"{component}.yml"
-        if defaults_file.is_file():
-            classes.append(f"defaults.{component}")
+    for c in components:
+        if inv.defaults_file(c).is_file():
+            classes.append(f"defaults.{c}")
 
     classes.append("global.commodore")
 
     if not bootstrap:
-        if not inv.component_file(target).is_file():
+        if not inv.component_file(component).is_file():
             raise click.ClickException(
                 f"Target rendering failed for {target}: component class is missing"
             )
-        classes.append(f"components.{target}")
-        parameters = {
-            "kapitan": {
-                "vars": {
-                    "target": target,
-                }
-            }
+        classes.append(f"components.{component}")
+        parameters["kapitan"] = {
+            "vars": {
+                "target": target,
+            },
         }
+
+        # When component != target we're rendering a target for an aliased
+        # component. This needs some extra work.
+        if component != target:
+            ckey = component.replace("-", "_")
+            tkey = target.replace("-", "_")
+            parameters[ckey] = f"${{{tkey}}}"
 
     return {
         "classes": classes,
@@ -155,12 +168,13 @@ def render_target(
     }
 
 
-def update_target(cfg: Config, target: str, bootstrap=False):
+# pylint: disable=unsubscriptable-object
+def update_target(cfg: Config, target: str, component: Optional[str] = None):
     click.secho(f"Updating Kapitan target for {target}...", bold=True)
     file = cfg.inventory.target_file(target)
     os.makedirs(file.parent, exist_ok=True)
     targetdata = render_target(
-        cfg.inventory, target, cfg.get_components().keys(), bootstrap=bootstrap
+        cfg.inventory, target, cfg.get_components().keys(), component=component
     )
     yaml_dump(targetdata, file)
 

@@ -10,7 +10,7 @@ from kapitan.resources import inventory_reclass
 
 from . import git
 from .config import Config
-from .component import Component
+from .component import Component, component_dir
 from .helpers import relsymlink, yaml_load, delsymlink
 
 
@@ -56,13 +56,32 @@ def _discover_components(cfg, inventory_path):
     the reclass applications dictionary.
     """
     reset_reclass_cache()
-    kapitan_applications = inventory_reclass(inventory_path)["applications"]
+    inv = inventory_reclass(inventory_path)
+    kapitan_applications = inv["applications"]
     components = set()
+    component_aliases = {}
     for component in kapitan_applications.keys():
+        try:
+            cn, alias = component.split(" as ")
+        except ValueError:
+            cn = component
+            alias = None
         if cfg.debug:
-            click.echo(f"   > Found component {component}")
-        components.add(component)
-    return sorted(components)
+            msg = f"   > Found component {cn}"
+            if alias:
+                msg += f" aliased to {alias}"
+            click.echo(msg)
+        components.add(cn)
+
+        if alias:
+            if alias in component_aliases:
+                pc = component_aliases[alias]
+                raise KeyError(
+                    f"Duplicate component alias {alias}: component {pc} is already aliased to {alias}"
+                )
+            component_aliases[alias] = cn
+
+    return sorted(components), component_aliases
 
 
 def _read_component_urls(cfg: Config, component_names) -> Dict[str, str]:
@@ -106,7 +125,11 @@ def fetch_components(cfg):
 
     click.secho("Discovering components...", bold=True)
     cfg.inventory.ensure_dirs()
-    component_names = _discover_components(cfg, cfg.inventory.inventory_dir)
+    component_names, component_aliases = _discover_components(
+        cfg, cfg.inventory.inventory_dir
+    )
+    click.secho("Registering component aliases...", bold=True)
+    cfg.register_component_aliases(component_aliases)
     urls = _read_component_urls(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for cn in component_names:
@@ -292,15 +315,32 @@ def inject_essential_libraries(file: P):
 
 def register_components(cfg: Config):
     """
-    Register all components which are currently checked out in dependencies/
+    Register all targets which are currently available in `inventory/targets`
     in the Commodore config.
     """
-    click.secho("Registering components...", bold=True)
-    for c in cfg.inventory.dependencies_dir.iterdir():
-        # Skip jsonnet libs when collecting components
-        if c.name == "lib" or c.name == "libs":
-            continue
+    click.secho("Discovering included components...", bold=True)
+    components, component_aliases = _discover_components(cfg, "inventory")
+    click.secho("Registering components and aliases...", bold=True)
+
+    for cn in components:
         if cfg.debug:
-            click.echo(f" > {c}")
-        component = Component(c.name)
+            click.echo(f" > Registering component {cn}...")
+        if not component_dir(cn).is_dir():
+            click.secho(
+                f" > Skipping registration of component {cn}: repo is not available",
+                fg="yellow",
+            )
+            continue
+        component = Component(cn)
         cfg.register_component(component)
+
+    registered_components = cfg.get_components().keys()
+    pruned_aliases = {
+        a: c for a, c in component_aliases.items() if c in registered_components
+    }
+    pruned = sorted(set(component_aliases.keys()) - set(pruned_aliases.keys()))
+    if len(pruned) > 0:
+        click.secho(
+            f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"
+        )
+    cfg.register_component_aliases(pruned_aliases)

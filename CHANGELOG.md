@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+* Add support for component instantiation ([#234]).
+
 ### Changed
 
 * Git repository URLs are now retrieved from the Lieutenant API ([#226])
@@ -16,7 +20,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   components with entries in `applications`.
   `classes: [ "components.argocd" ]` becomes `applications: [ "argocd" ]`.
 * Pull essential libraries with Jsonnet Bundler ([#246])
-
 * Add option to define postprocessing filters in the Kapitan inventory ([#222]).
 
 ### Fixed
@@ -254,5 +257,6 @@ Initial implementation
 [#222]: https://github.com/projectsyn/commodore/pull/222
 [#226]: https://github.com/projectsyn/commodore/pull/226
 [#227]: https://github.com/projectsyn/commodore/pull/227
+[#234]: https://github.com/projectsyn/commodore/pull/234
 [#237]: https://github.com/projectsyn/commodore/pull/237
 [#246]: https://github.com/projectsyn/commodore/pull/246
