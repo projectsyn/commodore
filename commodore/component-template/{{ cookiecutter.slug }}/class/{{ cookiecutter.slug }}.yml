@@ -9,3 +9,8 @@ parameters:
           - {{ cookiecutter.slug }}/component/main.jsonnet
         input_type: jsonnet
         output_path: {{ cookiecutter.slug }}/
+{% if cookiecutter.add_pp == "y" %}
+  commodore:
+    postprocess:
+      filters: []
+{% endif %}

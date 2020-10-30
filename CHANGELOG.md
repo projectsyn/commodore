@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Add support for component instantiation ([#234]).
+* Add basic renovate config to component template ([#249]).
 
 ### Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   `classes: [ "components.argocd" ]` becomes `applications: [ "argocd" ]`.
 * Pull essential libraries with Jsonnet Bundler ([#246])
 * Add option to define postprocessing filters in the Kapitan inventory ([#222]).
+* Update component template to use inventory postprocessing filters ([#249]).
 
 ### Fixed
 
@@ -260,3 +262,4 @@ Initial implementation
 [#234]: https://github.com/projectsyn/commodore/pull/234
 [#237]: https://github.com/projectsyn/commodore/pull/237
 [#246]: https://github.com/projectsyn/commodore/pull/246
+[#249]: https://github.com/projectsyn/commodore/pull/249
