@@ -5,6 +5,7 @@ from pathlib import Path as P
 
 import click
 
+from .config import Config
 from .helpers import rm_tree_contents, yaml_dump
 
 
@@ -155,15 +156,14 @@ class RefBuilder:
         return self._ref_params
 
 
-def update_refs(config, parameters):
+def update_refs(config: Config, parameters):
     """
     Iterate over parameters dict, and create Kapitan secret refs for all
     ?{...} found as values in the dict
     """
     click.secho("Updating Kapitan secret references...", bold=True)
-    refdir = P("catalog", "refs")
-    os.makedirs(refdir, exist_ok=True)
-    rm_tree_contents(refdir)
+    os.makedirs(config.refs_dir, exist_ok=True)
+    rm_tree_contents(config.refs_dir)
     # Find references
     rb = RefBuilder(config.debug, config.trace, parameters)
     rb.find_refs()
@@ -172,4 +172,4 @@ def update_refs(config, parameters):
     for r in rb.refs:
         if config.debug:
             click.echo(f" > Creating Kapitan reffile for secret ref {r.refstr}")
-        r.create_kapitan_ref(refdir, ref_params, debug=config.debug)
+        r.create_kapitan_ref(config.refs_dir, ref_params, debug=config.debug)

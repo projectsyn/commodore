@@ -131,7 +131,7 @@ def kapitan_compile(
         __install_dir__,
     ]
     reset_reclass_cache()
-    refController = RefController("./catalog/refs")
+    refController = RefController(config.refs_dir)
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)

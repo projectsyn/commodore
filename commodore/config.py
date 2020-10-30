@@ -8,7 +8,7 @@ from commodore.component import Component
 from .inventory import Inventory
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Config:
     _inventory: Inventory
     _components: Dict[str, Component]
@@ -83,6 +83,10 @@ class Config:
     @property
     def catalog_dir(self) -> P:
         return self.work_dir / "catalog"
+
+    @property
+    def refs_dir(self) -> P:
+        return self.catalog_dir / "refs"
 
     @property
     def api_token(self):
