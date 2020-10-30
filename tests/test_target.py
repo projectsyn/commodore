@@ -11,6 +11,7 @@ from textwrap import dedent
 
 from commodore import cluster
 from commodore.inventory import Inventory
+from commodore.config import Config
 
 
 @pytest.fixture
@@ -32,8 +33,8 @@ def data():
     }
 
 
-def cluster_from_data(data) -> cluster.Cluster:
-    return cluster.Cluster(None, data, {"id": data["tenant"]})
+def cluster_from_data(cfg: Config, data) -> cluster.Cluster:
+    return cluster.Cluster(cfg, data, {"id": data["tenant"]})
 
 
 def _setup_working_dir(tmp_path: P, inv: Inventory, components):
@@ -148,35 +149,40 @@ def test_render_aliased_target_with_dash(tmp_path: P):
     assert target["parameters"]["_instance"] == "foo-1"
 
 
-def test_render_params(data):
-    params = cluster.render_params(cluster_from_data(data))
+def test_render_params(data, tmp_path: P):
+    cfg = Config(work_dir=tmp_path)
+    target = cfg.inventory.bootstrap_target
+    params = cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
     assert params["parameters"]["cluster"]["name"] == "mycluster"
-    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["name"] == "mycluster"
+    assert params["parameters"][target]["name"] == "mycluster"
     assert (
-        params["parameters"][cluster.BOOTSTRAP_TARGET]["catalog_url"]
+        params["parameters"][target]["catalog_url"]
         == "ssh://git@git.example.com/cluster-catalogs/mycluster"
     )
-    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["tenant"] == "mytenant"
-    assert params["parameters"][cluster.BOOTSTRAP_TARGET]["dist"] == "rancher"
+    assert params["parameters"][target]["tenant"] == "mytenant"
+    assert params["parameters"][target]["dist"] == "rancher"
     assert params["parameters"]["facts"] == data["facts"]
     assert params["parameters"]["cloud"]["provider"] == "cloudscale"
     assert params["parameters"]["customer"]["name"] == "mytenant"
 
 
-def test_missing_facts(data):
+def test_missing_facts(data, tmp_path: P):
     data["facts"].pop("cloud")
+    cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cluster_from_data(data))
+        cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
 
 
-def test_empty_facts(data):
+def test_empty_facts(data, tmp_path: P):
     data["facts"]["cloud"] = ""
+    cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cluster_from_data(data))
+        cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
 
 
 def test_read_cluster_and_tenant(tmp_path):
-    file = cluster.params_file()
+    cfg = Config(work_dir=tmp_path)
+    file = cfg.inventory.params_file
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:
         f.write(
@@ -189,13 +195,14 @@ def test_read_cluster_and_tenant(tmp_path):
             )
         )
 
-    cluster_id, tenant_id = cluster.read_cluster_and_tenant()
+    cluster_id, tenant_id = cluster.read_cluster_and_tenant(cfg.inventory)
     assert cluster_id == "c-twilight-water-9032"
     assert tenant_id == "t-delicate-pine-3938"
 
 
 def test_read_cluster_and_tenant_missing_fact(tmp_path):
-    file = cluster.params_file()
+    inv = Inventory(work_dir=tmp_path)
+    file = inv.params_file
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:
         f.write(
@@ -207,4 +214,4 @@ def test_read_cluster_and_tenant_missing_fact(tmp_path):
         )
 
     with pytest.raises(KeyError):
-        cluster.read_cluster_and_tenant()
+        cluster.read_cluster_and_tenant(inv)

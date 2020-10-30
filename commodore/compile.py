@@ -7,7 +7,6 @@ from kapitan.resources import inventory_reclass
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
-    BOOTSTRAP_TARGET,
     Cluster,
     load_cluster_from_api,
     read_cluster_and_tenant,
@@ -58,21 +57,21 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     cfg.register_config("customer", repo)
 
 
-def _regular_setup(config, cluster_id):
+def _regular_setup(config: Config, cluster_id):
     try:
         cluster = load_cluster_from_api(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 
-    update_target(config, BOOTSTRAP_TARGET)
-    update_params(cluster)
+    update_target(config, config.inventory.bootstrap_target)
+    update_params(config.inventory, cluster)
 
     # Fetch components and config
     _fetch_global_config(config, cluster)
     _fetch_customer_config(config, cluster)
     fetch_components(config)
 
-    update_target(config, BOOTSTRAP_TARGET)
+    update_target(config, config.inventory.bootstrap_target)
     for component in config.get_components().keys():
         update_target(config, component)
 
@@ -87,12 +86,12 @@ def _local_setup(config: Config, cluster_id):
     click.secho("Running in local mode", bold=True)
     click.echo(" > Will use existing inventory, dependencies, and catalog")
 
-    file = config.inventory.target_file(BOOTSTRAP_TARGET)
+    file = config.inventory.target_file(config.inventory.bootstrap_target)
     if not file.is_file():
         raise click.ClickException(f"Invalid working dir state: '{file}' is missing")
 
     click.echo(" > Assert current working dir state matches requested compilation")
-    current_cluster_id, tenant = read_cluster_and_tenant()
+    current_cluster_id, tenant = read_cluster_and_tenant(config.inventory)
     if current_cluster_id != cluster_id:
         error = (
             "[Local mode] Cluster ID mismatch: local state targets "
@@ -126,14 +125,18 @@ def compile(config, cluster_id):
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     reset_reclass_cache()
-    cluster_inventory = inventory_reclass("inventory")["nodes"][BOOTSTRAP_TARGET]
+    cluster_inventory = inventory_reclass("inventory")["nodes"][
+        config.inventory.bootstrap_target
+    ]
     versions = cluster_inventory["parameters"].get("component_versions", None)
     if versions and not config.local:
         set_component_overrides(config, versions)
     # Rebuild reclass inventory to use new version of components
     reset_reclass_cache()
     kapitan_inventory = inventory_reclass("inventory")["nodes"]
-    cluster_parameters = kapitan_inventory[BOOTSTRAP_TARGET]["parameters"]
+    cluster_parameters = kapitan_inventory[config.inventory.bootstrap_target][
+        "parameters"
+    ]
 
     # Verify that all aliased components support instantiation after resolving component version overrides.
     config.verify_component_aliases(cluster_parameters)

@@ -1,7 +1,5 @@
 import os
 
-from pathlib import Path as P
-
 from typing import Iterable, Tuple, Dict, Optional, Union
 
 import click
@@ -14,9 +12,6 @@ from .helpers import (
 
 from .config import Config
 from .inventory import Inventory
-
-
-BOOTSTRAP_TARGET = "cluster"
 
 
 class Cluster:
@@ -103,19 +98,19 @@ def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     return Cluster(cfg, cluster_response, tenant_response)
 
 
-def read_cluster_and_tenant() -> Tuple[str, str]:
+def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:
     """
     Reads the cluster and tenant ID from the current target.
     """
-    file = params_file()
+    file = inv.params_file
     if not file.is_file():
         raise click.ClickException(f"params file for {file.stem} does not exist")
 
     data = yaml_load(file)
 
     return (
-        data["parameters"][BOOTSTRAP_TARGET]["name"],
-        data["parameters"][BOOTSTRAP_TARGET]["tenant"],
+        data["parameters"][inv.bootstrap_target]["name"],
+        data["parameters"][inv.bootstrap_target]["tenant"],
     )
 
 
@@ -128,11 +123,11 @@ def render_target(
 ):
     if not component:
         component = target
-    bootstrap = target == BOOTSTRAP_TARGET
+    bootstrap = target == inv.bootstrap_target
     if not bootstrap and component not in components:
         raise click.ClickException(f"Target {target} is not a component")
 
-    classes = [f"params.{BOOTSTRAP_TARGET}"]
+    classes = [f"params.{inv.bootstrap_target}"]
     parameters: Dict[str, Union[Dict, str]] = {
         "_instance": target,
     }
@@ -179,7 +174,7 @@ def update_target(cfg: Config, target: str, component: Optional[str] = None):
     yaml_dump(targetdata, file)
 
 
-def render_params(cluster: Cluster):
+def render_params(inv: Inventory, cluster: Cluster):
     facts = cluster.facts
     for fact in ["distribution", "cloud"]:
         if fact not in facts or not facts[fact]:
@@ -195,7 +190,7 @@ def render_params(cluster: Cluster):
 
     data = {
         "parameters": {
-            BOOTSTRAP_TARGET: {
+            inv.bootstrap_target: {
                 "name": cluster.id,
                 "catalog_url": cluster.catalog_repo_url,
                 "tenant": cluster.tenant,
@@ -214,12 +209,8 @@ def render_params(cluster: Cluster):
     return data
 
 
-def params_file():
-    return P("inventory", "classes", "params", f"{BOOTSTRAP_TARGET}.yml")
-
-
-def update_params(cluster: Cluster):
+def update_params(inv: Inventory, cluster: Cluster):
     click.secho("Updating cluster parameters...", bold=True)
-    file = params_file()
+    file = inv.params_file
     os.makedirs(file.parent, exist_ok=True)
-    yaml_dump(render_params(cluster), file)
+    yaml_dump(render_params(inv, cluster), file)

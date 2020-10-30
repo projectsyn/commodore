@@ -51,6 +51,14 @@ class Inventory:
     def global_config_dir(self) -> P:
         return self.classes_dir / "global"
 
+    @property
+    def bootstrap_target(self) -> str:
+        return "cluster"
+
+    @property
+    def params_file(self) -> P:
+        return self.classes_dir / "params" / f"{self.bootstrap_target}.yml"
+
     def tenant_config_dir(self, tenant: str) -> P:
         return self.classes_dir / tenant
 
