@@ -125,7 +125,7 @@ def compile(config, cluster_id):
     # versions are assumed to be defined in the inventory key
     # 'parameters.component_versions'
     reset_reclass_cache()
-    cluster_inventory = inventory_reclass("inventory")["nodes"][
+    cluster_inventory = inventory_reclass(config.inventory.inventory_dir)["nodes"][
         config.inventory.bootstrap_target
     ]
     versions = cluster_inventory["parameters"].get("component_versions", None)
@@ -133,7 +133,7 @@ def compile(config, cluster_id):
         set_component_overrides(config, versions)
     # Rebuild reclass inventory to use new version of components
     reset_reclass_cache()
-    kapitan_inventory = inventory_reclass("inventory")["nodes"]
+    kapitan_inventory = inventory_reclass(config.inventory.inventory_dir)["nodes"]
     cluster_parameters = kapitan_inventory[config.inventory.bootstrap_target][
         "parameters"
     ]
