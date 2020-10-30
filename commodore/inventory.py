@@ -71,6 +71,10 @@ class Inventory:
     def params_file(self) -> P:
         return self.params_dir / f"{self.bootstrap_target}.yml"
 
+    @property
+    def output_dir(self) -> P:
+        return self._work_dir / "compiled"
+
     def tenant_config_dir(self, tenant: str) -> P:
         return self.classes_dir / tenant
 

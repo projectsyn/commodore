@@ -69,7 +69,7 @@ def clean_catalog(repo):
         rm_tree_contents(repo.working_tree_dir)
 
 
-def update_catalog(cfg, targets: Iterable[str], repo):
+def update_catalog(cfg: Config, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
     from distutils import dir_util
@@ -77,7 +77,7 @@ def update_catalog(cfg, targets: Iterable[str], repo):
 
     catalogdir = P(repo.working_tree_dir, "manifests")
     for target_name in targets:
-        dir_util.copy_tree(str(P("compiled") / target_name), str(catalogdir))
+        dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
 
     difftext, changed = git.stage_all(repo)
     if changed:
