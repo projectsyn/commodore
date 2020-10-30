@@ -21,7 +21,6 @@ class Config:
         work_dir: P,
         api_url=None,
         api_token=None,
-        global_git=None,
         verbose=False,
         username=None,
         usermail=None,
@@ -30,7 +29,6 @@ class Config:
         self.api_url = api_url
         self.api_token = None
         self.api_token = api_token
-        self.global_git_base = global_git
         self._components = {}
         self._config_repos = {}
         self._component_aliases = {}
@@ -62,10 +60,6 @@ class Config:
     @property
     def jsonnet_file(self) -> P:
         return self._work_dir / "jsonnetfile.json"
-
-    @property
-    def default_component_base(self):
-        return f"{self.global_git_base}/commodore-components"
 
     @property
     def work_dir(self) -> P:
