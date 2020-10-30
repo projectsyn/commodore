@@ -1,7 +1,6 @@
 """
 Tests for component new command
 """
-import json
 import os
 import pytest
 import yaml
@@ -9,19 +8,7 @@ from pathlib import Path as P
 from subprocess import call
 from git import Repo
 
-from commodore.component import Component, component_dir
-from commodore.inventory import Inventory
-
-
-def setup_directory(tmp_path: P):
-    os.chdir(tmp_path)
-
-    inv = Inventory(work_dir=tmp_path)
-    inv.ensure_dirs()
-
-    jsonnetfile = tmp_path / "jsonnetfile.json"
-    with open(jsonnetfile, "w") as jf:
-        json.dump({"version": 1, "dependencies": [], "legacyImports": True}, jf)
+from test_component import setup_directory
 
 
 def test_run_component_new_command(tmp_path: P):
@@ -168,20 +155,3 @@ def test_deleting_inexistant_component(tmp_path: P):
         f"commodore -vvv component delete --force {component_name}", shell=True
     )
     assert exit_status == 2
-
-
-def _init_repo(tmp_path: P, cn: str, url: str):
-    setup_directory(tmp_path)
-    cr = Repo.init(component_dir(cn))
-    cr.create_remote("origin", url)
-
-
-def test_init_existing_component(tmp_path: P):
-    cn = "test-component"
-    orig_url = "git@github.com:projectsyn/commodore.git"
-    _init_repo(tmp_path, cn, orig_url)
-
-    c = Component(cn)
-
-    for url in c.repo.remote().urls:
-        assert url == orig_url
