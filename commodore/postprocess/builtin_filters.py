@@ -30,7 +30,6 @@ def _builtin_filter_helm_namespace(work_dir: P, inv, component: str, path, **kwa
     exclude_objects = kwargs.get("exclude_objects", [])
     exclude_objects = "|".join([json.dumps(e) for e in exclude_objects])
     output_dir = _output_dir(work_dir, component, path)
-    print(output_dir)
 
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
@@ -81,7 +80,5 @@ def validate_builtin_filter(config: Config, cn: str, fd: Dict):
         raise KeyError("Builtin filter is missing required key 'filterargs'")
 
     fpath = _output_dir(config.work_dir, cn, fd["path"])
-    print(fpath)
-    print(os.getcwd())
     if not fpath.exists():
         raise ValueError("Builtin filter called on path which doesn't exist")
