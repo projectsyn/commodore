@@ -1,4 +1,4 @@
-.PHONY: tox lint lint_flake8 lint_pylint lint_bandit
+.PHONY: tox lint lint_flake8 lint_pylint lint_bandit lint_black
 
 TOX_COMMAND = poetry run tox
 
@@ -22,7 +22,7 @@ lint_black:
 
 lint: lint_flake8 lint_pylint lint_bandit lint_mypy lint_black
 
-.PHONY: test_py36 test_py37 test_py38
+.PHONY: test_py3.6 test_py3.7 test_py3.8
 
 test_py3.6:
 	$(TOX_COMMAND) -e py36
@@ -32,3 +32,15 @@ test_py3.7:
 
 test_py3.8:
 	$(TOX_COMMAND) -e py38
+
+
+.PHONY: bench_py3.6 bench_py3.7 bench_py3.8
+
+bench_py3.6:
+	$(TOX_COMMAND) -e py36-bench
+
+bench_py3.7:
+	$(TOX_COMMAND) -e py37-bench
+
+bench_py3.8:
+	$(TOX_COMMAND) -e py38-bench
