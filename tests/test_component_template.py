@@ -25,6 +25,7 @@ def test_run_component_new_command(tmp_path: P):
     assert exit_status == 0
     for file in [
         P("README.md"),
+        P("renovate.json"),
         P("class", f"{component_name}.yml"),
         P("component", "main.jsonnet"),
         P("component", "app.jsonnet"),
