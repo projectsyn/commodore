@@ -118,16 +118,19 @@ def clean_working_tree(config: Config):
 def kapitan_compile(
     config: Config,
     targets: Iterable[str],
-    output_dir="./",
+    output_dir: P = None,
     search_paths=None,
     fake_refs=False,
     fetch_dependencies=True,
     reveal=False,
 ):
+    if not output_dir:
+        output_dir = config.work_dir
+
     if not search_paths:
         search_paths = []
     search_paths = search_paths + [
-        "./",
+        config.work_dir,
         __install_dir__,
     ]
     reset_reclass_cache()
@@ -135,9 +138,11 @@ def kapitan_compile(
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
-    cached.args["compile"] = ArgumentCache(inventory_path="./inventory")
+    cached.args["compile"] = ArgumentCache(
+        inventory_path=config.inventory.inventory_dir
+    )
     kapitan_targets.compile_targets(
-        inventory_path="./inventory",
+        inventory_path=config.inventory.inventory_dir,
         search_paths=search_paths,
         output_path=output_dir,
         targets=targets,
@@ -152,7 +157,7 @@ def kapitan_compile(
         cache_paths=None,
         fetch_dependencies=fetch_dependencies,
         validate=False,
-        schemas_path="./schemas",
+        schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
     )
 
