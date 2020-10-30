@@ -2,10 +2,10 @@ import json
 import pytest
 
 from pathlib import Path as P
-from git import Repo, GitCommandError
+from git import Repo
 
 
-from commodore.component import Component
+from commodore.component import Component, component_dir, RefError
 from commodore.inventory import Inventory
 
 
@@ -76,7 +76,7 @@ def test_component_checkout_sha1version(tmp_path: P):
 def test_component_checkout_nonexisting_version(tmp_path: P):
     c = _setup_component(tmp_path, version="does-not-exist")
 
-    with pytest.raises(GitCommandError):
+    with pytest.raises(RefError):
         c.checkout()
 
 
