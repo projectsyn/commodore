@@ -260,13 +260,15 @@ def write_jsonnetfile(file: P, deps: Iterable):
         f.write(json.dumps(data, indent=4))
 
 
-def fetch_jsonnet_libraries(cwd: P):
+def fetch_jsonnet_libraries(cwd: P, deps: Iterable = None):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """
     jsonnetfile = cwd / "jsonnetfile.json"
-    if not jsonnetfile.exists():
-        write_jsonnetfile(jsonnetfile, [])
+    if not jsonnetfile.exists() or deps:
+        if not deps:
+            deps = []
+        write_jsonnetfile(jsonnetfile, deps)
 
     inject_essential_libraries(jsonnetfile)
 

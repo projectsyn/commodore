@@ -1,5 +1,3 @@
-from pathlib import Path as P
-
 import click
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.resources import inventory_reclass
@@ -20,7 +18,6 @@ from .dependency_mgmt import (
     fetch_jsonnet_libraries,
     register_components,
     set_component_overrides,
-    write_jsonnetfile,
     jsonnet_dependencies,
 )
 from .helpers import (
@@ -146,8 +143,7 @@ def compile(config, cluster_id):
         fetch_jsonnet_libs(config, jsonnet_libs)
 
     if not config.local:
-        write_jsonnetfile(P("jsonnetfile.json"), jsonnet_dependencies(config))
-        fetch_jsonnet_libraries(config.work_dir)
+        fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
     clean_catalog(catalog_repo)
 
