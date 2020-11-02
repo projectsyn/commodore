@@ -19,8 +19,8 @@ from commodore.dependency_mgmt import (
     delete_component_symlinks,
     fetch_jsonnet_libraries,
     register_components,
+    write_jsonnetfile,
 )
-from commodore.inventory import Inventory
 
 slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
@@ -79,7 +79,7 @@ class ComponentTemplater:
         }
 
     def create(self):
-        path = component_dir(self.slug)
+        path = component_dir(self.config.work_dir, self.slug)
         if path.exists():
             raise click.ClickException(
                 f"Unable to add component {self.name}: {path} already exists."
@@ -90,12 +90,13 @@ class ComponentTemplater:
         cookiecutter(
             str(component_template.resolve()),
             no_input=True,
-            output_dir="dependencies",
+            output_dir=self.config.work_dir / "dependencies",
             extra_context=self.cookiecutter_args(),
         )
 
         component = Component(
             self.slug,
+            work_dir=self.config.work_dir,
             repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
             force_init=True,
         )
@@ -116,10 +117,10 @@ class ComponentTemplater:
         try:
             create_component_symlinks(self.config, component)
             update_target(self.config, self.slug)
-            insert_into_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
+            insert_into_jsonnetfile(self.config, component.target_directory)
             # call fetch_jsonnet_libraries after updating jsonnetfile to
             # symlink new component into vendor/
-            fetch_jsonnet_libraries()
+            fetch_jsonnet_libraries(self.config.work_dir)
         except FileNotFoundError:
             # TODO: This should maybe cleanup the "dependencies" subdirectory
             # (since we just created it).
@@ -131,9 +132,9 @@ class ComponentTemplater:
             click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 
     def delete(self):
-        inv = Inventory()
-        if component_dir(self.slug).exists():
-            component = Component(self.slug)
+        inv = self.config.inventory
+        if component_dir(self.config.work_dir, self.slug).exists():
+            component = Component(self.slug, work_dir=self.config.work_dir)
 
             if not self.config.force:
                 click.confirm(
@@ -145,10 +146,10 @@ class ComponentTemplater:
             rmtree(component.target_directory)
 
             os.unlink(inv.target_file(component))
-            remove_from_jsonnetfile(P("jsonnetfile.json"), component.target_directory)
+            remove_from_jsonnetfile(self.config, component.target_directory)
             # Fetch jsonnet libs after removing component from jsonnetfile to
             # remove symlink to removed component in vendor/
-            fetch_jsonnet_libraries()
+            fetch_jsonnet_libraries(self.config.work_dir)
 
             click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
         else:
@@ -157,36 +158,47 @@ class ComponentTemplater:
             )
 
 
-def insert_into_jsonnetfile(jsonnetfile: P, componentdir: P):
+def insert_into_jsonnetfile(cfg: CommodoreConfig.Config, componentdir: P):
     """
     Insert new component into jsonnetfile
     """
-    with open(jsonnetfile, "r") as jf:
+    if not cfg.jsonnet_file.exists():
+        write_jsonnetfile(cfg.config_file, [])
+
+    with open(cfg.jsonnet_file, "r") as jf:
         jsonnetf = json.load(jf)
 
     jsonnetf["dependencies"].append(
-        {"source": {"local": {"directory": str(componentdir)}}}
+        {
+            "source": {
+                "local": {"directory": _component_rel_path(cfg.work_dir, componentdir)}
+            }
+        }
     )
 
-    with open(jsonnetfile, "w") as jf:
+    with open(cfg.jsonnet_file, "w") as jf:
         json.dump(jsonnetf, jf, indent=4)
 
 
-def remove_from_jsonnetfile(jsonnetfile: P, componentdir: P):
+def remove_from_jsonnetfile(cfg: CommodoreConfig.Config, componentdir: P):
     """
     Remove component from jsonnetfile
     """
-    with open(jsonnetfile, "r") as jf:
+    with open(cfg.jsonnet_file, "r") as jf:
         jsonnetf = json.load(jf)
 
     deps = jsonnetf["dependencies"]
     deps = list(
         filter(
             lambda d: d.get("source", {}).get("local", {}).get("directory", {})
-            != str(componentdir),
+            != _component_rel_path(cfg.work_dir, componentdir),
             deps,
         )
     )
     jsonnetf["dependencies"] = deps
-    with open(jsonnetfile, "w") as jf:
+    with open(cfg.jsonnet_file, "w") as jf:
         json.dump(jsonnetf, jf, indent=4)
+
+
+def _component_rel_path(work_dir: P, path: P) -> str:
+    return os.path.relpath(path, start=work_dir)

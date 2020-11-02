@@ -5,6 +5,11 @@
 Some command line options aren't associated with a specific command, but can
 provided to any command instead.
 
+*--working-dir*::
+  Commodore creates a large amount of directories and files.
+  By default, this happens in the current working directory of the environment in which Commodore is executed.
+  If this option is provided, Commodore will create its directories and files in the provided location.
+
 *--version*::
   Show the version and exit.
 

@@ -1,10 +1,10 @@
 """
 Tests for component compile command
 """
-import os
 import yaml
 import pytest
 
+from pathlib import Path as P
 from subprocess import call
 from textwrap import dedent
 
@@ -63,13 +63,14 @@ def _add_postprocessing_filter(tmp_path, component_name="test-component"):
         yaml.dump(file_contents, file)
 
 
-def test_run_component_compile_command(tmp_path):
+def _cli_command_string(p: P, component: str) -> str:
+    return f"commodore -d '{p}' component compile -o '{p}/testdir' '{p}/dependencies/{component}'"
+
+
+def test_run_component_compile_command(tmp_path: P):
     """
     Run the component compile command
     """
-
-    os.chdir(tmp_path)
-
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
 
@@ -77,16 +78,22 @@ def test_run_component_compile_command(tmp_path):
     orig_remote_urls = list(component_repo.remote().urls)
 
     exit_status = call(
-        f"commodore component compile -o ./testdir dependencies/{component_name}",
+        _cli_command_string(tmp_path, component_name),
         shell=True,
     )
     assert exit_status == 0
-    assert os.path.exists(
-        tmp_path / "testdir/compiled" / component_name / f"apps/{component_name}.yaml"
-    )
+    assert (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / "apps"
+        / f"{component_name}.yaml"
+    ).exists()
     rendered_yaml = (
         tmp_path
-        / "testdir/compiled"
+        / "testdir"
+        / "compiled"
         / component_name
         / component_name
         / "test_service_account.yaml"
@@ -105,24 +112,27 @@ def test_run_component_compile_command_postprocess(tmp_path):
     Run the component compile command for a component with a postprocessing
     filter
     """
-
-    os.chdir(tmp_path)
-
     component_name = "test-component"
     _prepare_component(tmp_path, component_name)
     _add_postprocessing_filter(tmp_path, component_name)
 
     exit_status = call(
-        f"commodore component compile -o ./testdir dependencies/{component_name}",
+        _cli_command_string(tmp_path, component_name),
         shell=True,
     )
     assert exit_status == 0
-    assert os.path.exists(
-        tmp_path / "testdir/compiled" / component_name / f"apps/{component_name}.yaml"
-    )
+    assert (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / "apps"
+        / f"{component_name}.yaml"
+    ).exists()
     rendered_yaml = (
         tmp_path
-        / "testdir/compiled"
+        / "testdir"
+        / "compiled"
         / component_name
         / component_name
         / "test_service_account.yaml"
@@ -136,5 +146,5 @@ def test_run_component_compile_command_postprocess(tmp_path):
 
 def test_no_component_compile_command(tmp_path):
     with pytest.raises(ClickException) as excinfo:
-        compile_component(Config(), tmp_path / "foo", [], [], "./")
+        compile_component(Config(tmp_path), tmp_path / "foo", [], [], "./")
     assert "Could not find component class file" in str(excinfo)

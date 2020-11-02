@@ -6,14 +6,15 @@ import click
 from . import git
 from .helpers import rm_tree_contents, lieutenant_query
 from .cluster import Cluster
+from .config import Config
 
 
-def fetch_customer_catalog(config, cluster: Cluster):
+def fetch_customer_catalog(config: Config, cluster: Cluster):
     click.secho("Updating cluster catalog...", bold=True)
     repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
-    return git.clone_repository(repo_url, "catalog", config)
+    return git.clone_repository(repo_url, config.catalog_dir, config)
 
 
 def _pretty_print_component_commit(name, component):
@@ -68,7 +69,7 @@ def clean_catalog(repo):
         rm_tree_contents(repo.working_tree_dir)
 
 
-def update_catalog(cfg, targets: Iterable[str], repo):
+def update_catalog(cfg: Config, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
     from distutils import dir_util
@@ -76,7 +77,7 @@ def update_catalog(cfg, targets: Iterable[str], repo):
 
     catalogdir = P(repo.working_tree_dir, "manifests")
     for target_name in targets:
-        dir_util.copy_tree(str(P("compiled") / target_name), str(catalogdir))
+        dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
 
     difftext, changed = git.stage_all(repo)
     if changed:

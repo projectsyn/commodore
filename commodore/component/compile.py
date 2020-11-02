@@ -1,4 +1,3 @@
-import os
 from pathlib import Path as P
 import shutil
 import tempfile
@@ -22,7 +21,6 @@ def compile_component(
     component_path = P(component_path).resolve()
     value_files = [P(f).resolve() for f in value_files]
     search_paths = [P(d).resolve() for d in search_paths]
-    search_paths.append("./dependencies/")
     search_paths.append(component_path / "vendor")
     output_path = P(output_path).resolve()
     # Ignore 'component-' prefix in dir name
@@ -31,19 +29,19 @@ def compile_component(
     click.secho(f"Compile component {component_name}...", bold=True)
 
     temp_dir = P(tempfile.mkdtemp(prefix="component-")).resolve()
-    original_working_dir = os.getcwd()
-    os.chdir(temp_dir)
+    config.work_dir = temp_dir
     try:
         if config.debug:
-            click.echo(f"   > Created temp workspace: {temp_dir}")
-
-        inv = Inventory(work_dir=temp_dir)
+            click.echo(f"   > Created temp workspace: {config.work_dir}")
+        inv = config.inventory
+        inv.ensure_dirs()
+        search_paths.append(inv.dependencies_dir)
         component = Component(component_name, directory=component_path)
         config.register_component(component)
         _prepare_fake_inventory(inv, component, value_files)
 
         # Create class for fake parameters
-        with open(inv.classes_dir / "fake.yml", "w") as file:
+        with open(inv.params_file, "w") as file:
             file.write(
                 dedent(
                     f"""
@@ -74,7 +72,7 @@ def compile_component(
                 dedent(
                     f"""
                 classes:
-                - fake
+                - params.{inv.bootstrap_target}
                 - defaults.{component_name}
                 - components.{component_name}
                 {value_classes}"""
@@ -84,7 +82,6 @@ def compile_component(
         # Fake Argo CD lib
         # We plug "fake" Argo CD library here because every component relies on it
         # and we don't want to provide it every time when compiling a single component.
-        inv.lib_dir.mkdir(exist_ok=True)
         with open(inv.lib_dir / "argocd.libjsonnet", "w") as file:
             file.write(
                 dedent(
@@ -117,13 +114,9 @@ def compile_component(
 
         # prepare inventory and fake component object for postprocess
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
-        # We change the working directory to the output_path directory here,
-        # as postprocess expects to find `compiled/<target>` in the working
-        # directory.
-        os.chdir(output_path)
+        config.work_dir = output_path
         postprocess_components(config, nodes, config.get_components())
     finally:
-        os.chdir(original_working_dir)
         if config.trace:
             click.echo(f" > Temp dir left in place {temp_dir}")
         else:
@@ -144,13 +137,6 @@ def _prepare_fake_inventory(inv: Inventory, component: Component, value_files):
             f"Could not find component default file: {component_defaults_file}"
         )
 
-    for d in [
-        inv.components_dir,
-        inv.defaults_dir,
-        inv.targets_dir,
-        inv.dependencies_dir,
-    ]:
-        os.makedirs(d, exist_ok=True)
     # Create class symlink
     relsymlink(component_class_file, inv.components_dir)
     # Create defaults symlink

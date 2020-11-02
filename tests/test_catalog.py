@@ -6,9 +6,13 @@ from commodore.catalog import _render_catalog_commit_msg
 from commodore.config import Config
 
 
-def test_catalog_commit_message():
+def test_catalog_commit_message(tmp_path):
     config = Config(
-        "https://syn.example.com", "token", "ssh://git@git.example.com", False
+        tmp_path,
+        api_url="https://syn.example.com",
+        api_token="token",
+        global_git="ssh://git@git.example.com",
+        verbose=False,
     )
 
     commit_message = _render_catalog_commit_msg(config)

@@ -19,25 +19,27 @@ from commodore.inventory import Inventory
 
 
 @pytest.fixture
-def data():
+def data(tmp_path):
     """
     Setup test data
     """
 
     return Config(
-        "https://syn.example.com", "token", "ssh://git@git.example.com", False
+        tmp_path,
+        api_url="https://syn.example.com",
+        api_token="token",
+        global_git="ssh://git@git.example.com",
+        verbose=False,
     )
 
 
 def test_symlink(tmp_path: Path):
-    os.chdir(tmp_path)
     test_file = tmp_path / "test1"
     relsymlink(test_file, tmp_path)
     assert test_file.is_symlink()
 
 
 def test_override_symlink(tmp_path: Path):
-    os.chdir(tmp_path)
     test_file = tmp_path / "test2"
     test_file.touch()
     assert not test_file.is_symlink()
@@ -46,15 +48,13 @@ def test_override_symlink(tmp_path: Path):
 
 
 def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
-    os.chdir(tmp_path)
-    component = Component("my-component")
+    component = Component("my-component", work_dir=tmp_path)
     with pytest.raises(FileNotFoundError):
         dependency_mgmt.create_component_symlinks(data, component)
 
 
 def test_create_component_symlinks(capsys, data: Config, tmp_path):
-    os.chdir(tmp_path)
-    component = Component("my-component")
+    component = Component("my-component", work_dir=tmp_path)
     component.class_file.parent.mkdir(parents=True, exist_ok=True)
     with open(component.class_file, "w") as f:
         f.writelines(["class"])
@@ -99,14 +99,12 @@ def test_read_component_urls_no_config(data: Config):
     assert "inventory/classes/global/commodore.yml" in str(excinfo)
 
 
-def test_read_component_urls(data: Config, tmp_path):
-    os.chdir(tmp_path)
+def test_read_component_urls(data: Config, tmp_path: Path):
     component_names = ["component-overwritten", "component-default"]
-    inventory_global = Path("inventory/classes/global")
+    inventory_global = data.inventory.global_config_dir
     inventory_global.mkdir(parents=True, exist_ok=True)
-    config_file = inventory_global / "commodore.yml"
     override_url = "ssh://git@git.acme.com/some/component.git"
-    with open(config_file, "w") as file:
+    with open(data.config_file, "w") as file:
         file.write(
             dedent(
                 f"""
@@ -126,9 +124,8 @@ def test_read_component_urls(data: Config, tmp_path):
 
 
 def _setup_component_upstream(tmp_path: Path, patch_urls, components):
-    os.chdir(tmp_path)
     # Prepare minimum component directories
-    upstream = Path("upstream")
+    upstream = tmp_path / "upstream"
     for component in components:
         repo_path = upstream / component
         patch_urls.return_value[component] = f"file://#{repo_path.resolve()}"
@@ -145,7 +142,6 @@ def _setup_component_upstream(tmp_path: Path, patch_urls, components):
 @patch("commodore.dependency_mgmt._read_component_urls")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
-    os.chdir(tmp_path)
     components = ["component-one", "component-two"]
     patch_discover.return_value = (components, {})
     patch_urls.return_value = {}
@@ -169,7 +165,6 @@ def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Pa
 def test_fetch_components_is_minimal(
     patch_discover, patch_urls, data: Config, tmp_path: Path
 ):
-    os.chdir(tmp_path)
     components = ["component-one", "component-two"]
     other_components = ["component-three", "component-four"]
     patch_discover.return_value = (components, {})
@@ -196,8 +191,8 @@ def test_fetch_components_is_minimal(
 
 
 def test_write_jsonnetfile(data: Config, tmp_path: Path):
-    data.register_component(Component("test-component"))
-    data.register_component(Component("test-component-2"))
+    data.register_component(Component("test-component", work_dir=tmp_path))
+    data.register_component(Component("test-component-2", work_dir=tmp_path))
     dirs = [
         "dependencies/test-component",
         "dependencies/test-component-2",
@@ -218,9 +213,8 @@ def test_write_jsonnetfile(data: Config, tmp_path: Path):
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):
-    os.chdir(tmp_path)
-    jsonnetfile = Path("jsonnetfile.json")
-    jsonnet_lock = Path("jsonnetfile.lock.json")
+    jsonnetfile = tmp_path / "jsonnetfile.json"
+    jsonnet_lock = tmp_path / "jsonnetfile.lock.json"
     with open(jsonnetfile, "w") as jf:
         json.dump(
             {
@@ -260,7 +254,7 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
             },
             jl,
         )
-    dependency_mgmt.fetch_jsonnet_libraries()
+    dependency_mgmt.fetch_jsonnet_libraries(tmp_path)
 
     assert jsonnet_lock.is_file()
     with open(jsonnet_lock, "r") as file:
@@ -272,7 +266,6 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
 
 
 def _setup_register_components(tmp_path: Path):
-    os.chdir(tmp_path)
     inv = Inventory(tmp_path)
     inv.ensure_dirs()
     component_dirs = ["foo", "bar", "baz"]
@@ -288,7 +281,6 @@ def _setup_register_components(tmp_path: Path):
 
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_components(patch_discover, data: Config, tmp_path: Path):
-    os.chdir(tmp_path)
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
 
@@ -303,7 +295,6 @@ def test_register_components(patch_discover, data: Config, tmp_path: Path):
 
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_components_and_aliases(patch_discover, data: Config, tmp_path: Path):
-    os.chdir(tmp_path)
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     alias_data = {"fooer": "foo"}
     patch_discover.return_value = (component_dirs, alias_data)
@@ -329,7 +320,6 @@ def test_register_components_and_aliases(patch_discover, data: Config, tmp_path:
 def test_register_unknown_components(
     patch_discover, data: Config, tmp_path: Path, capsys
 ):
-    os.chdir(tmp_path)
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     unknown_components = ["qux", "quux"]
     component_dirs.extend(unknown_components)
@@ -346,7 +336,6 @@ def test_register_unknown_components(
 def test_register_dangling_aliases(
     patch_discover, data: Config, tmp_path: Path, capsys
 ):
-    os.chdir(tmp_path)
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     # add some dangling aliases
     alias_data = {"quxer": "qux", "quuxer": "quux"}

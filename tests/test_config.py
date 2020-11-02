@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path as P
 
 import click
 
@@ -6,9 +7,12 @@ from commodore.config import Config
 
 
 @pytest.fixture
-def config():
+def config(tmp_path: P):
     return Config(
-        "https://syn.example.com", "token", "ssh://git@git.example.com", False
+        tmp_path,
+        api_url="https://syn.example.com",
+        api_token="token",
+        global_git="ssh://git@git.example.com",
     )
 
 

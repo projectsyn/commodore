@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 
 from dotenv import load_dotenv
@@ -30,9 +32,20 @@ def _version():
 @click.group()
 @click.version_option(_version(), prog_name="commodore")
 @verbosity
+@click.option(
+    "-d",
+    "--working-dir",
+    default="./",
+    show_default=True,
+    type=click.Path(file_okay=False, dir_okay=True),
+    help=(
+        "The directory in which Commodore will fetch dependencies, "
+        "inventory and catalog, and store intermediate outputs"
+    ),
+)
 @click.pass_context
-def commodore(ctx, verbose):
-    ctx.obj = Config(verbose=verbose)
+def commodore(ctx, working_dir, verbose):
+    ctx.obj = Config(Path(working_dir), verbose=verbose)
 
 
 @commodore.group(short_help="Interact with a cluster catalog.")

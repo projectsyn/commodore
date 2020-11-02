@@ -1,11 +1,13 @@
 import json
 import os
+import functools
 
 from pathlib import Path as P
 from typing import Any, Callable, Dict, Iterable
 
 import _jsonnet
 
+from commodore.config import Config
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
 
@@ -40,12 +42,12 @@ def _import_callback_with_searchpath(search: Iterable[P], basedir: P, rel: str):
     raise RuntimeError("File not found")
 
 
-def _import_cb(basedir: str, rel: str):
+def _import_cb(work_dir: P, basedir: str, rel: str):
     # Add current working dir to search path for Jsonnet import callback
     search_path = [
-        P(".").resolve(),
+        work_dir.resolve(),
         __install_dir__.resolve(),
-        P("./dependencies").resolve(),
+        (work_dir / "vendor").resolve(),
     ]
     return _import_callback_with_searchpath(search_path, P(basedir), rel)
 
@@ -78,6 +80,7 @@ _native_callbacks = {
 
 # pylint: disable=too-many-arguments
 def jsonnet_runner(
+    work_dir: P,
     inv: Dict[str, Any],
     component: str,
     path: os.PathLike,
@@ -92,11 +95,11 @@ def jsonnet_runner(
     _native_cb["inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = P("compiled", component, path)
+    output_dir = work_dir / "compiled" / component / path
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),
-        import_callback=_import_cb,
+        import_callback=functools.partial(_import_cb, work_dir),
         native_callbacks=_native_cb,
         ext_vars=kwargs,
     )
@@ -112,26 +115,38 @@ def jsonnet_runner(
             yaml_dump(outcontents, outpath)
 
 
-def _filter_file(component: str, filterpath: str) -> P:
+def _filter_file(work_dir: P, component: str, filterpath: str) -> P:
     # TODO: Do we need to handle search path better?
-    return P("dependencies") / component / filterpath
+    return work_dir / "dependencies" / component / filterpath
 
 
 def run_jsonnet_filter(
-    inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+    config: Config,
+    inventory: Dict,
+    component: str,
+    filterid: str,
+    path: P,
+    **filterargs: str,
 ):
     """
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    filterfile = _filter_file(component, filterid)
+    filterfile = _filter_file(config.work_dir, component, filterid)
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
-        inventory, component, path, _jsonnet.evaluate_file, filterfile, **filterargs
+        config.work_dir,
+        inventory,
+        component,
+        path,
+        _jsonnet.evaluate_file,
+        filterfile,
+        **filterargs,
     )
 
 
-def validate_jsonnet_filter(cn: str, fd: Dict):
-    filterfile = _filter_file(cn, fd["filter"])
+# pylint: disable=unused-argument
+def validate_jsonnet_filter(config: Config, cn: str, fd: Dict):
+    filterfile = _filter_file(config.work_dir, cn, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")

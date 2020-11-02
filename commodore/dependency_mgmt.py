@@ -1,3 +1,4 @@
+import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
@@ -115,7 +116,7 @@ def _read_component_urls(cfg: Config, component_names) -> Dict[str, str]:
     return component_urls
 
 
-def fetch_components(cfg):
+def fetch_components(cfg: Config):
     """
     Download all components required by target. Generate list of components
     by searching for classes with prefix `components.` in the inventory files.
@@ -135,7 +136,7 @@ def fetch_components(cfg):
     for cn in component_names:
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
-        c = Component(cn, repo_url=urls[cn])
+        c = Component(cn, work_dir=cfg.work_dir, repo_url=urls[cn])
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
@@ -221,7 +222,9 @@ def jsonnet_dependencies(config: Config) -> Iterable:
             {
                 "source": {
                     "local": {
-                        "directory": str(component.target_directory),
+                        "directory": os.path.relpath(
+                            component.target_directory, start=config.work_dir
+                        ),
                     }
                 }
             }
@@ -232,7 +235,9 @@ def jsonnet_dependencies(config: Config) -> Iterable:
         {
             "source": {
                 "local": {
-                    "directory": str(config.inventory.lib_dir),
+                    "directory": os.path.relpath(
+                        config.inventory.lib_dir, start=config.work_dir
+                    ),
                 }
             }
         }
@@ -255,13 +260,15 @@ def write_jsonnetfile(file: P, deps: Iterable):
         f.write(json.dumps(data, indent=4))
 
 
-def fetch_jsonnet_libraries(cwd: P = P(".")):
+def fetch_jsonnet_libraries(cwd: P, deps: Iterable = None):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """
     jsonnetfile = cwd / "jsonnetfile.json"
-    if not jsonnetfile.exists():
-        write_jsonnetfile(jsonnetfile, [])
+    if not jsonnetfile.exists() or deps:
+        if not deps:
+            deps = []
+        write_jsonnetfile(jsonnetfile, deps)
 
     inject_essential_libraries(jsonnetfile)
 
@@ -319,19 +326,21 @@ def register_components(cfg: Config):
     in the Commodore config.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(cfg, "inventory")
+    components, component_aliases = _discover_components(
+        cfg, cfg.inventory.inventory_dir
+    )
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
         if cfg.debug:
             click.echo(f" > Registering component {cn}...")
-        if not component_dir(cn).is_dir():
+        if not component_dir(cfg.work_dir, cn).is_dir():
             click.secho(
                 f" > Skipping registration of component {cn}: repo is not available",
                 fg="yellow",
             )
             continue
-        component = Component(cn)
+        component = Component(cn, work_dir=cfg.work_dir)
         cfg.register_component(component)
 
     registered_components = cfg.get_components().keys()

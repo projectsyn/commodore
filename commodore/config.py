@@ -2,18 +2,23 @@ from pathlib import Path as P
 from typing import Dict
 
 import click
+from git import Repo
 
 from commodore.component import Component
 from .inventory import Inventory
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Config:
     _inventory: Inventory
+    _components: Dict[str, Component]
+    _config_repos: Dict[str, Repo]
+    _component_aliases: Dict[str, str]
 
     # pylint: disable=too-many-arguments
     def __init__(
         self,
+        work_dir: P,
         api_url=None,
         api_token=None,
         global_git=None,
@@ -21,6 +26,7 @@ class Config:
         username=None,
         usermail=None,
     ):
+        self._work_dir = work_dir.resolve()
         self.api_url = api_url
         self.api_token = None
         self.api_token = api_token
@@ -35,7 +41,7 @@ class Config:
         self.push = None
         self.interactive = None
         self.force = False
-        self._inventory = Inventory()
+        self._inventory = Inventory(work_dir=self.work_dir)
 
     @property
     def verbose(self):
@@ -54,8 +60,33 @@ class Config:
         return self._inventory.global_config_dir / "commodore.yml"
 
     @property
+    def jsonnet_file(self) -> P:
+        return self._work_dir / "jsonnetfile.json"
+
+    @property
     def default_component_base(self):
         return f"{self.global_git_base}/commodore-components"
+
+    @property
+    def work_dir(self) -> P:
+        return self._work_dir
+
+    @work_dir.setter
+    def work_dir(self, d: P):
+        self._work_dir = d
+        self.inventory.work_dir = d
+
+    @property
+    def vendor_dir(self) -> P:
+        return self.work_dir / "vendor"
+
+    @property
+    def catalog_dir(self) -> P:
+        return self.work_dir / "catalog"
+
+    @property
+    def refs_dir(self) -> P:
+        return self.catalog_dir / "refs"
 
     @property
     def api_token(self):

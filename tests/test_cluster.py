@@ -12,10 +12,14 @@ from commodore.config import Config
 
 
 @pytest.fixture
-def data():
+def data(tmp_path):
     return {
         "config": Config(
-            "https://syn.example.com", "token", "ssh://git@git.example.com", False
+            tmp_path,
+            api_url="https://syn.example.com",
+            api_token="token",
+            global_git="ssh://git@git.example.com",
+            verbose=False,
         ),
         "cluster": {"id": "c-bar", "tenant": "t-foo"},
         "tenant": {"id": "t-foo"},
@@ -33,10 +37,14 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
 
 
 @patch("commodore.cluster.lieutenant_query")
-def test_no_tenant_reference(test_patch):
+def test_no_tenant_reference(test_patch, tmp_path):
     customer_id = "t-wild-fire-234"
     config = Config(
-        "https://syn.example.com", "token", "ssh://git@git.example.com", False
+        tmp_path,
+        api_url="https://syn.example.com",
+        api_token="token",
+        global_git="ssh://git@git.example.com",
+        verbose=False,
     )
     test_patch.side_effect = lieutenant_query
     with pytest.raises(click.ClickException) as err:

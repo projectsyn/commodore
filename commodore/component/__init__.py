@@ -1,6 +1,8 @@
 from pathlib import Path as P
 from typing import Iterable
 
+import click
+
 from git import Repo
 
 
@@ -14,6 +16,7 @@ class Component:
     def __init__(
         self,
         name: str,
+        work_dir: P = None,
         repo_url: str = None,
         version: str = None,
         force_init: bool = False,
@@ -22,8 +25,12 @@ class Component:
         self._name = name
         if directory:
             self._dir = directory
+        elif work_dir:
+            self._dir = component_dir(work_dir, self.name)
         else:
-            self._dir = component_dir(self.name)
+            raise click.ClickException(
+                "Either `work_dir` or `directory` must be provided."
+            )
         self._init_repo(force_init)
         if repo_url:
             self.repo_url = repo_url
@@ -97,5 +104,5 @@ class Component:
             self._repo.git.pull()
 
 
-def component_dir(name: str) -> P:
-    return P("dependencies") / name
+def component_dir(work_dir: P, name: str) -> P:
+    return work_dir / "dependencies" / name

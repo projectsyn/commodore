@@ -14,13 +14,20 @@ from .builtin_filters import run_builtin_filter, validate_builtin_filter
 
 
 class FilterFunc(Protocol):
+    # pylint: disable=too-many-arguments
     def __call__(
-        self, inventory: Dict, component: str, filterid: str, path: P, **filterargs: str
+        self,
+        config: Config,
+        inventory: Dict,
+        component: str,
+        filterid: str,
+        path: P,
+        **filterargs: str,
     ):
         ...
 
 
-ValidateFunc = Callable[[str, Dict], Dict]
+ValidateFunc = Callable[[Config, str, Dict], Dict]
 
 
 class Filter:
@@ -55,7 +62,7 @@ class Filter:
         self.filterargs = fd.get("filterargs", {})
         self._runner: FilterFunc = self._run_handlers[self.type]
 
-    def run(self, inventory: Dict, component: str):
+    def run(self, config: Config, inventory: Dict, component: str):
         """
         Run the filter.
         """
@@ -65,10 +72,12 @@ class Filter:
             )
             return
 
-        self._runner(inventory, component, self.filter, self.path, **self.filterargs)
+        self._runner(
+            config, inventory, component, self.filter, self.path, **self.filterargs
+        )
 
     @classmethod
-    def validate(cls, cn: str, f: Dict):
+    def validate(cls, config: Config, cn: str, f: Dict):
         """
         Validate filter definition in `f`.
         Raises exceptions as appropriate when the definition is invalid.
@@ -86,18 +95,18 @@ class Filter:
             raise ValueError(f"Filter has unknown type {typ}")
 
         # perform type-specific extra validation
-        cls._validate_handlers[typ](cn, f)
+        cls._validate_handlers[typ](config, cn, f)
 
         return f
 
     @classmethod
-    def from_dict(cls, cn: str, f: Dict):
+    def from_dict(cls, config: Config, cn: str, f: Dict):
         """
         Create Filter object from filter definition dict `f`.
         Raises exceptions as appropriate when the definition is invalid.
         Returns a Filter object if the passed definition validates successfully.
         """
-        return Filter(Filter.validate(cn, f))
+        return Filter(Filter.validate(config, cn, f))
 
 
 def _get_inventory_filters(inventory: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -166,7 +175,7 @@ def postprocess_components(
         filters: List[Filter] = []
         for fd in invfilters + extfilters:
             try:
-                filters.append(Filter.from_dict(cn, fd))
+                filters.append(Filter.from_dict(config, cn, fd))
             except (KeyError, ValueError) as e:
                 click.secho(
                     f" > Skipping filter '{fd['filter']}' with invalid definition {fd}: {e}",
@@ -179,4 +188,4 @@ def postprocess_components(
         for f in filters:
             if config.debug:
                 click.secho(f"   > Executing filter '{f.type}:{f.filter}'")
-            f.run(inventory, cn)
+            f.run(config, inventory, cn)

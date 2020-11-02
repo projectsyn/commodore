@@ -28,8 +28,6 @@ def _make_ns_filter(ns, enabled=None):
 
 
 def _setup(tmp_path, filter, invfilter=False):
-    os.chdir(tmp_path)
-
     test_run_component_new_command(tmp_path=tmp_path)
 
     targetdir = tmp_path / "compiled" / "test-component" / "test"
@@ -58,8 +56,10 @@ def _setup(tmp_path, filter, invfilter=False):
         with open(pp_file, "w") as filterf:
             yaml.dump(filter, filterf)
 
-    config = Config()
-    component = Component("test-component", repo_url="https://fake.repo.url")
+    config = Config(work_dir=tmp_path)
+    component = Component(
+        "test-component", work_dir=tmp_path, repo_url="https://fake.repo.url"
+    )
     config.register_component(component)
     inventory = {
         "test-component": {
@@ -88,6 +88,8 @@ def test_postprocess_components(tmp_path, capsys):
     filter = _make_ns_filter("myns")
     testf, config, inventory, components = _setup(tmp_path, filter)
     config.update_verbosity(3)
+    print(testf)
+    print(testf.resolve())
     postprocess_components(config, inventory, components)
     assert testf.exists()
     with open(testf) as objf:
