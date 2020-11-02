@@ -33,11 +33,11 @@ def data():
     }
 
 
-def cluster_from_data(cfg: Config, data) -> cluster.Cluster:
-    return cluster.Cluster(cfg, data, {"id": data["tenant"]})
+def cluster_from_data(data) -> cluster.Cluster:
+    return cluster.Cluster(data, {"id": data["tenant"]})
 
 
-def _setup_working_dir(tmp_path: P, inv: Inventory, components):
+def _setup_working_dir(inv: Inventory, components):
     for cls in components:
         defaults = inv.defaults_file(cls)
         os.makedirs(defaults.parent, exist_ok=True)
@@ -50,7 +50,7 @@ def _setup_working_dir(tmp_path: P, inv: Inventory, components):
 def test_render_bootstrap_target(tmp_path: P):
     components = ["foo", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(tmp_path, inv, components)
+    _setup_working_dir(inv, components)
 
     target = cluster.render_target(inv, "cluster", ["foo", "bar", "baz"])
 
@@ -73,7 +73,7 @@ def test_render_bootstrap_target(tmp_path: P):
 def test_render_target(tmp_path: P):
     components = ["foo", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(tmp_path, inv, components)
+    _setup_working_dir(inv, components)
 
     target = cluster.render_target(inv, "foo", ["foo", "bar", "baz"])
 
@@ -98,7 +98,7 @@ def test_render_target(tmp_path: P):
 def test_render_aliased_target(tmp_path: P):
     components = ["foo", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(tmp_path, inv, components)
+    _setup_working_dir(inv, components)
 
     target = cluster.render_target(inv, "fooer", ["foo", "bar", "baz"], component="foo")
 
@@ -124,7 +124,7 @@ def test_render_aliased_target(tmp_path: P):
 def test_render_aliased_target_with_dash(tmp_path: P):
     components = ["foo-comp", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(tmp_path, inv, components)
+    _setup_working_dir(inv, components)
 
     target = cluster.render_target(
         inv, "foo-1", ["foo-comp", "bar", "baz"], component="foo-comp"
@@ -152,7 +152,7 @@ def test_render_aliased_target_with_dash(tmp_path: P):
 def test_render_params(data, tmp_path: P):
     cfg = Config(work_dir=tmp_path)
     target = cfg.inventory.bootstrap_target
-    params = cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
+    params = cluster.render_params(cfg.inventory, cluster_from_data(data))
     assert params["parameters"]["cluster"]["name"] == "mycluster"
     assert params["parameters"][target]["name"] == "mycluster"
     assert (
@@ -170,14 +170,14 @@ def test_missing_facts(data, tmp_path: P):
     data["facts"].pop("cloud")
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
+        cluster.render_params(cfg.inventory, cluster_from_data(data))
 
 
 def test_empty_facts(data, tmp_path: P):
     data["facts"]["cloud"] = ""
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cfg.inventory, cluster_from_data(cfg, data))
+        cluster.render_params(cfg.inventory, cluster_from_data(data))
 
 
 def test_read_cluster_and_tenant(tmp_path):

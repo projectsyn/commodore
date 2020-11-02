@@ -30,8 +30,6 @@ def data(tmp_path):
         tmp_path,
         api_url="https://syn.example.com",
         api_token="token",
-        global_git="ssh://git@git.example.com",
-        verbose=False,
     )
 
 
@@ -101,28 +99,37 @@ def test_read_component_urls_no_config(data: Config):
     assert "inventory/classes/global/commodore.yml" in str(excinfo)
 
 
-def test_read_component_urls(data: Config, tmp_path: Path):
-    component_names = ["component-overwritten", "component-default"]
-    inventory_global = data.inventory.global_config_dir
-    inventory_global.mkdir(parents=True, exist_ok=True)
-    override_url = "ssh://git@git.acme.com/some/component.git"
-    with open(data.config_file, "w") as file:
+def _setup_read_component_urls(data: Config):
+    file = data.config_file
+    file.parent.mkdir(parents=True, exist_ok=True)
+    with open(file, "w") as file:
         file.write(
             dedent(
-                f"""
+                """
             components:
             - name: component-overwritten
-              url: {override_url}"""
+              url: ssh://git@git.acme.com/some/component.git
+                """
             )
         )
 
-    components = dependency_mgmt._read_component_urls(data, component_names)
 
-    assert components["component-overwritten"] == override_url
+def test_read_component_urls(data: Config):
+    _setup_read_component_urls(data)
+    components = dependency_mgmt._read_component_urls(data, ["component-overwritten"])
+
     assert (
-        components["component-default"]
-        == f"{data.default_component_base}/component-default.git"
+        components["component-overwritten"]
+        == "ssh://git@git.acme.com/some/component.git"
     )
+
+
+def test_read_component_urls_missing_component(data: Config):
+    _setup_read_component_urls(data)
+    with pytest.raises(click.ClickException) as e:
+        dependency_mgmt._read_component_urls(data, ["component-missing"])
+
+    assert "No url for component 'component-missing'" in str(e)
 
 
 @patch("commodore.dependency_mgmt._read_component_urls")

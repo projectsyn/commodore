@@ -15,12 +15,10 @@ from .inventory import Inventory
 
 
 class Cluster:
-    _cfg: Config
     _cluster_response: Dict
     _tenant_response: Dict
 
-    def __init__(self, cfg: Config, cluster_response: Dict, tenant_response: Dict):
-        self._cfg = cfg
+    def __init__(self, cluster_response: Dict, tenant_response: Dict):
         self._cluster = cluster_response
         self._tenant = tenant_response
         if (
@@ -37,7 +35,9 @@ class Cluster:
     def global_git_repo_url(self) -> str:
         field = "globalGitRepoURL"
         if field not in self._tenant:
-            return f"{self._cfg.global_git_base}/commodore-defaults.git"
+            raise click.ClickException(
+                f"URL of the global git repository is missing on tenant '{self.tenant}'"
+            )
         return self._tenant[field]
 
     def _extract_field(self, field: str, default) -> str:
@@ -95,7 +95,7 @@ def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     tenant_response = lieutenant_query(
         cfg.api_url, cfg.api_token, "tenants", cluster_response["tenant"]
     )
-    return Cluster(cfg, cluster_response, tenant_response)
+    return Cluster(cluster_response, tenant_response)
 
 
 def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:

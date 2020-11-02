@@ -97,21 +97,13 @@ def _read_component_urls(cfg: Config, component_names) -> Dict[str, str]:
             f"Could not read Commodore configuration: {e}"
         ) from e
 
-    for component_name in component_names:
-        component_urls[
-            component_name
-        ] = f"{cfg.default_component_base}/{component_name}.git"
+    for component in commodore_config.get("components", []):
+        if component["name"] in component_names:
+            component_urls[component["name"]] = component["url"]
 
-    if commodore_config is None:
-        click.secho("Empty Commodore config file", fg="yellow")
-    else:
-        for component_override in commodore_config.get("components", []):
-            if cfg.debug:
-                click.echo(
-                    f"   > Found override for component {component_override['name']}:"
-                )
-                click.echo(f"     Using URL {component_override['url']}")
-            component_urls[component_override["name"]] = component_override["url"]
+    for name in component_names:
+        if name not in component_urls:
+            raise click.ClickException(f"No url for component '{name}' configured")
 
     return component_urls
 

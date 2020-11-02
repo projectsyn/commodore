@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Removed
 
 * Check for "Old-style" components ([#237])
+* Configuration of the global git base ([#247])
+  All components must be listed in `commodore.yml` within the global configuration repository.
+  The URL of the global configuration repository must be set at Lieutenant on the Tenant object.
 
 ## [v0.3.0] - 2020-10-01
 
@@ -264,4 +267,5 @@ Initial implementation
 [#234]: https://github.com/projectsyn/commodore/pull/234
 [#237]: https://github.com/projectsyn/commodore/pull/237
 [#246]: https://github.com/projectsyn/commodore/pull/246
+[#247]: https://github.com/projectsyn/commodore/pull/247
 [#249]: https://github.com/projectsyn/commodore/pull/249

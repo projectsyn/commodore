@@ -75,12 +75,6 @@ def clean(config: Config, verbose):
     metavar="TOKEN",
 )
 @click.option(
-    "--global-git-base",
-    envvar="COMMODORE_GLOBAL_GIT_BASE",
-    help="Base directory for global Git config repositories.",
-    metavar="URL",
-)
-@click.option(
     "--local",
     is_flag=True,
     default=False,
@@ -119,7 +113,6 @@ def compile_catalog(
     cluster,
     api_url,
     api_token,
-    global_git_base,
     local,
     push,
     interactive,
@@ -130,7 +123,6 @@ def compile_catalog(
     config.update_verbosity(verbose)
     config.api_url = api_url
     config.api_token = api_token
-    config.global_git_base = global_git_base
     config.local = local
     config.push = push
     config.interactive = interactive
