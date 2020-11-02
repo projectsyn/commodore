@@ -17,6 +17,8 @@ from commodore.component import Component
 from commodore.helpers import relsymlink
 from commodore.inventory import Inventory
 
+from bench_component import setup_components_upstream
+
 
 @pytest.fixture
 def data(tmp_path):
@@ -123,29 +125,12 @@ def test_read_component_urls(data: Config, tmp_path: Path):
     )
 
 
-def _setup_component_upstream(tmp_path: Path, patch_urls, components):
-    # Prepare minimum component directories
-    upstream = tmp_path / "upstream"
-    for component in components:
-        repo_path = upstream / component
-        patch_urls.return_value[component] = f"file://#{repo_path.resolve()}"
-        repo = git.Repo.init(repo_path)
-
-        class_dir = repo_path / "class"
-        class_dir.mkdir(parents=True, exist_ok=True)
-        (class_dir / "defaults.yml").touch(exist_ok=True)
-
-        repo.index.add(["class/defaults.yml"])
-        repo.index.commit("component defaults")
-
-
 @patch("commodore.dependency_mgmt._read_component_urls")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
     components = ["component-one", "component-two"]
     patch_discover.return_value = (components, {})
-    patch_urls.return_value = {}
-    _setup_component_upstream(tmp_path, patch_urls, components)
+    patch_urls.return_value = setup_components_upstream(tmp_path, components)
 
     dependency_mgmt.fetch_components(data)
 
@@ -169,9 +154,11 @@ def test_fetch_components_is_minimal(
     other_components = ["component-three", "component-four"]
     patch_discover.return_value = (components, {})
     patch_urls.return_value = {}
-    _setup_component_upstream(tmp_path, patch_urls, components)
+    patch_urls.return_value = setup_components_upstream(tmp_path, components)
     # Setup upstreams for components which are not included
-    _setup_component_upstream(tmp_path, patch_urls, other_components)
+    extra_urls = setup_components_upstream(tmp_path, other_components)
+    for cn, url in extra_urls.items():
+        patch_urls.return_value[cn] = url
 
     dependency_mgmt.fetch_components(data)
 
