@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Pull essential libraries with Jsonnet Bundler ([#246])
 * Add option to define postprocessing filters in the Kapitan inventory ([#222]).
 * Update component template to use inventory postprocessing filters ([#249]).
+* Components are no longer deleted when compiling a cluster ([#253])
+  Missing components will be cloned.
+  Existing components will be updated.
+  This also affects artefacts downloaded by components.
+  Component authors must ensure their downloaded path changes with versions.
+  Checkout the [component style guide](https://syn.tools/syn/references/style-guide.html#_component_style) for further details.
 
 ### Fixed
 
@@ -269,3 +275,4 @@ Initial implementation
 [#246]: https://github.com/projectsyn/commodore/pull/246
 [#247]: https://github.com/projectsyn/commodore/pull/247
 [#249]: https://github.com/projectsyn/commodore/pull/249
+[#253]: https://github.com/projectsyn/commodore/pull/253
