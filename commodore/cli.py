@@ -38,6 +38,7 @@ def _version():
     default="./",
     show_default=True,
     type=click.Path(file_okay=False, dir_okay=True),
+    envvar="COMMODORE_WORKING_DIR",
     help=(
         "The directory in which Commodore will fetch dependencies, "
         "inventory and catalog, and store intermediate outputs"
