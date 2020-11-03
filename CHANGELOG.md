@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Add support for component instantiation ([#234]).
 * Add basic renovate config to component template ([#249]).
 * Ability to configure the working directory ([#230])
+* Ability to configure working dir with an environment variable ([#256])
 
 ### Changed
 
@@ -276,3 +277,4 @@ Initial implementation
 [#247]: https://github.com/projectsyn/commodore/pull/247
 [#249]: https://github.com/projectsyn/commodore/pull/249
 [#253]: https://github.com/projectsyn/commodore/pull/253
+[#256]: https://github.com/projectsyn/commodore/pull/256
