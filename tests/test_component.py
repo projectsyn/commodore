@@ -97,6 +97,27 @@ def test_component_checkout_existing_repo_update_version(tmp_path: P):
     assert c.repo.head.commit.hexsha == commit
 
 
+def test_component_checkout_existing_repo_update_latest_upstream(tmp_path: P):
+    c = _setup_component(tmp_path, version="master")
+    c.checkout()
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == "master"
+    master_commit = c.repo.head.commit.hexsha
+
+    c.repo.git.reset("HEAD^", hard=True)
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == "master"
+    assert c.repo.head.commit.hexsha != master_commit
+
+    c.checkout()
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == "master"
+    assert not c.repo.is_dirty()
+
+
 @pytest.mark.parametrize(
     "mode",
     ["reinit", "update"],
