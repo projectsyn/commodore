@@ -117,16 +117,23 @@ class Component:
 
         try:
             if branch:
-                # If we found a branch, create a head (local branch) and check
-                # it out.
-                head = self._repo.create_head(branch, commit=commit)
-                head.checkout()
+                # If we found a remote branch for the requested version, find
+                # or create a local branch and point HEAD to the branch.
+                _head = [h for h in self._repo.heads if h.name == branch]
+                if len(_head) > 0:
+                    head = _head[0]
+                    head.commit = commit
+                else:
+                    head = self._repo.create_head(branch, commit=commit)
+                self._repo.head.reference = head
             else:
                 # Create detached head by setting repo.head.reference as
                 # direct ref to commit object.
                 rev = self._repo.rev_parse(commit)
                 self._repo.head.reference = rev
-                self._repo.head.reset(index=True, working_tree=True)
+
+            # Reset working tree to current HEAD reference
+            self._repo.head.reset(index=True, working_tree=True)
         except GitCommandError as e:
             raise RefError(f"Failed to checkout revision '{self.version}'") from e
         except BadName as e:
