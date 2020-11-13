@@ -148,27 +148,20 @@ def set_component_overrides(cfg, versions):
         if component_name not in cfg.get_components():
             continue
         component = cfg.get_components()[component_name]
-        needs_checkout = False
         if "url" in overrides:
             url = overrides["url"]
             if cfg.debug:
                 click.echo(f" > Set URL for {component.name}: {url}")
-            needs_checkout = git.update_remote(component.repo, url)
             component.repo_url = url
         if "version" in overrides:
             component.version = overrides["version"]
             if cfg.debug:
                 click.echo(f" > Set version for {component.name}: {component.version}")
-            needs_checkout = True
-        if needs_checkout:
-            try:
-                git.checkout_version(component.repo, component.version)
-            except git.RefError as e:
-                raise click.ClickException(
-                    f"While setting component override: {e}"
-                ) from e
-            # Create symlinks again with correctly checked out components
-            create_component_symlinks(cfg, component)
+
+        # Call checkout to ensure component is checked out from the correct remote&version
+        component.checkout()
+        # Create symlinks again with correctly checked out components
+        create_component_symlinks(cfg, component)
 
 
 def fetch_jsonnet_libs(config: Config, libs):

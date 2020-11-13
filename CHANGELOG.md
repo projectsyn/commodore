@@ -5,6 +5,11 @@ Please document all notable changes to this project in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+* Correctly create a local branch when overriding component version ([#262])
+
 ## [v0.4.0] 2020—11—05
 
 ### Added
@@ -279,3 +284,4 @@ Initial implementation
 [#249]: https://github.com/projectsyn/commodore/pull/249
 [#253]: https://github.com/projectsyn/commodore/pull/253
 [#256]: https://github.com/projectsyn/commodore/pull/256
+[#262]: https://github.com/projectsyn/commodore/pull/262
