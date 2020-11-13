@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 * Correctly create a local branch when overriding component version ([#262])
+* Field read when determine revision of the tenant config repository ([#263])
 
 ## [v0.4.0] 2020—11—05
 
@@ -285,3 +286,4 @@ Initial implementation
 [#253]: https://github.com/projectsyn/commodore/pull/253
 [#256]: https://github.com/projectsyn/commodore/pull/256
 [#262]: https://github.com/projectsyn/commodore/pull/262
+[#263]: https://github.com/projectsyn/commodore/pull/263
