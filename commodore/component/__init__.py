@@ -125,6 +125,8 @@ class Component:
                     head.commit = commit
                 else:
                     head = self._repo.create_head(branch, commit=commit)
+
+                head.set_tracking_branch(self.repo.remote().refs[branch])
                 self._repo.head.reference = head
             else:
                 # Create detached head by setting repo.head.reference as
