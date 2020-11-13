@@ -346,3 +346,52 @@ def test_register_dangling_aliases(
     assert (
         f"Dropping alias(es) {should_miss} with missing component(s)." in captured.out
     )
+
+
+def test_set_component_overrides_version(tmp_path: Path, data: Config):
+    data.inventory.ensure_dirs()
+    c = Component(
+        "argocd",
+        repo_url="https://github.com/projectsyn/component-argocd",
+        work_dir=tmp_path,
+    )
+    c.checkout()
+    data.register_component(c)
+
+    versions = {
+        "argocd": {
+            "version": "component-defs-in-applications",
+        }
+    }
+
+    dependency_mgmt.set_component_overrides(data, versions)
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == versions["argocd"]["version"]
+
+
+def test_set_component_overrides_url(tmp_path: Path, data: Config):
+    data.inventory.ensure_dirs()
+    c = Component(
+        "argocd",
+        repo_url="https://github.com/projectsyn/component-argocd",
+        work_dir=tmp_path,
+    )
+    c.checkout()
+    data.register_component(c)
+
+    # create local upstream
+    local_upstream = tmp_path / "upstream"
+    os.makedirs(local_upstream, exist_ok=True)
+    git.Repo.init(local_upstream, bare=True)
+    c.repo.create_remote("local", f"file://{local_upstream}")
+    c.repo.remote(name="local").push("master")
+
+    versions = {"argocd": {"url": f"file://{local_upstream}"}}
+
+    dependency_mgmt.set_component_overrides(data, versions)
+
+    origin_urls = list(c.repo.remote().urls)
+    assert len(origin_urls) == 1
+    print(origin_urls[0])
+    assert origin_urls[0] == f"file://{local_upstream}"
