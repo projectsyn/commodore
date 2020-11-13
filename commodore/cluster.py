@@ -63,7 +63,7 @@ class Cluster:
 
     @property
     def config_git_repo_revision(self) -> str:
-        return self._extract_field("gitRepoRevision", None)
+        return self._extract_field("tenantGitRepoRevision", None)
 
     @property
     def catalog_repo_url(self) -> str:
