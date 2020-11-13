@@ -59,6 +59,7 @@ def test_component_checkout_branch(tmp_path):
     else:
         raise ValueError(f"No remote branch for {branch}")
 
+    assert not c.repo.head.is_detached
     assert c.repo.head.ref.name == branch
     assert c.repo.head.commit == remote_branch_commit
 
@@ -80,7 +81,24 @@ def test_component_checkout_nonexisting_version(tmp_path: P):
         c.checkout()
 
 
-def test_component_checkout_existing_repo_update_version(tmp_path: P):
+def test_component_checkout_existing_repo_update_version_branch(tmp_path: P):
+    c = _setup_component(tmp_path, version="master")
+    c.checkout()
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == "master"
+
+    # update version
+    branch = "component-defs-in-applications"
+    c.version = branch
+
+    c.checkout()
+
+    assert not c.repo.head.is_detached
+    assert c.repo.head.ref.name == branch
+
+
+def test_component_checkout_existing_repo_update_version_sha1version(tmp_path: P):
     c = _setup_component(tmp_path, version="master")
     c.checkout()
 
