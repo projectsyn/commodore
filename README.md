@@ -74,8 +74,6 @@ using `helm template`.
    COMMODORE_API_URL=https://lieutenant-api.example.com/
    # Lieutenant API token
    COMMODORE_API_TOKEN=<my-token>
-   # Base URL for global Git repositories
-   COMMODORE_GLOBAL_GIT_BASE=ssh://git@github.com/projectsyn
    # Your local user ID to be used in the container (optional, defaults to root)
    USER_ID=<your-user-id>
    # Your username to be used in the commits (optional, defaults to your local git config)
@@ -87,13 +85,6 @@ using `helm template`.
    For Commodore to work, you need to run an instance of the
    [Lieutenant API](https://github.com/projectsyn/lieutenant-api) somewhere
    (locally is fine too).
-
-   Commodore component repositories must exist in
-   `${COMMODORE_GLOBAL_GIT_BASE}/commodore_components/` with the repository
-   named identically to the component name.
-
-   Or they must be configured in the `commodore.yml` config file in the
-   `${COMMODORE_GLOBAL_GIT_BASE}/commodore-defaults.git` repository.
 
 1. Run Commodore
 
