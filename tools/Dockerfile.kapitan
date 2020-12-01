@@ -1,4 +1,4 @@
-# Pushed to docker.io/vshn/kapitan:v0.29.1
+# Pushed to docker.io/projectsyn/kapitan:${KAPITAN_VERSION}
 
 FROM docker.io/alpine:3.12
 
