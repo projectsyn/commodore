@@ -1,0 +1,28 @@
+name: Build & Push Container Image
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - tools/Dockerfile.kapitan
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: docker.io/projectsyn/kapitan
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set image version
+      run: echo "VERSION=$(grep KAPITAN_VERSION tools/Dockerfile.kapitan | cut -d= -f2)" > ${GITHUB_ENV}
+    - name: Build image
+      run: docker build -t ${IMAGE_NAME} tools/
+      env:
+        IMAGE_NAME: "${IMAGE}:${VERSION}"
+    - name: Push image
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        docker login docker.io --username "${DOCKER_USERNAME}" --password "${DOCKER_PASSWORD}"
+        docker push "${IMAGE}:${VERSION}"
