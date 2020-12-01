@@ -1,4 +1,4 @@
-name: Build & Push Container Image
+name: Build & Push Kapitan Image
 on:
   push:
     branches:
