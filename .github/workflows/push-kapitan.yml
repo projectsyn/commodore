@@ -15,11 +15,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set image version
-      run: echo "VERSION=$(grep KAPITAN_VERSION tools/Dockerfile.kapitan | cut -d= -f2)" >> ${GITHUB_ENV}
+      run: |
+        echo "VERSION=$(grep "KAPITAN_VERSION=" tools/Dockerfile.kapitan | cut -d= -f2)" >> ${GITHUB_ENV}
     - name: Build image
-      run: docker build -t ${IMAGE_NAME} tools/
-      env:
-        IMAGE_NAME: "${IMAGE}:${VERSION}"
+      run: docker build -f tools/Dockerfile.kapitan -t ${IMAGE}:${VERSION} tools/
     - name: Push image
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
