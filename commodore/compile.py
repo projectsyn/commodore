@@ -69,8 +69,6 @@ def _regular_setup(config: Config, cluster_id):
     fetch_components(config)
 
     update_target(config, config.inventory.bootstrap_target)
-    for component in config.get_components().keys():
-        update_target(config, component)
 
     for alias, component in config.get_component_aliases().items():
         update_target(config, alias, component=component)
@@ -153,7 +151,7 @@ def compile(config, cluster_id):
 
     components = config.get_components()
     aliases = config.get_component_aliases()
-    targets = list(components.keys()) + list(aliases.keys())
+    targets = list(aliases.keys())
     kapitan_compile(config, targets, search_paths=[config.vendor_dir])
 
     postprocess_components(config, kapitan_inventory, components)

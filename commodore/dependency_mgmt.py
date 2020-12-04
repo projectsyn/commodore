@@ -66,21 +66,20 @@ def _discover_components(cfg, inventory_path):
             cn, alias = component.split(" as ")
         except ValueError:
             cn = component
-            alias = None
+            alias = component
         if cfg.debug:
             msg = f"   > Found component {cn}"
-            if alias:
+            if alias != component:
                 msg += f" aliased to {alias}"
             click.echo(msg)
         components.add(cn)
 
-        if alias:
-            if alias in component_aliases:
-                pc = component_aliases[alias]
-                raise KeyError(
-                    f"Duplicate component alias {alias}: component {pc} is already aliased to {alias}"
-                )
-            component_aliases[alias] = cn
+        if alias in component_aliases:
+            pc = component_aliases[alias]
+            raise KeyError(
+                f"Duplicate component alias {alias}: component {pc} is already aliased to {alias}"
+            )
+        component_aliases[alias] = cn
 
     return sorted(components), component_aliases
 

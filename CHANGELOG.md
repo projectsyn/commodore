@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 * Add GitHub action to build Kapitan docker image from `tools/Dockerfile.kapitan` ([#266])
 
+### Changed
+* Always create targets from component aliases ([#269])
+
 ### Fixed
 * Correctly create a local branch when overriding component version ([#262])
 * Field read when determine revision of the tenant config repository ([#263])
@@ -293,3 +296,4 @@ Initial implementation
 [#263]: https://github.com/projectsyn/commodore/pull/263
 [#265]: https://github.com/projectsyn/commodore/pull/265
 [#266]: https://github.com/projectsyn/commodore/pull/266
+[#269]: https://github.com/projectsyn/commodore/pull/269
