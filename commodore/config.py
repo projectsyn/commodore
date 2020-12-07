@@ -133,7 +133,8 @@ class Config:
     def verify_component_aliases(self, cluster_parameters: Dict):
         for alias, cn in self._component_aliases.items():
             ckey = cn.replace("-", "_")
-            if not cluster_parameters[ckey].get("multi_instance", False):
+            caliasable = cluster_parameters[ckey].get("multi_instance", False)
+            if alias != cn and not caliasable:
                 raise click.ClickException(
                     f"Component {cn} with alias {alias} does not support instantiation."
                 )
