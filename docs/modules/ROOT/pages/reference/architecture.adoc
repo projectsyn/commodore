@@ -105,6 +105,15 @@ Component instances are declared in the `applications` array using `as` as the i
 The current implementation of instances can be seen as a mechanism for introducing aliases for a component.
 Commodore supports hierarchies which include the same component non-aliased and aliased.
 
+[NOTE]
+====
+Non-aliased components are internally transformed into the aliased identity form `component as component`.
+This enables support for hierarchies which want to include a component only using aliases.
+
+A component can be aliased to its own name, regardless of whether the component supports instantiation.
+Having a component explicitly included both as `component` and `component as component` will result in an error during compilation.
+====
+
 The merged content of `parameters.<component_name>` in the configuration hierarchy is used as the base configuration for each instance.
 If an instance-aware component is included non-aliased, that "instance" sees the merged content of `parameters.<component_name>` in the hierarchy.
 For all other instances of a component, the content of `parameters.<instance_name>` is merged into `parameters.<component_name>`.
@@ -141,7 +150,7 @@ Components can make use of the meta-parameter `_instance` to ensure objects don'
 == Catalog Compilation
 
 Commodore uses https://kapitan.dev[Kapitan] to compile the cluster catalog.
-Commodore defines a https://kapitan.dev/inventory/#inventory-targets[Kapitan target] per component.
+Commodore defines a https://kapitan.dev/inventory/#inventory-targets[Kapitan target] for each <<_component_instantiation,component instance>>.
 Kapitan is called with a few options enabled.
 Most importantly, Kapitan is configured to support fetching dependencies of components, such as Helm charts.
 Further, Kapitan is configured with an extended search path to support component libraries and the builtin `commodore.libjsonnet`.
