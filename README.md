@@ -55,15 +55,7 @@ using `helm template`.
        poetry run build_kapitan_helm_binding
        ```
 
-    * OS X:
-
-      Note: At the moment you'll need a working Go compiler to build the Kapitan Helm
-      bindings on OS X.
-
-      ```console
-      poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/inputs/helm/build.sh'
-      poetry run sh -c '${VIRTUAL_ENV}/lib/python3.*/site-packages/kapitan/dependency_manager/helm/build.sh'
-      ```
+    * macOS: It's currently not supported to run Commodore via Poetry on macOS due to various issues
 
     Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
