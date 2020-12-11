@@ -41,7 +41,7 @@ commodore() {
 }
 ----
 
-== macOS X
+== macOS
 
 On macOS with Docker for Mac mounting the SSH agents socket into a container doesn't work.
 Instead you need to mount as magic path that's provided by Docker for Mac.
