@@ -31,7 +31,7 @@ using `helm template`.
 ## System Requirements
 
 * Python 3.6+, with `python3-dev` and `python3-venv` updated
-* [Poetry](https://github.com/python-poetry/poetry)
+* [Poetry](https://github.com/python-poetry/poetry) 1.1.0+
 * Docker
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
