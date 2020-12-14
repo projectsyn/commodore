@@ -35,10 +35,9 @@ applications:
 
 Note that this only works to remove components which have been included previously, and won't remove components that are included further down in the hierarchy.
 
-Unless instructed otherwise, Commodore will fetch components from subfolder `commodore-components` in the xref:reference/cli.adoc#_catalog_compile[global Git base].
-
-The file `commodore.yml` in the root of the Global configuration repository can be used to override the repository autodiscovery for components.
-The file must contain a key `components` which holds an array of dictionaries with keys `name` and `url`.
+Commodore currently has no mechanism to automatically discover components based on their names.
+Instead all components which are referenced in the hierarchy must be listed in key `components` in the file `commodore.yml` in the root of the global configuration repository.
+The key `components` holds an array of dictionaries with keys `name` and `url`.
 Each array entry specifies the repository URL of a single component.
 A sample `commodore.yml` can be found below.
 The file `commodore.yml` is also used to define the xref:commodore:ROOT:reference:hierarchy.adoc[Commodore class hierarchy].
