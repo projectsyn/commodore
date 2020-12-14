@@ -25,6 +25,16 @@ Commodore fetches the following dependencies:
 === Component discovery
 
 To discover all required components, Commodore reads the https://reclass.pantsfullofunix.net/operations.html#yaml-fs-storage[`applications` array] which is made available by reclass.
+If a component should be disabled in a subset of the hierarchy, it can be removed from the `applications` array by adding the component name prefixed with a `~`.
+
+[source,yaml]
+----
+applications:
+  - ~component-to-remove
+----
+
+Note that this only works to remove components which have been included previously, and won't remove components that are included further down in the hierarchy.
+
 Unless instructed otherwise, Commodore will fetch components from subfolder `commodore-components` in the xref:reference/cli.adoc#_catalog_compile[global Git base].
 
 The file `commodore.yml` in the root of the Global configuration repository can be used to override the repository autodiscovery for components.
