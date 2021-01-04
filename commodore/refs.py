@@ -2,6 +2,7 @@ import re
 import os
 from base64 import b64encode
 from pathlib import Path as P
+from typing import Dict
 
 import click
 
@@ -90,10 +91,13 @@ class RefBuilder:
     Helper class to wrap recursive search for Kapitan secret references
     """
 
-    def __init__(self, debug, trace, parameters):
-        self.debug = debug
-        self.trace = trace
-        self.parameters = parameters
+    _refs: Dict[str, SecretRef]
+
+    def __init__(self, config: Config, inventory):
+        self.debug = config.debug
+        self.trace = config.trace
+        self._bootstrap_target = config.inventory.bootstrap_target
+        self.inventory = inventory
         self._refs = {}
         self._ref_params = None
 
@@ -136,11 +140,13 @@ class RefBuilder:
             # Otherwise, handle as leaf
             self._find_ref(prefix, params)
 
-    def find_refs(self):
+    def find_refs(self, target: str, key: str):
         """
-        Search for Kapitan secret refs in `self.parameters`
+        Search for Kapitan secret refs in key `key` in the parameters for
+        Kapitan target `target`.
         """
-        self._find_refs("", self.parameters)
+        params = self.inventory[target]["parameters"][key]
+        self._find_refs(key, params)
 
     @property
     def refs(self):
@@ -149,24 +155,45 @@ class RefBuilder:
     @property
     def params(self):
         if self._ref_params is None:
-            kapitan_params = self.parameters["kapitan"]["secrets"]["vaultkv"]
+            kapitan_params = self.inventory[self._bootstrap_target]["parameters"][
+                "kapitan"
+            ]["secrets"]["vaultkv"]
             self._ref_params = {
                 "vaultkv": {"key": "vault_params", "values": kapitan_params}
             }
         return self._ref_params
 
 
-def update_refs(config: Config, parameters):
+def update_refs(config: Config, aliases: Dict[str, str], inventory: Dict):
     """
-    Iterate over parameters dict, and create Kapitan secret refs for all
-    ?{...} found as values in the dict
+    Iterate over parameters for each target, and create Kapitan secret refs
+    for all ?{...} found as values in the dicts
     """
     click.secho("Updating Kapitan secret references...", bold=True)
     os.makedirs(config.refs_dir, exist_ok=True)
     rm_tree_contents(config.refs_dir)
-    # Find references
-    rb = RefBuilder(config.debug, config.trace, parameters)
-    rb.find_refs()
+
+    rb = RefBuilder(config, inventory)
+
+    # Generate list of component keys from component aliases dict
+    component_keys = set(map(lambda x: x.replace("-", "_"), aliases.values()))
+    bootstrap_target = config.inventory.bootstrap_target
+    # Find all keys in the bootstrap target's parameters which don't directly
+    # belong to a component.
+    non_component_keys = (
+        set(inventory[bootstrap_target]["parameters"].keys()) - component_keys
+    )
+    # Search those keys in the bootstrap target for secret references
+    for key in non_component_keys:
+        rb.find_refs(bootstrap_target, key)
+
+    for target, component in aliases.items():
+        # For components, any dashes in the component name are replaced by
+        # underscores in the parameters key.
+        component_key = component.replace("-", "_")
+        # Find references for component instance
+        rb.find_refs(target, component_key)
+
     ref_params = rb.params
     # Create Kapitan references
     for r in rb.refs:

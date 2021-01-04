@@ -145,13 +145,14 @@ def compile(config, cluster_id):
 
     clean_catalog(catalog_repo)
 
-    # Generate Kapitan secret references from refs found in inventory
-    # parameters
-    update_refs(config, cluster_parameters)
-
     components = config.get_components()
     aliases = config.get_component_aliases()
     targets = list(aliases.keys())
+
+    # Generate Kapitan secret references from refs found in inventory
+    # parameters
+    update_refs(config, aliases, kapitan_inventory)
+
     kapitan_compile(config, targets, search_paths=[config.vendor_dir])
 
     postprocess_components(config, kapitan_inventory, components)
