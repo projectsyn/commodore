@@ -33,6 +33,10 @@ def inventory():
             "non_component": {
                 "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
             },
+            "non-component-2": {
+                "key1": "value",
+                "key2": 42,
+            },
             "other_component": {
                 "enabled": True,
                 "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
