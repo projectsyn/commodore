@@ -21,7 +21,7 @@ class Config:
         work_dir: P,
         api_url=None,
         api_token=None,
-        verbose=False,
+        verbose=0,
         username=None,
         usermail=None,
     ):

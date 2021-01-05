@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+* Correctly handle component instances in Kapitan reference management ([#272])
+
 ## [v0.4.1] 2020-12-28
 
 ### Added
@@ -301,3 +304,4 @@ Initial implementation
 [#265]: https://github.com/projectsyn/commodore/pull/265
 [#266]: https://github.com/projectsyn/commodore/pull/266
 [#269]: https://github.com/projectsyn/commodore/pull/269
+[#272]: https://github.com/projectsyn/commodore/pull/272
