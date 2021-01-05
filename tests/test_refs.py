@@ -12,123 +12,58 @@ def inventory():
     Setup test inventory
     """
 
-    kapitan = {
-        "secrets": {
-            "vaultkv": {
-                "VAULT_ADDR": "https://vault.example.com",
-                "VAULT_CAPATH": "/etc/ssl/certs/",
-                "VAULT_SKIP_VERIFY": "false",
-                "auth": "token",
-                "engine": "kv-v2",
-                "mount": "clusters/kv",
-            }
-        },
-    }
+    def _test(target):
+        return {
+            "accesskey": f"?{{vaultkv:t-tenant/c-cluster/test/{target}-accesskey}}",
+            "secretkey": f"?{{vaultkv:t-tenant/c-cluster/test/{target}-secretkey}}",
+            "config": "something else",
+            "params": {
+                "env": [
+                    {"key": "envA", "value": "valA"},
+                    {"key": "envB", "value": "valB"},
+                ],
+                "complex": True,
+            },
+        }
+
+    def _params(target):
+        return {
+            "_instance": target,
+            "test": _test(target),
+            "non_component": {
+                "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
+            },
+            "other_component": {
+                "enabled": True,
+                "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
+                "users": ["user1", "user2"],
+            },
+            "kapitan": {
+                "secrets": {
+                    "vaultkv": {
+                        "VAULT_ADDR": "https://vault.example.com",
+                        "VAULT_CAPATH": "/etc/ssl/certs/",
+                        "VAULT_SKIP_VERIFY": "false",
+                        "auth": "token",
+                        "engine": "kv-v2",
+                        "mount": "clusters/kv",
+                    }
+                },
+            },
+        }
 
     return {
         "cluster": {
-            "parameters": {
-                "_instance": "cluster",
-                "test": {
-                    "accesskey": "?{vaultkv:t-tenant/c-cluster/test/cluster-accesskey}",
-                    "secretkey": "?{vaultkv:t-tenant/c-cluster/test/cluster-secretkey}",
-                    "config": "something else",
-                    "params": {
-                        "env": [
-                            {"key": "envA", "value": "valA"},
-                            {"key": "envB", "value": "valB"},
-                        ],
-                        "complex": True,
-                    },
-                },
-                "non_component": {
-                    "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
-                },
-                "other_component": {
-                    "enabled": True,
-                    "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
-                    "users": ["user1", "user2"],
-                },
-                "kapitan": kapitan,
-            },
+            "parameters": _params("cluster"),
         },
         "test-a": {
-            "parameters": {
-                "_instance": "test-a",
-                "test": {
-                    "accesskey": "?{vaultkv:t-tenant/c-cluster/test/test-a-accesskey}",
-                    "secretkey": "?{vaultkv:t-tenant/c-cluster/test/test-a-secretkey}",
-                    "config": "something else",
-                    "params": {
-                        "env": [
-                            {"key": "envA", "value": "valA"},
-                            {"key": "envB", "value": "valB"},
-                        ],
-                        "complex": True,
-                    },
-                },
-                "non_component": {
-                    "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
-                },
-                "other_component": {
-                    "enabled": True,
-                    "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
-                    "users": ["user1", "user2"],
-                },
-                "kapitan": kapitan,
-            },
+            "parameters": _params("test-a"),
         },
         "test-b": {
-            "parameters": {
-                "_instance": "test-b",
-                "test": {
-                    "accesskey": "?{vaultkv:t-tenant/c-cluster/test/test-b-accesskey}",
-                    "secretkey": "?{vaultkv:t-tenant/c-cluster/test/test-b-secretkey}",
-                    "config": "something else",
-                    "params": {
-                        "env": [
-                            {"key": "envA", "value": "valA"},
-                            {"key": "envB", "value": "valB"},
-                        ],
-                        "complex": True,
-                    },
-                },
-                "non_component": {
-                    "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
-                },
-                "other_component": {
-                    "enabled": True,
-                    "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
-                    "users": ["user1", "user2"],
-                },
-                "kapitan": kapitan,
-            },
+            "parameters": _params("test-b"),
         },
         "other-component": {
-            "parameters": {
-                "_instance": "other-component",
-                "test": {
-                    "accesskey": "?{vaultkv:t-tenant/c-cluster/test/other-component-accesskey}",
-                    "secretkey": "?{vaultkv:t-tenant/c-cluster/test/other-component-secretkey}",
-                    "config": "something else",
-                    "params": {
-                        "env": [
-                            {"key": "envA", "value": "valA"},
-                            {"key": "envB", "value": "valB"},
-                        ],
-                        "complex": True,
-                    },
-                },
-                "non_component": {
-                    "password": "?{vaultkv:t-tenant/c-cluster/global/password}",
-                },
-                "other_component": {
-                    "enabled": True,
-                    "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
-                    "users": ["user1", "user2"],
-                },
-                "kapitan": kapitan,
-            },
+            "parameters": _params("other-component"),
         },
     }
 
