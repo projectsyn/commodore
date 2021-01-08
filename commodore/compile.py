@@ -136,6 +136,10 @@ def compile(config, cluster_id):
     # Verify that all aliased components support instantiation after resolving component version overrides.
     config.verify_component_aliases(cluster_parameters)
 
+    for cn, component in config.get_components().items():
+        ckey = cn.replace("-", "_")
+        component.render_jsonnetfile_json(cluster_parameters[ckey])
+
     jsonnet_libs = cluster_parameters.get("commodore", {}).get("jsonnet_libs", None)
     if jsonnet_libs and not config.local:
         fetch_jsonnet_libs(config, jsonnet_libs)

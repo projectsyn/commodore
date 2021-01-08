@@ -1,6 +1,7 @@
 from pathlib import Path as P
 from typing import Iterable
 
+import _jsonnet
 import click
 
 from git import Repo, BadName, GitCommandError
@@ -140,6 +141,20 @@ class Component:
             raise RefError(f"Failed to checkout revision '{self.version}'") from e
         except BadName as e:
             raise RefError(f"Revision '{self.version}' not found in repository") from e
+
+    def render_jsonnetfile_json(self, component_params):
+        """
+        Render jsonnetfile.json from jsonnetfile.jsonnet
+        """
+        jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
+        if jsonnetfile_jsonnet.is_file():
+            # pylint: disable=c-extension-no-member
+            output = _jsonnet.evaluate_file(
+                str(jsonnetfile_jsonnet),
+                ext_vars=component_params.get("jsonnetfile_parameters", {}),
+            )
+            with open(self._dir / "jsonnetfile.json", "w") as fp:
+                fp.write(output)
 
 
 def component_dir(work_dir: P, name: str) -> P:
