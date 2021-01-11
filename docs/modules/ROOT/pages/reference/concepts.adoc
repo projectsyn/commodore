@@ -45,6 +45,12 @@ inventory to install the software.
 Components can optionally provide Jsonnet libraries which can be used by other components.
 To allow Commodore to make component libraries available to other components, they must be placed in directory `lib/`.
 
+Components can specify Jsonnet dependencies in a `jsonnetfile.json` in the component's root directory.
+Commodore uses https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler] to fetch all components' dependencies.
+
+Optionally, components can provide a `jsonnetfile.jsonnet` instead which will be rendered to JSON before Commodore fetches component dependencies.
+In this case, external variables which are used in the `jsonnetfile.jsonnet` must be provided in the inventory key `parameters.<component_name>.jsonnetfile_parameters`.
+
 Components can define and use postprocessing filters which are applied on the result of the component's compiled Kapitan catalog.
 Components define postprocessing filters in the <<_inventory,inventory>> in key `parameters.commodore.postprocess.filters`.
 Details of the filter definition format and the postprocessing process can be found in the xref:commodore:ROOT:reference/architecture.adoc#_postprocessing_filters[architecture documentation].
