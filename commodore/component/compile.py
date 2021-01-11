@@ -96,6 +96,12 @@ def compile_component(
                 )
             )
 
+        # Render jsonnetfile.jsonnet if necessary
+        nodes = inventory_reclass(inv.inventory_dir)["nodes"]
+        component_params = nodes[component_name]["parameters"].get(
+            component_name.replace("-", "_"), {}
+        )
+        component.render_jsonnetfile_json(component_params)
         # Fetch Jsonnet libs
         fetch_jsonnet_libraries(component_path)
 
@@ -113,7 +119,6 @@ def compile_component(
         )
 
         # prepare inventory and fake component object for postprocess
-        nodes = inventory_reclass(inv.inventory_dir)["nodes"]
         config.work_dir = output_path
         postprocess_components(config, nodes, config.get_components())
     finally:
