@@ -3,6 +3,7 @@ import pytest
 
 from pathlib import Path as P
 from git import Repo
+from textwrap import dedent
 
 
 from commodore.component import Component, component_dir, RefError
@@ -190,3 +191,46 @@ def test_init_existing_component(tmp_path: P):
 
     for url in c.repo.remote().urls:
         assert url == orig_url
+
+
+def test_render_jsonnetfile_json(tmp_path: P):
+    Repo.init(tmp_path)
+    c = Component("kube-monitoring", directory=tmp_path)
+    jsonnetfile = tmp_path / "jsonnetfile.jsonnet"
+    with open(jsonnetfile, "w") as jf:
+        jf.write(
+            dedent(
+                """
+            {
+               version: 1,
+               dependencies: [
+                    {
+                        source: {
+                            git: {
+                                remote: "https://github.com/coreos/kube-prometheus",
+                                subdir: "jsonnet/kube-prometheus",
+                            },
+                        },
+                        version: std.extVar("kube_prometheus_version"),
+                    },
+               ],
+               legacyImports: true,
+            }"""
+            )
+        )
+
+    c.render_jsonnetfile_json(
+        {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
+    )
+
+    assert (tmp_path / "jsonnetfile.json").is_file()
+    with open(tmp_path / "jsonnetfile.json") as jf:
+        jsonnetfile_contents = json.load(jf)
+        assert isinstance(jsonnetfile_contents, dict)
+        # check expected keys are there using set comparison
+        assert {"version", "dependencies", "legacyImports"} <= set(
+            jsonnetfile_contents.keys()
+        )
+        assert jsonnetfile_contents["version"] == 1
+        assert jsonnetfile_contents["legacyImports"]
+        assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
