@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+* Support for rendering component `jsonnetfile.json` from Jsonnet ([#275])
+
 ### Fixed
 * Correctly handle component instances in Kapitan reference management ([#272])
 
@@ -309,4 +312,5 @@ Initial implementation
 [#266]: https://github.com/projectsyn/commodore/pull/266
 [#269]: https://github.com/projectsyn/commodore/pull/269
 [#272]: https://github.com/projectsyn/commodore/pull/272
+[#275]: https://github.com/projectsyn/commodore/pull/275
 [#276]: https://github.com/projectsyn/commodore/pull/276
