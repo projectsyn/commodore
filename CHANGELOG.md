@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 * Correctly handle component instances in Kapitan reference management ([#272])
 
+### Changed
+* Component template to ignore `vendor/` from linting ([#276])
+
 ## [v0.4.1] 2020-12-28
 
 ### Added
@@ -306,3 +309,4 @@ Initial implementation
 [#266]: https://github.com/projectsyn/commodore/pull/266
 [#269]: https://github.com/projectsyn/commodore/pull/269
 [#272]: https://github.com/projectsyn/commodore/pull/272
+[#276]: https://github.com/projectsyn/commodore/pull/276

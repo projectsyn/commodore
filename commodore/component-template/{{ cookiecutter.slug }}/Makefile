@@ -8,12 +8,12 @@ SHELL := bash
 DOCKER_CMD   ?= docker
 DOCKER_ARGS  ?= run --rm --user "$$(id -u)" -v "$${PWD}:/component" --workdir /component
 
-JSONNET_FILES   ?= $(shell find . -type f -name '*.*jsonnet' -or -name '*.libsonnet')
+JSONNET_FILES   ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.*jsonnet' -or -name '*.libsonnet' \))
 JSONNETFMT_ARGS ?= --in-place --pad-arrays
 JSONNET_IMAGE   ?= docker.io/bitnami/jsonnet:latest
 JSONNET_DOCKER  ?= $(DOCKER_CMD) $(DOCKER_ARGS) --entrypoint=jsonnetfmt $(JSONNET_IMAGE)
 
-YAML_FILES      ?= $(shell find . -type f -name '*.yaml' -or -name '*.yml')
+YAML_FILES      ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.yaml' -or -name '*.yml' \))
 YAMLLINT_ARGS   ?= --no-warnings
 YAMLLINT_CONFIG ?= .yamllint.yml
 YAMLLINT_IMAGE  ?= docker.io/cytopia/yamllint:latest
