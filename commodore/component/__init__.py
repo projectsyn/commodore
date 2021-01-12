@@ -100,6 +100,10 @@ class Component:
         # TODO Use self.target_directory when implement https://github.com/projectsyn/commodore/issues/214.
         return P(self.repo.working_tree_dir, "postprocess", "filters.yml")
 
+    @property
+    def parameters_key(self):
+        return component_parameters_key(self.name)
+
     def checkout(self):
         remote_heads = self._repo.remote().fetch()
         remote_prefix = self._repo.remote().name + "/"
@@ -159,3 +163,7 @@ class Component:
 
 def component_dir(work_dir: P, name: str) -> P:
     return work_dir / "dependencies" / name
+
+
+def component_parameters_key(name: str) -> str:
+    return name.replace("-", "_")

@@ -6,7 +6,12 @@ from git import Repo
 from textwrap import dedent
 
 
-from commodore.component import Component, component_dir, RefError
+from commodore.component import (
+    Component,
+    component_dir,
+    RefError,
+    component_parameters_key,
+)
 from commodore.inventory import Inventory
 
 
@@ -234,3 +239,15 @@ def test_render_jsonnetfile_json(tmp_path: P):
         assert jsonnetfile_contents["version"] == 1
         assert jsonnetfile_contents["legacyImports"]
         assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
+
+
+@pytest.mark.parametrize(
+    "name,key",
+    [
+        ("simple", "simple"),
+        ("simple-name", "simple_name"),
+        ("some-other-name", "some_other_name"),
+    ],
+)
+def test_component_parameters_key(name: str, key: str):
+    assert component_parameters_key(name) == key

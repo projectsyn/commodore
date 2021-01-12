@@ -6,6 +6,7 @@ from typing import Dict
 
 import click
 
+from .component import component_parameters_key
 from .config import Config
 from .helpers import rm_tree_contents, yaml_dump
 
@@ -176,7 +177,7 @@ def update_refs(config: Config, aliases: Dict[str, str], inventory: Dict):
     rb = RefBuilder(config, inventory)
 
     # Generate list of component keys from component aliases dict
-    component_keys = set(map(lambda x: x.replace("-", "_"), aliases.values()))
+    component_keys = set(map(component_parameters_key, aliases.values()))
     bootstrap_target = config.inventory.bootstrap_target
     # Find all keys in the bootstrap target's parameters which don't directly
     # belong to a component.
@@ -190,7 +191,7 @@ def update_refs(config: Config, aliases: Dict[str, str], inventory: Dict):
     for target, component in aliases.items():
         # For components, any dashes in the component name are replaced by
         # underscores in the parameters key.
-        component_key = component.replace("-", "_")
+        component_key = component_parameters_key(component)
         # Find references for component instance
         rb.find_refs(target, component_key)
 
