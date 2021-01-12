@@ -223,6 +223,8 @@ def test_render_jsonnetfile_json(tmp_path: P):
             }"""
             )
         )
+    c.repo.index.add("*")
+    c.repo.index.commit("Initial commit")
 
     c.render_jsonnetfile_json(
         {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}

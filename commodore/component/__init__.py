@@ -151,7 +151,14 @@ class Component:
         Render jsonnetfile.json from jsonnetfile.jsonnet
         """
         jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
+        jsonnetfile_json = self._dir / "jsonnetfile.json"
         if jsonnetfile_jsonnet.is_file():
+            if jsonnetfile_json.name in self.repo.tree():
+                click.secho(
+                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet,"
+                    + "continuing with jsonnetfile.jsonnet",
+                    fg="yellow",
+                )
             # pylint: disable=c-extension-no-member
             output = _jsonnet.evaluate_file(
                 str(jsonnetfile_jsonnet),
