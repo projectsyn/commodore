@@ -168,7 +168,8 @@ Commodore injects the key `parameters.<component_name>.jsonnetfile_parameters` a
 
 [NOTE]
 ====
-Jsonnet external variables must be string-valued. Therefore we can't simply pass the full `parameters.component_name` as external variables.
+Jsonnet external variables must be string-valued.
+Therefore it's not possible to simply pass the full `parameters.component_name` as external variables.
 ====
 
 Below a `jsonnetfile.jsonnet` and corresponding `class/defaults.yml` for component `rancher-monitoring` are shown.
