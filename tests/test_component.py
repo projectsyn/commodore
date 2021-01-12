@@ -198,7 +198,7 @@ def test_init_existing_component(tmp_path: P):
         assert url == orig_url
 
 
-def test_render_jsonnetfile_json(tmp_path: P):
+def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
     Repo.init(tmp_path)
     c = Component("kube-monitoring", directory=tmp_path)
     jsonnetfile = tmp_path / "jsonnetfile.jsonnet"
@@ -225,12 +225,26 @@ def test_render_jsonnetfile_json(tmp_path: P):
         )
     c.repo.index.add("*")
     c.repo.index.commit("Initial commit")
+    return c
+
+
+def _render_jsonnetfile_json_error_string(c: Component):
+    return (
+        f" > [WARN] Component {c.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet, "
+        + "continuing with jsonnetfile.jsonnet"
+    )
+
+
+def test_render_jsonnetfile_json(tmp_path: P, capsys):
+    c = _setup_render_jsonnetfile_json(tmp_path)
 
     c.render_jsonnetfile_json(
         {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
     )
 
+    stdout, _ = capsys.readouterr()
     assert (tmp_path / "jsonnetfile.json").is_file()
+    assert _render_jsonnetfile_json_error_string(c) not in stdout
     with open(tmp_path / "jsonnetfile.json") as jf:
         jsonnetfile_contents = json.load(jf)
         assert isinstance(jsonnetfile_contents, dict)
@@ -241,6 +255,21 @@ def test_render_jsonnetfile_json(tmp_path: P):
         assert jsonnetfile_contents["version"] == 1
         assert jsonnetfile_contents["legacyImports"]
         assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
+
+
+def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
+    c = _setup_render_jsonnetfile_json(tmp_path)
+    with open(tmp_path / "jsonnetfile.json", "w") as jf:
+        jf.write("{}")
+    c.repo.index.add("*")
+    c.repo.index.commit("Add jsonnetfile.json")
+
+    c.render_jsonnetfile_json(
+        {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
+    )
+
+    stdout, _ = capsys.readouterr()
+    assert _render_jsonnetfile_json_error_string(c) in stdout
 
 
 @pytest.mark.parametrize(
