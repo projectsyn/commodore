@@ -172,7 +172,7 @@ Jsonnet external variables must be string-valued. Therefore we can't simply pass
 ====
 
 Below a `jsonnetfile.jsonnet` and corresponding `class/defaults.yml` for component `rancher-monitoring` are shown.
-The `rancher-monitoring` component on the `kube-prometheus` Jsonnet library, but requires different versions of the library depending on the target cluster's Kubernetes version.
+The `rancher-monitoring` component depends on the `kube-prometheus` Jsonnet library, but requires different versions of the library depending on the target cluster's Kubernetes version.
 
 .jsonnetfile.jsonnet
 [source,jsonnet]
