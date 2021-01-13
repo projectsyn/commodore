@@ -1,6 +1,7 @@
 from pathlib import Path as P
 from typing import Iterable
 
+import _jsonnet
 import click
 
 from git import Repo, BadName, GitCommandError
@@ -99,6 +100,10 @@ class Component:
         # TODO Use self.target_directory when implement https://github.com/projectsyn/commodore/issues/214.
         return P(self.repo.working_tree_dir, "postprocess", "filters.yml")
 
+    @property
+    def parameters_key(self):
+        return component_parameters_key(self.name)
+
     def checkout(self):
         remote_heads = self._repo.remote().fetch()
         remote_prefix = self._repo.remote().name + "/"
@@ -141,6 +146,31 @@ class Component:
         except BadName as e:
             raise RefError(f"Revision '{self.version}' not found in repository") from e
 
+    def render_jsonnetfile_json(self, component_params):
+        """
+        Render jsonnetfile.json from jsonnetfile.jsonnet
+        """
+        jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
+        jsonnetfile_json = self._dir / "jsonnetfile.json"
+        if jsonnetfile_jsonnet.is_file():
+            if jsonnetfile_json.name in self.repo.tree():
+                click.secho(
+                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet, "
+                    + "continuing with jsonnetfile.jsonnet",
+                    fg="yellow",
+                )
+            # pylint: disable=c-extension-no-member
+            output = _jsonnet.evaluate_file(
+                str(jsonnetfile_jsonnet),
+                ext_vars=component_params.get("jsonnetfile_parameters", {}),
+            )
+            with open(self._dir / "jsonnetfile.json", "w") as fp:
+                fp.write(output)
+
 
 def component_dir(work_dir: P, name: str) -> P:
     return work_dir / "dependencies" / name
+
+
+def component_parameters_key(name: str) -> str:
+    return name.replace("-", "_")

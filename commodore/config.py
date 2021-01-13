@@ -4,7 +4,7 @@ from typing import Dict
 import click
 from git import Repo
 
-from commodore.component import Component
+from commodore.component import Component, component_parameters_key
 from .inventory import Inventory
 
 
@@ -132,7 +132,7 @@ class Config:
 
     def verify_component_aliases(self, cluster_parameters: Dict):
         for alias, cn in self._component_aliases.items():
-            ckey = cn.replace("-", "_")
+            ckey = component_parameters_key(cn)
             caliasable = cluster_parameters[ckey].get("multi_instance", False)
             if alias != cn and not caliasable:
                 raise click.ClickException(

@@ -156,6 +156,58 @@ Similar to Helm charts, the components themselves must make sure to not cause an
 This is required both for namespaced and non-namespaced resources.
 Components can make use of the meta-parameter `_instance` to ensure objects don't collide, as that parameter is guaranteed to be unique to each instance.
 
+=== Component dependencies
+
+Components can specify their dependencies in a `jsonnetfile.json`.
+Commodore uses https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler] to fetch component dependencies.
+
+Components can optionally specify their dependencies in a `jsonnetfile.jsonnet`.
+In this case, Commodore renders the `jsonnetfile.jsonnet` into `jsonnetfile.json` before running jsonnet-bundler.
+
+Commodore injects the key `parameters.<component_name>.jsonnetfile_parameters` as external variables when rendering the `jsonnetfile.jsonnet`.
+
+[NOTE]
+====
+Jsonnet external variables must be string-valued.
+Therefore it's not possible to simply pass the full `parameters.component_name` as external variables.
+====
+
+Below a `jsonnetfile.jsonnet` and corresponding `class/defaults.yml` for component `rancher-monitoring` are shown.
+The `rancher-monitoring` component depends on the `kube-prometheus` Jsonnet library, but requires different versions of the library depending on the target cluster's Kubernetes version.
+
+.jsonnetfile.jsonnet
+[source,jsonnet]
+----
+{
+  version: 1,
+  dependencies: [
+    {
+      source: {
+        git: {
+          remote: 'https://github.com/coreos/kube-prometheus',
+          subdir: 'jsonnet/kube-prometheus',
+        },
+      },
+      version: std.extVar('kube_prometheus_version'),
+    },
+  ],
+  legacyImports: true,
+}
+----
+
+.class/defaults.yml
+[source,yaml]
+----
+parameters:
+  rancher_monitoring:
+    kube_prometheus_version:
+      '1.17': 4e7440f742df31cd6da188f52ddc4e4037b81599
+      '1.18': f69ff3d63de17f3f52b955c3b7e0d7aff0372873
+    jsonnetfile_parameters:
+      # Default to K8s 1.18 if not overridden by cluster version
+      kube_prometheus_version: ${rancher_monitoring:kube_prometheus_version:1.18}
+----
+
 == Catalog Compilation
 
 Commodore uses https://kapitan.dev[Kapitan] to compile the cluster catalog.

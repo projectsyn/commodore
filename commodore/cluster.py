@@ -10,6 +10,7 @@ from .helpers import (
     yaml_load,
 )
 
+from .component import component_parameters_key
 from .config import Config
 from .inventory import Inventory
 
@@ -153,8 +154,8 @@ def render_target(
         # When component != target we're rendering a target for an aliased
         # component. This needs some extra work.
         if component != target:
-            ckey = component.replace("-", "_")
-            tkey = target.replace("-", "_")
+            ckey = component_parameters_key(component)
+            tkey = component_parameters_key(target)
             parameters[ckey] = f"${{{tkey}}}"
 
     return {

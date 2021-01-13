@@ -3,9 +3,15 @@ import pytest
 
 from pathlib import Path as P
 from git import Repo
+from textwrap import dedent
 
 
-from commodore.component import Component, component_dir, RefError
+from commodore.component import (
+    Component,
+    component_dir,
+    RefError,
+    component_parameters_key,
+)
 from commodore.inventory import Inventory
 
 
@@ -190,3 +196,89 @@ def test_init_existing_component(tmp_path: P):
 
     for url in c.repo.remote().urls:
         assert url == orig_url
+
+
+def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
+    Repo.init(tmp_path)
+    c = Component("kube-monitoring", directory=tmp_path)
+    jsonnetfile = tmp_path / "jsonnetfile.jsonnet"
+    with open(jsonnetfile, "w") as jf:
+        jf.write(
+            dedent(
+                """
+            {
+               version: 1,
+               dependencies: [
+                    {
+                        source: {
+                            git: {
+                                remote: "https://github.com/coreos/kube-prometheus",
+                                subdir: "jsonnet/kube-prometheus",
+                            },
+                        },
+                        version: std.extVar("kube_prometheus_version"),
+                    },
+               ],
+               legacyImports: true,
+            }"""
+            )
+        )
+    c.repo.index.add("*")
+    c.repo.index.commit("Initial commit")
+    return c
+
+
+def _render_jsonnetfile_json_error_string(c: Component):
+    return (
+        f" > [WARN] Component {c.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet, "
+        + "continuing with jsonnetfile.jsonnet"
+    )
+
+
+def test_render_jsonnetfile_json(tmp_path: P, capsys):
+    c = _setup_render_jsonnetfile_json(tmp_path)
+
+    c.render_jsonnetfile_json(
+        {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
+    )
+
+    stdout, _ = capsys.readouterr()
+    assert (tmp_path / "jsonnetfile.json").is_file()
+    assert _render_jsonnetfile_json_error_string(c) not in stdout
+    with open(tmp_path / "jsonnetfile.json") as jf:
+        jsonnetfile_contents = json.load(jf)
+        assert isinstance(jsonnetfile_contents, dict)
+        # check expected keys are there using set comparison
+        assert {"version", "dependencies", "legacyImports"} <= set(
+            jsonnetfile_contents.keys()
+        )
+        assert jsonnetfile_contents["version"] == 1
+        assert jsonnetfile_contents["legacyImports"]
+        assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
+
+
+def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
+    c = _setup_render_jsonnetfile_json(tmp_path)
+    with open(tmp_path / "jsonnetfile.json", "w") as jf:
+        jf.write("{}")
+    c.repo.index.add("*")
+    c.repo.index.commit("Add jsonnetfile.json")
+
+    c.render_jsonnetfile_json(
+        {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
+    )
+
+    stdout, _ = capsys.readouterr()
+    assert _render_jsonnetfile_json_error_string(c) in stdout
+
+
+@pytest.mark.parametrize(
+    "name,key",
+    [
+        ("simple", "simple"),
+        ("simple-name", "simple_name"),
+        ("some-other-name", "some_other_name"),
+    ],
+)
+def test_component_parameters_key(name: str, key: str):
+    assert component_parameters_key(name) == key
