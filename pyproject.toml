@@ -13,7 +13,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.6"
 # Require kapitan >= 0.27 to help poetry to resolve dependencies
-kapitan = ">=0.29"
+kapitan = { git = "https://github.com/kapicorp/kapitan.git", branch = "master" }
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
