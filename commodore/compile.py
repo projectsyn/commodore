@@ -17,7 +17,6 @@ from .dependency_mgmt import (
     fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
     register_components,
-    set_component_overrides,
     jsonnet_dependencies,
 )
 from .helpers import (
@@ -116,24 +115,13 @@ def compile(config, cluster_id):
         clean_working_tree(config)
         catalog_repo = _regular_setup(config, cluster_id)
 
-    # Compile kapitan inventory to extract component versions. Component
-    # versions are assumed to be defined in the inventory key
-    # 'parameters.component_versions'
-    reset_reclass_cache()
-    cluster_inventory = inventory_reclass(config.inventory.inventory_dir)["nodes"][
-        config.inventory.bootstrap_target
-    ]
-    versions = cluster_inventory["parameters"].get("component_versions", None)
-    if versions and not config.local:
-        set_component_overrides(config, versions)
-    # Rebuild reclass inventory to use new version of components
     reset_reclass_cache()
     kapitan_inventory = inventory_reclass(config.inventory.inventory_dir)["nodes"]
     cluster_parameters = kapitan_inventory[config.inventory.bootstrap_target][
         "parameters"
     ]
 
-    # Verify that all aliased components support instantiation after resolving component version overrides.
+    # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)
 
     for component in config.get_components().values():
