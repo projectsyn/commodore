@@ -1,3 +1,5 @@
+import re
+
 from pathlib import Path as P
 from typing import Iterable
 
@@ -7,6 +9,9 @@ import click
 from git import Repo, BadName, GitCommandError
 
 from commodore.git import RefError
+
+
+HTTP_SSH_REPLACER = re.compile("^https?://")
 
 
 class Component:
@@ -65,6 +70,11 @@ class Component:
             self._repo.remote().set_url(url)
         except ValueError:
             self._repo.create_remote("origin", url)
+        # Try to generate a best effort push-over-SSH URL. If the URL starts
+        # with http/https, replace the protocol prefix with ssh://git@,
+        # otherwise return the url string unchanged.
+        pushurl = HTTP_SSH_REPLACER.sub("ssh://git@", url)
+        self._repo.remote().set_url(pushurl, push=True)
 
     @property
     def version(self) -> str:
