@@ -52,6 +52,15 @@ components:
   url: https://github.com/projectsyn/component-metrics-server.git
 --
 
+[NOTE]
+====
+Commodore will attempt to transform http(s) Git URLs to their SSH-based counterparts when configuring the push URL on the local repository.
+This transformation allows authorized users to push feature branches to component repos without having to first manually adjust the repository's push URL.
+
+The transformation assumes that SSH URLs follow the pattern `git@host:path/to/repo.git` (or `ssh://git@host/path/to/repo.git`).
+This assumption holds for many popular Git hosting services, such as GitHub and GitLab.
+====
+
 Additionally, component repositories can be overridden in the hierarchy in
 parameter `parameters.component_versions.<component-name>` by setting the key
 `url`.
