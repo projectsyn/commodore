@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+* Generate a best-effort SSH-based push URL for component repos ([#281])
+
 ## [v0.4.2] - 2021-01-14
 
 ### Added
@@ -317,3 +321,4 @@ Initial implementation
 [#272]: https://github.com/projectsyn/commodore/pull/272
 [#275]: https://github.com/projectsyn/commodore/pull/275
 [#276]: https://github.com/projectsyn/commodore/pull/276
+[#281]: https://github.com/projectsyn/commodore/pull/281
