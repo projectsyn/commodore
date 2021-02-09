@@ -69,6 +69,7 @@ def test_component_setup_remote_no_sub(tmp_path, repo_url):
         ("http://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
         ("https://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
         ("https://user@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://user:pass@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
     ],
 )
 def test_component_setup_remote_sub(tmp_path, repo_url, push_url):

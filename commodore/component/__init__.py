@@ -11,7 +11,7 @@ from git import Repo, BadName, GitCommandError
 from commodore.git import RefError
 
 
-HTTP_SSH_REPLACER = re.compile("^https?://")
+HTTP_SSH_REPLACER = re.compile(r"^https?://(\w+(:\w+)?@)?")
 
 
 class Component:

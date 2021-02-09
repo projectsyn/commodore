@@ -56,6 +56,7 @@ components:
 ====
 Commodore will attempt to transform http(s) Git URLs to their SSH-based counterparts when configuring the push URL on the local repository.
 This transformation allows authorized users to push feature branches to component repos without having to first manually adjust the repository's push URL.
+If the http(s) Git URL contains a `user@` or `user:pass@` part, that part will be removed when transforming the URL to a SSH-based push URL.
 
 The transformation assumes that SSH URLs follow the pattern `git@host:path/to/repo.git` (or `ssh://git@host/path/to/repo.git`).
 This assumption holds for many popular Git hosting services, such as GitHub and GitLab.
