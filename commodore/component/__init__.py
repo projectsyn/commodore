@@ -5,6 +5,7 @@ import _jsonnet
 import click
 
 from git import Repo, BadName, GitCommandError
+from url_normalize.tools import deconstruct_url
 
 from commodore.git import RefError
 
@@ -65,6 +66,14 @@ class Component:
             self._repo.remote().set_url(url)
         except ValueError:
             self._repo.create_remote("origin", url)
+
+        # Generate a best effort push-over-SSH URL for http(s) repo URLs.
+        if url.startswith(("http://", "https://")):
+            url_parts = deconstruct_url(url)
+            # Ignore everything but the host and path parts of the URL to
+            # build the push URL
+            pushurl = f"ssh://git@{url_parts.host}{url_parts.path}"
+            self._repo.remote().set_url(pushurl, push=True)
 
     @property
     def version(self) -> str:

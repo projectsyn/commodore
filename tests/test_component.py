@@ -30,10 +30,13 @@ def _init_repo(tmp_path: P, cn: str, url: str):
     cr.create_remote("origin", url)
 
 
+REPO_URL = "https://github.com/projectsyn/component-argocd.git"
+
+
 def _setup_component(
     tmp_path: P,
     version="master",
-    repo_url="https://github.com/projectsyn/component-argocd.git",
+    repo_url=REPO_URL,
 ):
     return Component(
         "argocd",
@@ -43,12 +46,57 @@ def _setup_component(
     )
 
 
+@pytest.mark.parametrize(
+    "repo_url",
+    [
+        "ssh://user@host/path/to/repo.git",
+        "user@host:path/to/repo.git",
+        "file:///path/to/repo.git",
+    ],
+)
+def test_component_setup_remote_no_sub(tmp_path, repo_url):
+    c = _setup_component(tmp_path, repo_url=repo_url)
+
+    pull_remote = c.repo.git.remote("get-url", "origin")
+    push_remote = c.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == repo_url
+    assert push_remote == repo_url
+
+
+@pytest.mark.parametrize(
+    "repo_url,push_url",
+    [
+        ("http://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://host:1234/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://user@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://user:pass@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        (
+            "https://user:pass@host:1234/path/to/repo.git",
+            "ssh://git@host/path/to/repo.git",
+        ),
+    ],
+)
+def test_component_setup_remote_sub(tmp_path, repo_url, push_url):
+    c = _setup_component(tmp_path, repo_url=repo_url)
+
+    pull_remote = c.repo.git.remote("get-url", "origin")
+    push_remote = c.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == repo_url
+    assert push_remote == push_url
+
+
 def test_component_checkout(tmp_path):
     c = _setup_component(tmp_path)
 
     c.checkout()
 
     assert c.repo.head.ref.name == "master"
+    pull_remote = c.repo.git.remote("get-url", "origin")
+    push_remote = c.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == REPO_URL
+    assert push_remote.startswith("ssh://git@")
+    assert push_remote == REPO_URL.replace("https://", "ssh://git@")
 
 
 def test_component_checkout_branch(tmp_path):
