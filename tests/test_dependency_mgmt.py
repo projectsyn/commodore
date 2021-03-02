@@ -9,7 +9,6 @@ import pytest
 import json
 from unittest.mock import patch
 from pathlib import Path
-from textwrap import dedent
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -93,51 +92,90 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
     assert capsys.readouterr().out == ""
 
 
-def test_read_component_urls_no_config(data: Config):
-    with pytest.raises(click.ClickException) as excinfo:
-        dependency_mgmt._read_component_urls(data, [])
-    assert "inventory/classes/global/commodore.yml" in str(excinfo)
+def _setup_read_components(patch_inventory):
+    components = {
+        "test-component": {
+            "url": "https://github.com/projectsyn/component-test-component.git",
+            "version": "master",
+        },
+        "other-component": {
+            "url": "ssh://git@git.acme.com/some/component.git",
+        },
+        "third-component": {
+            "url": "https://github.com/projectsyn/component-third-component.git",
+            "version": "feat/test",
+        },
+    }
+    mock_inventory = {"nodes": {"cluster": {"parameters": {"components": components}}}}
+
+    def inv(inventory_dir):
+        return mock_inventory
+
+    patch_inventory.side_effect = inv
+
+    return mock_inventory["nodes"]["cluster"]["parameters"]["components"]
 
 
-def _setup_read_component_urls(data: Config):
-    file = data.config_file
-    file.parent.mkdir(parents=True, exist_ok=True)
-    with open(file, "w") as file:
-        file.write(
-            dedent(
-                """
-            components:
-            - name: component-overwritten
-              url: ssh://git@git.acme.com/some/component.git
-                """
-            )
-        )
+@patch.object(dependency_mgmt, "inventory_reclass")
+def test_read_components(patch_inventory, data: Config):
+    components = _setup_read_components(patch_inventory)
+    component_urls, component_versions = dependency_mgmt._read_components(
+        data, ["test-component"]
+    )
 
-
-def test_read_component_urls(data: Config):
-    _setup_read_component_urls(data)
-    components = dependency_mgmt._read_component_urls(data, ["component-overwritten"])
-
+    # check that exactly 'test-component' is discovered
+    assert {"test-component"} == set(component_urls.keys())
+    assert components["test-component"]["url"] == component_urls["test-component"]
     assert (
-        components["component-overwritten"]
-        == "ssh://git@git.acme.com/some/component.git"
+        components["test-component"]["version"] == component_versions["test-component"]
     )
 
 
-def test_read_component_urls_missing_component(data: Config):
-    _setup_read_component_urls(data)
+@patch.object(dependency_mgmt, "inventory_reclass")
+def test_read_components_multiple(patch_inventory, data: Config):
+    components = _setup_read_components(patch_inventory)
+    component_urls, component_versions = dependency_mgmt._read_components(
+        data, components.keys()
+    )
+    # check that exactly 'test-component' is discovered
+    assert set(components.keys()) == set(component_urls.keys())
+    assert set(components.keys()) == set(component_versions.keys())
+    assert all(components[cn]["url"] == component_urls[cn] for cn in components.keys())
+    assert all(
+        components[cn].get("version", "master") == component_versions[cn]
+        for cn in components.keys()
+    )
+
+
+@patch.object(dependency_mgmt, "inventory_reclass")
+def test_read_components_missing_component(patch_inventory, data: Config):
+    _setup_read_components(patch_inventory)
     with pytest.raises(click.ClickException) as e:
-        dependency_mgmt._read_component_urls(data, ["component-missing"])
+        dependency_mgmt._read_components(data, ["component-missing"])
 
-    assert "No url for component 'component-missing'" in str(e)
+    assert "Unknown component 'component-missing'" in str(e)
 
 
-@patch("commodore.dependency_mgmt._read_component_urls")
+@patch.object(dependency_mgmt, "inventory_reclass")
+def test_read_components_missing_component_url(patch_inventory, data: Config):
+    def inv(inventory_dir):
+        return {
+            "nodes": {"cluster": {"parameters": {"components": {"test-component": {}}}}}
+        }
+
+    patch_inventory.side_effect = inv
+    with pytest.raises(click.ClickException) as e:
+        dependency_mgmt._read_components(data, ["test-component"])
+
+    assert "No url for component 'test-component' configured" in str(e)
+
+
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
-def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Path):
+def test_fetch_components(patch_discover, patch_read, data: Config, tmp_path: Path):
     components = ["component-one", "component-two"]
     patch_discover.return_value = (components, {})
-    patch_urls.return_value = setup_components_upstream(tmp_path, components)
+    patch_read.return_value = setup_components_upstream(tmp_path, components)
 
     dependency_mgmt.fetch_components(data)
 
@@ -152,7 +190,7 @@ def test_fetch_components(patch_discover, patch_urls, data: Config, tmp_path: Pa
         assert (tmp_path / "dependencies" / component).is_dir()
 
 
-@patch("commodore.dependency_mgmt._read_component_urls")
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_is_minimal(
     patch_discover, patch_urls, data: Config, tmp_path: Path
@@ -160,12 +198,12 @@ def test_fetch_components_is_minimal(
     components = ["component-one", "component-two"]
     other_components = ["component-three", "component-four"]
     patch_discover.return_value = (components, {})
-    patch_urls.return_value = {}
     patch_urls.return_value = setup_components_upstream(tmp_path, components)
     # Setup upstreams for components which are not included
-    extra_urls = setup_components_upstream(tmp_path, other_components)
-    for cn, url in extra_urls.items():
-        patch_urls.return_value[cn] = url
+    extra_urls, extra_versions = setup_components_upstream(tmp_path, other_components)
+    for cn in extra_urls.keys():
+        patch_urls.return_value[0][cn] = extra_urls[cn]
+        patch_urls.return_value[1][cn] = extra_versions[cn]
 
     dependency_mgmt.fetch_components(data)
 
@@ -346,52 +384,3 @@ def test_register_dangling_aliases(
     assert (
         f"Dropping alias(es) {should_miss} with missing component(s)." in captured.out
     )
-
-
-def test_set_component_overrides_version(tmp_path: Path, data: Config):
-    data.inventory.ensure_dirs()
-    c = Component(
-        "argocd",
-        repo_url="https://github.com/projectsyn/component-argocd",
-        work_dir=tmp_path,
-    )
-    c.checkout()
-    data.register_component(c)
-
-    versions = {
-        "argocd": {
-            "version": "component-defs-in-applications",
-        }
-    }
-
-    dependency_mgmt.set_component_overrides(data, versions)
-
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == versions["argocd"]["version"]
-
-
-def test_set_component_overrides_url(tmp_path: Path, data: Config):
-    data.inventory.ensure_dirs()
-    c = Component(
-        "argocd",
-        repo_url="https://github.com/projectsyn/component-argocd",
-        work_dir=tmp_path,
-    )
-    c.checkout()
-    data.register_component(c)
-
-    # create local upstream
-    local_upstream = tmp_path / "upstream"
-    os.makedirs(local_upstream, exist_ok=True)
-    git.Repo.init(local_upstream, bare=True)
-    c.repo.create_remote("local", f"file://{local_upstream}")
-    c.repo.remote(name="local").push("master")
-
-    versions = {"argocd": {"url": f"file://{local_upstream}"}}
-
-    dependency_mgmt.set_component_overrides(data, versions)
-
-    origin_urls = list(c.repo.remote().urls)
-    assert len(origin_urls) == 1
-    print(origin_urls[0])
-    assert origin_urls[0] == f"file://{local_upstream}"
