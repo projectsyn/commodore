@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Generate a best-effort SSH-based push URL for component repos ([#281])
 
+### Changed
+
+* Update pytest options to remove warnings([#283])
+
 ## [v0.4.2] - 2021-01-14
 
 ### Added
@@ -322,3 +326,4 @@ Initial implementation
 [#275]: https://github.com/projectsyn/commodore/pull/275
 [#276]: https://github.com/projectsyn/commodore/pull/276
 [#281]: https://github.com/projectsyn/commodore/pull/281
+[#283]: https://github.com/projectsyn/commodore/pull/283
