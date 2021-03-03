@@ -37,7 +37,7 @@ def delete_component_symlinks(cfg, component: Component):
     """
     Remove the component symlinks in the inventory subdirectory.
 
-    This is the reverse from the createa_component_symlinks method and is used
+    This is the reverse from the create_component_symlinks method and is used
     when deleting a component.
     """
     delsymlink(cfg.inventory.component_file(component), cfg.debug)
@@ -110,7 +110,8 @@ def _read_components(
         if "version" in info:
             component_versions[component_name] = info["version"]
         else:
-            component_versions[component_name] = "master"
+            # Note: We use version=None as a marker for checking out the remote repo's default branch
+            component_versions[component_name] = None
         if cfg.debug:
             click.echo(
                 f" > Version for {component_name}: {component_versions[component_name]}"

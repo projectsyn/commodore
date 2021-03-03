@@ -15,7 +15,7 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     for component in components:
         repo_path = upstream / component
         component_urls[component] = f"file://#{repo_path.resolve()}"
-        component_versions[component] = "master"
+        component_versions[component] = None
         repo = git.Repo.init(repo_path)
 
         class_dir = repo_path / "class"

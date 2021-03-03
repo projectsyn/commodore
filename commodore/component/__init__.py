@@ -1,5 +1,5 @@
 from pathlib import Path as P
-from typing import Iterable
+from typing import Iterable, Optional
 
 import _jsonnet
 import click
@@ -13,7 +13,7 @@ from commodore.git import RefError
 class Component:
     _name: str
     _repo: Repo
-    _version: str = "master"
+    _version: Optional[str] = None
     _dir: P
 
     # pylint: disable=too-many-arguments
@@ -76,7 +76,7 @@ class Component:
             self._repo.remote().set_url(pushurl, push=True)
 
     @property
-    def version(self) -> str:
+    def version(self) -> Optional[str]:
         return self._version
 
     @version.setter
@@ -116,17 +116,27 @@ class Component:
     def checkout(self):
         remote_heads = self._repo.remote().fetch()
         remote_prefix = self._repo.remote().name + "/"
+        version = self._version
+        if self._version is None:
+            # Handle case where we want the default branch of the remote
+            try:
+                version = self._repo.remote().refs["HEAD"].reference.name
+            except IndexError:
+                self._repo.git.remote("set-head", "origin", "--auto")
+                version = self._repo.remote().refs["HEAD"].reference.name
+
+            version = version.replace(remote_prefix, "", 1)
         for head in remote_heads:
             branch = head.name
             if branch.startswith(remote_prefix):
                 branch = branch.replace(remote_prefix, "", 1)
-            if branch == self._version:
+            if branch == version:
                 commit = head.commit
                 break
         else:
             # If we haven't found a branch matching the requested version,
             # assume the version is a commit sha.
-            commit = self._version
+            commit = version
             branch = None
 
         try:
