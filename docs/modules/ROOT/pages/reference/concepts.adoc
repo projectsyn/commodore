@@ -26,8 +26,7 @@ desired state.
 
 Inventory repositories are cloned directly into the Kapitan `inventory` directory to make their contents available as inventory classes in Kapitan.
 
-Commodore also makes use of the inventory to allow tracking
-<<_component_versions,component versions>>.
+Commodore also makes use of the inventory to manage xref:commodore:ROOT:reference/architecture.adoc#_component_discovery_and_versions[component repository locations and versions].
 
 == Components
 

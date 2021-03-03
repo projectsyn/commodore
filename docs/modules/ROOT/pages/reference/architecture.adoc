@@ -20,9 +20,9 @@ Commodore fetches the following dependencies:
 * Tenant configuration
 * Components as discovered in global and tenant configuration
 * Jsonnet libraries as described in the
-  <<_configuration_hierarchy,configuration hierarchy>>
+  xref:commodore:ROOT:reference/concepts.adoc#_configuration_hierarchy[configuration hierarchy]
 
-=== Component discovery
+=== Component discovery and versions
 
 To discover all required components, Commodore reads the https://reclass.pantsfullofunix.net/operations.html#yaml-fs-storage[`applications` array] which is made available by reclass.
 If a component should be disabled in a subset of the hierarchy, it can be removed from the `applications` array by adding the component name prefixed with a `~`.
@@ -36,20 +36,26 @@ applications:
 Note that this only works to remove components which have been included previously, and won't remove components that are included further down in the hierarchy.
 
 Commodore currently has no mechanism to automatically discover components based on their names.
-Instead all components which are referenced in the hierarchy must be listed in key `components` in the file `commodore.yml` in the root of the global configuration repository.
-The key `components` holds an array of dictionaries with keys `name` and `url`.
-Each array entry specifies the repository URL of a single component.
-A sample `commodore.yml` can be found below.
-The file `commodore.yml` is also used to define the xref:commodore:ROOT:reference:hierarchy.adoc[Commodore class hierarchy].
+Instead all components which are referenced in the `applications` array must be listed in key `parameters.components` in the hierarchy.
+Using the xref:commodore:ROOT:reference/concepts.adoc#_configuration_hierarchy[configuration hierarchy] for specifying component locations and versions allows tight integration of component management with the rest of the configuration.
 
-.commodore.yml
+Commodore will read `parameters.components` from the hierarchy _before component defaults are included_.
+The key `parameters.components` holds a dictionary of dictionaries mapping component names to their remote repository location and version.
+The remote repository location is specified in key `url`.
+The version is specified in key `version`.
+The version can be any Git https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddeftree-ishatree-ishalsotreeish[tree-ish].
+If no version is given for a component, Commodore defaults to `master` for the version.
+Commodore fetches the remote repository and directly checks out the specified version.
+
 [source,yaml]
 --
-components:
-- name: argocd
-  url: https://github.com/projectsyn/component-argocd.git
-- name: metrics-server
-  url: https://github.com/projectsyn/component-metrics-server.git
+parameters:
+  components:
+    argocd:
+      url: https://github.com/projectsyn/component-argocd.git
+    metrics-server:
+      url: https://github.com/projectsyn/component-metrics-server.git
+      version: v1.0.2
 --
 
 [NOTE]
@@ -62,53 +68,23 @@ The transformation assumes that SSH URLs follow the pattern `git@host:path/to/re
 This assumption holds for many popular Git hosting services, such as GitHub and GitLab.
 ====
 
-Additionally, component repositories can be overridden in the hierarchy in
-parameter `parameters.component_versions.<component-name>` by setting the key
-`url`.
-This can't be used as a replacement for globally overriding the default
-location in `commodore.yml`, as the component must be discoverable without
-having to parse the Kapitan inventory.
-However, this mechanism can be used to configure a subset of managed clusters
-to use a fork of a component.
+Component repositories and versions can be overridden by setting the keys `url` and `versions` respectively in `parameters.components.<component-name>` in the xref:commodore:ROOT:reference/concepts.adoc#_inventory[inventory repositories].
+This allows configuring a subset of managed clusters to use a fork or different version of a component.
 
 [source,yaml]
 --
 parameters:
-  component_versions:
+  components:
     argocd:
-      url: https://github.com/projectsyn/component-argocd/
---
-
-=== Component versioning
-
-As described in the xref:reference/concepts.adoc[Commodore concepts],
-component versions and remote repository locations can be specified in the
-configuration hierarchy.
-Component versions are tracked in the inventory in key `version` under
-parameter `component_versions.<component-name>` and default to the component
-repository's default branch.
-
-An example:
-
-[source,yaml]
---
-parameters:
-  component_versions:
-    argocd:
+      url: https://github.com/projectsyn/component-argocd-fork.git
       version: v1.0.0
 --
 
-Reusing the <<_configuration_hierarchy,configuration hierarchy>> for
-specifying the component versions allows tight integration of component
-version management with the rest of the configuration.
+[NOTE]
+====
+Since Commodore won't re-read `parameters.components` after including the discovered components' default classes, entries in `parameters.components` in a component's `defaults.yml` will be ignored.
+====
 
-After cloning component repositories, all components will be checked out on
-the repository's default branch.
-Commodore will then explicitly check out the version specified in the
-inventory for any components that specify a version.
-The version specification is parsed from the inventory using Kapitan's
-inventory parsing, allowing the version to be overridden at any point in the
-configuration hierarchy.
 
 === Component instantiation
 
