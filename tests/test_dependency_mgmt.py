@@ -153,7 +153,10 @@ def test_read_components_missing_component(patch_inventory, data: Config):
     with pytest.raises(click.ClickException) as e:
         dependency_mgmt._read_components(data, ["component-missing"])
 
-    assert "Unknown component 'component-missing'" in str(e)
+    assert (
+        "Unknown component 'component-missing'. Please add it to 'parameters.components'"
+        in str(e)
+    )
 
 
 @patch.object(dependency_mgmt, "inventory_reclass")

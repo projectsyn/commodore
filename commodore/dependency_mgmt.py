@@ -95,11 +95,13 @@ def _read_components(
     cluster_inventory = inv["nodes"][cfg.inventory.bootstrap_target]
     components = cluster_inventory["parameters"].get("components", None)
     if not components:
-        raise click.ClickException("Component list (parameters.components) missing")
+        raise click.ClickException("Component list ('parameters.components') missing")
 
     for component_name in component_names:
         if component_name not in components:
-            raise click.ClickException(f"Unknown component '{component_name}'")
+            raise click.ClickException(
+                f"Unknown component '{component_name}'. Please add it to 'parameters.components'"
+            )
 
         info = components[component_name]
 
