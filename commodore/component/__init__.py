@@ -114,7 +114,7 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
-        remote_heads = self._repo.remote().fetch()
+        remote_heads = self._repo.remote().fetch(prune=True)
         remote_prefix = self._repo.remote().name + "/"
         version = self._version
         if self._version is None:
