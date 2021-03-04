@@ -92,7 +92,7 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
     assert capsys.readouterr().out == ""
 
 
-def _setup_read_components(patch_inventory):
+def _setup_mock_inventory(patch_inventory, aliases={}):
     components = {
         "test-component": {
             "url": "https://github.com/projectsyn/component-test-component.git",
@@ -106,7 +106,20 @@ def _setup_read_components(patch_inventory):
             "version": "feat/test",
         },
     }
-    mock_inventory = {"nodes": {"cluster": {"parameters": {"components": components}}}}
+    assert set(aliases.keys()) <= set(components.keys())
+    applications = list(components.keys())
+    for c, a in aliases.items():
+        applications.append(f"{c} as {a}")
+    params = {"components": components}
+    nodes = {
+        a: {"applications": sorted(applications), "parameters": params}
+        for a in applications
+    }
+    nodes["cluster"] = {"applications": sorted(applications), "parameters": params}
+    mock_inventory = {
+        "applications": {a: applications for a in applications},
+        "nodes": nodes,
+    }
 
     def inv(inventory_dir, key="nodes"):
         return mock_inventory[key]
@@ -118,7 +131,7 @@ def _setup_read_components(patch_inventory):
 
 @patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components(patch_inventory, data: Config):
-    components = _setup_read_components(patch_inventory)
+    components = _setup_mock_inventory(patch_inventory)
     component_urls, component_versions = dependency_mgmt._read_components(
         data, ["test-component"]
     )
@@ -133,7 +146,7 @@ def test_read_components(patch_inventory, data: Config):
 
 @patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_multiple(patch_inventory, data: Config):
-    components = _setup_read_components(patch_inventory)
+    components = _setup_mock_inventory(patch_inventory)
     component_urls, component_versions = dependency_mgmt._read_components(
         data, components.keys()
     )
@@ -149,7 +162,7 @@ def test_read_components_multiple(patch_inventory, data: Config):
 
 @patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_missing_component(patch_inventory, data: Config):
-    _setup_read_components(patch_inventory)
+    _setup_mock_inventory(patch_inventory)
     with pytest.raises(click.ClickException) as e:
         dependency_mgmt._read_components(data, ["component-missing"])
 
@@ -169,6 +182,41 @@ def test_read_components_missing_component_url(patch_inventory, data: Config):
         dependency_mgmt._read_components(data, ["test-component"])
 
     assert "No url for component 'test-component' configured" in str(e)
+
+
+@patch.object(dependency_mgmt, "kapitan_inventory")
+def test_discover_components(patch_inventory, data: Config):
+    component_inv = _setup_mock_inventory(patch_inventory)
+
+    components, aliases = dependency_mgmt._discover_components(data)
+    assert components == sorted(component_inv.keys())
+    assert sorted(aliases.keys()) == components
+    assert all(k == v for k, v in aliases.items())
+
+
+@patch.object(dependency_mgmt, "kapitan_inventory")
+def test_discover_components_aliases(patch_inventory, data: Config):
+    expected_aliases = {"other-component": "aliased"}
+    component_inv = _setup_mock_inventory(patch_inventory, expected_aliases)
+
+    components, aliases = dependency_mgmt._discover_components(data)
+    assert components == sorted(component_inv.keys())
+    assert set(components + list(expected_aliases.values())) == set(aliases.keys())
+    assert set(aliases.values()) == set(components)
+    assert aliases["aliased"] == "other-component"
+
+
+@patch.object(dependency_mgmt, "kapitan_inventory")
+def test_discover_components_duplicate_aliases(patch_inventory, data: Config):
+    expected_aliases = {"other-component": "aliased", "third-component": "aliased"}
+    _setup_mock_inventory(patch_inventory, expected_aliases)
+
+    with pytest.raises(KeyError) as e:
+        dependency_mgmt._discover_components(data)
+        assert (
+            "Duplicate component alias aliased: component other-component is already aliased to aliased"
+            in str(e)
+        )
 
 
 @patch("commodore.dependency_mgmt._read_components")
