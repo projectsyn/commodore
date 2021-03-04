@@ -1,6 +1,4 @@
 import click
-from kapitan.cached import reset_cache as reset_reclass_cache
-from kapitan.resources import inventory_reclass
 
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
@@ -23,6 +21,7 @@ from .helpers import (
     ApiError,
     clean_working_tree,
     kapitan_compile,
+    kapitan_inventory,
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
@@ -115,11 +114,8 @@ def compile(config, cluster_id):
         clean_working_tree(config)
         catalog_repo = _regular_setup(config, cluster_id)
 
-    reset_reclass_cache()
-    kapitan_inventory = inventory_reclass(config.inventory.inventory_dir)["nodes"]
-    cluster_parameters = kapitan_inventory[config.inventory.bootstrap_target][
-        "parameters"
-    ]
+    inventory = kapitan_inventory(config)
+    cluster_parameters = inventory[config.inventory.bootstrap_target]["parameters"]
 
     # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)
@@ -143,11 +139,11 @@ def compile(config, cluster_id):
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
-    update_refs(config, aliases, kapitan_inventory)
+    update_refs(config, aliases, inventory)
 
     kapitan_compile(config, targets, search_paths=[config.vendor_dir])
 
-    postprocess_components(config, kapitan_inventory, components)
+    postprocess_components(config, inventory, components)
 
     update_catalog(config, targets, catalog_repo)
 

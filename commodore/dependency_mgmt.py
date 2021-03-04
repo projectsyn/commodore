@@ -2,17 +2,14 @@ import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import click
-
-from kapitan.cached import reset_cache as reset_reclass_cache
-from kapitan.resources import inventory_reclass
 
 from . import git
 from .config import Config
 from .component import Component, component_dir
-from .helpers import relsymlink, delsymlink
+from .helpers import relsymlink, delsymlink, kapitan_inventory
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -51,16 +48,14 @@ def delete_component_symlinks(cfg, component: Component):
         delsymlink(file, cfg.debug)
 
 
-def _discover_components(cfg, inventory_path):
+def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
     """
     Discover components in `inventory_path/` by extracting all entries from
     the reclass applications dictionary.
     """
-    reset_reclass_cache()
-    inv = inventory_reclass(inventory_path)
-    kapitan_applications = inv["applications"]
+    kapitan_applications = kapitan_inventory(cfg, key="applications")
     components = set()
-    component_aliases = {}
+    component_aliases: Dict[str, str] = {}
     for component in kapitan_applications.keys():
         try:
             cn, alias = component.split(" as ")
@@ -90,9 +85,8 @@ def _read_components(
     component_urls = {}
     component_versions = {}
 
-    reset_reclass_cache()
-    inv = inventory_reclass(cfg.inventory.inventory_dir)
-    cluster_inventory = inv["nodes"][cfg.inventory.bootstrap_target]
+    inv = kapitan_inventory(cfg)
+    cluster_inventory = inv[cfg.inventory.bootstrap_target]
     components = cluster_inventory["parameters"].get("components", None)
     if not components:
         raise click.ClickException("Component list ('parameters.components') missing")
@@ -135,9 +129,7 @@ def fetch_components(cfg: Config):
 
     click.secho("Discovering components...", bold=True)
     cfg.inventory.ensure_dirs()
-    component_names, component_aliases = _discover_components(
-        cfg, cfg.inventory.inventory_dir
-    )
+    component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
     urls, versions = _read_components(cfg, component_names)
@@ -300,9 +292,7 @@ def register_components(cfg: Config):
     in the Commodore config.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(
-        cfg, cfg.inventory.inventory_dir
-    )
+    components, component_aliases = _discover_components(cfg)
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:

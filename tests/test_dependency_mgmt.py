@@ -108,15 +108,15 @@ def _setup_read_components(patch_inventory):
     }
     mock_inventory = {"nodes": {"cluster": {"parameters": {"components": components}}}}
 
-    def inv(inventory_dir):
-        return mock_inventory
+    def inv(inventory_dir, key="nodes"):
+        return mock_inventory[key]
 
     patch_inventory.side_effect = inv
 
     return mock_inventory["nodes"]["cluster"]["parameters"]["components"]
 
 
-@patch.object(dependency_mgmt, "inventory_reclass")
+@patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components(patch_inventory, data: Config):
     components = _setup_read_components(patch_inventory)
     component_urls, component_versions = dependency_mgmt._read_components(
@@ -131,7 +131,7 @@ def test_read_components(patch_inventory, data: Config):
     )
 
 
-@patch.object(dependency_mgmt, "inventory_reclass")
+@patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_multiple(patch_inventory, data: Config):
     components = _setup_read_components(patch_inventory)
     component_urls, component_versions = dependency_mgmt._read_components(
@@ -147,7 +147,7 @@ def test_read_components_multiple(patch_inventory, data: Config):
     )
 
 
-@patch.object(dependency_mgmt, "inventory_reclass")
+@patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_missing_component(patch_inventory, data: Config):
     _setup_read_components(patch_inventory)
     with pytest.raises(click.ClickException) as e:
@@ -159,12 +159,10 @@ def test_read_components_missing_component(patch_inventory, data: Config):
     )
 
 
-@patch.object(dependency_mgmt, "inventory_reclass")
+@patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_missing_component_url(patch_inventory, data: Config):
-    def inv(inventory_dir):
-        return {
-            "nodes": {"cluster": {"parameters": {"components": {"test-component": {}}}}}
-        }
+    def inv(inventory_dir, key="nodes"):
+        return {"cluster": {"parameters": {"components": {"test-component": {}}}}}
 
     patch_inventory.side_effect = inv
     with pytest.raises(click.ClickException) as e:
