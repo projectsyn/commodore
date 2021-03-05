@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-* Update pytest options to remove warnings([#283])
+* Update pytest options to remove warnings ([#283])
+* Move component URLs to `parameters.components` ([#284])
 
 ## [v0.4.2] - 2021-01-14
 
@@ -327,3 +328,4 @@ Initial implementation
 [#276]: https://github.com/projectsyn/commodore/pull/276
 [#281]: https://github.com/projectsyn/commodore/pull/281
 [#283]: https://github.com/projectsyn/commodore/pull/283
+[#284]: https://github.com/projectsyn/commodore/pull/284

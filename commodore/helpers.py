@@ -3,7 +3,7 @@ import json
 import shutil
 import os
 from pathlib import Path as P
-from typing import Callable, Iterable, Optional
+from typing import Callable, Dict, Iterable, Optional
 
 import click
 import requests
@@ -18,6 +18,7 @@ from kapitan import defaults
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.refs.base import RefController, PlainRef
 from kapitan.refs.secrets.vaultkv import VaultBackend
+from kapitan.resources import inventory_reclass
 
 from commodore import __install_dir__
 from commodore.config import Config
@@ -161,6 +162,16 @@ def kapitan_compile(
         schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
     )
+
+
+def kapitan_inventory(config: Config, key="nodes") -> Dict:
+    """
+    Reset reclass cache and render inventory.
+    Returns the top-level key according to the kwarg.
+    """
+    reset_reclass_cache()
+    inv = inventory_reclass(config.inventory.inventory_dir)
+    return inv[key]
 
 
 def rm_tree_contents(basedir):

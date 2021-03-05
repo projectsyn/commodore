@@ -131,6 +131,8 @@ def render_target(
     classes = [f"params.{inv.bootstrap_target}"]
     parameters: Dict[str, Union[Dict, str]] = {
         "_instance": target,
+        "component_versions": {},
+        "components": "${component_versions}",
     }
 
     for c in components:

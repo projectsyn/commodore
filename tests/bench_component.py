@@ -11,9 +11,11 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     # Prepare minimum component directories
     upstream = tmp_path / "upstream"
     component_urls = {}
+    component_versions = {}
     for component in components:
         repo_path = upstream / component
         component_urls[component] = f"file://#{repo_path.resolve()}"
+        component_versions[component] = "master"
         repo = git.Repo.init(repo_path)
 
         class_dir = repo_path / "class"
@@ -23,11 +25,11 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
         repo.index.add(["class/defaults.yml"])
         repo.index.commit("component defaults")
 
-    return component_urls
+    return component_urls, component_versions
 
 
 def _setup_component(tmp_path: Path, cn: str):
-    urls = setup_components_upstream(tmp_path, [cn])
+    urls, _ = setup_components_upstream(tmp_path, [cn])
     return Component(cn, repo_url=urls[cn], directory=tmp_path / "test-component")
 
 

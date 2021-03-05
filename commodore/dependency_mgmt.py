@@ -2,17 +2,14 @@ import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import click
-
-from kapitan.cached import reset_cache as reset_reclass_cache
-from kapitan.resources import inventory_reclass
 
 from . import git
 from .config import Config
 from .component import Component, component_dir
-from .helpers import relsymlink, yaml_load, delsymlink
+from .helpers import relsymlink, delsymlink, kapitan_inventory
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -51,16 +48,14 @@ def delete_component_symlinks(cfg, component: Component):
         delsymlink(file, cfg.debug)
 
 
-def _discover_components(cfg, inventory_path):
+def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
     """
     Discover components in `inventory_path/` by extracting all entries from
     the reclass applications dictionary.
     """
-    reset_reclass_cache()
-    inv = inventory_reclass(inventory_path)
-    kapitan_applications = inv["applications"]
+    kapitan_applications = kapitan_inventory(cfg, key="applications")
     components = set()
-    component_aliases = {}
+    component_aliases: Dict[str, str] = {}
     for component in kapitan_applications.keys():
         try:
             cn, alias = component.split(" as ")
@@ -84,27 +79,44 @@ def _discover_components(cfg, inventory_path):
     return sorted(components), component_aliases
 
 
-def _read_component_urls(cfg: Config, component_names) -> Dict[str, str]:
+def _read_components(
+    cfg: Config, component_names
+) -> Tuple[Dict[str, str], Dict[str, Optional[str]]]:
     component_urls = {}
+    component_versions = {}
 
-    if cfg.debug:
-        click.echo(f"   > Read commodore config file {cfg.config_file}")
-    try:
-        commodore_config = yaml_load(cfg.config_file)
-    except Exception as e:
-        raise click.ClickException(
-            f"Could not read Commodore configuration: {e}"
-        ) from e
+    inv = kapitan_inventory(cfg)
+    cluster_inventory = inv[cfg.inventory.bootstrap_target]
+    components = cluster_inventory["parameters"].get("components", None)
+    if not components:
+        raise click.ClickException("Component list ('parameters.components') missing")
 
-    for component in commodore_config.get("components", []):
-        if component["name"] in component_names:
-            component_urls[component["name"]] = component["url"]
+    for component_name in component_names:
+        if component_name not in components:
+            raise click.ClickException(
+                f"Unknown component '{component_name}'. Please add it to 'parameters.components'"
+            )
 
-    for name in component_names:
-        if name not in component_urls:
-            raise click.ClickException(f"No url for component '{name}' configured")
+        info = components[component_name]
 
-    return component_urls
+        if "url" not in info:
+            raise click.ClickException(
+                f"No url for component '{component_name}' configured"
+            )
+
+        component_urls[component_name] = info["url"]
+        if cfg.debug:
+            click.echo(f" > URL for {component_name}: {component_urls[component_name]}")
+        if "version" in info:
+            component_versions[component_name] = info["version"]
+        else:
+            component_versions[component_name] = "master"
+        if cfg.debug:
+            click.echo(
+                f" > Version for {component_name}: {component_versions[component_name]}"
+            )
+
+    return component_urls, component_versions
 
 
 def fetch_components(cfg: Config):
@@ -117,50 +129,20 @@ def fetch_components(cfg: Config):
 
     click.secho("Discovering components...", bold=True)
     cfg.inventory.ensure_dirs()
-    component_names, component_aliases = _discover_components(
-        cfg, cfg.inventory.inventory_dir
-    )
+    component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    urls = _read_component_urls(cfg, component_names)
+    urls, versions = _read_components(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for cn in component_names:
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
-        c = Component(cn, work_dir=cfg.work_dir, repo_url=urls[cn])
+        c = Component(
+            cn, work_dir=cfg.work_dir, repo_url=urls[cn], version=versions[cn]
+        )
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
-
-
-def set_component_overrides(cfg, versions):
-    """
-    Set component overrides according to versions and URLs provided in versions dict.
-    The dict is assumed to contain the component names as keys, and dicts as
-    values. The value dicts are assumed to contain a key 'version' which
-    indicates the version as a Git tree-ish. Additionally the key 'url' can
-    specify the URL of the Git repo.
-    """
-
-    click.secho("Setting component overrides...", bold=True)
-    for component_name, overrides in versions.items():
-        if component_name not in cfg.get_components():
-            continue
-        component = cfg.get_components()[component_name]
-        if "url" in overrides:
-            url = overrides["url"]
-            if cfg.debug:
-                click.echo(f" > Set URL for {component.name}: {url}")
-            component.repo_url = url
-        if "version" in overrides:
-            component.version = overrides["version"]
-            if cfg.debug:
-                click.echo(f" > Set version for {component.name}: {component.version}")
-
-        # Call checkout to ensure component is checked out from the correct remote&version
-        component.checkout()
-        # Create symlinks again with correctly checked out components
-        create_component_symlinks(cfg, component)
 
 
 def fetch_jsonnet_libs(config: Config, libs):
@@ -310,9 +292,7 @@ def register_components(cfg: Config):
     in the Commodore config.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(
-        cfg, cfg.inventory.inventory_dir
-    )
+    components, component_aliases = _discover_components(cfg)
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
