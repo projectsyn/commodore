@@ -148,3 +148,5 @@ def compile(config, cluster_id):
     update_catalog(config, targets, catalog_repo)
 
     click.secho("Catalog compiled! 🎉", bold=True)
+
+    config.print_deprecation_notices()
