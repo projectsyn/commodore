@@ -11,6 +11,7 @@ from .cluster import (
 )
 from .config import Config
 from .dependency_mgmt import (
+    create_component_symlinks,
     fetch_components,
     fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
@@ -105,6 +106,12 @@ def _local_setup(config: Config, cluster_id):
     )
 
     register_components(config)
+
+    components = config.get_components()
+    for alias, component in config.get_component_aliases().items():
+        create_component_symlinks(config, components[component])
+        update_target(config, alias, component=component)
+    update_target(config, config.inventory.bootstrap_target)
 
     click.secho("Configuring catalog repo...", bold=True)
     return git.init_repository(config.catalog_dir)
