@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Generate a best-effort SSH-based push URL for component repos ([#281])
+* Deprecation notice framework ([#287])
 
 ### Changed
 
 * Update pytest options to remove warnings ([#283])
 * Move component URLs to `parameters.components` ([#284])
 * Default component version to "origin/HEAD" instead of "master" ([#286])
+* Deprecated use of `parameters.component_versions` ([#287])
 
 ## [v0.4.2] - 2021-01-14
 
@@ -331,3 +333,4 @@ Initial implementation
 [#283]: https://github.com/projectsyn/commodore/pull/283
 [#284]: https://github.com/projectsyn/commodore/pull/284
 [#286]: https://github.com/projectsyn/commodore/pull/286
+[#287]: https://github.com/projectsyn/commodore/pull/287
