@@ -1,3 +1,4 @@
+import multiprocessing
 from pathlib import Path
 
 import click
@@ -256,5 +257,8 @@ def component_compile(config: Config, path, values, search_paths, output, verbos
 
 
 def main():
+    # set 'fork' method as a more deterministic/conservative
+    # and compatible multiprocessing method for Linux and MacOS
+    multiprocessing.set_start_method("fork")
     load_dotenv()
     commodore.main(prog_name="commodore", auto_envvar_prefix="COMMODORE")
