@@ -155,7 +155,7 @@ def test_read_components_multiple(patch_inventory, data: Config):
     assert set(components.keys()) == set(component_versions.keys())
     assert all(components[cn]["url"] == component_urls[cn] for cn in components.keys())
     assert all(
-        components[cn].get("version", "master") == component_versions[cn]
+        components[cn].get("version", None) == component_versions[cn]
         for cn in components.keys()
     )
 

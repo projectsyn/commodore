@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Update pytest options to remove warnings ([#283])
 * Move component URLs to `parameters.components` ([#284])
+* Default component version to "origin/HEAD" instead of "master" ([#286])
 
 ## [v0.4.2] - 2021-01-14
 
@@ -329,3 +330,4 @@ Initial implementation
 [#281]: https://github.com/projectsyn/commodore/pull/281
 [#283]: https://github.com/projectsyn/commodore/pull/283
 [#284]: https://github.com/projectsyn/commodore/pull/284
+[#286]: https://github.com/projectsyn/commodore/pull/286
