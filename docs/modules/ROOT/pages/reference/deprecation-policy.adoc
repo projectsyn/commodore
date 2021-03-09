@@ -1,0 +1,14 @@
+= Deprecation policy
+
+NOTE: This document isn't finalized yet.
+
+Starting with Commodore v0.5.0, deprecation and removal of Commodore features will adhere to the deprecation policy for public APIs in https://semver.org/[semantic versioning]:
+
+* Deprecating a feature must happen in a new minor version (https://semver.org/#spec-item-7[SemVer specification §7]).
+* Deprecated features will continue to work in all patch releases of the minor version which introduces the deprecation (https://semver.org/#spec-item-6[SemVer specification §6]).
+* Deprecated features will be removed in the next major version released after the minor version which introduces the deprecation (https://semver.org/#spec-item-8[SemVer specification §8]).
+
+In addition, Commodore will print warnings ("deprecation notices") to the standard output for all deprecated features which are used by a cluster configuration.
+To make the deprecation notices easy to find, they're all collected and are printed after the catalog has been compiled.
+
+We list all deprecation notices organized by Commodore version in xref:commodore/ROOT/pages/reference/deprecation-notices.adoc[the documentation].
