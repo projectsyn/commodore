@@ -106,6 +106,20 @@ def _local_setup(config: Config, cluster_id):
     return git.init_repository(config.catalog_dir)
 
 
+def check_parameters_component_versions(config: Config, cluster_parameters):
+    """
+    Deprecation handler for `parameters.component_versions`.
+
+    Registers a deprecation notice if uses of `parameters.component_versions`
+    are found in the rendered inventory.
+    """
+    cvers = cluster_parameters.get("component_versions", {})
+    if len(cvers.keys()) > 0:
+        config.register_deprecation_notice(
+            "`parameters.component_versions` is deprecated, please migrate to `parameters.components`"
+        )
+
+
 # pylint: disable=redefined-builtin
 def compile(config, cluster_id):
     if config.local:
@@ -116,6 +130,7 @@ def compile(config, cluster_id):
 
     inventory = kapitan_inventory(config)
     cluster_parameters = inventory[config.inventory.bootstrap_target]["parameters"]
+    check_parameters_component_versions(config, cluster_parameters)
 
     # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)
@@ -148,3 +163,5 @@ def compile(config, cluster_id):
     update_catalog(config, targets, catalog_repo)
 
     click.secho("Catalog compiled! 🎉", bold=True)
+
+    config.print_deprecation_notices()

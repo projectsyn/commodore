@@ -1,4 +1,5 @@
 import pytest
+import textwrap
 from pathlib import Path as P
 
 import click
@@ -30,3 +31,37 @@ def test_verify_component_aliases_error(config):
 
     with pytest.raises(click.ClickException):
         config.verify_component_aliases(params)
+
+
+def _setup_deprecation_notices(config):
+    config.register_deprecation_notice("test 1")
+    config.register_deprecation_notice("test 2")
+
+
+def test_register_deprecation_notices(config):
+    _setup_deprecation_notices(config)
+
+    assert ["test 1", "test 2"] == config._deprecation_notices
+
+
+def test_print_deprecation_notices_no_notices(config, capsys):
+    config.print_deprecation_notices()
+    captured = capsys.readouterr()
+    assert "" == captured.out
+
+
+def test_print_deprecation_notices(config, capsys):
+    _setup_deprecation_notices(config)
+
+    config.print_deprecation_notices()
+    captured = capsys.readouterr()
+    assert (
+        textwrap.dedent(
+            """
+            Commodore notices:
+             > test 1
+             > test 2
+            """
+        )
+        == captured.out
+    )

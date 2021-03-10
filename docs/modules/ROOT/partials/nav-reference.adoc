@@ -3,3 +3,5 @@
 * xref:commodore:ROOT:reference/commands.adoc[Commands]
 * xref:commodore:ROOT:reference/cli.adoc[Command Line Options]
 * xref:commodore:ROOT:reference/hierarchy.adoc[Inventory Hierarchy]
+* xref:commodore:ROOT:reference/deprecation-policy.adoc[Deprecation policy]
+* xref:commodore:ROOT:reference/deprecation-notices.adoc[Deprecation notices]

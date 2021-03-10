@@ -1,5 +1,7 @@
+import textwrap
+
 from pathlib import Path as P
-from typing import Dict
+from typing import Dict, List
 
 import click
 from git import Repo
@@ -14,6 +16,7 @@ class Config:
     _components: Dict[str, Component]
     _config_repos: Dict[str, Repo]
     _component_aliases: Dict[str, str]
+    _deprecation_notices: List[str]
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -40,6 +43,7 @@ class Config:
         self.interactive = None
         self.force = False
         self._inventory = Inventory(work_dir=self.work_dir)
+        self._deprecation_notices = []
 
     @property
     def verbose(self):
@@ -138,3 +142,18 @@ class Config:
                 raise click.ClickException(
                     f"Component {cn} with alias {alias} does not support instantiation."
                 )
+
+    def register_deprecation_notice(self, notice: str):
+        self._deprecation_notices.append(notice)
+
+    def print_deprecation_notices(self):
+        tw = textwrap.TextWrapper(
+            width=100,
+            initial_indent=" > ",
+            subsequent_indent="   ",
+        )
+        if len(self._deprecation_notices) > 0:
+            click.secho("\nCommodore notices:", bold=True)
+            for notice in self._deprecation_notices:
+                notice = tw.fill(notice)
+                click.secho(notice)
