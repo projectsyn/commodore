@@ -1,3 +1,4 @@
+from collections import namedtuple
 from pathlib import Path as P
 from typing import Iterable, Optional
 
@@ -8,6 +9,9 @@ from git import Repo, BadName, GitCommandError
 from url_normalize.tools import deconstruct_url
 
 from commodore.git import RefError
+
+
+CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
 
 
 class Component:
@@ -113,19 +117,25 @@ class Component:
     def parameters_key(self):
         return component_parameters_key(self.name)
 
-    def checkout(self):
-        remote_heads = self._repo.remote().fetch(prune=True, tags=True)
-        remote_prefix = self._repo.remote().name + "/"
-        version = self._version
-        if self._version is None:
-            # Handle case where we want the default branch of the remote
-            try:
-                version = self._repo.remote().refs["HEAD"].reference.name
-            except IndexError:
-                self._repo.git.remote("set-head", "origin", "--auto")
-                version = self._repo.remote().refs["HEAD"].reference.name
+    def _remote_prefix(self):
+        """
+        Find prefix of Git remote, will usually be 'origin/'.
+        """
+        return self._repo.remote().name + "/"
 
-            version = version.replace(remote_prefix, "", 1)
+    def _default_version(self):
+        """
+        Find default branch of the remote
+        """
+        try:
+            version = self._repo.remote().refs["HEAD"].reference.name
+        except IndexError:
+            self._repo.git.remote("set-head", "origin", "--auto")
+            version = self._repo.remote().refs["HEAD"].reference.name
+        return version.replace(self._remote_prefix(), "", 1)
+
+    def _find_commit_for_version(self, version, remote_heads):
+        remote_prefix = self._remote_prefix()
         for head in remote_heads:
             tag = None
             branch = None
@@ -145,6 +155,17 @@ class Component:
             commit = version
             branch = None
             tag = None
+
+        return CommitInfo(commit=commit, branch=branch, tag=tag)
+
+    def checkout(self):
+        remote_heads = self._repo.remote().fetch(prune=True, tags=True)
+        version = self._version
+        if self._version is None:
+            # Handle case where we want the default branch of the remote
+            version = self._default_version()
+
+        commit, branch, tag = self._find_commit_for_version(version, remote_heads)
 
         try:
             if branch:
