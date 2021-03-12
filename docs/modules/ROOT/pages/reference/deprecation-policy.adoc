@@ -11,4 +11,4 @@ Starting with Commodore v0.5.0, deprecation and removal of Commodore features wi
 In addition, Commodore will print warnings ("deprecation notices") to the standard output for all deprecated features which are used by a cluster configuration.
 To make the deprecation notices easy to find, they're all collected and are printed after the catalog has been compiled.
 
-We list all deprecation notices organized by Commodore version in xref:commodore/ROOT/pages/reference/deprecation-notices.adoc[the documentation].
+We list all deprecation notices organized by Commodore version in xref:commodore:ROOT:reference/deprecation-notices.adoc[the documentation].

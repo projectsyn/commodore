@@ -3,11 +3,11 @@
 This page lists deprecations of Commodore features organized by version.
 We include a link to relevant documentation, if applicable.
 
-== Unreleased
+== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v050-20210312[v0.5.0]
 
 === `parameters.component_versions` is deprecated
 
-Users should switch to xref:commodore/ROOT/pages/reference/architecture.adoc#_component_discovery_and_versions[`parameters.components`] which has the exact same format.
+Users should switch to xref:commodore:ROOT:reference/architecture.adoc#_component_discovery_and_versions[`parameters.components`] which has the exact same format.
 
 == https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v040-20201105[v0.4.0]
 
@@ -17,9 +17,9 @@ Users should switch to xref:commodore/ROOT/pages/reference/architecture.adoc#_co
 == https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v030---2020-10-01[v0.3.0]
 
 * The reclass hierarchy must be configured in the global defaults repository.
-  See xref:commodore/ROOT/pages/reference/hierarchy.adoc[the reference docs] for details.
+  See xref:commodore:ROOT:reference/hierarchy.adoc[the reference docs] for details.
 
 == https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v030---2020-10-01[v0.2.0]
 
 * Command structure has been reorganized.
-  See xref:commodore/ROOT/pages/reference/commands.adoc[the commands documentation].
+  See xref:commodore:ROOT:reference/commands.adoc[the commands documentation].
