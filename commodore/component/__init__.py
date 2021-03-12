@@ -114,7 +114,7 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
-        remote_heads = self._repo.remote().fetch(prune=True)
+        remote_heads = self._repo.remote().fetch(prune=True, tags=True)
         remote_prefix = self._repo.remote().name + "/"
         version = self._version
         if self._version is None:
@@ -127,17 +127,24 @@ class Component:
 
             version = version.replace(remote_prefix, "", 1)
         for head in remote_heads:
-            branch = head.name
-            if branch.startswith(remote_prefix):
-                branch = branch.replace(remote_prefix, "", 1)
-            if branch == version:
+            tag = None
+            branch = None
+            headname = head.name
+            if headname.startswith(remote_prefix):
+                branch = headname.replace(remote_prefix, "", 1)
+                headname = branch
+            else:
+                tag = headname
+
+            if headname == version:
                 commit = head.commit
                 break
         else:
-            # If we haven't found a branch matching the requested version,
+            # If we haven't found a branch or tag matching the requested version,
             # assume the version is a commit sha.
             commit = version
             branch = None
+            tag = None
 
         try:
             if branch:
@@ -152,6 +159,9 @@ class Component:
 
                 head.set_tracking_branch(self.repo.remote().refs[branch])
                 self._repo.head.reference = head
+            elif tag:
+                # Simply create detached head pointing to tag
+                self._repo.head.reference = tag
             else:
                 # Create detached head by setting repo.head.reference as
                 # direct ref to commit object.
