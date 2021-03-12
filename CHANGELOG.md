@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Default component version to "origin/HEAD" instead of "master" ([#286])
 * Deprecated use of `parameters.component_versions` ([#287])
 
+### Fixed
+
+* Values in `parameters.components` always have precedence over values in `parameters.component_versions` ([#289])
+
 ## [v0.4.2] - 2021-01-14
 
 ### Added
@@ -334,3 +338,4 @@ Initial implementation
 [#284]: https://github.com/projectsyn/commodore/pull/284
 [#286]: https://github.com/projectsyn/commodore/pull/286
 [#287]: https://github.com/projectsyn/commodore/pull/287
+[#289]: https://github.com/projectsyn/commodore/pull/289
