@@ -3,7 +3,7 @@
 This page lists deprecations of Commodore features organized by version.
 We include a link to relevant documentation, if applicable.
 
-== Unreleased
+== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v050-20210312[v0.5.0]
 
 === `parameters.component_versions` is deprecated
 
