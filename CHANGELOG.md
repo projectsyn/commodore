@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 * Values in `parameters.components` always have precedence over values in `parameters.component_versions` ([#289])
+* Correctly handle tags as component versions ([#290])
 
 ## [v0.4.2] - 2021-01-14
 
@@ -339,3 +340,4 @@ Initial implementation
 [#286]: https://github.com/projectsyn/commodore/pull/286
 [#287]: https://github.com/projectsyn/commodore/pull/287
 [#289]: https://github.com/projectsyn/commodore/pull/289
+[#290]: https://github.com/projectsyn/commodore/pull/290

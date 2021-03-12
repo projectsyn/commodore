@@ -37,11 +37,12 @@ def _setup_component(
     tmp_path: P,
     version="master",
     repo_url=REPO_URL,
+    name="argocd",
 ):
     return Component(
-        "argocd",
+        name,
         repo_url=repo_url,
-        directory=tmp_path / "argocd",
+        directory=tmp_path / name,
         version=version,
     )
 
@@ -126,6 +127,20 @@ def test_component_checkout_sha1version(tmp_path: P):
 
     assert c.repo.head.is_detached
     assert c.repo.head.commit.hexsha == commit
+
+
+def test_component_checkout_tag(tmp_path: P):
+    c = _setup_component(
+        tmp_path,
+        version="v1.0.0",
+        repo_url="https://github.com/projectsyn/component-backup-k8up.git",
+        name="backup-k8up",
+    )
+
+    c.checkout()
+
+    assert c.repo.head.is_detached
+    assert c.repo.head.commit.hexsha == c.repo.tags["v1.0.0"].commit.hexsha
 
 
 def test_component_checkout_nonexisting_version(tmp_path: P):
