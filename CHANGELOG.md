@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Render multi-line strings as block-scalars in Commodore's YAML dump helpers ([#294])
 
+### Fixed
+
+* Fix component template GitHub workflow to correctly lint docs ([#295])
+
 ## [v0.5.0] - 2021-03-12
 
 ### Added
@@ -349,3 +353,4 @@ Initial implementation
 [#289]: https://github.com/projectsyn/commodore/pull/289
 [#290]: https://github.com/projectsyn/commodore/pull/290
 [#294]: https://github.com/projectsyn/commodore/pull/294
+[#295]: https://github.com/projectsyn/commodore/pull/295
