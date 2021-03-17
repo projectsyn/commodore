@@ -56,10 +56,28 @@ def yaml_load_all(file):
         return list(yaml.safe_load_all(f))
 
 
+def _represent_str(dumper, data):
+    """
+    Custom string rendering when dumping data as YAML.
+
+    Hooking this method into PyYAML with
+
+        yaml.add_representer(str, _represent_str)
+
+    will configure the YAML dumper to render strings which contain newline
+    characters as block scalars with the last newline stripped.
+    """
+    style = None
+    if "\n" in data:
+        style = "|"
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+
+
 def yaml_dump(obj, file):
     """
     Dump obj as single-document YAML
     """
+    yaml.add_representer(str, _represent_str)
     with open(file, "w") as outf:
         yaml.dump(obj, outf)
 
@@ -68,6 +86,7 @@ def yaml_dump_all(obj, file):
     """
     Dump obj as multi-document YAML
     """
+    yaml.add_representer(str, _represent_str)
     with open(file, "w") as outf:
         yaml.dump_all(obj, outf)
 
