@@ -23,3 +23,27 @@ compile the catalog for the selected cluster.
 --
 poetry run commodore catalog compile <cluster-id>
 --
+
+To test a component which is new to a cluster in local mode, the component has to be downloaded and symlinked into the directory structure of a previous `commodore catalog compile`.
+
+[source,bash]
+--
+COMPONENT_NAME=
+COMPONENT_GIT_URL=
+
+git clone ${COMPONENT_GIT_URL} ./dependencies/${COMPONENT_NAME}
+
+ln -svf ../../../dependencies/${COMPONENT_NAME}/class/defaults.yml ./inventory/classes/defaults/${COMPONENT_NAME}.yml
+ln -svf ../../../dependencies/${COMPONENT_NAME}/class/${COMPONENT_NAME}.yml ./inventory/classes/components/${COMPONENT_NAME}.yml
+
+ln -svf ../dependencies/${COMPONENT_NAME} ./vendor/${COMPONENT_NAME}
+--
+
+To configure the target for the new component the one of argocd can be copied as this is usually present in all clusters.
+
+[source,bash]
+--
+cp ./inventory/targets/argocd.yml ./inventory/targets/${COMPONENT_NAME}.yml
+sed -i "s/ argocd/ ${COMPONENT_NAME}/g" ./inventory/targets/${COMPONENT_NAME}.yml
+sed -i "s/- components.argocd/- defaults.${COMPONENT_NAME}\n- components.${COMPONENT_NAME}/g" ./inventory/targets/${COMPONENT_NAME}.yml
+--
