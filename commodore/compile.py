@@ -158,8 +158,7 @@ def compile(config, cluster_id):
         )
         fetch_jsonnet_libs(config, jsonnet_libs)
 
-    if not config.local:
-        fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
+    fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
     clean_catalog(catalog_repo)
 
