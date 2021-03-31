@@ -115,8 +115,8 @@ For all other instances of a component, the content of `parameters.<instance_nam
 Commodore always sets the meta-parameter `parameters._instance` to the instance name.
 For non-aliased instances of instance-aware components, `parameters._instance` is set to the component name.
 
-Let's take the configuration below, which includes component `nfs-client-provisioner` twice, once non-aliased, and once aliased to `nfs-2`, as an example.
-In this example, we'll end up with two instances of nfs-client-provisioner, which create volumes on `nfs.example.org:/path/to/share-1` and `nfs.example.org:/path/to/share-2` respectively.
+Let's take the configuration below, which includes component `nfs-subdir-external-provisioner` twice, once non-aliased, and once aliased to `nfs-2`, as an example.
+In this example, we'll end up with two instances of nfs-subdir-external-provisioner, which create volumes on `nfs.example.org:/path/to/share-1` and `nfs.example.org:/path/to/share-2` respectively.
 
 [NOTE]
 ====
@@ -128,14 +128,18 @@ Therefore the parameters key for an aliased component is the alias name, but wit
 [source,yaml]
 ----
 applications:
-  - nfs-client-provisioner
-  - nfs-client-provisioner as nfs-2
+  - nfs-subdir-external-provisioner
+  - nfs-subdir-external-provisioner as nfs-2
 parameters:
-  nfs_client_provisioner:
-    server: nfs.example.org
-    path: /path/to/share-1
+  nfs_subdir_external_provisioner:
+    helm_values:
+      nfs:
+        server: nfs.example.org
+        path: /path/to/share-1
   nfs_2:
-    path: /path/to/share-2
+    helm_values:
+      nfs:
+        path: /path/to/share-2
 ----
 
 Similar to Helm charts, the components themselves must make sure to not cause any naming collisions of objects belonging to different instances.
