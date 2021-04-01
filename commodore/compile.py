@@ -33,6 +33,8 @@ def _fetch_global_config(cfg: Config, cluster: Cluster):
         cluster.global_git_repo_url, cfg.inventory.global_config_dir, cfg
     )
     rev = cluster.global_git_repo_revision
+    if cfg.global_repo_revision_override:
+        rev = cfg.global_repo_revision_override
     if rev:
         git.checkout_version(repo, rev)
     cfg.register_config("global", repo)
@@ -47,6 +49,8 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
         repo_url, cfg.inventory.tenant_config_dir(cluster.tenant), cfg
     )
     rev = cluster.config_git_repo_revision
+    if cfg.tenant_repo_revision_override:
+        rev = cfg.tenant_repo_revision_override
     if rev:
         git.checkout_version(repo, rev)
     cfg.register_config("customer", repo)
