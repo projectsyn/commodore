@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 * Render multi-line strings as block-scalars in Commodore's YAML dump helpers ([#294])
+* Deprecation notice for parameter `commodore.jsonnet_libs` ([#300])
 
 ### Fixed
 
@@ -354,3 +355,4 @@ Initial implementation
 [#290]: https://github.com/projectsyn/commodore/pull/290
 [#294]: https://github.com/projectsyn/commodore/pull/294
 [#295]: https://github.com/projectsyn/commodore/pull/295
+[#300]: https://github.com/projectsyn/commodore/pull/300
