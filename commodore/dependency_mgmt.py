@@ -289,8 +289,10 @@ def inject_essential_libraries(file: P):
 
 def register_components(cfg: Config):
     """
-    Register all targets which are currently available in `inventory/targets`
-    in the Commodore config.
+    Discover components in the inventory, and register them if the
+    corresponding directory in `dependencies/` exists.
+
+    Create component symlinks for discovered components which exist.
     """
     click.secho("Discovering included components...", bold=True)
     components, component_aliases = _discover_components(cfg)
@@ -307,6 +309,7 @@ def register_components(cfg: Config):
             continue
         component = Component(cn, work_dir=cfg.work_dir)
         cfg.register_component(component)
+        create_component_symlinks(cfg, component)
 
     registered_components = cfg.get_components().keys()
     pruned_aliases = {

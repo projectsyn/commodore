@@ -10,7 +10,6 @@ from cookiecutter.main import cookiecutter
 from commodore import git, __install_dir__
 from commodore import config as CommodoreConfig
 from commodore.component import Component, component_dir
-from commodore.dependency_mgmt import delete_component_symlinks
 
 slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
@@ -112,7 +111,6 @@ class ComponentTemplater:
                     f"{self.slug}? This action cannot be undone",
                     abort=True,
                 )
-            delete_component_symlinks(self.config, component)
             rmtree(component.target_directory)
 
             click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)

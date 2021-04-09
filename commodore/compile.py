@@ -11,7 +11,6 @@ from .cluster import (
 )
 from .config import Config
 from .dependency_mgmt import (
-    create_component_symlinks,
     fetch_components,
     fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
@@ -114,13 +113,17 @@ def _local_setup(config: Config, cluster_id):
 
     click.secho("Resetting targets...", bold=True)
     rm_tree_contents(config.inventory.targets_dir)
+
+    click.secho("Resetting component symlinks in inventory...", bold=True)
+    rm_tree_contents(config.inventory.defaults_dir)
+    rm_tree_contents(config.inventory.components_dir)
+
+    click.secho("Creating bootstrap target...", bold=True)
     update_target(config, config.inventory.bootstrap_target)
 
     register_components(config)
 
-    components = config.get_components()
     for alias, component in config.get_component_aliases().items():
-        create_component_symlinks(config, components[component])
         update_target(config, alias, component=component)
     update_target(config, config.inventory.bootstrap_target)
 
