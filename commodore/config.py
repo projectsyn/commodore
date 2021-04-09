@@ -42,6 +42,7 @@ class Config:
         self.push = None
         self.interactive = None
         self.force = False
+        self.fetch_dependencies = True
         self._inventory = Inventory(work_dir=self.work_dir)
         self._deprecation_notices = []
         self._global_repo_revision_override = None

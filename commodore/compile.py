@@ -82,7 +82,13 @@ def _regular_setup(config: Config, cluster_id):
 
 def _local_setup(config: Config, cluster_id):
     click.secho("Running in local mode", bold=True)
-    click.echo(" > Will use existing inventory, dependencies, and catalog")
+    click.echo(" > Will use existing inventory, components, and catalog")
+    if not config.fetch_dependencies:
+        click.echo(" > Will use existing Jsonnet and Kapitan dependencies")
+        click.echo(
+            "   > Use --fetch-dependencies at least once if you're trying to enable a new component in local mode,"
+            + " otherwise Kapitan will fail to find the component"
+        )
 
     file = config.inventory.target_file(config.inventory.bootstrap_target)
     if not file.is_file():
@@ -151,14 +157,15 @@ def compile(config, cluster_id):
         component.render_jsonnetfile_json(cluster_parameters[ckey])
 
     jsonnet_libs = cluster_parameters.get("commodore", {}).get("jsonnet_libs", None)
-    if jsonnet_libs and not config.local:
+    if jsonnet_libs and config.fetch_dependencies:
         config.register_deprecation_notice(
             "Parameter `commodore.jsonnet_libs` is deprecated. "
             + "If your component needs Jsonnet dependencies, specify them in the component's `jsonnetfile.json`"
         )
         fetch_jsonnet_libs(config, jsonnet_libs)
 
-    fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
+    if config.fetch_dependencies:
+        fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
     clean_catalog(catalog_repo)
 
@@ -170,7 +177,12 @@ def compile(config, cluster_id):
     # parameters
     update_refs(config, aliases, inventory)
 
-    kapitan_compile(config, targets, search_paths=[config.vendor_dir])
+    kapitan_compile(
+        config,
+        targets,
+        search_paths=[config.vendor_dir],
+        fetch_dependencies=config.fetch_dependencies,
+    )
 
     postprocess_components(config, inventory, components)
 
