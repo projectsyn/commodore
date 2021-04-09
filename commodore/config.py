@@ -44,6 +44,8 @@ class Config:
         self.force = False
         self._inventory = Inventory(work_dir=self.work_dir)
         self._deprecation_notices = []
+        self._global_repo_revision_override = None
+        self._tenant_repo_revision_override = None
 
     @property
     def verbose(self):
@@ -105,6 +107,22 @@ class Config:
                 else:
                     raise
             self._api_token = api_token.strip()
+
+    @property
+    def global_repo_revision_override(self):
+        return self._global_repo_revision_override
+
+    @global_repo_revision_override.setter
+    def global_repo_revision_override(self, rev):
+        self._global_repo_revision_override = rev
+
+    @property
+    def tenant_repo_revision_override(self):
+        return self._tenant_repo_revision_override
+
+    @tenant_repo_revision_override.setter
+    def tenant_repo_revision_override(self, rev):
+        self._tenant_repo_revision_override = rev
 
     @property
     def inventory(self):

@@ -79,6 +79,16 @@ See also xref:local-mode.adoc[local mode documentation].
 *--git-author-email* EMAIL::
   E-mail address of catalog commit author
 
+*--global-repo-revision-override* REV::
+  Git tree-ish to checkout for the global config repository.
+  This command line parameter overrides the global git repository revision configured on the cluster or tenant object in Lieutenant.
+  When this option is provided, Commodore will abort without compiling the catalog if `--push` is also provided.
+
+*--tenant-repo-revision-override* REV::
+  Git tree-ish to checkout for the tenant config repository.
+  This command line parameter overrides the tenant git repository revision configured on the cluster object in Lieutenant.
+  When this option is provided, Commodore will abort without compiling the catalog if `--push` is also provided.
+
 *--help*::
   Show catalog clean usage and options then exit.
 

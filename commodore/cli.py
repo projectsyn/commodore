@@ -106,6 +106,26 @@ def clean(config: Config, verbose):
     metavar="EMAIL",
     help="E-mail address of catalog commit author",
 )
+@click.option(
+    "-g",
+    "--global-repo-revision-override",
+    envvar="GLOBAL_REPO_REVISION_OVERRIDE",
+    metavar="REV",
+    help=(
+        "Git revision (tree-ish) to checkout for the global config repo "
+        + "(overrides configuration in Lieutenant tenant & cluster)"
+    ),
+)
+@click.option(
+    "-t",
+    "--tenant-repo-revision-override",
+    envvar="TENANT_REPO_REVISION_OVERRIDE",
+    metavar="REV",
+    help=(
+        "Git revision (tree-ish) to checkout for the tenant config repo "
+        + "(overrides configuration in Lieutenant cluster)"
+    ),
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -120,6 +140,8 @@ def compile_catalog(
     verbose,
     git_author_name,
     git_author_email,
+    global_repo_revision_override,
+    tenant_repo_revision_override,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -129,6 +151,14 @@ def compile_catalog(
     config.interactive = interactive
     config.username = git_author_name
     config.usermail = git_author_email
+    config.global_repo_revision_override = global_repo_revision_override
+    config.tenant_repo_revision_override = tenant_repo_revision_override
+    if config.push and (
+        config.global_repo_revision_override or config.tenant_repo_revision_override
+    ):
+        raise click.ClickException(
+            "Cannot push changes when local global or tenant repo override is specified"
+        )
     _compile(config, cluster)
 
 
