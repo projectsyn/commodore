@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.6.0] - 2021-04-09
+
 ### Added
 
 * Render multi-line strings as block-scalars in Commodore's YAML dump helpers ([#294])
@@ -265,7 +267,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Initial implementation
 
-[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/projectsyn/commodore/compare/v0.6.0...HEAD
 [v0.1.0]: https://github.com/projectsyn/commodore/releases/tag/v0.1.0
 [v0.1.1]: https://github.com/projectsyn/commodore/releases/tag/v0.1.1
 [v0.1.2]: https://github.com/projectsyn/commodore/releases/tag/v0.1.2
@@ -282,6 +284,7 @@ Initial implementation
 [v0.4.1]: https://github.com/projectsyn/commodore/releases/tag/v0.4.1
 [v0.4.2]: https://github.com/projectsyn/commodore/releases/tag/v0.4.2
 [v0.5.0]: https://github.com/projectsyn/commodore/releases/tag/v0.5.0
+[v0.6.0]: https://github.com/projectsyn/commodore/releases/tag/v0.6.0
 
 [#53]: https://github.com/projectsyn/commodore/pull/53
 [#58]: https://github.com/projectsyn/commodore/pull/58

@@ -5,6 +5,8 @@ We include a link to relevant documentation, if applicable.
 
 == Unreleased
 
+== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v060-20210409[v0.6.0]
+
 === `parameters.commodore.jsonnet_libs` is deprecated
 
 Users should specify Jsonnet dependencies of components in the component's `jsonnetfile.json`.
