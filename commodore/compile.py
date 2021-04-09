@@ -141,6 +141,10 @@ def compile(config, cluster_id):
 
     jsonnet_libs = cluster_parameters.get("commodore", {}).get("jsonnet_libs", None)
     if jsonnet_libs and not config.local:
+        config.register_deprecation_notice(
+            "Parameter `commodore.jsonnet_libs` is deprecated. "
+            + "If your component needs Jsonnet dependencies, specify them in the component's `jsonnetfile.json`"
+        )
         fetch_jsonnet_libs(config, jsonnet_libs)
 
     if not config.local:
