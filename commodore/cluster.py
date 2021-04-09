@@ -136,6 +136,8 @@ def render_target(
     for c in components:
         if inv.defaults_file(c).is_file():
             classes.append(f"defaults.{c}")
+        else:
+            click.secho(f" > Default file for class {c} missing", fg="yellow")
 
     classes.append("global.commodore")
 

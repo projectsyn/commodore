@@ -126,6 +126,12 @@ def clean(config: Config, verbose):
         + "(overrides configuration in Lieutenant cluster)"
     ),
 )
+@click.option(
+    " / -F",
+    "--fetch-dependencies/--no-fetch-dependencies",
+    default=True,
+    help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. By default dependencies are fetched.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -142,6 +148,7 @@ def compile_catalog(
     git_author_email,
     global_repo_revision_override,
     tenant_repo_revision_override,
+    fetch_dependencies,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -159,6 +166,15 @@ def compile_catalog(
         raise click.ClickException(
             "Cannot push changes when local global or tenant repo override is specified"
         )
+
+    if not local:
+        if not fetch_dependencies:
+            click.echo(
+                "--no-fetch-dependencies doesn't take effect unless --local is specified"
+            )
+        # Ensure we always fetch dependencies in regular mode
+        fetch_dependencies = True
+    config.fetch_dependencies = fetch_dependencies
     _compile(config, cluster)
 
 

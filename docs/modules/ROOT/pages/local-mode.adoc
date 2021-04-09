@@ -1,25 +1,81 @@
 = Local mode
 
-Commodore provides a local mode for the `compile` command. Local mode is
-intended for local development, and won't fetch information from the
-SYNventory API or clone Git repositories for the inventory and components.
+[NOTE]
+====
+This document assumes that you have your local environment set up to run Commodore as `commodore`.
+See xref:running-commodore.adoc[Running Commodore] for a guide to get your local environment set up.
+====
 
+Commodore provides a local mode for the `catalog compile` command.
+Local mode can be enabled with the `--local` flag.
 
-Local mode can be enabled with the `--local` flag of the `compile` command.
-
-[source,bash]
---
-poetry run commodore catalog compile <cluster-id> --local
---
-
-In local mode, the existing directory structure in the working directory is
-used. This allows local development on components and also allows testing
-local modifications to the inventory. The user is responsible for ensuring
-that all the moving parts are where they should be. It's recommended to run
-Commodore in regular mode once to fetch all the inputs which are required to
-compile the catalog for the selected cluster.
+Local mode is intended for local development, and won't fetch information from the SYNventory API or clone Git repositories for the inventory and components.
+However, by default Commodore will fetch Jsonnet dependencies in local mode (using jsonnet-bundler) and will configure Kapitan to fetch dependencies.
+This dependency fetching can be disabled with the `--no-fetch-dependencies` command line flag.
 
 [source,bash]
 --
-poetry run commodore catalog compile <cluster-id>
+commodore catalog compile <cluster-id> --local [--no-fetch-dependencies]
 --
+
+In local mode, the existing directory structure in the working directory is used.
+This allows local development on components and also allows testing local modifications to the inventory.
+
+[NOTE]
+====
+The user is responsible for preparing the working directory to hold a directory structure which Commodore understands.
+We recommend running Commodore in regular mode once to fetch all the inputs which are required to compile the catalog for the selected cluster.
+
+[source,bash]
+--
+commodore catalog compile <cluster-id>
+--
+====
+
+[NOTE]
+====
+Local mode will perform component discovery and will create Kapitan targets for discovered components.
+However, Commodore will only create targets for components which are present in `dependencies/`.
+See <<_add_existing_component_to_a_cluster_in_local_mode,the next section>> for a set of steps to add existing components to a cluster in local mode.
+====
+
+== Add existing component to a cluster in local mode
+
+To add an existing component to a cluster in local mode for testing purposes, the following steps can be used.
+This example uses the https://github.com/projectsyn/component-nfs-subdir-external-provisioner/[nfs-subdir-external-provisioner] component.
+
+. Clone the component, if it's not present in `dependencies/`
++
+[source,bash]
+--
+test -d dependencies/nfs-subdir-external-provisioner || \
+git clone https://github.com/projectsyn/component-nfs-subdir-external-provisioner.git \
+    dependencies/nfs-subdir-external-provisioner
+--
+
+. Add the component to the cluster, by adding it in the `applications` array in the cluster config:
++
+[source,yaml]
+--
+applications:
+  - nfs-subdir-external-provisioner
+--
+
+. Run Commodore in local mode with dependency fetching enabled
++
+[source,bash]
+--
+commodore catalog compile <cluster-id> --local
+--
+
+. Now you can configure the component and test changes with dependency fetching disabled
++
+[source,bash]
+--
+commodore catalog compile <cluster-id> --local --no-fetch-dependencies
+--
+
+== Testing a new component in local mode
+
+Commodore's `component new` command won't insert the component into the current cluster configuration.
+In order to test a new component in local mode, you need to explicitly add the component to the cluster by following the steps in <<_add_existing_component_to_a_cluster_in_local_mode,the previous section>>.

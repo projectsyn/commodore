@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Deprecation notice for parameter `commodore.jsonnet_libs` ([#300])
 * Command line options to override global and tenant repo revisions ([#301])
 * Tests and benchmarks on Python 3.9 ([#302])
+* Kapitan targets are created from scratch in local mode ([#303])
+* Command line option to disable Jsonnet and Kapitan dependency fetching in local mode ([#303])
+
+### Changed
+
+* `component new` and `component delete` don't add or remove the new component in the inventory and `jsonnetfile.json` anymore ([#303])
 
 ### Fixed
 
@@ -360,3 +366,4 @@ Initial implementation
 [#300]: https://github.com/projectsyn/commodore/pull/300
 [#301]: https://github.com/projectsyn/commodore/pull/301
 [#302]: https://github.com/projectsyn/commodore/pull/302
+[#303]: https://github.com/projectsyn/commodore/pull/303

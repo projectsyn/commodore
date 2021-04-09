@@ -9,7 +9,7 @@ import click
 from . import git
 from .config import Config
 from .component import Component, component_dir
-from .helpers import relsymlink, delsymlink, kapitan_inventory
+from .helpers import relsymlink, kapitan_inventory
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -31,21 +31,6 @@ def create_component_symlinks(cfg, component: Component):
         if cfg.debug:
             click.echo(f"     > installing template library: {file}")
         relsymlink(file, cfg.inventory.lib_dir)
-
-
-def delete_component_symlinks(cfg, component: Component):
-    """
-    Remove the component symlinks in the inventory subdirectory.
-
-    This is the reverse from the create_component_symlinks method and is used
-    when deleting a component.
-    """
-    delsymlink(cfg.inventory.component_file(component), cfg.debug)
-    delsymlink(cfg.inventory.defaults_file(component), cfg.debug)
-
-    # If the component has a lib/ subdir, remove the links to the dependencies/lib.
-    for file in component.lib_files:
-        delsymlink(file, cfg.debug)
 
 
 def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
@@ -289,8 +274,10 @@ def inject_essential_libraries(file: P):
 
 def register_components(cfg: Config):
     """
-    Register all targets which are currently available in `inventory/targets`
-    in the Commodore config.
+    Discover components in the inventory, and register them if the
+    corresponding directory in `dependencies/` exists.
+
+    Create component symlinks for discovered components which exist.
     """
     click.secho("Discovering included components...", bold=True)
     components, component_aliases = _discover_components(cfg)
@@ -307,6 +294,7 @@ def register_components(cfg: Config):
             continue
         component = Component(cn, work_dir=cfg.work_dir)
         cfg.register_component(component)
+        create_component_symlinks(cfg, component)
 
     registered_components = cfg.get_components().keys()
     pruned_aliases = {

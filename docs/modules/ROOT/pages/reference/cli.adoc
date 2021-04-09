@@ -65,6 +65,17 @@ a "regular" `catalog compile` for the cluster you want to work against.
 +
 See also xref:local-mode.adoc[local mode documentation].
 
+*--fetch-dependencies/--no-fetch-dependencies*::
+  Whether to fetch Jsonnet and Kapitan dependencies in local mode.
++
+This flag doesn't have an effect in regular mode, but speeds up local mode by not fetching Jsonnet dependencies, and disabling Kapitan's dependency fetching.
+By default, Jsonnet and Kapitan dependencies are fetched in local mode, to make local testing of component and configuration changes easier.
+Additionally, having Jsonnet and Kapitan dependency fetching enabled in local mode is required to test some types of changes such as upgrading versions.
++
+When you want to test adding a new component in local mode, you *must* run local mode with dependency fetching enabled at least once.
+After that, all the symlinks and dependencies which are required to compile the component will be present and you can disable dependency fetching.
+
+
 *--push*::
   Push catalog to remote repository as discovered in the cluster configuration
   fetched from the Lieutenant API.
