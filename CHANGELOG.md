@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Render multi-line strings as block-scalars in Commodore's YAML dump helpers ([#294])
 * Deprecation notice for parameter `commodore.jsonnet_libs` ([#300])
 * Command line options to override global and tenant repo revisions ([#301])
+* Tests and benchmarks on Python 3.9 ([#302])
 
 ### Fixed
 
@@ -358,3 +359,4 @@ Initial implementation
 [#295]: https://github.com/projectsyn/commodore/pull/295
 [#300]: https://github.com/projectsyn/commodore/pull/300
 [#301]: https://github.com/projectsyn/commodore/pull/301
+[#302]: https://github.com/projectsyn/commodore/pull/302
