@@ -35,20 +35,6 @@ def test_run_component_new_command(tmp_path: P):
         P("docs", "modules", "ROOT", "pages", "index.adoc"),
     ]:
         assert (tmp_path / "dependencies" / component_name / file).exists()
-    for file in [
-        P("inventory", "classes", "components", f"{component_name}.yml"),
-        P("inventory", "classes", "defaults", f"{component_name}.yml"),
-        P("dependencies", "lib", f"{component_name}.libsonnet"),
-        P("vendor", component_name),
-    ]:
-        assert (tmp_path / file).is_symlink()
-    targetyml = tmp_path / "inventory" / "targets" / f"{component_name}.yml"
-    assert targetyml.exists()
-    with open(targetyml) as file:
-        target = yaml.safe_load(file)
-        assert f"defaults.{component_name}" in target["classes"]
-        assert target["classes"][-1] == f"components.{component_name}"
-        assert target["parameters"]["kapitan"]["vars"]["target"] == component_name
     # Check that there are no uncommited files in the component repo
     repo = Repo(tmp_path / "dependencies" / component_name)
     assert not repo.is_dirty()
