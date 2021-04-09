@@ -23,6 +23,7 @@ from .helpers import (
     clean_working_tree,
     kapitan_compile,
     kapitan_inventory,
+    rm_tree_contents,
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
@@ -110,6 +111,10 @@ def _local_setup(config: Config, cluster_id):
     config.register_config(
         "customer", git.init_repository(config.inventory.tenant_config_dir(tenant))
     )
+
+    click.secho("Resetting targets...", bold=True)
+    rm_tree_contents(config.inventory.targets_dir)
+    update_target(config, config.inventory.bootstrap_target)
 
     register_components(config)
 
