@@ -47,14 +47,19 @@ def compile_component(
                     f"""
                 parameters:
                   cloud:
-                    provider: cloudscale
-                    region: rma1
+                    provider: ${{facts:cloud}}
+                    region: ${{facts:region}}
                   cluster:
                     catalog_url: ssh://git@git.example.com/org/repo.git
                     dist: test-distribution
                     name: c-green-test-1234
+                    tenant: t-silent-test-1234
                   customer:
-                    name: t-silent-test-1234
+                    name: ${{cluster:tenant}}
+                  facts:
+                    distribution: test-distribution
+                    cloud: cloudscale
+                    region: rma1
                   argocd:
                     namespace: test
 

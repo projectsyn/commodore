@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 * Fix component template GitHub workflow to correctly lint docs ([#295])
+* Fix mock cluster parameters provided by `component compile` ([#304])
 
 ## [v0.5.0] - 2021-03-12
 
@@ -367,3 +368,4 @@ Initial implementation
 [#301]: https://github.com/projectsyn/commodore/pull/301
 [#302]: https://github.com/projectsyn/commodore/pull/302
 [#303]: https://github.com/projectsyn/commodore/pull/303
+[#304]: https://github.com/projectsyn/commodore/pull/304
