@@ -48,9 +48,10 @@ This example uses the https://github.com/projectsyn/component-nfs-subdir-externa
 +
 [source,bash]
 --
-test -d dependencies/nfs-subdir-external-provisioner || \
-git clone https://github.com/projectsyn/component-nfs-subdir-external-provisioner.git \
-    dependencies/nfs-subdir-external-provisioner
+COMPONENT_NAME=nfs-subdir-external-provisioner
+test -d dependencies/${COMPONENT_NAME} || \
+git clone https://github.com/projectsyn/component-${COMPONENT_NAME}.git \
+    dependencies/${COMPONENT_NAME}
 --
 
 . Add the component to the cluster, by adding it in the `applications` array in the cluster config:
@@ -79,3 +80,4 @@ commodore catalog compile <cluster-id> --local --no-fetch-dependencies
 
 Commodore's `component new` command won't insert the component into the current cluster configuration.
 In order to test a new component in local mode, you need to explicitly add the component to the cluster by following the steps in <<_add_existing_component_to_a_cluster_in_local_mode,the previous section>>.
+Note that you can omit step 1 of the previous section, as `component new` will ensure that the component repo is initialized in `dependencies/`.
