@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+* Small improvements in local mode documentation ([#306])
+
 ## [v0.6.0] - 2021-04-09
 
 ### Added
@@ -372,3 +376,4 @@ Initial implementation
 [#302]: https://github.com/projectsyn/commodore/pull/302
 [#303]: https://github.com/projectsyn/commodore/pull/303
 [#304]: https://github.com/projectsyn/commodore/pull/304
+[#306]: https://github.com/projectsyn/commodore/pull/306
