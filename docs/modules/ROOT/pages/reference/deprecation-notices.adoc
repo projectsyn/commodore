@@ -5,7 +5,7 @@ We include a link to relevant documentation, if applicable.
 
 == Unreleased
 
-== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v060-20210409[v0.6.0]
+== https://github.com/projectsyn/commodore/releases/tag/v0.6.0[v0.6.0]
 
 === `parameters.commodore.jsonnet_libs` is deprecated
 
@@ -13,18 +13,18 @@ Users should specify Jsonnet dependencies of components in the component's `json
 
 For now, Commodore itself ensures `kube-libsonnet` is available as `lib/kube.libsonnet`.
 
-== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v050-20210312[v0.5.0]
+== https://github.com/projectsyn/commodore/releases/tag/v0.5.0[v0.5.0]
 
 === `parameters.component_versions` is deprecated
 
 Users should switch to xref:commodore:ROOT:reference/architecture.adoc#_component_discovery_and_versions[`parameters.components`] which has the exact same format.
 
-== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v040-20201105[v0.4.0]
+== https://github.com/projectsyn/commodore/releases/tag/v0.4.0[v0.4.0]
 
 * Class includes of components are removed.
   Instead components *must* be included with entries in the `applications` array.
 
-== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v030---2020-10-01[v0.3.0]
+== https://github.com/projectsyn/commodore/releases/tag/v0.3.0[v0.3.0]
 
 * The reclass hierarchy must be configured in the global defaults repository.
   See xref:commodore:ROOT:reference/hierarchy.adoc[the reference docs] for details.
@@ -38,7 +38,7 @@ Users should switch to xref:commodore:ROOT:reference/architecture.adoc#_componen
 ** `parameters.customer.name` -> `parameters.cluster.tenant`
 
 
-== https://github.com/projectsyn/commodore/blob/master/CHANGELOG.md#v030---2020-10-01[v0.2.0]
+== https://github.com/projectsyn/commodore/releases/tag/v0.2.0[v0.2.0]
 
 * Command structure has been reorganized.
   See xref:commodore:ROOT:reference/commands.adoc[the commands documentation].

@@ -5,8 +5,7 @@ For documentation on Project Syn and this component, see https://syn.tools.
 
 **Please note that this project is in its early stages and under active development**.
 
-See [CHANGELOG.md](/CHANGELOG.md) for changelogs of each release version of
-Commodore.
+See [GitHub Releases](https://github.com/projectsyn/commodore/releases) for changelogs of each release version of Commodore.
 
 See [DockerHub](https://hub.docker.com/r/projectsyn/commodore) for pre-built
 Docker images of Commodore.
