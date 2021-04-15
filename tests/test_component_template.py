@@ -33,6 +33,13 @@ def test_run_component_new_command(tmp_path: P):
         P("lib", f"{component_name}.libsonnet"),
         P("docs", "modules", "ROOT", "pages", "references", "parameters.adoc"),
         P("docs", "modules", "ROOT", "pages", "index.adoc"),
+        P(".github", "changelog-configuration.json"),
+        P(".github", "PULL_REQUEST_TEMPLATE.md"),
+        P(".github", "workflows", "release.yaml"),
+        P(".github", "workflows", "test.yaml"),
+        P(".github", "ISSUE_TEMPLATE", "01_bug_report.md"),
+        P(".github", "ISSUE_TEMPLATE", "02_feature_request.md"),
+        P(".github", "ISSUE_TEMPLATE", "config.yml"),
     ]:
         assert (tmp_path / "dependencies" / component_name / file).exists()
     # Check that there are no uncommited files in the component repo
