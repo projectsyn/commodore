@@ -33,11 +33,15 @@ class Cluster:
         return self._cluster["id"]
 
     @property
+    def display_name(self) -> str:
+        return self._cluster["displayName"]
+
+    @property
     def global_git_repo_url(self) -> str:
         field = "globalGitRepoURL"
         if field not in self._tenant:
             raise click.ClickException(
-                f"URL of the global git repository is missing on tenant '{self.tenant}'"
+                f"URL of the global git repository is missing on tenant '{self.tenant_id}'"
             )
         return self._tenant[field]
 
@@ -77,8 +81,12 @@ class Cluster:
         return repo_url
 
     @property
-    def tenant(self) -> str:
+    def tenant_id(self) -> str:
         return self._tenant["id"]
+
+    @property
+    def tenant_display_name(self) -> str:
+        return self._tenant["displayName"]
 
     @property
     def facts(self) -> Dict[str, str]:
@@ -195,8 +203,10 @@ def render_params(inv: Inventory, cluster: Cluster):
         "parameters": {
             inv.bootstrap_target: {
                 "name": cluster.id,
+                "display_name": cluster.display_name,
                 "catalog_url": cluster.catalog_repo_url,
-                "tenant": cluster.tenant,
+                "tenant": cluster.tenant_id,
+                "tenant_display_name": cluster.tenant_display_name,
                 # TODO Remove dist after deprecation phase.
                 "dist": facts["distribution"],
             },
@@ -204,7 +214,7 @@ def render_params(inv: Inventory, cluster: Cluster):
             # TODO Remove the cloud and customer parameters after deprecation phase.
             "cloud": cloud,
             "customer": {
-                "name": cluster.tenant,
+                "name": cluster.tenant_id,
             },
             # Merge component_versions into components in params.cluster for
             # backwards-compatibility.

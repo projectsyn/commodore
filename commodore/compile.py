@@ -47,7 +47,7 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
     repo = git.clone_repository(
-        repo_url, cfg.inventory.tenant_config_dir(cluster.tenant), cfg
+        repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id), cfg
     )
     rev = cluster.config_git_repo_revision
     if cfg.tenant_repo_revision_override:
