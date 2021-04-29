@@ -1,0 +1,37 @@
+= Commodore-managed inventory parameters
+
+This page provides a reference for all inventory parameters which are injected into the hierarchy by Commodore.
+The parameters are injected using the class `params.cluster`.
+This class is created by Commodore in file `inventory/classes/params/cluster.yml`.
+
+The class is included in each Kapitan target with the lowest precedence of all classes.
+
+== Parameters
+
+=== `cluster`
+
+The key `cluster` holds the following information about the cluster and its tenant:
+
+`name`::
+The cluster's ID (the name of the cluster object managed by Lieutenant).
+`display_name`::
+The cluster's display name.
+`tenant`::
+The ID of the cluster's tenant.
+`tenant_display_name`::
+The display name of the cluster's tenant.
+`catalog_url`::
+The cluster catalog Git repository URL.
+
+=== `facts`
+
+The cluster's facts, as stored in the cluster's Lieutenant object.
+
+The following facts are mandatory:
+
+`cloud`:: The cloud provider on which the cluster is installed.
+`region`::
+The cloud region on which the cluster is installed.
+Mandatory only for clouds which have multiple regions.
+`distribution`::
+The Kubernetes distribution of the cluster.

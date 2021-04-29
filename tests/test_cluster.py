@@ -14,8 +14,12 @@ from commodore.config import Config
 @pytest.fixture
 def data():
     return {
-        "cluster": {"id": "c-bar", "tenant": "t-foo"},
-        "tenant": {"id": "t-foo"},
+        "cluster": {
+            "id": "c-bar",
+            "tenant": "t-foo",
+            "displayName": "Foo Inc. Bar cluster",
+        },
+        "tenant": {"id": "t-foo", "displayName": "Foo Inc."},
     }
 
 
@@ -123,14 +127,24 @@ def test_catalog_repo_url(data):
     assert "ssh://git@example.com/catalog.git" == cluster.catalog_repo_url
 
 
-def test_tenant(data):
+def test_tenant_id(data):
     cluster = Cluster(data["cluster"], data["tenant"])
-    assert "t-foo" == cluster.tenant
+    assert "t-foo" == cluster.tenant_id
+
+
+def test_tenant_display_name(data):
+    cluster = Cluster(data["cluster"], data["tenant"])
+    assert "Foo Inc." == cluster.tenant_display_name
 
 
 def test_id(data):
     cluster = Cluster(data["cluster"], data["tenant"])
     assert "c-bar" == cluster.id
+
+
+def test_display_name(data):
+    cluster = Cluster(data["cluster"], data["tenant"])
+    assert "Foo Inc. Bar cluster" == cluster.display_name
 
 
 def test_facts(data):

@@ -20,9 +20,14 @@ def data():
     Setup test data
     """
 
-    return {
+    tenant = {
+        "id": "mytenant",
+        "displayName": "My Test Tenant",
+    }
+    cluster = {
         "id": "mycluster",
-        "tenant": "mytenant",
+        "displayName": "My Test Cluster",
+        "tenant": tenant["id"],
         "facts": {
             "distribution": "rancher",
             "cloud": "cloudscale",
@@ -31,10 +36,14 @@ def data():
             "url": "ssh://git@git.example.com/cluster-catalogs/mycluster",
         },
     }
+    return {
+        "cluster": cluster,
+        "tenant": tenant,
+    }
 
 
 def cluster_from_data(data) -> cluster.Cluster:
-    return cluster.Cluster(data, {"id": data["tenant"]})
+    return cluster.Cluster(data["cluster"], data["tenant"])
 
 
 def _setup_working_dir(inv: Inventory, components):
@@ -155,26 +164,28 @@ def test_render_params(data, tmp_path: P):
     params = cluster.render_params(cfg.inventory, cluster_from_data(data))
     assert params["parameters"]["cluster"]["name"] == "mycluster"
     assert params["parameters"][target]["name"] == "mycluster"
+    assert params["parameters"][target]["display_name"] == "My Test Cluster"
     assert (
         params["parameters"][target]["catalog_url"]
         == "ssh://git@git.example.com/cluster-catalogs/mycluster"
     )
     assert params["parameters"][target]["tenant"] == "mytenant"
+    assert params["parameters"][target]["tenant_display_name"] == "My Test Tenant"
     assert params["parameters"][target]["dist"] == "rancher"
-    assert params["parameters"]["facts"] == data["facts"]
+    assert params["parameters"]["facts"] == data["cluster"]["facts"]
     assert params["parameters"]["cloud"]["provider"] == "cloudscale"
     assert params["parameters"]["customer"]["name"] == "mytenant"
 
 
 def test_missing_facts(data, tmp_path: P):
-    data["facts"].pop("cloud")
+    data["cluster"]["facts"].pop("cloud")
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
         cluster.render_params(cfg.inventory, cluster_from_data(data))
 
 
 def test_empty_facts(data, tmp_path: P):
-    data["facts"]["cloud"] = ""
+    data["cluster"]["facts"]["cloud"] = ""
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
         cluster.render_params(cfg.inventory, cluster_from_data(data))
