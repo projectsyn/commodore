@@ -31,7 +31,7 @@ RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/
 
 RUN pip install ./dist/commodore-*-py3-none-any.whl
 
-FROM docker.io/golang:1.15-buster AS helm_binding_builder
+FROM docker.io/golang:1.16-buster AS helm_binding_builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3-cffi \
