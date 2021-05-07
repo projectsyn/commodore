@@ -1,0 +1,50 @@
+= Component deprecation
+
+Commodore supports components being marked as deprecated.
+Components can be marked as "deprecated" by adding `deprecated: True` to parameter `parameters.<component_name>._metadata`.
+To avoid allowing the inventory hierarchy to overwrite a component's `_metadata` parameter, it must be labeled as https://github.com/kapicorp/reclass/blob/develop/README-extensions.rst#constant-parameters[constant] by prefixing it with a `=`.
+The component template adds the `_metadata` parameter (with no content) for new components.
+
+.class/defaults.yml
+[source,yaml]
+----
+parameters:
+  component_name:
+    =_metadata:
+      deprecated: True
+----
+
+If the component is deprecated in favor of a new component, the new component can be indicated by adding `replaced_by: another-component` in the component's `_metadata` parameter.
+The value of `replaced_by` isn't verified to be an existing component.
+
+.class/defaults.yml
+[source,yaml]
+----
+parameters:
+  component_name:
+    =_metadata:
+      deprecated: True
+      replaced_by: another-component
+----
+
+Commodore will append the contents of field `deprecation_notice` in the component's `_metadata` parameter to the deprecation notice.
+This field is intended to be used to give extended information about the deprecation.
+This could be a link to a migration guide, if a replacement component exists, or simply a link to a longer deprecation notice in the component's documentation.
+
+.class/defaults.yml
+[source,yaml]
+----
+parameters:
+  component_name:
+    =_metadata:
+      deprecated: True
+      replaced_by: another-component
+      deprecation_guide: >-
+        See https://github.com/projectsyn/component-another-component/docs/.../how-tos/migrating-from-component-name.adoc
+        for a migration guide.
+----
+
+Commodore will print a deprecation notice for each component which has `parameters.<component_name>._metadata.deprecated` set to `True`.
+
+* If field `replaced_by` in the component's `_metadata` parameter isn't empty, the deprecation notice will use the field's value as the name of the replacement component.
+* If field `deprecation_notice` in the component's `_metadata` parameter isn't empty, the value of the field will be appended to the deprecation notice.
