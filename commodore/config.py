@@ -168,6 +168,9 @@ class Config:
     def print_deprecation_notices(self):
         tw = textwrap.TextWrapper(
             width=100,
+            # Next two options ensure we don't break URLs
+            break_long_words=False,
+            break_on_hyphens=False,
             initial_indent=" > ",
             subsequent_indent="   ",
         )
@@ -176,3 +179,16 @@ class Config:
             for notice in self._deprecation_notices:
                 notice = tw.fill(notice)
                 click.secho(notice)
+
+    def register_component_deprecations(self, cluster_parameters):
+        for cname in self._component_aliases.values():
+            ckey = component_parameters_key(cname)
+            cmeta = cluster_parameters[ckey].get("_metadata", {})
+
+            if cmeta.get("deprecated", False):
+                msg = f"Component {cname} is deprecated."
+                if "replaced_by" in cmeta:
+                    msg += f" Use component {cmeta['replaced_by']} instead."
+                if "deprecation_guide" in cmeta:
+                    msg += f" See {cmeta['deprecation_guide']} for a migration guide."
+                self.register_deprecation_notice(msg)

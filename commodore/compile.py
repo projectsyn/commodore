@@ -159,6 +159,7 @@ def compile(config, cluster_id):
 
     # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)
+    config.register_component_deprecations(cluster_parameters)
 
     for component in config.get_components().values():
         ckey = component.parameters_key
