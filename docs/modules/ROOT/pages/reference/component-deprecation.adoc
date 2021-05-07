@@ -27,7 +27,9 @@ parameters:
       replaced_by: another-component
 ----
 
-If a migration guide from the deprecated component to the new component exists, the URL of that guide can be provided in field `deprecation_guide` in the component's `_metadata` parameter.
+Commodore will append the contents of field `deprecation_notice` in the component's `_metadata` parameter to the deprecation notice.
+This field is intended to be used to give extended information about the deprecation.
+This could be a link to a migration guide, if a replacement component exists, or simply a link to a longer deprecation notice in the component's documentation.
 
 .class/defaults.yml
 [source,yaml]
@@ -37,10 +39,12 @@ parameters:
     =_metadata:
       deprecated: True
       replaced_by: another-component
-      deprecation_guide: https://github.com/projectsyn/component-another-component/docs/.../how-tos/migrating-from-component-name.adoc
+      deprecation_guide: >-
+        See https://github.com/projectsyn/component-another-component/docs/.../how-tos/migrating-from-component-name.adoc
+        for a migration guide.
 ----
 
 Commodore will print a deprecation notice for each component which has `parameters.<component_name>._metadata.deprecated` set to `True`.
 
 * If field `replaced_by` in the component's `_metadata` parameter isn't empty, the deprecation notice will use the field's value as the name of the replacement component.
-* If field `deprecation_guide` in the component's `_metadata` parameter isn't empty, the deprecation notice will treat the field's value as a URL to a migration documentation.
+* If field `deprecation_notice` in the component's `_metadata` parameter isn't empty, the value of the field will be appended to the deprecation notice.

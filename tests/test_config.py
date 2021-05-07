@@ -80,7 +80,7 @@ def test_verify_component_aliases_error(config):
                     "_metadata": {
                         "deprecated": True,
                         "replaced_by": "foo",
-                        "deprecation_guide": "https://example.com/migrate-from-bar.html",
+                        "deprecation_notice": "See https://example.com/migrate-from-bar.html for a migration guide.",
                     },
                 },
                 "foo": {},

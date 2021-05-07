@@ -189,6 +189,6 @@ class Config:
                 msg = f"Component {cname} is deprecated."
                 if "replaced_by" in cmeta:
                     msg += f" Use component {cmeta['replaced_by']} instead."
-                if "deprecation_guide" in cmeta:
-                    msg += f" See {cmeta['deprecation_guide']} for a migration guide."
+                if "deprecation_notice" in cmeta:
+                    msg += f" {cmeta['deprecation_notice']}"
                 self.register_deprecation_notice(msg)
