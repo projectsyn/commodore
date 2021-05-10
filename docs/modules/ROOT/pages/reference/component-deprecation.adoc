@@ -39,7 +39,7 @@ parameters:
     =_metadata:
       deprecated: True
       replaced_by: another-component
-      deprecation_guide: >-
+      deprecation_notice: >-
         See https://github.com/projectsyn/component-another-component/docs/.../how-tos/migrating-from-component-name.adoc
         for a migration guide.
 ----
