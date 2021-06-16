@@ -12,8 +12,9 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-# Require kapitan >= 0.27 to help poetry to resolve dependencies
-kapitan = ">=0.29"
+# Pin Kapitan to 0.29.4, since 0.29.5 has regressions in reclass which break our usage of the
+# `applications` array.
+kapitan = "=0.29.4"
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
