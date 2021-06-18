@@ -139,7 +139,7 @@ This command doesn't have any command line options.
   to _projectsyn_.
 
 *--copyright* TEXT::
-  The copyright holder added to the license file. Defaults to "VSHN AG <info@vshn.ch>".
+  The copyright holder added to the license file. Defaults to "VSHN AG <info@vshn.ch>."
 
 *--help*::
   Show component new usage and options then exit.

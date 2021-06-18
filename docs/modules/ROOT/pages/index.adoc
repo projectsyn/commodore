@@ -1,6 +1,6 @@
 = Project Syn: Commodore
 
-image::syn.png[]
+image::projectsyn.svg[]
 
 Welcome to the documentation of Commodore - a Project Syn tool.
 
