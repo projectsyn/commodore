@@ -23,7 +23,7 @@ verbosity = click.option(
 
 
 def _version():
-    pyversion = version("commodore")
+    pyversion = version("syn-commodore")
     if f"v{pyversion}" != __git_version__:
         return f"{pyversion} (Git version: {__git_version__})"
     return pyversion
