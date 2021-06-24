@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from importlib_metadata import version
 from commodore import __git_version__
 from .catalog import catalog_list
@@ -302,5 +302,5 @@ def component_compile(config: Config, path, values, search_paths, output, verbos
 
 
 def main():
-    load_dotenv()
+    load_dotenv(dotenv_path=find_dotenv(usecwd=True))
     commodore.main(prog_name="commodore", auto_envvar_prefix="COMMODORE")
