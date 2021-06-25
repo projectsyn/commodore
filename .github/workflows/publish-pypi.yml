@@ -1,0 +1,45 @@
+name: PyPI release
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: install poetry
+        run: pip install poetry
+      - name: install dependencies
+        run: poetry install
+      - name: install go
+        run: |
+          sudo apt update
+          sudo apt install golang-1.14-go -y
+      - name: build helm bindings
+        run: |
+          bash $(poetry env info -p)/lib/python3.8/site-packages/kapitan/inputs/helm/build.sh
+          bash $(poetry env info -p)/lib/python3.8/site-packages/kapitan/dependency_manager/helm/build.sh
+          mkdir -p commodore/helm_bindings/inputs
+          mkdir -p commodore/helm_bindings/dependency_manager
+          cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/inputs/helm/{helm_binding.py,libtemplate.so} commodore/helm_bindings/inputs
+          cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/dependency_manager/helm/{helm_fetch_binding.py,helm_fetch.so} commodore/helm_bindings/dependency_manager
+      - name: inject version
+        run: make inject-version
+      - name: build commodore
+        run: poetry build
+      - name: publish to pypi
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}

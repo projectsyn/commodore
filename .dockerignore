@@ -6,7 +6,6 @@ dependencies/
 inventory/
 tools/
 !tools/entrypoint.sh
-README.md
 Dockerfile
 docker-compose.*
 _antora

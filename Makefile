@@ -53,3 +53,7 @@ docker:
 		--build-arg GITVERSION=$(GITVERSION) \
 		-t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
+
+inject-version:
+	sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
+	poetry version "${PYVERSION}"
