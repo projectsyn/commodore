@@ -1,5 +1,6 @@
 :global:
   componentName: {{ cookiecutter.name }}
+  githubUrl: {{ cookiecutter.github_url }}
 
 LICENSE:
   year: {{ cookiecutter.copyright_year }}
