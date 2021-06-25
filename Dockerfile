@@ -29,7 +29,7 @@ RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/
  && poetry version "${PYVERSION}" \
  && poetry build --format wheel
 
-RUN pip install ./dist/commodore-*-py3-none-any.whl
+RUN pip install ./dist/syn_commodore-*-py3-none-any.whl
 
 FROM docker.io/golang:1.15-buster AS helm_binding_builder
 
