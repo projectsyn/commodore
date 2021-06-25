@@ -32,6 +32,8 @@ jobs:
           mkdir -p commodore/helm_bindings/dependency_manager
           cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/inputs/helm/{helm_binding.py,libtemplate.so} commodore/helm_bindings/inputs
           cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/dependency_manager/helm/{helm_fetch_binding.py,helm_fetch.so} commodore/helm_bindings/dependency_manager
+      - name: inject version
+        run: make inject-version
       - name: build commodore
         run: poetry build
       - name: publish to pypi

@@ -3,8 +3,7 @@ from pathlib import Path
 import click
 
 from dotenv import load_dotenv, find_dotenv
-from importlib_metadata import version
-from commodore import __git_version__
+from commodore import __git_version__, __version__
 from .catalog import catalog_list
 from .config import Config
 from .helpers import clean_working_tree
@@ -23,10 +22,9 @@ verbosity = click.option(
 
 
 def _version():
-    pyversion = version("syn-commodore")
-    if f"v{pyversion}" != __git_version__:
-        return f"{pyversion} (Git version: {__git_version__})"
-    return pyversion
+    if f"v{__version__}" != __git_version__:
+        return f"{__version__} (Git version: {__git_version__})"
+    return __version__
 
 
 @click.group()
