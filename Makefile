@@ -55,5 +55,5 @@ docker:
 	@echo built image $(IMAGE_NAME)
 
 inject-version:
-	sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
+	sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
 	poetry version "${PYVERSION}"
