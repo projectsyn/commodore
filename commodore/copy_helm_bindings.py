@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import shutil
+import sys
 
 import kapitan
 import commodore
@@ -33,4 +34,9 @@ def main():
 
 
 if __name__ == "__main__":
+    if sys.platform != "linux":
+        raise NotImplementedError(
+            f"""Helm bindings are not compatible with {sys.platform}.
+            Compile them from source: https://kapitan.dev/compile/#building-the-binding-from-source"""
+        )
     main()
