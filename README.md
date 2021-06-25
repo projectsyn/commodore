@@ -30,11 +30,55 @@ using `helm template`.
 ## System Requirements
 
 * Python 3.6+, with `python3-dev` and `python3-venv` updated
-* [Poetry](https://github.com/python-poetry/poetry) 1.1.0+
-* Docker
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
 ## Getting started
+
+1. Recommended: create a new virtual environment
+    ```console
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+1. Install commodore from PyPI
+    ```console
+    pip install syn-commodore
+    ```
+1. Copy helm bindings to kapitan directory
+    ```console
+    copy_helm_bindings
+    ```
+1. <a name="getting_started_jsonnet"></a>Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
+
+1. For Commodore to work, you need to run an instance of [Lieutenant](https://syn.tools/syn/tutorials/getting-started.html#_kickstart_lieutenant) somewhere
+   (locally is fine too).
+
+
+1. Setup a `.env` file to configure Commodore (don't use quotes):
+
+   ```shell
+   # URL of Lieutenant API
+   COMMODORE_API_URL=https://lieutenant-api.example.com/
+   # Lieutenant API token
+   COMMODORE_API_TOKEN=<my-token>
+   # Your local user ID to be used in the container (optional, defaults to root)
+   USER_ID=<your-user-id>
+   # Your username to be used in the commits (optional, defaults to your local git config)
+   COMMODORE_USERNAME=<your name>
+   # Your user email to be used in the commits (optional, defaults to your local git config)
+   COMMODORE_USERMAIL=<your email>
+   ```
+1. Run commodore
+    ```console
+    commodore
+    ```
+
+## Run Commodore with poetry
+
+### Additional System Requirements
+
+* [Poetry](https://github.com/python-poetry/poetry) 1.1.0+
+* Docker
+
 
 1. Install requirements
 
@@ -58,24 +102,8 @@ using `helm template`.
 
     Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
-1. Setup a `.env` file to configure Commodore (don't use quotes):
 
-   ```shell
-   # URL of Lieutenant API
-   COMMODORE_API_URL=https://lieutenant-api.example.com/
-   # Lieutenant API token
-   COMMODORE_API_TOKEN=<my-token>
-   # Your local user ID to be used in the container (optional, defaults to root)
-   USER_ID=<your-user-id>
-   # Your username to be used in the commits (optional, defaults to your local git config)
-   COMMODORE_USERNAME=<your name>
-   # Your user email to be used in the commits (optional, defaults to your local git config)
-   COMMODORE_USERMAIL=<your email>
-   ```
-
-   For Commodore to work, you need to run an instance of the
-   [Lieutenant API](https://github.com/projectsyn/lieutenant-api) somewhere
-   (locally is fine too).
+1. Finish setup as described [above](#getting_started_jsonnet)
 
 1. Run Commodore
 
