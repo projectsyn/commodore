@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-import kapitan
-import commodore
 import os
 import shutil
+
+import kapitan
+import commodore
 
 
 def main():
