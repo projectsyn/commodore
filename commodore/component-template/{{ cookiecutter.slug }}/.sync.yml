@@ -1,0 +1,9 @@
+:global:
+  componentName: {{ cookiecutter.name }}
+
+LICENSE:
+  year: {{ cookiecutter.copyright_year }}
+
+docs/antora.yml:
+  name: {{ cookiecutter.slug }}
+  title: {{ cookiecutter.name }}
