@@ -30,7 +30,7 @@ class Config:
     ):
         self._work_dir = work_dir.resolve()
         self.api_url = api_url
-        self.api_token = None
+        self._api_token = None
         self.api_token = api_token
         self._components = {}
         self._config_repos = {}

@@ -4,7 +4,7 @@ import click
 
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
-from .catalog import catalog_list
+from .catalog import catalog_list, catalog_save
 from .config import Config
 from .helpers import clean_working_tree
 from .compile import compile as _compile
@@ -164,6 +164,10 @@ def compile_catalog(
         raise click.ClickException(
             "Cannot push changes when local global or tenant repo override is specified"
         )
+    if config.push and api_url.startswith("file://"):
+        raise click.ClickException(
+            "Cannot push changes when using a local catalog file."
+        )
 
     if not local:
         if not fetch_dependencies:
@@ -193,6 +197,33 @@ def clusters_list_command(config: Config, api_url, api_token, verbose):
     config.api_url = api_url
     config.api_token = api_token
     catalog_list(config)
+
+
+@catalog.command(
+    name="save", short_help="Save the list of clusters returned by Lieutenant to a file"
+)
+@click.option(
+    "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
+)
+@click.option(
+    "--api-token",
+    envvar="COMMODORE_API_TOKEN",
+    help="Lieutenant API token.",
+    metavar="TOKEN",
+)
+@click.option(
+    "--output",
+    default="commodore-config.yml",
+    help="File in which to save list of clusters.",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path, allow_dash=True),
+)
+@verbosity
+@pass_config
+def clusters_save_command(config: Config, api_url, api_token, output: Path, verbose):
+    config.update_verbosity(verbose)
+    config.api_url = api_url
+    config.api_token = api_token
+    catalog_save(config, output)
 
 
 @commodore.group(short_help="Interact with components.")

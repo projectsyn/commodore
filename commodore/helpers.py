@@ -91,6 +91,14 @@ def yaml_dump_all(obj, file):
         yaml.dump_all(obj, outf)
 
 
+def local_config_query(api_url, api_token=None, api_endpoint=None, api_id=None):
+    path = api_url[len("file://"):]
+    local_config = yaml_load(path)
+    if api_endpoint is not None:
+        return local_config[api_endpoint]
+    return local_config
+
+
 def lieutenant_query(api_url, api_token, api_endpoint, api_id):
     try:
         r = requests.get(

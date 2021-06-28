@@ -4,7 +4,7 @@ from typing import Iterable
 import click
 
 from . import git
-from .helpers import rm_tree_contents, lieutenant_query
+from .helpers import rm_tree_contents, lieutenant_query, local_config_query, yaml_dump
 from .cluster import Cluster
 from .config import Config
 
@@ -115,7 +115,10 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
 
 
 def catalog_list(cfg):
-    clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+    query_resolver = lieutenant_query
+    if cfg.api_url.startswith("file://"):
+        query_resolver = local_config_query
+    clusters = query_resolver(cfg.api_url, cfg.api_token, "clusters", "")
     for cluster in clusters:
         display_name = cluster["displayName"]
         catalog_id = cluster["id"]
@@ -124,3 +127,25 @@ def catalog_list(cfg):
             click.echo(f" - {display_name}")
         else:
             click.echo(catalog_id)
+
+
+def catalog_save(cfg: Config, output: P):
+    clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+    tenant_ids = {}
+    for cluster in clusters:
+        if "tenant" not in cluster:
+            raise click.ClickException(
+                f"cluster {cluster} does not have a tenant reference"
+            )
+        tenant_ids[cluster["tenant"]] = True
+    tenants = []
+    for tenant_id in tenant_ids:
+        tenant_response = lieutenant_query(
+            cfg.api_url, cfg.api_token, "tenants", tenant_id
+        )
+        tenants.append(tenant_response)
+    cluster_config = {
+        "clusters": clusters,
+        "tenants": tenants,
+    }
+    yaml_dump(cluster_config, output)

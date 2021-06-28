@@ -5,6 +5,7 @@ from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
     load_cluster_from_api,
+    load_cluster_from_file,
     read_cluster_and_tenant,
     update_params,
     update_target,
@@ -58,8 +59,11 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
 
 
 def _regular_setup(config: Config, cluster_id):
+    cluster_loader = load_cluster_from_api
+    if config.api_url.startswith("file://"):
+        cluster_loader = load_cluster_from_file
     try:
-        cluster = load_cluster_from_api(config, cluster_id)
+        cluster = cluster_loader(config, cluster_id)
     except ApiError as e:
         raise click.ClickException(f"While fetching cluster specification: {e}") from e
 

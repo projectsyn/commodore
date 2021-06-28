@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from typing import Iterable, Tuple, Dict, Optional, Union
 
@@ -6,6 +7,7 @@ import click
 
 from .helpers import (
     lieutenant_query,
+    local_config_query,
     yaml_dump,
     yaml_load,
 )
@@ -76,7 +78,7 @@ class Cluster:
         if repo_url is None:
             raise click.ClickException(
                 " > API did not return a repository URL for cluster '%s'"
-                % self._cluster["id"]
+                % self._cluster["id"],
             )
         return repo_url
 
@@ -95,16 +97,42 @@ class Cluster:
         return self._cluster["facts"]
 
 
-def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
-    cluster_response = lieutenant_query(
+def load_cluster(query_resolver, cfg: Config, cluster_id: str) -> Cluster:
+    cluster_response = query_resolver(
         cfg.api_url, cfg.api_token, "clusters", cluster_id
     )
     if "tenant" not in cluster_response:
         raise click.ClickException("cluster does not have a tenant reference")
-    tenant_response = lieutenant_query(
+    tenant_response = query_resolver(
         cfg.api_url, cfg.api_token, "tenants", cluster_response["tenant"]
     )
     return Cluster(cluster_response, tenant_response)
+
+
+def load_cluster_from_file(cfg: Config, cluster_id: str) -> Cluster:
+    if not cfg.api_url.startswith("file://"):
+        raise click.ClickException(
+            f"API_URL should start with 'file://', but was {cfg.api_url}"
+        )
+    cluster = load_cluster(local_config_query, cfg, cluster_id)
+
+    # Patch local paths in git repo url.
+    # This allows to use relative paths to git repos.
+    path = Path(cfg.api_url[len("file://"):])
+    dirname = path.absolute().parent
+    tenant_git_url = cluster.config_repo_url
+    if tenant_git_url.startswith("."):
+        cluster.config_repo_url = dirname / tenant_git_url
+
+    cluster_git_url = cluster.catalog_repo_url
+    if cluster_git_url.startswith("."):
+        cluster.catalog_repo_url = dirname / cluster_git_url
+
+    return cluster
+
+
+def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
+    return load_cluster(lieutenant_query, cfg, cluster_id)
 
 
 def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:
