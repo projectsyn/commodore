@@ -1,0 +1,7 @@
+:global:
+  componentName: {{ cookiecutter.name }}
+  githubUrl: {{ cookiecutter.github_url }}
+
+docs/antora.yml:
+  name: {{ cookiecutter.slug }}
+  title: {{ cookiecutter.name }}

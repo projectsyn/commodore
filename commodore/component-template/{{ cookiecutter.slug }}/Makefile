@@ -5,50 +5,49 @@ SHELL := bash
 .DELETE_ON_ERROR:
 .SUFFIXES:
 
-DOCKER_CMD   ?= docker
-DOCKER_ARGS  ?= run --rm --user "$$(id -u)" -v "$${PWD}:/component" --workdir /component
+include Makefile.vars.mk
 
-JSONNET_FILES   ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.*jsonnet' -or -name '*.libsonnet' \))
-JSONNETFMT_ARGS ?= --in-place --pad-arrays
-JSONNET_IMAGE   ?= docker.io/bitnami/jsonnet:latest
-JSONNET_DOCKER  ?= $(DOCKER_CMD) $(DOCKER_ARGS) --entrypoint=jsonnetfmt $(JSONNET_IMAGE)
-
-YAML_FILES      ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.yaml' -or -name '*.yml' \))
-YAMLLINT_ARGS   ?= --no-warnings
-YAMLLINT_CONFIG ?= .yamllint.yml
-YAMLLINT_IMAGE  ?= docker.io/cytopia/yamllint:latest
-YAMLLINT_DOCKER ?= $(DOCKER_CMD) $(DOCKER_ARGS) $(YAMLLINT_IMAGE)
-
-VALE_CMD  ?= $(DOCKER_CMD) $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules:/pages vshn/vale:2.1.1
-VALE_ARGS ?= --minAlertLevel=error --config=/pages/ROOT/pages/.vale.ini /pages
-
-ANTORA_PREVIEW_CMD ?= $(DOCKER_CMD) run --rm --publish 2020:2020 --volume "${PWD}":/antora vshn/antora-preview:2.3.3 --style=syn --antora=docs
+.PHONY: help
+help: ## Show this help
+	@grep -E -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = "(: ).*?## "}; {gsub(/\\:/,":", $$1)}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
-all: lint open
+all: lint
 
 .PHONY: lint
-lint: lint_jsonnet lint_yaml docs-vale
+lint: lint_jsonnet lint_yaml lint_adoc ## All-in-one linting
 
 .PHONY: lint_jsonnet
-lint_jsonnet: $(JSONNET_FILES)
+lint_jsonnet: $(JSONNET_FILES) ## Lint jsonnet files
 	$(JSONNET_DOCKER) $(JSONNETFMT_ARGS) --test -- $?
 
 .PHONY: lint_yaml
-lint_yaml: $(YAML_FILES)
+lint_yaml: $(YAML_FILES) ## Lint yaml files
 	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
 
+.PHONY: lint_adoc
+lint_adoc: ## Lint documentation
+	$(VALE_CMD) $(VALE_ARGS)
+
 .PHONY: format
-format: format_jsonnet
+format: format_jsonnet ## All-in-one formatting
 
 .PHONY: format_jsonnet
-format_jsonnet: $(JSONNET_FILES)
+format_jsonnet: $(JSONNET_FILES) ## Format jsonnet files
 	$(JSONNET_DOCKER) $(JSONNETFMT_ARGS) -- $?
 
 .PHONY: docs-serve
-docs-serve:
+docs-serve: ## Preview the documentation
 	$(ANTORA_PREVIEW_CMD)
 
-.PHONY: docs-vale
-docs-vale:
-	$(VALE_CMD) $(VALE_ARGS)
+.PHONY: compile
+.compile:
+	$(COMMODORE_CMD)
+
+.PHONY: test
+test: commodore_args = -f tests/$(instance).yml
+test: .compile ## Compile the component
+
+.PHONY: clean
+clean: ## Clean the project
+	rm -rf compiled dependencies vendor helmcharts jsonnetfile*.json || true
