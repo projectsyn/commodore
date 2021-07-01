@@ -57,3 +57,7 @@ docker:
 inject-version:
 	sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
 	poetry version "${PYVERSION}"
+
+.PHONY: test_integration
+test_integration:
+	poetry run pytest -m integration

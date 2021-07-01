@@ -82,6 +82,38 @@ jobs:
       run: echo "/opt/bin" >> $GITHUB_PATH
     - name: Run benchmarks on Python ${{ matrix.python-version }}
       run: make bench_py${{ matrix.python-version }}
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
+      run: |
+        pip install poetry
+        poetry env use python3.9
+        poetry install
+        poetry run build_kapitan_helm_binding
+    - name: Install jsonnet-bundler
+      run: |
+        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          && chmod +x /opt/bin/jb
+    - name: Update PATH
+      run: echo "/opt/bin" >> $GITHUB_PATH
+    - name: Pull in SSH deploy key for integration tests
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+          mkdir -p ~/.ssh
+          echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.CATALOG_DEPLOY_KEY }}"
+    - name: Run catalog compile integration test
+      run: make test_integration
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
   docs:
     runs-on: ubuntu-latest
     steps:
