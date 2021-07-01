@@ -177,6 +177,7 @@ def kapitan_compile(
         cache=False,
         cache_paths=None,
         fetch_dependencies=fetch_dependencies,
+        force_fetch=True,
         validate=False,
         schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
