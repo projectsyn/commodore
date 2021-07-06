@@ -13,4 +13,4 @@ parameters:
   commodore:
     postprocess:
       filters: []
-{% endif %}
+{% endif -%}
