@@ -50,6 +50,7 @@ tenant_resp = {
         "url": "https://github.com/projectsyn/test-tenant.git",
     },
     "globalGitRepoURL": "https://github.com/projectsyn/commodore-defaults.git",
+    "globalGitRepoRevision": "ec9bba",
 }
 
 
