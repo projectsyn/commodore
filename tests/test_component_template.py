@@ -154,3 +154,35 @@ def test_deleting_inexistant_component(tmp_path: P):
         shell=True,
     )
     assert exit_status == 2
+
+
+@pytest.mark.parametrize(
+    "extra_args",
+    [
+        "",
+        "--lib",
+        "--pp",
+        "--lib --pp",
+    ],
+)
+def test_check_component_template(tmp_path: P, extra_args: str):
+    """
+    Run integrated lints in freshly created component
+    """
+
+    setup_directory(tmp_path)
+
+    component_name = "test-component"
+    exit_status = call(
+        f"commodore -d {tmp_path} -vvv component new {component_name} {extra_args}",
+        shell=True,
+    )
+    assert exit_status == 0
+
+    # Call `make lint` in component directory
+    exit_status = call(
+        "make lint",
+        shell=True,
+        cwd=tmp_path / "dependencies" / component_name,
+    )
+    assert exit_status == 0
