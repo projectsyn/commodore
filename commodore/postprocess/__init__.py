@@ -158,7 +158,10 @@ def postprocess_components(
 ):
     click.secho("Postprocessing...", bold=True)
 
-    for cn, c in components.items():
+    aliases = config.get_component_aliases()
+
+    for a, cn in aliases.items():
+        c = components[cn]
         inv = kapitan_inventory.get(a)
         if not inv:
             click.echo(f" > No target exists for component {cn}, skipping...")
