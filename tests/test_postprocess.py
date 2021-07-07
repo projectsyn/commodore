@@ -159,6 +159,16 @@ def test_postprocess_components_invfilter(tmp_path, capsys):
         assert obj["metadata"]["namespace"] == "myns"
 
 
+def test_postprocess_components_invfilter_explicit_enabled(tmp_path, capsys):
+    f = _make_ns_filter("myns", enabled=True)
+    testf, config, inventory, components = _setup(tmp_path, f, invfilter=True)
+    postprocess_components(config, inventory, components)
+    assert testf.exists()
+    with open(testf) as objf:
+        obj = yaml.safe_load(objf)
+        assert obj["metadata"]["namespace"] == "myns"
+
+
 def test_postprocess_components_invfilter_disabled(tmp_path, capsys):
     f = _make_ns_filter("myns", enabled=False)
     testf, config, inventory, components = _setup(tmp_path, f, invfilter=True)
