@@ -58,7 +58,7 @@ class UnknownBuiltinFilter(ValueError):
 
 def run_builtin_filter(
     config: Config,
-    inventory: Dict,
+    inv: Dict,
     component: str,
     filterid: str,
     path: P,
@@ -66,9 +66,7 @@ def run_builtin_filter(
 ):
     if filterid not in _builtin_filters:
         raise UnknownBuiltinFilter(filterid)
-    _builtin_filters[filterid](
-        config.work_dir, inventory, component, path, **filterargs
-    )
+    _builtin_filters[filterid](config.work_dir, inv, component, path, **filterargs)
 
 
 def validate_builtin_filter(config: Config, cn: str, fd: Dict):

@@ -18,7 +18,7 @@ class FilterFunc(Protocol):
     def __call__(
         self,
         config: Config,
-        inventory: Dict,
+        inv: Dict,
         component: str,
         filterid: str,
         path: P,
@@ -109,20 +109,18 @@ class Filter:
         return Filter(Filter.validate(config, cn, f))
 
 
-def _get_inventory_filters(inventory: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _get_inventory_filters(inv: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Return list of filters defined in inventory.
 
     Inventory filters are expected to be defined as a list in
     `parameters.commodore.postprocess.filters`.
     """
-    commodore = inventory["parameters"].get("commodore", {})
+    commodore = inv["parameters"].get("commodore", {})
     return commodore.get("postprocess", {}).get("filters", [])
 
 
-def _get_external_filters(
-    inventory: Dict[str, Any], c: Component
-) -> List[Dict[str, Any]]:
+def _get_external_filters(inv: Dict[str, Any], c: Component) -> List[Dict[str, Any]]:
     filters_file = c.filters_file
     filters = []
     if filters_file.is_file():
@@ -130,7 +128,7 @@ def _get_external_filters(
         for f in _filters:
             # Resolve any inventory references in filter definition
             try:
-                f = resolve_inventory_vars(inventory, f)
+                f = resolve_inventory_vars(inv, f)
             except InventoryError as e:
                 raise click.ClickException(
                     f"Failed to resolve reclass references for external filter: {e}"
@@ -161,16 +159,16 @@ def postprocess_components(
     click.secho("Postprocessing...", bold=True)
 
     for cn, c in components.items():
-        inventory = kapitan_inventory.get(cn)
-        if not inventory:
+        inv = kapitan_inventory.get(a)
+        if not inv:
             click.echo(f" > No target exists for component {cn}, skipping...")
             continue
 
         # inventory filters
-        invfilters = _get_inventory_filters(inventory)
+        invfilters = _get_inventory_filters(inv)
 
         # "old", external filters
-        extfilters = _get_external_filters(inventory, c)
+        extfilters = _get_external_filters(inv, c)
 
         filters: List[Filter] = []
         for fd in invfilters + extfilters:
@@ -188,4 +186,4 @@ def postprocess_components(
         for f in filters:
             if config.debug:
                 click.secho(f"   > Executing filter '{f.type}:{f.filter}'")
-            f.run(config, inventory, cn)
+            f.run(config, inv, cn)
