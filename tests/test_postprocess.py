@@ -27,7 +27,7 @@ def _make_ns_filter(ns, enabled=None):
     return filter
 
 
-def _setup(tmp_path, filter, invfilter=False):
+def _setup(tmp_path, filter, invfilter=False, alias="test-component"):
     test_run_component_new_command(tmp_path=tmp_path)
 
     targetdir = tmp_path / "compiled" / "test-component" / "test"
@@ -61,8 +61,10 @@ def _setup(tmp_path, filter, invfilter=False):
         "test-component", work_dir=tmp_path, repo_url="https://fake.repo.url"
     )
     config.register_component(component)
+    aliases = {alias: "test-component"}
+    config.register_component_aliases(aliases)
     inventory = {
-        "test-component": {
+        alias: {
             "classes": {
                 "defaults.test-component",
                 "global.common",
@@ -77,7 +79,7 @@ def _setup(tmp_path, filter, invfilter=False):
     }
 
     if invfilter:
-        inventory["test-component"]["parameters"]["commodore"] = {
+        inventory[alias]["parameters"]["commodore"] = {
             "postprocess": filter,
         }
 
@@ -167,3 +169,29 @@ def test_postprocess_components_invfilter_disabled(tmp_path, capsys):
         assert obj["metadata"]["namespace"] == "untouched"
     captured = capsys.readouterr()
     assert "Skipping disabled filter" in captured.out
+
+
+def test_postprocess_components_aliased_component(tmp_path, capsys):
+    f = _make_ns_filter("myns")
+    testf, config, inventory, components = _setup(tmp_path, f, alias="component-alias")
+
+    postprocess_components(config, inventory, components)
+
+    assert testf.exists()
+    with open(testf) as objf:
+        obj = yaml.safe_load(objf)
+        assert obj["metadata"]["namespace"] == "myns"
+
+
+def test_postprocess_components_aliased_component_invfilter(tmp_path, capsys):
+    f = _make_ns_filter("myns")
+    testf, config, inventory, components = _setup(
+        tmp_path, f, invfilter=True, alias="component-alias"
+    )
+
+    postprocess_components(config, inventory, components)
+
+    assert testf.exists()
+    with open(testf) as objf:
+        obj = yaml.safe_load(objf)
+        assert obj["metadata"]["namespace"] == "myns"
