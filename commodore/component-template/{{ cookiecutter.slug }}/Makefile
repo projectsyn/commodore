@@ -42,6 +42,7 @@ docs-serve: ## Preview the documentation
 
 .PHONY: compile
 .compile:
+	mkdir -p dependencies
 	$(COMMODORE_CMD)
 
 .PHONY: test
