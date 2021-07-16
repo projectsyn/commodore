@@ -122,7 +122,7 @@ def _filter_file(work_dir: P, component: str, filterpath: str) -> P:
 
 def run_jsonnet_filter(
     config: Config,
-    inventory: Dict,
+    inv: Dict,
     component: str,
     filterid: str,
     path: P,
@@ -136,7 +136,7 @@ def run_jsonnet_filter(
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
         config.work_dir,
-        inventory,
+        inv,
         component,
         path,
         _jsonnet.evaluate_file,

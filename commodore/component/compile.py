@@ -38,6 +38,7 @@ def compile_component(
         search_paths.append(inv.dependencies_dir)
         component = Component(component_name, directory=component_path)
         config.register_component(component)
+        config.register_component_aliases({component_name: component_name})
         _prepare_fake_inventory(inv, component, value_files)
 
         # Create class for fake parameters
