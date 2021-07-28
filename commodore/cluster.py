@@ -166,6 +166,7 @@ def render_target(
         if component != target:
             ckey = component_parameters_key(component)
             tkey = component_parameters_key(target)
+            parameters[tkey] = {}
             parameters[ckey] = f"${{{tkey}}}"
 
     return {
