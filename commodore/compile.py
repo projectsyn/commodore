@@ -3,7 +3,6 @@ import click
 from . import git
 from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
-    Cluster,
     load_cluster_from_api,
     read_cluster_and_tenant,
     update_params,
@@ -26,35 +25,10 @@ from .helpers import (
 )
 from .postprocess import postprocess_components
 from .refs import update_refs
-
-
-def _fetch_global_config(cfg: Config, cluster: Cluster):
-    click.secho("Updating global config...", bold=True)
-    repo = git.clone_repository(
-        cluster.global_git_repo_url, cfg.inventory.global_config_dir, cfg
-    )
-    rev = cluster.global_git_repo_revision
-    if cfg.global_repo_revision_override:
-        rev = cfg.global_repo_revision_override
-    if rev:
-        git.checkout_version(repo, rev)
-    cfg.register_config("global", repo)
-
-
-def _fetch_customer_config(cfg: Config, cluster: Cluster):
-    click.secho("Updating customer config...", bold=True)
-    repo_url = cluster.config_repo_url
-    if cfg.debug:
-        click.echo(f" > Cloning customer config {repo_url}")
-    repo = git.clone_repository(
-        repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id), cfg
-    )
-    rev = cluster.config_git_repo_revision
-    if cfg.tenant_repo_revision_override:
-        rev = cfg.tenant_repo_revision_override
-    if rev:
-        git.checkout_version(repo, rev)
-    cfg.register_config("customer", repo)
+from .fetch_config import (
+    fetch_global_config,
+    fetch_customer_config,
+)
 
 
 def _regular_setup(config: Config, cluster_id):
@@ -67,8 +41,8 @@ def _regular_setup(config: Config, cluster_id):
     update_params(config.inventory, cluster)
 
     # Fetch components and config
-    _fetch_global_config(config, cluster)
-    _fetch_customer_config(config, cluster)
+    fetch_global_config(config, cluster)
+    fetch_customer_config(config, cluster)
     fetch_components(config)
 
     update_target(config, config.inventory.bootstrap_target)

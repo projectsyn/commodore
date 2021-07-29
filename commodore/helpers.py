@@ -2,6 +2,7 @@ import collections
 import json
 import shutil
 import os
+import sys
 from pathlib import Path as P
 from typing import Callable, Dict, Iterable, Optional
 
@@ -73,13 +74,16 @@ def _represent_str(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
 
-def yaml_dump(obj, file):
+def yaml_dump(obj, file=None):
     """
     Dump obj as single-document YAML
     """
     yaml.add_representer(str, _represent_str)
-    with open(file, "w") as outf:
-        yaml.dump(obj, outf)
+    if file is None:
+        yaml.dump(obj, sys.stdout)
+    else:
+        with open(file, "w") as outf:
+            yaml.dump(obj, outf)
 
 
 def yaml_dump_all(obj, file):

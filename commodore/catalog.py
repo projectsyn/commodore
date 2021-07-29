@@ -1,12 +1,17 @@
 from pathlib import Path as P
-from typing import Iterable
+from typing import Iterable, Optional
 
 import click
 
 from . import git
-from .helpers import rm_tree_contents, lieutenant_query
-from .cluster import Cluster
+from .helpers import rm_tree_contents, lieutenant_query, ApiError, yaml_dump
+from .cluster import Cluster, update_target, update_params, load_cluster_from_api
 from .config import Config
+from .dependency_mgmt import _discover_components, _read_components
+from .fetch_config import (
+    fetch_global_config,
+    fetch_customer_config,
+)
 
 
 def fetch_customer_catalog(config: Config, cluster: Cluster):
@@ -124,3 +129,42 @@ def catalog_list(cfg):
             click.echo(f" - {display_name}")
         else:
             click.echo(catalog_id)
+
+
+def list_components(config: Config, cluster_id: str, output: Optional[str] = None):
+    """
+    List all components required by target. Generate list of components
+    by searching for classes with prefix `components.` in the inventory files.
+
+    Component repos are searched in `GLOBAL_GIT_BASE/commodore_components`.
+    """
+
+    try:
+        cluster = load_cluster_from_api(config, cluster_id)
+    except ApiError as e:
+        raise click.ClickException(f"While fetching cluster specification: {e}") from e
+
+    # pylint: disable=import-outside-toplevel
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        config.inventory.work_dir = P(tmp)
+
+        update_target(config, config.inventory.bootstrap_target)
+        update_params(config.inventory, cluster)
+
+        # Fetch components and config
+        fetch_global_config(config, cluster)
+        fetch_customer_config(config, cluster)
+
+        click.secho("Discovering components...", bold=True)
+        component_names, component_aliases = _discover_components(config)
+        urls, versions = _read_components(config, component_names)
+        components = {}
+        for cn in component_names:
+            components[cn] = {
+                "url": urls[cn],
+                "version": versions[cn],
+                "alias": component_aliases[cn],
+            }
+        yaml_dump(components, output)

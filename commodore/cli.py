@@ -8,6 +8,7 @@ from .catalog import catalog_list
 from .config import Config
 from .helpers import clean_working_tree
 from .compile import compile as _compile
+from .catalog import list_components
 from .component.template import ComponentTemplater
 from .component.compile import compile_component
 
@@ -193,6 +194,36 @@ def clusters_list_command(config: Config, api_url, api_token, verbose):
     config.api_url = api_url
     config.api_token = api_token
     catalog_list(config)
+
+
+# pylint: disable=too-many-arguments
+@catalog.command(
+    name="list-components", short_help="List components and versions in a catalog"
+)
+@click.argument("cluster")
+@click.option(
+    "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
+)
+@click.option(
+    "--api-token",
+    envvar="COMMODORE_API_TOKEN",
+    help="Lieutenant API token.",
+    metavar="TOKEN",
+)
+@click.option(
+    "--output",
+    help="File in which to save list of components.",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path, allow_dash=True),
+)
+@verbosity
+@pass_config
+def clusters_list_components_command(
+    config: Config, cluster, api_url, api_token, output, verbose
+):
+    config.update_verbosity(verbose)
+    config.api_url = api_url
+    config.api_token = api_token
+    list_components(config, cluster, output)
 
 
 @commodore.group(short_help="Interact with components.")

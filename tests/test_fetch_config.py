@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path as P
 from unittest.mock import patch
 
-from commodore import compile
+from commodore import fetch_config
 from commodore.config import Config
 from commodore.cluster import Cluster
 
@@ -88,7 +88,7 @@ def assert_result(cluster, repo, repourl, revision, override_revision):
     assert repo.head.call_counts["reset"] == cc
 
 
-@patch.object(compile, "git", new=mock_git)
+@patch.object(fetch_config, "git", new=mock_git)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
@@ -96,7 +96,7 @@ def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
     cluster = setup_cluster(globalrev=revision)
     config.global_repo_revision_override = override_revision
 
-    compile._fetch_global_config(config, cluster)
+    fetch_config.fetch_global_config(config, cluster)
 
     repo = config.get_configs()["global"]
 
@@ -105,7 +105,7 @@ def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
     )
 
 
-@patch.object(compile, "git", new=mock_git)
+@patch.object(fetch_config, "git", new=mock_git)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_customer_config(tmp_path: P, config, revision, override_revision):
@@ -113,7 +113,7 @@ def test_fetch_customer_config(tmp_path: P, config, revision, override_revision)
     cluster = setup_cluster(tenantrev=revision)
     config.tenant_repo_revision_override = override_revision
 
-    compile._fetch_customer_config(config, cluster)
+    fetch_config.fetch_customer_config(config, cluster)
 
     repo = config.get_configs()["customer"]
 
