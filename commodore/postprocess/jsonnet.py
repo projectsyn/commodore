@@ -79,31 +79,7 @@ _native_callbacks = {
 }
 
 
-# pylint: disable=too-many-arguments
-def jsonnet_runner(
-    work_dir: P,
-    inv: Dict[str, Any],
-    component: str,
-    path: os.PathLike,
-    jsonnet_func: Callable,
-    jsonnet_input: os.PathLike,
-    **kwargs: str,
-):
-    def _inventory() -> Dict[str, Any]:
-        return inv
-
-    _native_cb = _native_callbacks
-    _native_cb["inventory"] = ((), _inventory)
-    kwargs["target"] = component
-    kwargs["component"] = component
-    output_dir = work_dir / "compiled" / component / path
-    kwargs["output_path"] = str(output_dir)
-    output = jsonnet_func(
-        str(jsonnet_input),
-        import_callback=functools.partial(_import_cb, work_dir),
-        native_callbacks=_native_cb,
-        ext_vars=kwargs,
-    )
+def write_jsonnet_output(output_dir: P, output: str):
     out_objs = json.loads(output)
     for outobj, outcontents in out_objs.items():
         outpath = output_dir / f"{outobj}.yaml"
@@ -116,6 +92,35 @@ def jsonnet_runner(
             yaml_dump(outcontents, outpath)
 
 
+# pylint: disable=too-many-arguments
+def jsonnet_runner(
+    work_dir: P,
+    inv: Dict[str, Any],
+    component: str,
+    instance: str,
+    path: os.PathLike,
+    jsonnet_func: Callable,
+    jsonnet_input: os.PathLike,
+    **kwargs: str,
+):
+    def _inventory() -> Dict[str, Any]:
+        return inv
+
+    _native_cb = _native_callbacks
+    _native_cb["inventory"] = ((), _inventory)
+    kwargs["target"] = component
+    kwargs["component"] = component
+    output_dir = work_dir / "compiled" / instance / path
+    kwargs["output_path"] = str(output_dir)
+    output = jsonnet_func(
+        str(jsonnet_input),
+        import_callback=functools.partial(_import_cb, work_dir),
+        native_callbacks=_native_cb,
+        ext_vars=kwargs,
+    )
+    write_jsonnet_output(output_dir, output)
+
+
 def _filter_file(component: Component, filterpath: str) -> P:
     return component.target_directory / filterpath
 
@@ -124,6 +129,7 @@ def run_jsonnet_filter(
     config: Config,
     inv: Dict,
     component: Component,
+    instance: str,
     filterid: str,
     path: P,
     **filterargs: str,
@@ -138,6 +144,7 @@ def run_jsonnet_filter(
         config.work_dir,
         inv,
         component.name,
+        instance,
         path,
         _jsonnet.evaluate_file,
         filterfile,
@@ -146,7 +153,7 @@ def run_jsonnet_filter(
 
 
 # pylint: disable=unused-argument
-def validate_jsonnet_filter(config: Config, c: Component, fd: Dict):
+def validate_jsonnet_filter(config: Config, c: Component, instance: str, fd: Dict):
     filterfile = _filter_file(c, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")
