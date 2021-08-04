@@ -4,6 +4,7 @@ Tests for postprocessing
 import os
 import pytest
 import yaml
+from textwrap import dedent
 
 from commodore.config import Config
 from commodore.component import Component
@@ -11,7 +12,7 @@ from commodore.postprocess import postprocess_components
 from test_component_template import test_run_component_new_command
 
 
-def _make_ns_filter(ns, enabled=None):
+def _make_builtin_filter(ns, enabled=None):
     f = {
         "filters": [
             {
@@ -29,11 +30,66 @@ def _make_ns_filter(ns, enabled=None):
     return f
 
 
-def _setup(tmp_path, f, invfilter=False, alias="test-component"):
-    test_run_component_new_command(tmp_path=tmp_path)
+def _make_jsonnet_filter(tmp_path, ns, enabled=None, invfilter=False):
+    filter_file = (
+        tmp_path / "dependencies" / "test-component" / "postprocess" / "filter.jsonnet"
+    )
+    os.makedirs(filter_file.parent)
+    with open(filter_file, "w") as ff:
+        ff.write(
+            dedent(
+                """
+                local com = import 'lib/commodore.libjsonnet';
+                local file = std.extVar('output_path');
+                local objs = com.yaml_load_all(file);
+                local stem(elem) =
+                    local elems = std.split(elem, '.');
+                    std.join('.', elems[:std.length(elems) - 1]);
+                local fixup(objs) = [ obj { metadata+: { namespace: 'myns' }} for obj in objs ];
+                {
+                    [stem(file)]: fixup(objs),
+                }
+                """
+            )
+        )
 
+    if invfilter:
+        f = {
+            "filters": [
+                {
+                    "path": "test/object.yaml",
+                    "type": "jsonnet",
+                    "filter": "postprocess/filter.jsonnet",
+                }
+            ]
+        }
+    else:
+        f = {
+            "filters": [
+                {
+                    "output_path": "test/object.yaml",
+                    "type": "jsonnet",
+                    "filter": "filter.jsonnet",
+                }
+            ]
+        }
+
+    if enabled is not None:
+        f["filters"][0]["enabled"] = enabled
+    return f
+
+
+def _make_ns_filter(tmp_path, ns, enabled=None, jsonnet=False, invfilter=False):
+    if jsonnet:
+        return _make_jsonnet_filter(tmp_path, ns, enabled=enabled, invfilter=invfilter)
+
+    return _make_builtin_filter(ns, enabled=enabled)
+
+
+def _setup(tmp_path, f, invfilter=False, alias="test-component"):
     targetdir = tmp_path / "compiled" / alias / "test"
     os.makedirs(targetdir, exist_ok=True)
+
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
         obj = {
@@ -98,8 +154,13 @@ def _expected_ns(enabled):
 @pytest.mark.parametrize("enabled", [None, True, False])
 @pytest.mark.parametrize("invfilter", [True, False])
 @pytest.mark.parametrize("alias", ["test-component", "component-alias"])
-def test_postprocess_components(tmp_path, capsys, enabled, invfilter, alias):
-    f = _make_ns_filter("myns", enabled=enabled)
+@pytest.mark.parametrize("jsonnet", [False, True])
+def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, alias):
+    test_run_component_new_command(tmp_path=tmp_path)
+
+    f = _make_ns_filter(
+        tmp_path, "myns", enabled=enabled, jsonnet=jsonnet, invfilter=invfilter
+    )
 
     testf, config, inventory, components = _setup(
         tmp_path,
@@ -125,7 +186,9 @@ def test_postprocess_components(tmp_path, capsys, enabled, invfilter, alias):
 # render the inventory with reclass in the test above.
 @pytest.mark.parametrize("enabledref", [True, False])
 def test_postprocess_components_enabledref(tmp_path, capsys, enabledref):
-    f = _make_ns_filter("myns", enabled="${test_component:filter:enabled}")
+    test_run_component_new_command(tmp_path=tmp_path)
+
+    f = _make_builtin_filter("myns", enabled="${test_component:filter:enabled}")
 
     testf, config, inventory, components = _setup(tmp_path, f)
     inventory["test-component"]["parameters"]["test_component"]["filter"] = {
