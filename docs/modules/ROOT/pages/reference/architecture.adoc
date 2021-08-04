@@ -232,6 +232,11 @@ The path to the jsonnet filter is relative to the component repository.
 Filters can be disabled by setting the optional field `enabled` in the filter definition to `false`.
 If this field isn't present, filters are treated as enabled.
 
+Filters can instruct Commodore to search for the compiled output in a different directory than the default `compiled/<component-name>` by setting the optional field `output_dir` in the filter definition to the directory in `compiled` in which the Kapitan output is expected to be.
+This can be useful when instance-aware components want to create an individual ArgoCD app and manifests directory for each instance.
+In that case, the `output_dir` field must be set to the name of the manifests directory created for the instance.
+If the component simply uses the instance name for the manifests directory, `output_dir: ${_instance}` should be sufficient.
+
 A component can use the `helm_namespace` filter by providing the following filter configuration:
 
 .component-metrics-server/class/metrics-server.yml
