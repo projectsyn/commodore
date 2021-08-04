@@ -27,10 +27,16 @@ def _make_ns_filter(ns, enabled=None):
     return filter
 
 
-def _setup(tmp_path, filter, invfilter=False, alias="test-component"):
+def _setup(
+    tmp_path, filter, invfilter=False, alias="test-component", aliased_output=False
+):
     test_run_component_new_command(tmp_path=tmp_path)
 
-    targetdir = tmp_path / "compiled" / "test-component" / "test"
+    targetdir = "test-component"
+    if aliased_output:
+        targetdir = alias
+
+    targetdir = tmp_path / "compiled" / targetdir / "test"
     os.makedirs(targetdir, exist_ok=True)
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
@@ -197,6 +203,23 @@ def test_postprocess_components_aliased_component_invfilter(tmp_path, capsys):
     f = _make_ns_filter("myns")
     testf, config, inventory, components = _setup(
         tmp_path, f, invfilter=True, alias="component-alias"
+    )
+
+    postprocess_components(config, inventory, components)
+
+    assert testf.exists()
+    with open(testf) as objf:
+        obj = yaml.safe_load(objf)
+        assert obj["metadata"]["namespace"] == "myns"
+
+
+def test_postprocess_components_aliased_component_invfilter_custom_output(
+    tmp_path, capsys
+):
+    f = _make_ns_filter("myns")
+    f["filters"][0]["output_dir"] = "component-alias"
+    testf, config, inventory, components = _setup(
+        tmp_path, f, invfilter=True, alias="component-alias", aliased_output=True
     )
 
     postprocess_components(config, inventory, components)
