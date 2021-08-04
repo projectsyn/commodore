@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable
 import _jsonnet
 
 from commodore.config import Config
+from commodore.component import Component
 from commodore.helpers import yaml_load, yaml_load_all, yaml_dump, yaml_dump_all
 from commodore import __install_dir__
 
@@ -115,15 +116,14 @@ def jsonnet_runner(
             yaml_dump(outcontents, outpath)
 
 
-def _filter_file(work_dir: P, component: str, filterpath: str) -> P:
-    # TODO: Do we need to handle search path better?
-    return work_dir / "dependencies" / component / filterpath
+def _filter_file(component: Component, filterpath: str) -> P:
+    return component.target_directory / filterpath
 
 
 def run_jsonnet_filter(
     config: Config,
     inv: Dict,
-    component: str,
+    component: Component,
     filterid: str,
     path: P,
     **filterargs: str,
@@ -132,12 +132,12 @@ def run_jsonnet_filter(
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    filterfile = _filter_file(config.work_dir, component, filterid)
+    filterfile = _filter_file(component, filterid)
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
         config.work_dir,
         inv,
-        component,
+        component.name,
         path,
         _jsonnet.evaluate_file,
         filterfile,
@@ -146,7 +146,7 @@ def run_jsonnet_filter(
 
 
 # pylint: disable=unused-argument
-def validate_jsonnet_filter(config: Config, cn: str, fd: Dict):
-    filterfile = _filter_file(config.work_dir, cn, fd["filter"])
+def validate_jsonnet_filter(config: Config, c: Component, fd: Dict):
+    filterfile = _filter_file(c, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")

@@ -8,6 +8,7 @@ import click
 
 from commodore import __install_dir__
 from commodore.config import Config
+from commodore.component import Component
 
 from .jsonnet import jsonnet_runner
 
@@ -16,7 +17,9 @@ def _output_dir(work_dir: P, component: str, path):
     return work_dir / "compiled" / component / path
 
 
-def _builtin_filter_helm_namespace(work_dir: P, inv, component: str, path, **kwargs):
+def _builtin_filter_helm_namespace(
+    work_dir: P, inv, component: Component, path, **kwargs
+):
     if "namespace" not in kwargs:
         raise click.ClickException(
             "Builtin filter 'helm_namespace': filter argument 'namespace' is required"
@@ -28,13 +31,13 @@ def _builtin_filter_helm_namespace(work_dir: P, inv, component: str, path, **kwa
         create_namespace = "true" if create_namespace else "false"
     exclude_objects = kwargs.get("exclude_objects", [])
     exclude_objects = "|".join([json.dumps(e) for e in exclude_objects])
-    output_dir = _output_dir(work_dir, component, path)
+    output_dir = _output_dir(work_dir, component.name, path)
 
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
         work_dir,
         inv,
-        component,
+        component.name,
         path,
         _jsonnet.evaluate_file,
         __install_dir__ / "filters" / "helm_namespace.jsonnet",
@@ -59,7 +62,7 @@ class UnknownBuiltinFilter(ValueError):
 def run_builtin_filter(
     config: Config,
     inv: Dict,
-    component: str,
+    component: Component,
     filterid: str,
     path: P,
     **filterargs: str,
@@ -69,13 +72,13 @@ def run_builtin_filter(
     _builtin_filters[filterid](config.work_dir, inv, component, path, **filterargs)
 
 
-def validate_builtin_filter(config: Config, cn: str, fd: Dict):
+def validate_builtin_filter(config: Config, c: Component, fd: Dict):
     if fd["filter"] not in _builtin_filters:
         raise UnknownBuiltinFilter(fd["filter"])
 
     if "filterargs" not in fd:
         raise KeyError("Builtin filter is missing required key 'filterargs'")
 
-    fpath = _output_dir(config.work_dir, cn, fd["path"])
+    fpath = _output_dir(config.work_dir, c.name, fd["path"])
     if not fpath.exists():
         raise ValueError("Builtin filter called on path which doesn't exist")
