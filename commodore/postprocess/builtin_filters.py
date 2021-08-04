@@ -13,8 +13,9 @@ from commodore.component import Component
 from .jsonnet import jsonnet_runner
 
 
-def _output_dir(work_dir: P, component: str, path):
-    return work_dir / "compiled" / component / path
+def _output_dir(work_dir: P, compiled_dir: str, path):
+    """Compute directory in which to apply filter"""
+    return work_dir / "compiled" / compiled_dir / path
 
 
 def _builtin_filter_helm_namespace(
@@ -31,7 +32,9 @@ def _builtin_filter_helm_namespace(
         create_namespace = "true" if create_namespace else "false"
     exclude_objects = kwargs.get("exclude_objects", [])
     exclude_objects = "|".join([json.dumps(e) for e in exclude_objects])
-    output_dir = _output_dir(work_dir, component.name, path)
+    # NOTE: we pass "" for compiled_dir here, as we already patch `path` to
+    # contain the output dir in postprocess/__init__.py
+    output_dir = _output_dir(work_dir, "", path)
 
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
@@ -79,6 +82,8 @@ def validate_builtin_filter(config: Config, c: Component, fd: Dict):
     if "filterargs" not in fd:
         raise KeyError("Builtin filter is missing required key 'filterargs'")
 
-    fpath = _output_dir(config.work_dir, c.name, fd["path"])
+    compiled_dir = fd.get("output_dir", c.name)
+
+    fpath = _output_dir(config.work_dir, compiled_dir, fd["path"])
     if not fpath.exists():
         raise ValueError("Builtin filter called on path which doesn't exist")

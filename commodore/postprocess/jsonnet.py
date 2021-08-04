@@ -96,7 +96,7 @@ def jsonnet_runner(
     _native_cb["inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
-    output_dir = work_dir / "compiled" / component / path
+    output_dir = work_dir / "compiled" / path
     kwargs["output_path"] = str(output_dir)
     output = jsonnet_func(
         str(jsonnet_input),

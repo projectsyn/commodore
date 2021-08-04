@@ -58,6 +58,7 @@ class Filter:
         self.type = fd["type"]
         self.filter = fd["filter"]
         self.path = P(fd["path"])
+        self.output_dir = fd.get("output_dir", "")
         self.enabled = fd.get("enabled", True)
         self.filterargs = fd.get("filterargs", {})
         self._runner: FilterFunc = self._run_handlers[self.type]
@@ -72,8 +73,19 @@ class Filter:
             )
             return
 
+        path = self.path
+        if self.output_dir != "":
+            path = P(self.output_dir) / path
+        else:
+            path = P(component.name) / path
+
         self._runner(
-            config, inventory, component, self.filter, self.path, **self.filterargs
+            config,
+            inventory,
+            component,
+            self.filter,
+            path,
+            **self.filterargs,
         )
 
     @classmethod
