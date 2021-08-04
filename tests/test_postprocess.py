@@ -30,7 +30,7 @@ def _make_ns_filter(ns, enabled=None):
 def _setup(tmp_path, filter, invfilter=False, alias="test-component"):
     test_run_component_new_command(tmp_path=tmp_path)
 
-    targetdir = tmp_path / "compiled" / "test-component" / "test"
+    targetdir = tmp_path / "compiled" / alias / "test"
     os.makedirs(targetdir, exist_ok=True)
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
