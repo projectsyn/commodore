@@ -229,8 +229,12 @@ For builtin filters, the `filter` field holds the name of the builtin filter.
 For jsonnet filters, the `filter` field holds a the path to the jsonnet file defining the filter.
 The path to the jsonnet filter is relative to the component repository.
 
+The field `path` is interpreted relative to the component instance's Kapitan output, which is always in `compiled/<instance-name>`.
+Therefore, field `path` needs to use the same prefix as is used for the entry in `parameters.kapitan.compile` for which the postprocessing filter should be applied.
+
 Filters can be disabled by setting the optional field `enabled` in the filter definition to `false`.
 If this field isn't present, filters are treated as enabled.
+
 
 A component can use the `helm_namespace` filter by providing the following filter configuration:
 
