@@ -114,6 +114,9 @@ This command doesn't have any command line options.
   provide multiple files. Files specified later win when resolving inventory
   values.
 
+*-a, --alias* ALIAS::
+  Provide component alias to use when compiling component.
+
 *-J, --search-paths* DIRECTORY::
   Specify additional search paths.
 

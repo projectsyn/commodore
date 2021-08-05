@@ -14,8 +14,14 @@ from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
+# pylint: disable=too-many-arguments
 def compile_component(
-    config: Config, component_path, value_files, search_paths, output_path
+    config: Config,
+    component_path,
+    instance_name,
+    value_files,
+    search_paths,
+    output_path,
 ):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path).resolve()
@@ -26,7 +32,14 @@ def compile_component(
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace("component-", "")
 
-    click.secho(f"Compile component {component_name}...", bold=True)
+    # Fall back to `component as component` when instance_name is empty
+    if instance_name is None or instance_name == "":
+        instance_name = component_name
+        click.secho(f"Compile component {component_name}...", bold=True)
+    else:
+        click.secho(
+            f"Compile component {component_name} as {instance_name}...", bold=True
+        )
 
     temp_dir = P(tempfile.mkdtemp(prefix="component-")).resolve()
     config.work_dir = temp_dir
@@ -38,7 +51,7 @@ def compile_component(
         search_paths.append(inv.dependencies_dir)
         component = Component(component_name, directory=component_path)
         config.register_component(component)
-        config.register_component_aliases({component_name: component_name})
+        config.register_component_aliases({instance_name: component_name})
         _prepare_fake_inventory(inv, component, value_files)
 
         # Create class for fake parameters
@@ -66,13 +79,13 @@ def compile_component(
 
                   kapitan:
                     vars:
-                        target: {component_name}
+                        target: {instance_name}
                         namespace: test"""
                 )
             )
 
         # Create test target
-        with open(inv.target_file(component), "w") as file:
+        with open(inv.target_file(instance_name), "w") as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
             file.write(
                 dedent(
@@ -81,7 +94,10 @@ def compile_component(
                 - params.{inv.bootstrap_target}
                 - defaults.{component_name}
                 - components.{component_name}
-                {value_classes}"""
+                {value_classes}
+                parameters:
+                  _instance: {instance_name}
+                """
                 )
             )
 
@@ -102,9 +118,12 @@ def compile_component(
                 )
             )
 
-        # Render jsonnetfile.jsonnet if necessary
+        # Verify component alias
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
-        component_params = nodes[component_name]["parameters"].get(
+        config.verify_component_aliases(nodes[instance_name]["parameters"])
+
+        # Render jsonnetfile.jsonnet if necessary
+        component_params = nodes[instance_name]["parameters"].get(
             component_name.replace("-", "_"), {}
         )
         component.render_jsonnetfile_json(component_params)
@@ -114,14 +133,14 @@ def compile_component(
         # Compile component
         kapitan_compile(
             config,
-            [component_name],
+            [instance_name],
             output_dir=output_path,
             search_paths=search_paths,
             fake_refs=True,
             reveal=True,
         )
         click.echo(
-            f" > Component compiled to {output_path / 'compiled' / component_name}"
+            f" > Component compiled to {output_path / 'compiled' / instance_name}"
         )
 
         # prepare inventory and fake component object for postprocess

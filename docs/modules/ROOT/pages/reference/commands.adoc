@@ -77,3 +77,5 @@ included in a cluster's configuration.
 The command takes so called values files which provide custom configuration
 values for any configuration that could be provided from the hierarchical
 configuration repositories.
+
+The option `--alias` (or `-a`) can be used to compile an instance-aware component with a specific instance.

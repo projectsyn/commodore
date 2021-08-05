@@ -277,6 +277,12 @@ def component_delete(config: Config, slug, force, verbose):
     help="Specify inventory class in a YAML file (can specify multiple).",
 )
 @click.option(
+    "-a",
+    "--alias",
+    metavar="ALIAS",
+    help="Provide component alias to use when compiling component.",
+)
+@click.option(
     "-J",
     "--search-paths",
     multiple=True,
@@ -294,9 +300,11 @@ def component_delete(config: Config, slug, force, verbose):
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
-def component_compile(config: Config, path, values, search_paths, output, verbose):
+def component_compile(
+    config: Config, path, values, alias, search_paths, output, verbose
+):
     config.update_verbosity(verbose)
-    compile_component(config, path, values, search_paths, output)
+    compile_component(config, path, alias, values, search_paths, output)
 
 
 def main():
