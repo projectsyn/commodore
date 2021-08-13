@@ -92,7 +92,6 @@ jobs:
         pip install poetry
         poetry env use python3.9
         poetry install
-        poetry run build_kapitan_helm_binding
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \

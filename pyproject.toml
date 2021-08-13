@@ -14,7 +14,6 @@ include = [
     "commodore/component-template/**/*",
     "commodore/lib/commodore.libjsonnet",
     "commodore/filters/helm_namespace.jsonnet",
-    "commodore/helm_bindings/**/*"
 ]
 
 [tool.poetry.dependencies]
@@ -38,11 +37,9 @@ pytest-benchmark = "^3.2.3"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
-build_kapitan_helm_binding = 'tools.tools:build_kapitan_helm_binding'
 autopep = 'tools.tools:autopep'
 local_reveal = 'tools.tools:reveal'
 compile = 'tools.tools:compile'
-copy_helm_bindings = 'commodore.copy_helm_bindings:main'
 
 [build-system]
 requires = ["poetry>=0.12"]
