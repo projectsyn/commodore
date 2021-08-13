@@ -43,10 +43,6 @@ using `helm template`.
     ```console
     pip install syn-commodore
     ```
-1. Copy helm bindings to kapitan directory
-    ```console
-    copy_helm_bindings
-    ```
 1. <a name="getting_started_jsonnet"></a>Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
 1. For Commodore to work, you need to run an instance of [Lieutenant](https://syn.tools/syn/tutorials/getting-started.html#_kickstart_lieutenant) somewhere
@@ -90,15 +86,6 @@ using `helm template`.
     ```console
     poetry install
     ```
-
-    Build the Kapitan helm binding:
-    * Linux:
-
-       ```console
-       poetry run build_kapitan_helm_binding
-       ```
-
-    * macOS: It's currently not supported to run Commodore via Poetry on macOS due to various issues
 
     Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
