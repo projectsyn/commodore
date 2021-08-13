@@ -31,18 +31,15 @@ RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/
 
 RUN pip install ./dist/syn_commodore-*-py3-none-any.whl
 
-FROM docker.io/golang:1.15-buster AS helm_binding_builder
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+ && chmod 700 get_helm.sh \
+ && ./get_helm.sh \
+ && mv /usr/local/bin/helm /usr/local/bin/helm3 \
+ && curl -LO https://git.io/get_helm.sh \
+ && chmod 700 get_helm.sh \
+ && ./get_helm.sh \
+ && mv /usr/local/bin/helm /usr/local/bin/helm2
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3-cffi \
- && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /virtualenv
-
-COPY --from=builder /usr/local/lib/python3.9/site-packages/kapitan ./kapitan
-
-RUN ./kapitan/inputs/helm/build.sh \
- && ./kapitan/dependency_manager/helm/build.sh
 
 FROM base AS runtime
 
@@ -59,16 +56,10 @@ COPY --from=builder \
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
+      /usr/local/bin/helm* \
       /usr/local/bin/
 
-COPY --from=helm_binding_builder \
-      /virtualenv/kapitan/inputs/helm/libtemplate.so \
-      /virtualenv/kapitan/inputs/helm/helm_binding.py \
-      /usr/local/lib/python3.9/site-packages/kapitan/inputs/helm/
-
-COPY --from=helm_binding_builder \
-      /virtualenv/kapitan/dependency_manager/helm/helm_fetch.so \
-      /usr/local/lib/python3.9/site-packages/kapitan/dependency_manager/helm/
+RUN ln -s /usr/local/bin/helm3 /usr/local/bin/helm
 
 RUN curl -sLo /usr/local/bin/jb \
   https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
