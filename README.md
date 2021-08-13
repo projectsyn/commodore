@@ -29,7 +29,7 @@ using `helm template`.
 
 ## System Requirements
 
-* Python 3.6+, with `python3-dev` and `python3-venv` updated
+* Python 3.7+, with `python3-dev` and `python3-venv` updated
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
 ## Getting started
