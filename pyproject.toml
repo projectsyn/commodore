@@ -18,10 +18,8 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-# Pin Kapitan to 0.29.4, since 0.29.5 has regressions in reclass which break our usage of the
-# `applications` array.
-kapitan = "=0.29.4"
+python = "^3.7"
+kapitan = {version = "0.30.0rc0", allow-prereleases = true}
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
