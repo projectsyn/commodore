@@ -1,21 +1,111 @@
 = Running Commodore
 
 Commodore is written in Python and it requires external dependencies.
-It also requires the compilation of some Golang bindings.
-A container image is provided to ease the use setup commodore on different platforms.
+We provide Commodore as a container image and a Python package on PyPI.
 
 [NOTE]
 ====
 For local development, the procedure is documented in the https://github.com/projectsyn/commodore/blob/master/README.md[README].
 ====
 
-Commodore interacts with git repositories that might require authorization.
-For this to work, the container needs to have access to an authorized SSH key.
+Commodore interacts with Git repositories that might require authorization.
+For this to work, Commodore needs to have access to an authorized SSH key.
 
-The following shell functions can be placed in your shells configuration file (for example `~/.profile`, `~/.bashrc`, `.zshrc` etc.).
-By doing so, you can run commodore as it would be any other executable on your system.
+== PyPI
 
-== Linux
+We recommend that you use the Commodore Python package provided on PyPI to make `commodore` available locally.
+
+=== Prerequisites
+
+* Python 3.7, 3.8 or 3.9 as `python3` and the Python `venv` module.
+We recommend that you install Python and the `venv` module with your preferred package manager.
+* `jsonnet-bundler`, https://github.com/jsonnet-bundler/jsonnet-bundler#install[installation instructions]
+* Helm 3, https://helm.sh/docs/intro/install/[installation instructions]
+
+[IMPORTANT]
+====
+Other documentation assumes that Helm 3 is available as `helm` and `helm3`, and Helm 2 is available as `helm2` in `$PATH`.
+Please make sure you setup the Helm binaries accordingly on your local system.
+====
+
+[WARNING]
+====
+As of 2021–11–03, Commodore doesn't yet support Python 3.10+.
+====
+
+=== Installation
+
+Generally, it's best to create a separate https://docs.python.org/3.9/tutorial/venv.html[virtualenv] for Python utilities.
+Having separate virtualenvs avoids running into dependency conflicts when installing multiple Python utilities from PyPI.
+
+. Check your Python version
++
+[source,bash]
+----
+python3 --version
+----
++
+This command should report something like
++
+[source]
+----
+Python 3.8.10
+----
+
+. Create a virtualenv in `~/.local/commodore-venv`
++
+[source,bash]
+----
+python3 -m venv ~/.local/commodore-venv
+----
+
+. Activate the virtualenv
++
+[source,bash]
+----
+source ~/.local/commodore-venv/bin/activate
+----
+
+. Install Commodore into the virtualenv
++
+[source,bash]
+----
+pip install syn-commodore
+----
+
+. Check that `commodore` was installed correctly
++
+[source,bash]
+----
+commodore --version
+----
+
+=== Usage
+
+If you've installed Commodore into a virtualenv, you need to activate the virtualenv whenever you want to run Commodore.
+
+[source,bash]
+----
+source ~/.local/commodore-venv/bin/activate
+----
+
+After that, you can run Commodore with
+
+[source,bash]
+----
+commodore --help
+----
+
+TIP: To leave the virtualenv, you can execute the `deactivate` command.
+
+== Docker
+
+If you want, you can also use the Commodore container image locally.
+
+In that case, the following shell functions can be placed in your shells configuration file (for example `~/.profile`, `~/.bashrc`, `.zshrc` etc.).
+By doing so, you can run commodore as if it was any other executable on your system.
+
+=== Linux
 
 On Linux it's possible to use SSH agent and mounting the agents socket into the container.
 
@@ -41,7 +131,7 @@ commodore() {
 }
 ----
 
-== macOS
+=== macOS
 
 On macOS with Docker for Mac mounting the SSH agents socket into a container doesn't work.
 Instead you need to mount as magic path that's provided by Docker for Mac.
