@@ -109,9 +109,7 @@ class Component:
 
     @property
     def filters_file(self) -> P:
-        # The command `component compile` changes directory so we need an absolute path here.
-        # TODO Use self.target_directory when implement https://github.com/projectsyn/commodore/issues/214.
-        return P(self.repo.working_tree_dir, "postprocess", "filters.yml")
+        return self.target_directory / "postprocess" / "filters.yml"
 
     @property
     def parameters_key(self):
