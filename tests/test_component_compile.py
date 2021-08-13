@@ -5,7 +5,7 @@ import yaml
 import pytest
 
 from pathlib import Path as P
-from subprocess import call, run, PIPE
+from subprocess import call, run
 from textwrap import dedent
 
 
@@ -178,8 +178,7 @@ def test_run_component_compile_command_instance(tmp_path, capsys, instance_aware
     result = run(
         _cli_command_string(tmp_path, component_name, instance_name),
         shell=True,
-        stdout=PIPE,
-        stderr=PIPE,
+        capture_output=True,
     )
 
     exit_status = result.returncode
