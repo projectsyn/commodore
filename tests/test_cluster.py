@@ -158,3 +158,15 @@ def test_facts(data):
     data["cluster"]["facts"] = facts.copy()
     cluster = Cluster(data["cluster"], data["tenant"])
     assert facts == cluster.facts
+
+
+def test_dynamic_facts(data):
+    cluster = Cluster(data["cluster"], data["tenant"])
+    assert {} == cluster.dynamic_facts
+
+    dynamic_facts = {
+        "kubernetes_version": {"major": "1", "minor": "21", "gitVersion": "v1.21.3"}
+    }
+    data["cluster"]["dynamicFacts"] = dynamic_facts.copy()
+    cluster = Cluster(data["cluster"], data["tenant"])
+    assert dynamic_facts == cluster.dynamic_facts
