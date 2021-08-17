@@ -25,7 +25,7 @@ The cluster catalog Git repository URL.
 
 === `facts`
 
-The cluster's facts, as stored in the cluster's Lieutenant object.
+The cluster's static facts, as stored in the cluster's Lieutenant object.
 
 The following facts are mandatory:
 
@@ -35,3 +35,9 @@ The cloud region on which the cluster is installed.
 Mandatory only for clouds which have multiple regions.
 `distribution`::
 The Kubernetes distribution of the cluster.
+
+=== `dynamic_facts`
+
+The cluster's dynamic facts as reported by Steward on the cluster.
+
+There are currently no mandatory dynamic facts.
