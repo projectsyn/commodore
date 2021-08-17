@@ -90,9 +90,7 @@ class Cluster:
 
     @property
     def facts(self) -> Dict[str, str]:
-        if "facts" not in self._cluster:
-            return {}
-        return self._cluster["facts"]
+        return self._cluster.get("facts", {})
 
 
 def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
