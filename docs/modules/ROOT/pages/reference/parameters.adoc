@@ -41,3 +41,30 @@ The Kubernetes distribution of the cluster.
 The cluster's dynamic facts as reported by Steward on the cluster.
 
 There are currently no mandatory dynamic facts.
+
+[NOTE]
+====
+Components shouldn't directly consume dynamic facts.
+Instead, components should expose a parameter which can be configured with a dynamic fact if information from dynamic facts should be used in a component.
+This minimizes the coupling between components and the presence of dynamic facts, and allows components to degrade gracefully when a dynamic fact is missing for a Project Syn installation.
+
+This could look something like
+
+.Component `defaults.yml`
+[source,yaml]
+----
+parameters:
+  component_name:
+    kubernetes_version: '1.20' <1>
+----
+<1> The component defaults to K8s version 1.20 when the parameter isn't overwritten in the configuration hierarchy
+
+.Project Syn global configuration repository
+[source,yaml]
+----
+parameters:
+  component_name:
+    kubernetes_version: '${dynamic_facts:kubernetes_version:major}.${dynamic_facts.kubernetes_version.minor}' <1>
+----
+<1> The parameter is overwritten using dynamic facts in the Project Syn installation's global configuration repository.
+====
