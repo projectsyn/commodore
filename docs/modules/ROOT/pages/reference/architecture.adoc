@@ -15,7 +15,7 @@ calls to the Lieutenant API.
 
 Commodore fetches the following dependencies:
 
-* Cluster facts from Lieutenant API
+* Static and dynamic cluster facts from Lieutenant API
 * Global configuration
 * Tenant configuration
 * Components as discovered in global and tenant configuration

@@ -1,6 +1,6 @@
 import os
 
-from typing import Iterable, Tuple, Dict, Optional, Union
+from typing import Any, Iterable, Tuple, Dict, Optional, Union
 
 import click
 
@@ -90,9 +90,11 @@ class Cluster:
 
     @property
     def facts(self) -> Dict[str, str]:
-        if "facts" not in self._cluster:
-            return {}
-        return self._cluster["facts"]
+        return self._cluster.get("facts", {})
+
+    @property
+    def dynamic_facts(self) -> Dict[str, Any]:
+        return self._cluster.get("dynamicFacts", {})
 
 
 def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
@@ -188,6 +190,7 @@ def update_target(cfg: Config, target: str, component: Optional[str] = None):
 
 def render_params(inv: Inventory, cluster: Cluster):
     facts = cluster.facts
+    dynfacts = cluster.dynamic_facts
     for fact in ["distribution", "cloud"]:
         if fact not in facts or not facts[fact]:
             raise click.ClickException(f"Required fact '{fact}' not set")
@@ -212,6 +215,7 @@ def render_params(inv: Inventory, cluster: Cluster):
                 "dist": facts["distribution"],
             },
             "facts": facts,
+            "dynamic_facts": dynfacts,
             # TODO Remove the cloud and customer parameters after deprecation phase.
             "cloud": cloud,
             "customer": {

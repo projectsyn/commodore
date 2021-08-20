@@ -32,6 +32,13 @@ def data():
             "distribution": "rancher",
             "cloud": "cloudscale",
         },
+        "dynamicFacts": {
+            "kubernetes_version": {
+                "major": "1",
+                "minor": "21",
+                "gitVersion": "v1.21.3",
+            }
+        },
         "gitRepo": {
             "url": "ssh://git@git.example.com/cluster-catalogs/mycluster",
         },
@@ -162,19 +169,55 @@ def test_render_params(data, tmp_path: P):
     cfg = Config(work_dir=tmp_path)
     target = cfg.inventory.bootstrap_target
     params = cluster.render_params(cfg.inventory, cluster_from_data(data))
-    assert params["parameters"]["cluster"]["name"] == "mycluster"
-    assert params["parameters"][target]["name"] == "mycluster"
-    assert params["parameters"][target]["display_name"] == "My Test Cluster"
+
+    assert "parameters" in params
+
+    params = params["parameters"]
+    assert "cluster" in params
+
+    assert "name" in params["cluster"]
+    assert params["cluster"]["name"] == "mycluster"
+
+    assert target in params
+    target_params = params[target]
+
+    assert "name" in target_params
+    assert target_params["name"] == "mycluster"
+    assert "display_name" in target_params
+    assert target_params["display_name"] == "My Test Cluster"
+    assert "catalog_url" in target_params
     assert (
-        params["parameters"][target]["catalog_url"]
+        target_params["catalog_url"]
         == "ssh://git@git.example.com/cluster-catalogs/mycluster"
     )
-    assert params["parameters"][target]["tenant"] == "mytenant"
-    assert params["parameters"][target]["tenant_display_name"] == "My Test Tenant"
-    assert params["parameters"][target]["dist"] == "rancher"
-    assert params["parameters"]["facts"] == data["cluster"]["facts"]
-    assert params["parameters"]["cloud"]["provider"] == "cloudscale"
-    assert params["parameters"]["customer"]["name"] == "mytenant"
+    assert "tenant" in target_params
+    assert target_params["tenant"] == "mytenant"
+    assert "tenant_display_name" in target_params
+    assert target_params["tenant_display_name"] == "My Test Tenant"
+    assert "dist" in target_params
+    assert target_params["dist"] == "rancher"
+
+    assert "facts" in params
+    assert params["facts"] == data["cluster"]["facts"]
+
+    assert "dynamic_facts" in params
+    dyn_facts = params["dynamic_facts"]
+    assert "kubernetes_version" in dyn_facts
+    k8s_ver = dyn_facts["kubernetes_version"]
+    assert "major" in k8s_ver
+    assert "minor" in k8s_ver
+    assert "gitVersion" in k8s_ver
+    assert "1" == k8s_ver["major"]
+    assert "21" == k8s_ver["minor"]
+    assert "v1.21.3" == k8s_ver["gitVersion"]
+
+    assert "cloud" in params
+    assert "provider" in params["cloud"]
+    assert params["cloud"]["provider"] == "cloudscale"
+
+    assert "customer" in params
+    assert "name" in params["customer"]
+    assert params["customer"]["name"] == "mytenant"
 
 
 def test_missing_facts(data, tmp_path: P):
