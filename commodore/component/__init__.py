@@ -214,7 +214,7 @@ class Component:
                 str(jsonnetfile_jsonnet),
                 ext_vars=component_params.get("jsonnetfile_parameters", {}),
             )
-            with open(self._dir / "jsonnetfile.json", "w") as fp:
+            with open(self._dir / "jsonnetfile.json", "w", encoding="utf-8") as fp:
                 fp.write(output)
 
 

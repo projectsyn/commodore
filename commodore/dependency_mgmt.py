@@ -208,7 +208,7 @@ def write_jsonnetfile(file: P, deps: Iterable):
         "legacyImports": True,
     }
 
-    with open(file, "w") as f:
+    with open(file, "w", encoding="utf-8") as f:
         f.write(json.dumps(data, indent=4))
 
 
@@ -249,7 +249,7 @@ def inject_essential_libraries(file: P):
     Ensures essential libraries are added to `jsonnetfile.json`.
     :param file: The path to `jsonnetfile.json`.
     """
-    with open(file, "r") as f:
+    with open(file, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     deps = data["dependencies"]
@@ -268,7 +268,7 @@ def inject_essential_libraries(file: P):
             },
         )
 
-    with open(file, "w") as j:
+    with open(file, "w", encoding="utf-8") as j:
         json.dump(data, j, indent=4)
 
 

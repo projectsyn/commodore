@@ -44,7 +44,7 @@ def yaml_load(file):
     """
     Load single-document YAML and return document
     """
-    with open(file, "r") as f:
+    with open(file, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -52,7 +52,7 @@ def yaml_load_all(file):
     """
     Load multi-document YAML and return documents in list
     """
-    with open(file, "r") as f:
+    with open(file, "r", encoding="utf-8") as f:
         return list(yaml.safe_load_all(f))
 
 
@@ -78,7 +78,7 @@ def yaml_dump(obj, file):
     Dump obj as single-document YAML
     """
     yaml.add_representer(str, _represent_str)
-    with open(file, "w") as outf:
+    with open(file, "w", encoding="utf-8") as outf:
         yaml.dump(obj, outf)
 
 
@@ -87,7 +87,7 @@ def yaml_dump_all(obj, file):
     Dump obj as multi-document YAML
     """
     yaml.add_representer(str, _represent_str)
-    with open(file, "w") as outf:
+    with open(file, "w", encoding="utf-8") as outf:
         yaml.dump_all(obj, outf)
 
 

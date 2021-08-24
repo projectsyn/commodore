@@ -55,7 +55,7 @@ def compile_component(
         _prepare_fake_inventory(inv, component, value_files)
 
         # Create class for fake parameters
-        with open(inv.params_file, "w") as file:
+        with open(inv.params_file, "w", encoding="utf-8") as file:
             file.write(
                 dedent(
                     f"""
@@ -85,7 +85,7 @@ def compile_component(
             )
 
         # Create test target
-        with open(inv.target_file(instance_name), "w") as file:
+        with open(inv.target_file(instance_name), "w", encoding="utf-8") as file:
             value_classes = "\n".join([f"- {c.stem}" for c in value_files])
             file.write(
                 dedent(
@@ -104,7 +104,7 @@ def compile_component(
         # Fake Argo CD lib
         # We plug "fake" Argo CD library here because every component relies on it
         # and we don't want to provide it every time when compiling a single component.
-        with open(inv.lib_dir / "argocd.libjsonnet", "w") as file:
+        with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as file:
             file.write(
                 dedent(
                     """
