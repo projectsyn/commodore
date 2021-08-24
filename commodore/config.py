@@ -98,7 +98,7 @@ class Config:
             try:
                 p = P(api_token)
                 if p.is_file():
-                    with open(p) as apitoken:
+                    with open(p, encoding="utf-8") as apitoken:
                         api_token = apitoken.read()
             except OSError as e:
                 # File name too long, assume token is not configured as file

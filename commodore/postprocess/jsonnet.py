@@ -28,7 +28,7 @@ def _try_path(basedir: P, rel: str):
 
     if not full_path.is_file():
         return full_path.name, None
-    with open(full_path) as f:
+    with open(full_path, encoding="utf-8") as f:
         return full_path.name, f.read()
 
 
