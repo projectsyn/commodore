@@ -46,7 +46,7 @@ docs-serve: ## Preview the documentation
 	$(COMMODORE_CMD)
 
 .PHONY: test
-test: commodore_args = -f tests/$(instance).yml --search-paths ./dependencies
+test: commodore_args += -f tests/$(instance).yml
 test: .compile ## Compile the component
 
 .PHONY: clean
