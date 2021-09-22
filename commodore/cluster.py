@@ -61,8 +61,7 @@ class Cluster:
         repo_url = self._tenant.get("gitRepo", {}).get("url", None)
         if repo_url is None:
             raise click.ClickException(
-                " > API did not return a repository URL for tenant '%s'"
-                % self._cluster["tenant"]
+                f" > API did not return a repository URL for tenant '{self._cluster['tenant']}'"
             )
         return repo_url
 
@@ -75,8 +74,7 @@ class Cluster:
         repo_url = self._cluster.get("gitRepo", {}).get("url", None)
         if repo_url is None:
             raise click.ClickException(
-                " > API did not return a repository URL for cluster '%s'"
-                % self._cluster["id"]
+                f" > API did not return a repository URL for cluster '{self._cluster['id']}'"
             )
         return repo_url
 
