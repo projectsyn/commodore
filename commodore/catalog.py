@@ -100,7 +100,21 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
                 click.echo(" > Commiting changes...")
                 git.commit(repo, commit_message, cfg)
                 click.echo(" > Pushing catalog to remote...")
-                repo.remotes.origin.push()
+                try:
+                    pushinfos = repo.remotes.origin.push()
+                except git.GitCommandError as e:
+                    raise click.ClickException(
+                        "Failed to push to the catalog repository: " +
+                        f"Git exited with status code {e.status}"
+                    ) from e
+                for pi in pushinfos:
+                    # Any error has pi.ERROR set in the `flags` bitmask
+                    # We just forward the summary from the pushinfo
+                    summary = pi.summary.strip()
+                    if (pi.flags & pi.ERROR) != 0:
+                        raise click.ClickException(
+                            f"Failed to push to the catalog repository: {summary}"
+                        )
             else:
                 click.echo(" > Skipping commit+push to catalog...")
                 click.echo(" > Use flag --push to commit and push the catalog repo")
