@@ -69,6 +69,49 @@ def clean_catalog(repo):
         rm_tree_contents(repo.working_tree_dir)
 
 
+def _push_catalog(cfg: Config, repo, commit_message):
+    """Push catalog to catalog repo if conditions to allow push are met.
+
+    Conditions to allow pushing are:
+    * Commodore doesn't run in local mode
+    * User has requested pushing with `--push`
+
+    Ask user to confirm push if `--interactive` is specified
+    """
+    if not cfg.local:
+        if cfg.interactive and cfg.push:
+            cfg.push = click.confirm(" > Should the push be done?")
+
+        if cfg.push:
+            click.echo(" > Commiting changes...")
+            git.commit(repo, commit_message, cfg)
+            click.echo(" > Pushing catalog to remote...")
+            try:
+                pushinfos = repo.remotes.origin.push()
+            except git.GitCommandError as e:
+                raise click.ClickException(
+                    "Failed to push to the catalog repository: "
+                    + f"Git exited with status code {e.status}"
+                ) from e
+            for pi in pushinfos:
+                # Any error has pi.ERROR set in the `flags` bitmask
+                # We just forward the summary from the pushinfo
+                summary = pi.summary.strip()
+                if (pi.flags & pi.ERROR) != 0:
+                    raise click.ClickException(
+                        f"Failed to push to the catalog repository: {summary}"
+                    )
+        else:
+            click.echo(" > Skipping commit+push to catalog...")
+            click.echo(" > Use flag --push to commit and push the catalog repo")
+            click.echo(
+                " > Add flag --interactive to show the diff and decide on the push"
+            )
+    else:
+        repo.head.reset(working_tree=False)
+        click.echo(" > Skipping commit+push to catalog in local mode...")
+
+
 def update_catalog(cfg: Config, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
@@ -92,24 +135,7 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
         click.echo(" > Commit message will be")
         click.echo(textwrap.indent(commit_message, "   "))
     if changed:
-        if not cfg.local:
-            if cfg.interactive and cfg.push:
-                cfg.push = click.confirm(" > Should the push be done?")
-
-            if cfg.push:
-                click.echo(" > Commiting changes...")
-                git.commit(repo, commit_message, cfg)
-                click.echo(" > Pushing catalog to remote...")
-                repo.remotes.origin.push()
-            else:
-                click.echo(" > Skipping commit+push to catalog...")
-                click.echo(" > Use flag --push to commit and push the catalog repo")
-                click.echo(
-                    " > Add flag --interactive to show the diff and decide on the push"
-                )
-        else:
-            repo.head.reset(working_tree=False)
-            click.echo(" > Skipping commit+push to catalog in local mode...")
+        _push_catalog(cfg, repo, commit_message)
     else:
         click.echo(" > Skipping commit+push to catalog...")
 
