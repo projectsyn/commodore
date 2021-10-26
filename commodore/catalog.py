@@ -1,12 +1,16 @@
+import difflib
+
 from pathlib import Path as P
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import click
+import yaml
 
 from . import git
 from .helpers import rm_tree_contents, lieutenant_query
 from .cluster import Cluster
-from .config import Config
+from .config import Config, Migration
+from .k8sobject import K8sObject
 
 
 def fetch_customer_catalog(config: Config, cluster: Cluster):
@@ -112,6 +116,64 @@ def _push_catalog(cfg: Config, repo, commit_message):
         click.echo(" > Skipping commit+push to catalog in local mode...")
 
 
+def _ignore_kapitan_029_030_non_semantic(line):
+    """
+    Ignore non-semantic changes in the (already sorted by K8s object) diff between
+    Kapitan 0.29 and 0.30.
+
+    This includes:
+    * Change of "app.kubernetes.io/managed-by: Tiller" to
+      "app.kubernetes.io/managed-by: Helm"
+    * Change of "heritage: Tiller" to "heritage: Helm"
+    * `null` objects not emitted in multi-object YAML documents anymore
+    """
+    line = line.strip()
+    # We don't care about context and metadata lines
+    if not (line.startswith("-") or line.startswith("+")):
+        return True
+    # Ignore changes where we don't emit a null object preceded or followed
+    # by a stream separator anymore
+    if line in ("-null", "----"):
+        return True
+    # Ignore changes which are only about Tiller -> Helm as object manager
+    if line.startswith("-") and (
+        line.endswith("app.kubernetes.io/managed-by: Tiller")
+        or line.endswith("heritage: Tiller")
+    ):
+        return True
+    if line.startswith("+") and (
+        line.endswith("app.kubernetes.io/managed-by: Helm")
+        or line.endswith("heritage: Helm")
+    ):
+        return True
+
+    return False
+
+
+def _kapitan_029_030_difffunc(
+    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
+) -> Tuple[Iterable[str], bool]:
+    before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
+    before_sorted_lines = yaml.dump_all(before_objs).split("\n")
+
+    after_objs = sorted(yaml.safe_load_all(after_text), key=K8sObject)
+    after_sorted_lines = yaml.dump_all(after_objs).split("\n")
+
+    diff = difflib.unified_diff(
+        before_sorted_lines,
+        after_sorted_lines,
+        lineterm="",
+        fromfile=fromfile,
+        tofile=tofile,
+    )
+    diff_lines = list(diff)
+    suppress_diff = all(
+        _ignore_kapitan_029_030_non_semantic(line) for line in diff_lines[2:]
+    )
+
+    return diff_lines, suppress_diff
+
+
 def update_catalog(cfg: Config, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
@@ -122,7 +184,11 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
     for target_name in targets:
         dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
 
-    difftext, changed = git.stage_all(repo)
+    if cfg.migration == Migration.KAP_029_030:
+        difftext, changed = git.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
+    else:
+        difftext, changed = git.stage_all(repo)
+
     if changed:
         indented = textwrap.indent(difftext, "     ")
         message = f" > Changes:\n{indented}"
