@@ -172,7 +172,7 @@ def _verify_commit_message(
 def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
     os.chdir(tmp_path)
     cluster_id = "c-test"
-    expected_components = ["argocd", "metrics-server"]
+    expected_components = ["argocd", "metrics-server", "resource-locker"]
     expected_dirs = [
         tmp_path / "catalog",
         tmp_path / "catalog/manifests",
