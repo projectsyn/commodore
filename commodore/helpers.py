@@ -1,4 +1,5 @@
 import collections
+import itertools
 import json
 import shutil
 import os
@@ -228,3 +229,14 @@ def relsymlink(src: P, dest_dir: P, dest_name: Optional[str] = None):
     if link_dst.exists():
         os.remove(link_dst)
     os.symlink(link_src, link_dst)
+
+
+def sliding_window(iterable, n):
+    # sliding_window('ABCDEFG', 4) -> ABCD BCDE CDEF DEFG
+    it = iter(iterable)
+    window = collections.deque(itertools.islice(it, n), maxlen=n)
+    if len(window) == n:
+        yield tuple(window)
+    for x in it:
+        window.append(x)
+        yield tuple(window)
