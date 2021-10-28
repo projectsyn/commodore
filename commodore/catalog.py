@@ -7,7 +7,7 @@ import click
 import yaml
 
 from . import git
-from .helpers import rm_tree_contents, lieutenant_query
+from .helpers import rm_tree_contents, lieutenant_query, sliding_window
 from .cluster import Cluster
 from .config import Config, Migration
 from .k8sobject import K8sObject
@@ -116,43 +116,55 @@ def _push_catalog(cfg: Config, repo, commit_message):
         click.echo(" > Skipping commit+push to catalog in local mode...")
 
 
-def _ignore_kapitan_029_030_non_semantic(line):
+def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
     """
-    Ignore non-semantic changes in the (already sorted by K8s object) diff between
-    Kapitan 0.29 and 0.30.
+    Returns True if a pair of lines of a diff which is already sorted
+    by K8s object indicates that this diff contains a semantic change
+    when migrating from  Kapitan 0.29 to 0.30.
 
-    This includes:
+    The function expects pairs of diff lines as input.
+
+    The function treats the following diffs as non-semantic:
     * Change of "app.kubernetes.io/managed-by: Tiller" to
       "app.kubernetes.io/managed-by: Helm"
     * Change of "heritage: Tiller" to "heritage: Helm"
     * `null` objects not emitted in multi-object YAML documents anymore
     """
-    line = line.strip()
-    # We don't care about context and metadata lines
-    if not (line.startswith("-") or line.startswith("+")):
-        return True
+    line_a, line_b = map(str.rstrip, win)
+
+    # Ignore context and metadata lines:
+    if (
+        line_a.startswith(" ")
+        or line_b.startswith(" ")
+        or line_a.startswith("@@")
+        or line_b.startswith("@@")
+    ):
+        return False
+
     # Ignore changes where we don't emit a null object preceded or followed
     # by a stream separator anymore
-    if line in ("-null", "----"):
-        return True
-    # Ignore changes which are only about Tiller -> Helm as object manager
-    if line.startswith("-") and (
-        line.endswith("app.kubernetes.io/managed-by: Tiller")
-        or line.endswith("heritage: Tiller")
-    ):
-        return True
-    if line.startswith("+") and (
-        line.endswith("app.kubernetes.io/managed-by: Helm")
-        or line.endswith("heritage: Helm")
-    ):
-        return True
+    if line_a == "-null" and line_b == "----":
+        return False
+    if line_b == "-null" and line_a == "----":
+        return False
 
-    return False
+    # Ignore changes which are only about Tiller -> Helm as object manager
+    if line_a.startswith("-") and line_b.startswith("+"):
+        if line_a.endswith("app.kubernetes.io/managed-by: Tiller") and line_b.endswith(
+            "app.kubernetes.io/managed-by: Helm"
+        ):
+            return False
+        if line_a.endswith("heritage: Tiller") and line_b.endswith("heritage: Helm"):
+            return False
+
+    # Don't ignore any other diffs
+    return True
 
 
 def _kapitan_029_030_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> Tuple[Iterable[str], bool]:
+
     before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
     before_sorted_lines = yaml.dump_all(before_objs).split("\n")
 
@@ -167,8 +179,9 @@ def _kapitan_029_030_difffunc(
         tofile=tofile,
     )
     diff_lines = list(diff)
-    suppress_diff = all(
-        _ignore_kapitan_029_030_non_semantic(line) for line in diff_lines[2:]
+    suppress_diff = not any(
+        _is_semantic_diff_kapitan_029_030(win)
+        for win in sliding_window(diff_lines[2:], 2)
     )
 
     return diff_lines, suppress_diff
