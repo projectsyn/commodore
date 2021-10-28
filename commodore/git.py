@@ -148,37 +148,34 @@ def _default_difffunc(
     return diff_lines, False
 
 
-def _process_diffs(
-    change_type: str, changes: Iterable, diff_func: DiffFunc
-) -> Iterable[str]:
+def _process_diff(change_type: str, change, diff_func: DiffFunc) -> Iterable[str]:
     difftext = []
-    for c in changes:
-        # Because we're diffing the staged changes, the diff objects
-        # are backwards, and "added" files are actually being deleted
-        # and vice versa for "deleted" files.
-        if change_type == "A":
-            difftext.append(click.style(f"Deleted file {c.b_path}", fg="red"))
-        elif change_type == "D":
-            difftext.append(click.style(f"Added file {c.b_path}", fg="green"))
-        elif change_type == "R":
-            difftext.append(
-                click.style(f"Renamed file {c.b_path} => {c.a_path}", fg="yellow")
-            )
-        else:
-            # Other changes should produce a usable diff
-            # The diff objects are backwards, so use b_blob as before
-            # and a_blob as after.
-            before = c.b_blob.data_stream.read().decode("utf-8")
-            after = c.a_blob.data_stream.read().decode("utf-8")
-            diff_lines, suppress_diff = diff_func(
-                before, after, fromfile=c.b_path, tofile=c.a_path
-            )
-            if not suppress_diff:
-                if c.renamed_file:
-                    # Just compute similarity ratio for renamed files
-                    # similar to git's diffing
-                    difftext.append("\n".join(_compute_similarity(c)).strip())
-                    continue
+    # Because we're diffing the staged changes, the diff objects
+    # are backwards, and "added" files are actually being deleted
+    # and vice versa for "deleted" files.
+    if change_type == "A":
+        difftext.append(click.style(f"Deleted file {change.b_path}", fg="red"))
+    elif change_type == "D":
+        difftext.append(click.style(f"Added file {change.b_path}", fg="green"))
+    elif change_type == "R":
+        difftext.append(
+            click.style(f"Renamed file {change.b_path} => {change.a_path}", fg="yellow")
+        )
+    else:
+        # Other changes should produce a usable diff
+        # The diff objects are backwards, so use b_blob as before
+        # and a_blob as after.
+        before = change.b_blob.data_stream.read().decode("utf-8")
+        after = change.a_blob.data_stream.read().decode("utf-8")
+        diff_lines, suppress_diff = diff_func(
+            before, after, fromfile=change.b_path, tofile=change.a_path
+        )
+        if not suppress_diff:
+            if change.renamed_file:
+                # Just compute similarity ratio for renamed files
+                # similar to git's diffing
+                difftext.append("\n".join(_compute_similarity(change)).strip())
+            else:
                 diff_lines = [_colorize_diff(line) for line in diff_lines]
                 difftext.append("\n".join(diff_lines).strip())
 
@@ -212,8 +209,8 @@ def stage_all(repo, diff_func: DiffFunc = _default_difffunc):
     if diff:
         changed = True
         for ct in diff.change_type:
-            ct_difftext = _process_diffs(ct, diff.iter_change_type(ct), diff_func)
-            difftext.extend(ct_difftext)
+            for c in diff.iter_change_type(ct):
+                difftext.extend(_process_diff(ct, c, diff_func))
 
     return "\n".join(difftext), changed
 
