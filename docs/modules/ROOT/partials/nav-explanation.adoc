@@ -1,3 +1,3 @@
-* xref:commodore:ROOT:local-mode.adoc[Local Mode]
-* xref:commodore:ROOT:dependencies.adoc[Manage Dependencies]
-* xref:commodore:ROOT:running-commodore.adoc[Running Commodore]
+* xref:commodore:ROOT:explanation/local-mode.adoc[Local Mode]
+* xref:commodore:ROOT:explanation/dependencies.adoc[Manage Dependencies]
+* xref:commodore:ROOT:explanation/running-commodore.adoc[Running Commodore]
