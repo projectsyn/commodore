@@ -1,4 +1,5 @@
 import difflib
+import time
 
 from pathlib import Path as P
 from typing import Iterable, Tuple
@@ -197,14 +198,19 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
     for target_name in targets:
         dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
 
+    start = time.time()
     if cfg.migration == Migration.KAP_029_030:
+        click.echo(" > Smart diffing started... (this can take a while)")
         difftext, changed = git.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
     else:
         difftext, changed = git.stage_all(repo)
+    elapsed = time.time() - start
 
     if changed:
         indented = textwrap.indent(difftext, "     ")
         message = f" > Changes:\n{indented}"
+        if cfg.migration:
+            message += f"\n > Smart diffing took {elapsed:.2f}s"
     else:
         message = " > No changes."
     click.echo(message)
