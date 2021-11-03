@@ -144,9 +144,9 @@ def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
 
     # Ignore changes where we don't emit a null object preceded or followed
     # by a stream separator anymore
-    if line_a == "-null" and line_b == "----":
+    if line_a == "-null" and line_b in ("----", "---- null"):
         return False
-    if line_b == "-null" and line_a == "----":
+    if line_a == "---- null" and line_b == "----":
         return False
 
     # Ignore changes which are only about Tiller -> Helm as object manager
