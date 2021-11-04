@@ -6,6 +6,9 @@ on:
     - master
     tags:
     - v*
+  pull_request:
+    branches:
+    - master
 
 jobs:
   build-and-publish:
@@ -16,30 +19,30 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Set up python
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
-      - name: install poetry
-        run: pip install poetry
-      - name: install dependencies
-        run: poetry install
-      - name: install go
+          python-version: '3.9.6'
+      - name: Setup poetry environment
         run: |
-          sudo apt update
-          sudo apt install golang-1.14-go -y
-      - name: build helm bindings
-        run: |
-          bash $(poetry env info -p)/lib/python3.8/site-packages/kapitan/inputs/helm/build.sh
-          bash $(poetry env info -p)/lib/python3.8/site-packages/kapitan/dependency_manager/helm/build.sh
-          mkdir -p commodore/helm_bindings/inputs
-          mkdir -p commodore/helm_bindings/dependency_manager
-          cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/inputs/helm/{helm_binding.py,libtemplate.so} commodore/helm_bindings/inputs
-          cp $(poetry env info -p)/lib/python3.8/site-packages/kapitan/dependency_manager/helm/{helm_fetch_binding.py,helm_fetch.so} commodore/helm_bindings/dependency_manager
-      - name: inject version
+          pip install poetry
+          poetry install
+      - name: Inject package versions to action env
         run: make inject-version
-      - name: build commodore
+      - name: Set Python package version for release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: poetry version "${PYVERSION}"
+      - name: Set Python package version
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        run: |
+          poetry version "${PYVERSION}.dev${GITHUB_RUN_NUMBER}"
+      - name: Build Python package
         run: poetry build
-      - name: publish to pypi
+      - name: Publish to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
         run: poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+      - name: Publish to TestPyPI
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        run: |
+          poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          poetry publish -r test-pypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}

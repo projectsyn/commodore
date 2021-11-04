@@ -42,7 +42,7 @@ include tox.mk
 BINARY_NAME ?= commodore
 
 GITVERSION ?= $(shell git describe --tags --always --match=v* --dirty=+dirty || (echo "command failed $?"; exit 1))
-PYVERSION ?= $(shell git describe --tags --always --abbrev=0 --match=v* || (echo "command failed $?"; exit 1))
+PYVERSION ?= $(shell git describe --tags --always --match=v* | cut -d- -f1,2 || (echo "command failed $?"; exit 1))
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):test
 
@@ -54,9 +54,16 @@ docker:
 		-t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
 
+.PHONY: inject-version
 inject-version:
-	sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
-	poetry version "${PYVERSION}"
+	@if [ -n "${CI}" ]; then\
+		echo "In CI";\
+		echo "GITVERSION=${GITVERSION}" >> "${GITHUB_ENV}";\
+		echo "PYVERSION=${PYVERSION}" >> "${GITHUB_ENV}";\
+	else\
+		sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py;\
+		poetry version "${PYVERSION}";\
+	fi
 
 .PHONY: test_integration
 test_integration:
