@@ -144,5 +144,11 @@ This command doesn't have any command line options.
 *--copyright* TEXT::
   The copyright holder added to the license file. Defaults to "VSHN AG <info@vshn.ch>."
 
+*--golden-tests / --no-golden-tests*::
+  Enable golden tests for the component. Defaults to _yes_.
+
+*--matrix-tests / --no-matrix-tests*::
+  Enable test matrix for the component compile and golden tests. Defaults to _yes_.
+
 *--help*::
   Show component new usage and options then exit.
