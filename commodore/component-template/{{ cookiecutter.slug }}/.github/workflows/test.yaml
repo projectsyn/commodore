@@ -38,6 +38,7 @@ jobs:
           path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
       - name: Compile component
         run: make test
+{%- if cookiecutter.add_golden == "y" %}
   golden:
     runs-on: ubuntu-latest
     defaults:
@@ -49,3 +50,4 @@ jobs:
           path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
       - name: Golden diff
         run: make golden-diff
+{%- endif %}

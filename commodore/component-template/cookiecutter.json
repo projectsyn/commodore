@@ -5,6 +5,7 @@
 
   "add_lib": "n",
   "add_pp": "n",
+  "add_golden": "y",
 
   "copyright_holder": "VSHN AG <info@vshn.ch>",
   "copyright_year": "1950",
