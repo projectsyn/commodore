@@ -1,7 +1,18 @@
-_archive/
-_public/
+# Commodore
 .cache/
 helmcharts/
 manifests/
 vendor/
 jsonnetfile.lock.json
+crds/
+compiled/
+
+# Editors
+.vscode/
+.idea/
+
+# Antora
+_archive/
+_public/
+
+# Additional entries
