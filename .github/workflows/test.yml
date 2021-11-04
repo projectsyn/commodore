@@ -35,10 +35,9 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.6'
           - '3.7'
           - '3.8'
-          - '3.9'
+          - '3.9.6' # XXX: Regression in 3.9.7 with gitpython-3.1.20
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -54,17 +53,18 @@ jobs:
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
+    - name: Extract Python minor version from matrix python-version
+      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - name: Run tests on Python ${{ matrix.python-version }}
-      run: make test_py${{ matrix.python-version }}
+      run: make bench_py${PYVER}
   benchs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - '3.6'
           - '3.7'
           - '3.8'
-          - '3.9'
+          - '3.9.6' # XXX: Regression in 3.9.7 with gitpython-3.1.20
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -80,21 +80,22 @@ jobs:
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
+    - name: Extract Python minor version from matrix python-version
+      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - name: Run benchmarks on Python ${{ matrix.python-version }}
-      run: make bench_py${{ matrix.python-version }}
+      run: make bench_py${PYVER}
   integration:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.9'
+        python-version: '3.9.6' # XXX: Regression in 3.9.7 with gitpython-3.1.20
     - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
       run: |
         pip install poetry
         poetry env use python3.9
         poetry install
-        poetry run build_kapitan_helm_binding
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \

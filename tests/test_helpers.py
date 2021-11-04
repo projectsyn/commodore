@@ -134,3 +134,33 @@ def test_yaml_dump(tmp_path: Path, input, expected):
 )
 def test_yaml_dump_all(tmp_path: Path, input, expected):
     _test_yaml_dump_fun(helpers.yaml_dump_all, tmp_path, input, expected)
+
+
+@pytest.mark.parametrize(
+    "sequence,winsize,expected",
+    [
+        (
+            "abcd",
+            1,
+            [("a",), ("b",), ("c",), ("d",)],
+        ),
+        (
+            "abcd",
+            2,
+            [("a", "b"), ("b", "c"), ("c", "d")],
+        ),
+        (
+            "abcd",
+            4,
+            [("a", "b", "c", "d")],
+        ),
+        (
+            ["aaa", "bbb", "ccc", "ddd"],
+            2,
+            [("aaa", "bbb"), ("bbb", "ccc"), ("ccc", "ddd")],
+        ),
+    ],
+)
+def test_sliding_window(sequence, winsize, expected):
+    windows = list(helpers.sliding_window(sequence, winsize))
+    assert windows == expected

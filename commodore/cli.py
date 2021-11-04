@@ -5,7 +5,7 @@ import click
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
 from .catalog import catalog_list
-from .config import Config
+from .config import Config, Migration
 from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
@@ -130,6 +130,18 @@ def clean(config: Config, verbose):
     default=True,
     help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. By default dependencies are fetched.",
 )
+@click.option(
+    "-m",
+    "--migration",
+    help=(
+        "Specify a migration that you expect to happen for the cluster catalog. "
+        + "Currently Commodore only knows the Kapitan 0.29 to 0.30 migration. "
+        + "When the Kapitan 0.29 to 0.30 migration is selected, Commodore will suppress "
+        + "noise (changing managed-by labels, and reordered objects) caused by the "
+        + "migration in the diff output."
+    ),
+    type=click.Choice([m.value for m in Migration], case_sensitive=False),
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -147,6 +159,7 @@ def compile_catalog(
     global_repo_revision_override,
     tenant_repo_revision_override,
     fetch_dependencies,
+    migration,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -158,6 +171,7 @@ def compile_catalog(
     config.usermail = git_author_email
     config.global_repo_revision_override = global_repo_revision_override
     config.tenant_repo_revision_override = tenant_repo_revision_override
+    config.migration = migration
     if config.push and (
         config.global_repo_revision_override or config.tenant_repo_revision_override
     ):

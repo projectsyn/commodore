@@ -29,7 +29,7 @@ using `helm template`.
 
 ## System Requirements
 
-* Python 3.6+, with `python3-dev` and `python3-venv` updated
+* Python 3.7+, with `python3-dev` and `python3-venv` updated
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
 ## Getting started
@@ -42,10 +42,6 @@ using `helm template`.
 1. Install commodore from PyPI
     ```console
     pip install syn-commodore
-    ```
-1. Copy helm bindings to kapitan directory
-    ```console
-    copy_helm_bindings
     ```
 1. <a name="getting_started_jsonnet"></a>Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 
@@ -90,15 +86,6 @@ using `helm template`.
     ```console
     poetry install
     ```
-
-    Build the Kapitan helm binding:
-    * Linux:
-
-       ```console
-       poetry run build_kapitan_helm_binding
-       ```
-
-    * macOS: It's currently not supported to run Commodore via Poetry on macOS due to various issues
 
     Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
 

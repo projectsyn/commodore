@@ -22,10 +22,7 @@ lint_black:
 
 lint: lint_flake8 lint_pylint lint_bandit lint_mypy lint_black
 
-.PHONY: test_py3.6 test_py3.7 test_py3.8 test_py3.9
-
-test_py3.6:
-	$(TOX_COMMAND) -e py36
+.PHONY: test_py3.7 test_py3.8 test_py3.9
 
 test_py3.7:
 	$(TOX_COMMAND) -e py37
@@ -36,11 +33,7 @@ test_py3.8:
 test_py3.9:
 	$(TOX_COMMAND) -e py39
 
-
-.PHONY: bench_py3.6 bench_py3.7 bench_py3.8 bench_py3.9
-
-bench_py3.6:
-	$(TOX_COMMAND) -e py36-bench
+.PHONY: bench_py3.7 bench_py3.8 bench_py3.9
 
 bench_py3.7:
 	$(TOX_COMMAND) -e py37-bench

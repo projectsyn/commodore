@@ -14,14 +14,11 @@ include = [
     "commodore/component-template/**/*",
     "commodore/lib/commodore.libjsonnet",
     "commodore/filters/helm_namespace.jsonnet",
-    "commodore/helm_bindings/**/*"
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
-# Pin Kapitan to 0.29.4, since 0.29.5 has regressions in reclass which break our usage of the
-# `applications` array.
-kapitan = "=0.29.4"
+python = "^3.7"
+kapitan = {version = "0.30.0rc0", allow-prereleases = true}
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
@@ -40,11 +37,9 @@ pytest-benchmark = "^3.2.3"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
-build_kapitan_helm_binding = 'tools.tools:build_kapitan_helm_binding'
 autopep = 'tools.tools:autopep'
 local_reveal = 'tools.tools:reveal'
 compile = 'tools.tools:compile'
-copy_helm_bindings = 'commodore.copy_helm_bindings:main'
 
 [build-system]
 requires = ["poetry>=0.12"]

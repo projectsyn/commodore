@@ -1,12 +1,17 @@
+import difflib
+import time
+
 from pathlib import Path as P
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import click
+import yaml
 
 from . import git
-from .helpers import rm_tree_contents, lieutenant_query
+from .helpers import rm_tree_contents, lieutenant_query, sliding_window
 from .cluster import Cluster
-from .config import Config
+from .config import Config, Migration
+from .k8sobject import K8sObject
 
 
 def fetch_customer_catalog(config: Config, cluster: Cluster):
@@ -112,6 +117,77 @@ def _push_catalog(cfg: Config, repo, commit_message):
         click.echo(" > Skipping commit+push to catalog in local mode...")
 
 
+def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
+    """
+    Returns True if a pair of lines of a diff which is already sorted
+    by K8s object indicates that this diff contains a semantic change
+    when migrating from  Kapitan 0.29 to 0.30.
+
+    The function expects pairs of diff lines as input.
+
+    The function treats the following diffs as non-semantic:
+    * Change of "app.kubernetes.io/managed-by: Tiller" to
+      "app.kubernetes.io/managed-by: Helm"
+    * Change of "heritage: Tiller" to "heritage: Helm"
+    * `null` objects not emitted in multi-object YAML documents anymore
+    """
+    line_a, line_b = map(str.rstrip, win)
+
+    # Ignore context and metadata lines:
+    if (
+        line_a.startswith(" ")
+        or line_b.startswith(" ")
+        or line_a.startswith("@@")
+        or line_b.startswith("@@")
+    ):
+        return False
+
+    # Ignore changes where we don't emit a null object preceded or followed
+    # by a stream separator anymore
+    if line_a == "-null" and line_b in ("----", "---- null"):
+        return False
+    if line_a == "---- null" and line_b == "----":
+        return False
+
+    # Ignore changes which are only about Tiller -> Helm as object manager
+    if line_a.startswith("-") and line_b.startswith("+"):
+        if line_a.endswith("app.kubernetes.io/managed-by: Tiller") and line_b.endswith(
+            "app.kubernetes.io/managed-by: Helm"
+        ):
+            return False
+        if line_a.endswith("heritage: Tiller") and line_b.endswith("heritage: Helm"):
+            return False
+
+    # Don't ignore any other diffs
+    return True
+
+
+def _kapitan_029_030_difffunc(
+    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
+) -> Tuple[Iterable[str], bool]:
+
+    before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
+    before_sorted_lines = yaml.dump_all(before_objs).split("\n")
+
+    after_objs = sorted(yaml.safe_load_all(after_text), key=K8sObject)
+    after_sorted_lines = yaml.dump_all(after_objs).split("\n")
+
+    diff = difflib.unified_diff(
+        before_sorted_lines,
+        after_sorted_lines,
+        lineterm="",
+        fromfile=fromfile,
+        tofile=tofile,
+    )
+    diff_lines = list(diff)
+    suppress_diff = not any(
+        _is_semantic_diff_kapitan_029_030(win)
+        for win in sliding_window(diff_lines[2:], 2)
+    )
+
+    return diff_lines, suppress_diff
+
+
 def update_catalog(cfg: Config, targets: Iterable[str], repo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
@@ -122,10 +198,19 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
     for target_name in targets:
         dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
 
-    difftext, changed = git.stage_all(repo)
+    start = time.time()
+    if cfg.migration == Migration.KAP_029_030:
+        click.echo(" > Smart diffing started... (this can take a while)")
+        difftext, changed = git.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
+    else:
+        difftext, changed = git.stage_all(repo)
+    elapsed = time.time() - start
+
     if changed:
         indented = textwrap.indent(difftext, "     ")
         message = f" > Changes:\n{indented}"
+        if cfg.migration:
+            message += f"\n > Smart diffing took {elapsed:.2f}s"
     else:
         message = " > No changes."
     click.echo(message)

@@ -1,13 +1,18 @@
 import textwrap
 
+from enum import Enum
 from pathlib import Path as P
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 from git import Repo
 
 from commodore.component import Component, component_parameters_key
 from .inventory import Inventory
+
+
+class Migration(Enum):
+    KAP_029_030 = "kapitan-0.29-to-0.30"
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -17,6 +22,7 @@ class Config:
     _config_repos: Dict[str, Repo]
     _component_aliases: Dict[str, str]
     _deprecation_notices: List[str]
+    _migration: Optional[Migration]
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -46,6 +52,7 @@ class Config:
         self._deprecation_notices = []
         self._global_repo_revision_override = None
         self._tenant_repo_revision_override = None
+        self._migration = None
 
     @property
     def verbose(self):
@@ -123,6 +130,15 @@ class Config:
     @tenant_repo_revision_override.setter
     def tenant_repo_revision_override(self, rev):
         self._tenant_repo_revision_override = rev
+
+    @property
+    def migration(self):
+        return self._migration
+
+    @migration.setter
+    def migration(self, migration):
+        if migration and migration != "":
+            self._migration = Migration(migration)
 
     @property
     def inventory(self):
