@@ -29,6 +29,12 @@ jobs:
           args: 'check'
   test:
     runs-on: ubuntu-latest
+{%- if cookiecutter.add_matrix == "y" %}
+    strategy:
+      matrix:
+        instance:
+          - defaults
+{%- endif %}
     defaults:
       run:
         working-directory: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
@@ -37,10 +43,20 @@ jobs:
         with:
           path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
       - name: Compile component
+{%-  if cookiecutter.add_matrix == "y" %}
+        run: make test -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- else %}
         run: make test
+{%- endif %}
 {%- if cookiecutter.add_golden == "y" %}
   golden:
     runs-on: ubuntu-latest
+{%- if cookiecutter.add_matrix == "y" %}
+    strategy:
+      matrix:
+        instance:
+          - defaults
+{%- endif %}
     defaults:
       run:
         working-directory: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
@@ -49,5 +65,9 @@ jobs:
         with:
           path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
       - name: Golden diff
+{%- if cookiecutter.add_matrix == "y" %}
+        run: make golden-diff -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- else %}
         run: make golden-diff
+{%- endif %}
 {%- endif %}

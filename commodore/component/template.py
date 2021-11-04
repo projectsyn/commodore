@@ -24,6 +24,7 @@ class ComponentTemplater:
     copyright_holder: str
     today: datetime.date
     golden_tests: bool
+    matrix_tests: bool
 
     def __init__(self, config, slug):
         self.config = config
@@ -61,6 +62,7 @@ class ComponentTemplater:
             "add_lib": "y" if self.library else "n",
             "add_pp": "y" if self.post_process else "n",
             "add_golden": "y" if self.golden_tests else "n",
+            "add_matrix": "y" if self.matrix_tests else "n",
             "copyright_holder": self.copyright_holder,
             "copyright_year": self.today.strftime("%Y"),
             "github_owner": self.github_owner,
