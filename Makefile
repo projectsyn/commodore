@@ -42,7 +42,7 @@ include tox.mk
 BINARY_NAME ?= commodore
 
 GITVERSION ?= $(shell git describe --tags --always --match=v* --dirty=+dirty || (echo "command failed $?"; exit 1))
-PYVERSION ?= $(shell git describe --tags --always --abbrev=0 --match=v* || (echo "command failed $?"; exit 1))
+PYVERSION ?= $(shell git describe --tags --always --match=v* | cut -d- -f1,2 || (echo "command failed $?"; exit 1))
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):test
 
