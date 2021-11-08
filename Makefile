@@ -58,12 +58,12 @@ docker:
 inject-version:
 	@if [ -n "${CI}" ]; then\
 		echo "In CI";\
-		echo "GITVERSION=${GITVERSION}" >> "${GITHUB_ENV}";\
 		echo "PYVERSION=${PYVERSION}" >> "${GITHUB_ENV}";\
 	else\
-		sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py;\
 		poetry version "${PYVERSION}";\
 	fi
+	# Always inject Git version
+	sed -i "s/^__git_version__.*$$/__git_version__ = '${GITVERSION}'/" commodore/__init__.py
 
 .PHONY: test_integration
 test_integration:
