@@ -247,11 +247,32 @@ def component(config: Config, verbose):
     show_default=True,
     help="The copyright holder added to the license file.",
 )
+@click.option(
+    "--golden-tests/--no-golden-tests",
+    default=True,
+    show_default=True,
+    help="Add golden tests to the component.",
+)
+@click.option(
+    "--matrix-tests/--no-matrix-tests",
+    default=True,
+    show_default=True,
+    help="Enable test matrix for compile/golden tests.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_new(
-    config: Config, slug, name, lib, pp, owner, copyright_holder, verbose
+    config: Config,
+    slug,
+    name,
+    lib,
+    pp,
+    owner,
+    copyright_holder,
+    golden_tests,
+    matrix_tests,
+    verbose,
 ):
     config.update_verbosity(verbose)
     f = ComponentTemplater(config, slug)
@@ -260,6 +281,8 @@ def component_new(
     f.post_process = pp
     f.github_owner = owner
     f.copyright_holder = copyright_holder
+    f.golden_tests = golden_tests
+    f.matrix_tests = matrix_tests
     f.create()
 
 

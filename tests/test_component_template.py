@@ -11,7 +11,22 @@ from git import Repo
 from test_component import setup_directory
 
 
-def test_run_component_new_command(tmp_path: P):
+@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
+@pytest.mark.parametrize(
+    "pp",
+    ["--no-pp", "--pp"],
+)
+@pytest.mark.parametrize(
+    "golden",
+    ["--no-golden-tests", "--golden-tests"],
+)
+@pytest.mark.parametrize(
+    "matrix",
+    ["--no-matrix-tests", "--matrix-tests"],
+)
+def test_run_component_new_command(
+    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
+):
     """
     Run the component new command
     """
@@ -20,17 +35,17 @@ def test_run_component_new_command(tmp_path: P):
 
     component_name = "test-component"
     exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} --lib --pp",
+        f"commodore -d '{tmp_path}' -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
         shell=True,
     )
     assert exit_status == 0
-    for file in [
+
+    expected_files = [
         P("README.md"),
         P("renovate.json"),
         P("class", f"{component_name}.yml"),
         P("component", "main.jsonnet"),
         P("component", "app.jsonnet"),
-        P("lib", f"{component_name}.libsonnet"),
         P("docs", "modules", "ROOT", "pages", "references", "parameters.adoc"),
         P("docs", "modules", "ROOT", "pages", "index.adoc"),
         P(".github", "changelog-configuration.json"),
@@ -40,7 +55,23 @@ def test_run_component_new_command(tmp_path: P):
         P(".github", "ISSUE_TEMPLATE", "01_bug_report.md"),
         P(".github", "ISSUE_TEMPLATE", "02_feature_request.md"),
         P(".github", "ISSUE_TEMPLATE", "config.yml"),
-    ]:
+        P(".sync.yml"),
+        P("tests", "defaults.yml"),
+    ]
+    if lib == "--lib":
+        expected_files.append(P("lib", f"{component_name}.libsonnet"))
+    if golden == "--golden":
+        expected_files.append(
+            P(
+                "tests",
+                "golden",
+                "defaults",
+                component_name,
+                "apps",
+                f"{component_name}.yaml",
+            )
+        )
+    for file in expected_files:
         assert (tmp_path / "dependencies" / component_name / file).exists()
     # Check that there are no uncommited files in the component repo
     repo = Repo(tmp_path / "dependencies" / component_name)
@@ -54,10 +85,42 @@ def test_run_component_new_command(tmp_path: P):
         assert "parameters" in class_contents
         params = class_contents["parameters"]
         assert "kapitan" in params
-        assert "commodore" in params
-        assert "postprocess" in params["commodore"]
-        assert "filters" in params["commodore"]["postprocess"]
-        assert isinstance(params["commodore"]["postprocess"]["filters"], list)
+        if pp == "--pp":
+            assert "commodore" in params
+            assert "postprocess" in params["commodore"]
+            assert "filters" in params["commodore"]["postprocess"]
+            assert isinstance(params["commodore"]["postprocess"]["filters"], list)
+
+    has_golden = golden == "--golden-tests"
+    has_matrix = matrix == "--matrix-tests"
+    with open(
+        tmp_path
+        / "dependencies"
+        / component_name
+        / ".github"
+        / "workflows"
+        / "test.yaml"
+    ) as ght:
+        ghtest = yaml.safe_load(ght)
+        assert ghtest["env"] == {"COMPONENT_NAME": component_name}
+        assert ("strategy" in ghtest["jobs"]["test"]) == has_matrix
+        run_step = ghtest["jobs"]["test"]["steps"][1]
+        if has_matrix:
+            assert run_step["run"] == "make test -e instance=${{ matrix.instance }}"
+        else:
+            assert run_step["run"] == "make test"
+
+        if has_golden:
+            assert "golden" in ghtest["jobs"]
+            assert ("strategy" in ghtest["jobs"]["golden"]) == has_matrix
+            run_step = ghtest["jobs"]["golden"]["steps"][1]
+            if has_matrix:
+                assert (
+                    run_step["run"]
+                    == "make golden-diff -e instance=${{ matrix.instance }}"
+                )
+            else:
+                assert run_step["run"] == "make golden-diff"
 
 
 def test_run_component_new_command_with_name(tmp_path: P):
@@ -156,16 +219,22 @@ def test_deleting_inexistant_component(tmp_path: P):
     assert exit_status == 2
 
 
+@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
 @pytest.mark.parametrize(
-    "extra_args",
-    [
-        "",
-        "--lib",
-        "--pp",
-        "--lib --pp",
-    ],
+    "pp",
+    ["--no-pp", "--pp"],
 )
-def test_check_component_template(tmp_path: P, extra_args: str):
+@pytest.mark.parametrize(
+    "golden",
+    ["--no-golden-tests", "--golden-tests"],
+)
+@pytest.mark.parametrize(
+    "matrix",
+    ["--no-matrix-tests", "--matrix-tests"],
+)
+def test_check_component_template(
+    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
+):
     """
     Run integrated lints in freshly created component
     """
@@ -174,7 +243,7 @@ def test_check_component_template(tmp_path: P, extra_args: str):
 
     component_name = "test-component"
     exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new {component_name} {extra_args}",
+        f"commodore -d {tmp_path} -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
         shell=True,
     )
     assert exit_status == 0
@@ -182,6 +251,28 @@ def test_check_component_template(tmp_path: P, extra_args: str):
     # Call `make lint` in component directory
     exit_status = call(
         "make lint",
+        shell=True,
+        cwd=tmp_path / "dependencies" / component_name,
+    )
+    assert exit_status == 0
+
+
+def test_check_golden_diff(tmp_path: P):
+    """
+    Verify that `make golden-diff` passes for a component which has golden tests enabled
+    """
+    setup_directory(tmp_path)
+
+    component_name = "test-component"
+    exit_status = call(
+        f"commodore -d {tmp_path} -vvv component new {component_name}",
+        shell=True,
+    )
+    assert exit_status == 0
+
+    # Call `make lint` in component directory
+    exit_status = call(
+        "make golden-diff",
         shell=True,
         cwd=tmp_path / "dependencies" / component_name,
     )

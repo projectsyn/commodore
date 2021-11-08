@@ -1,7 +1,20 @@
 :global:
   componentName: {{ cookiecutter.name }}
   githubUrl: {{ cookiecutter.github_url }}
+  feature_goldenTests: true
 
 docs/antora.yml:
   name: {{ cookiecutter.slug }}
   title: {{ cookiecutter.name }}
+{% if cookiecutter.add_matrix == "y" -%}
+
+.github/workflows/test.yaml:
+  test_makeTarget: test -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- if cookiecutter.add_golden == "y" %}
+  goldenTest_makeTarget: golden-diff -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- endif %}
+  matrix:
+    key: instance
+    entries:
+      - defaults
+{% endif -%}

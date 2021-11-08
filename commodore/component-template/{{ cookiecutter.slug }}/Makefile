@@ -49,6 +49,20 @@ docs-serve: ## Preview the documentation
 test: commodore_args += -f tests/$(instance).yml
 test: .compile ## Compile the component
 
+{%- if cookiecutter.add_golden == "y" %}
+.PHONY: gen-golden
+gen-golden: commodore_args += -f tests/$(instance).yml
+gen-golden: .compile ## Update the reference version for target `golden-diff`.
+	@rm -rf tests/golden/$(instance)
+	@mkdir -p tests/golden/$(instance)
+	@cp -R compiled/. tests/golden/$(instance)/.
+
+.PHONY: golden-diff
+golden-diff: commodore_args += -f tests/$(instance).yml
+golden-diff: .compile ## Diff compile output against the reference version. Review output and run `make gen-golden golden-diff` if this target fails.
+	@git diff --exit-code --minimal --no-index -- tests/golden/$(instance) compiled/
+{%- endif %}
+
 .PHONY: clean
 clean: ## Clean the project
 	rm -rf compiled dependencies vendor helmcharts jsonnetfile*.json || true

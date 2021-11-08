@@ -4,6 +4,9 @@ on:
     branches:
       - master
 
+env:
+  COMPONENT_NAME: {{ cookiecutter.slug }}
+
 jobs:
   linting:
     runs-on: ubuntu-latest
@@ -24,3 +27,47 @@ jobs:
       - uses: snow-actions/eclint@v1.0.1
         with:
           args: 'check'
+  test:
+    runs-on: ubuntu-latest
+{%- if cookiecutter.add_matrix == "y" %}
+    strategy:
+      matrix:
+        instance:
+          - defaults
+{%- endif %}
+    defaults:
+      run:
+        working-directory: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
+      - name: Compile component
+{%-  if cookiecutter.add_matrix == "y" %}
+        run: make test -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- else %}
+        run: make test
+{%- endif %}
+{%- if cookiecutter.add_golden == "y" %}
+  golden:
+    runs-on: ubuntu-latest
+{%- if cookiecutter.add_matrix == "y" %}
+    strategy:
+      matrix:
+        instance:
+          - defaults
+{%- endif %}
+    defaults:
+      run:
+        working-directory: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: {% raw %}${{ env.COMPONENT_NAME }}{% endraw %}
+      - name: Golden diff
+{%- if cookiecutter.add_matrix == "y" %}
+        run: make golden-diff -e instance={% raw %}${{ matrix.instance }}{% endraw %}
+{%- else %}
+        run: make golden-diff
+{%- endif %}
+{%- endif %}
