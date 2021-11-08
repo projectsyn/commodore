@@ -40,6 +40,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
  && ./get_helm.sh \
  && mv /usr/local/bin/helm /usr/local/bin/helm2
 
+RUN ./tools/install-jb.sh v0.4.0
 
 FROM base AS runtime
 
@@ -57,13 +58,10 @@ COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
       /usr/local/bin/helm* \
+      /usr/local/bin/jb \
       /usr/local/bin/
 
 RUN ln -s /usr/local/bin/helm3 /usr/local/bin/helm
-
-RUN curl -sLo /usr/local/bin/jb \
-  https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
-  && chmod +x /usr/local/bin/jb
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
 
