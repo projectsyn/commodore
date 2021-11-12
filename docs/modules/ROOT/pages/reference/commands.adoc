@@ -79,3 +79,15 @@ values for any configuration that could be provided from the hierarchical
 configuration repositories.
 
 The option `--alias` (or `-a`) can be used to compile an instance-aware component with a specific instance.
+
+== Inventory Components
+
+  commodore inventory components GLOBAL_CONFIG
+
+This command lists all the components defined in `parameters.components` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
+
+The component takes optional argument which allow the user to specify a Kubernetes distribution, cloud provider and cloud region which should be considered when rendering the contents of `parameters.components`.
+
+The command supports both YAML and JSON output.
+
+NOTE: The command doesn't yet support taking into account a tenant repo when rendering the contents of `parameters.components`.

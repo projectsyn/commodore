@@ -152,3 +152,17 @@ This command doesn't have any command line options.
 
 *--help*::
   Show component new usage and options then exit.
+
+== Inventory Components
+
+*-d, --distribution*::
+  Specify the distribution for which to extract component versions.
+
+*-c, --cloud*::
+  Specify the cloud provider for which to extract component versions.
+
+*-r, --cloud-region*::
+  Specify the cloud region for which to extract component versions.
+
+*-o, --output-format*::
+    The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.
