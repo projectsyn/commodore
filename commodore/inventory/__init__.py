@@ -1,5 +1,4 @@
 from os import makedirs
-
 from pathlib import Path as P
 from typing import Union
 
