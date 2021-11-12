@@ -1,6 +1,9 @@
+import json
 from pathlib import Path
+from typing import Optional
 
 import click
+import yaml
 
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
@@ -10,6 +13,8 @@ from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
 from .component.compile import compile_component
+from .inventory.render import extract_components
+from .inventory.parameters import InventoryFacts
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -342,6 +347,76 @@ def component_compile(
 ):
     config.update_verbosity(verbose)
     compile_component(config, path, alias, values, search_paths, output)
+
+
+@commodore.group(short_help="Interact with a Commodore inventory")
+@verbosity
+@pass_config
+def inventory(config: Config, verbose):
+    config.update_verbosity(verbose)
+
+
+@inventory.command(
+    name="components",
+    short_help="Extract component URLs and versions from the inventory",
+)
+@click.option(
+    "-d",
+    "--distribution",
+    metavar="DIST",
+    help="Specify the distribution for which to extract component versions",
+)
+@click.option(
+    "-c",
+    "--cloud",
+    metavar="CLOUD",
+    help="Specify the cloud provider for which to extract component versions",
+)
+@click.option(
+    "-r",
+    "--cloud-region",
+    metavar="REGION",
+    help="Specify the cloud region for which to extract component versions",
+)
+@click.option(
+    "-t", "--tenant-config", help="URL or path to tenant repo", metavar="URL/PATH"
+)
+@click.option(
+    "-o",
+    "--output-format",
+    help="Output format",
+    type=click.Choice(["json", "yaml"]),
+    default="yaml",
+)
+@click.argument("global-config")
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def component_versions(
+    config: Config,
+    verbose,
+    global_config: str,
+    distribution: Optional[str],
+    cloud: Optional[str],
+    cloud_region: Optional[str],
+    tenant_config: Optional[str],
+    output_format: str,
+):
+    config.update_verbosity(verbose)
+    try:
+        components = extract_components(
+            config,
+            InventoryFacts(
+                global_config, tenant_config, distribution, cloud, cloud_region
+            ),
+        )
+    except ValueError as e:
+        raise click.ClickException(f"While extracting components: {e}") from e
+
+    if output_format == "json":
+        click.echo(json.dumps(components))
+    else:
+        click.echo(yaml.safe_dump(components))
 
 
 def main():
