@@ -9,7 +9,7 @@ from textwrap import dedent
 from commodore.config import Config
 from commodore.component import Component
 from commodore.postprocess import postprocess_components
-from test_component_template import test_run_component_new_command
+from test_component_template import call_component_new
 
 
 def _make_builtin_filter(ns, enabled=None):
@@ -156,7 +156,7 @@ def _expected_ns(enabled):
 @pytest.mark.parametrize("alias", ["test-component", "component-alias"])
 @pytest.mark.parametrize("jsonnet", [False, True])
 def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, alias):
-    test_run_component_new_command(tmp_path=tmp_path)
+    call_component_new(tmp_path=tmp_path)
 
     f = _make_ns_filter(
         tmp_path, "myns", enabled=enabled, jsonnet=jsonnet, invfilter=invfilter
@@ -186,7 +186,7 @@ def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, a
 # render the inventory with reclass in the test above.
 @pytest.mark.parametrize("enabledref", [True, False])
 def test_postprocess_components_enabledref(tmp_path, capsys, enabledref):
-    test_run_component_new_command(tmp_path=tmp_path)
+    call_component_new(tmp_path=tmp_path)
 
     f = _make_builtin_filter("myns", enabled="${test_component:filter:enabled}")
 

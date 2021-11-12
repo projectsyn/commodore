@@ -15,11 +15,11 @@ from git import Repo
 from commodore.config import Config
 from commodore.component import component_parameters_key
 from commodore.component.compile import compile_component
-from test_component_template import test_run_component_new_command
+from test_component_template import call_component_new
 
 
 def _prepare_component(tmp_path, component_name="test-component"):
-    test_run_component_new_command(tmp_path=tmp_path)
+    call_component_new(tmp_path)
 
     with open(
         tmp_path / "dependencies" / component_name / "component/main.jsonnet", "a"
