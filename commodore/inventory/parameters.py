@@ -82,8 +82,8 @@ class DefaultsFact(Enum):
 
 
 class InventoryFactory:
-    def __init__(self, work_dir: Path, repo_dir: Path):
-        self._repo = repo_dir
+    def __init__(self, work_dir: Path, global_dir: Path):
+        self._global_dir = global_dir
         self._inventory = Inventory(work_dir=work_dir)
         self._distributions = self._find_values(DefaultsFact.DISTRIBUTION)
         self._clouds = self._find_values(DefaultsFact.CLOUD)
@@ -105,8 +105,8 @@ class InventoryFactory:
         return self._inventory.targets_dir
 
     @property
-    def repo(self) -> Path:
-        return self._repo
+    def global_dir(self) -> Path:
+        return self._global_dir
 
     def _reclass_config(self) -> Dict:
         return {
@@ -193,11 +193,11 @@ class InventoryFactory:
 
     def _find_values(self, fact: DefaultsFact, cloud: str = None) -> Iterable[str]:
         values = []
-        value_path = self.repo / fact.value
+        value_path = self.global_dir / fact.value
         if fact == DefaultsFact.REGION:
             if not cloud:
                 raise ValueError(f"cloud must not be None if fact is {fact}")
-            value_path = self.repo / "cloud" / cloud
+            value_path = self.global_dir / "cloud" / cloud
         if value_path.is_dir():
             for f in value_path.iterdir():
                 if f.is_file() and f.suffix in (".yml", ".yaml"):
@@ -222,8 +222,8 @@ class InventoryFactory:
         os.makedirs(work_dir / "inventory" / "classes", exist_ok=True)
 
     @classmethod
-    def from_repo_dir(cls, work_dir: Path, repo_dir: Path):
+    def from_repo_dir(cls, work_dir: Path, global_dir: Path):
         cls._make_directories(work_dir)
         classes_dir = work_dir / "inventory" / "classes"
-        os.symlink(repo_dir.absolute(), classes_dir / "global")
-        return InventoryFactory(work_dir=work_dir, repo_dir=classes_dir / "global")
+        os.symlink(global_dir.absolute(), classes_dir / "global")
+        return InventoryFactory(work_dir=work_dir, global_dir=classes_dir / "global")

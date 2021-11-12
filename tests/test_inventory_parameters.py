@@ -230,7 +230,7 @@ def test_inventoryfactory_find_values(tmp_path: Path):
     }
     global_dir = setup_global_repo_dir(tmp_path, {}, distributions, cloud_regions)
 
-    invfactory = parameters.InventoryFactory(work_dir=tmp_path, repo_dir=global_dir)
+    invfactory = parameters.InventoryFactory(work_dir=tmp_path, global_dir=global_dir)
 
     assert set(invfactory.distributions) == set(distributions.keys())
     assert set(invfactory.clouds) == set(cloud_regions.keys())
