@@ -58,7 +58,7 @@ jobs:
     - name: Extract Python minor version from matrix python-version
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - name: Run tests on Python ${{ matrix.python-version }}
-      run: make bench_py${PYVER}
+      run: make test_py${PYVER}
   benchs:
     runs-on: ubuntu-latest
     strategy:

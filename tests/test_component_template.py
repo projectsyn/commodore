@@ -11,6 +11,21 @@ from git import Repo
 from test_component import setup_directory
 
 
+def call_component_new(
+    tmp_path: P,
+    component_name="test-component",
+    lib="--no-lib",
+    pp="--no-pp",
+    golden="--no-golden-tests",
+    matrix="--no-matrix-tests",
+):
+    exit_status = call(
+        f"commodore -d '{tmp_path}' -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
+        shell=True,
+    )
+    assert exit_status == 0
+
+
 @pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
 @pytest.mark.parametrize(
     "pp",
@@ -34,11 +49,14 @@ def test_run_component_new_command(
     setup_directory(tmp_path)
 
     component_name = "test-component"
-    exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
-        shell=True,
+    call_component_new(
+        tmp_path,
+        component_name=component_name,
+        lib=lib,
+        pp=pp,
+        golden=golden,
+        matrix=matrix,
     )
-    assert exit_status == 0
 
     expected_files = [
         P("README.md"),
