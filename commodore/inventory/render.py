@@ -38,12 +38,12 @@ def extract_components(
 
     if invfacts.cloud and invfacts.cloud not in invfactory.clouds:
         raise ValueError(
-            f"Unknown distribution '{invfacts.distribution}' in global defaults {global_dir}"
+            f"Unknown cloud '{invfacts.cloud}' in global defaults {global_dir}"
         )
 
     if invfacts.region and not invfacts.cloud:
         raise ValueError(
-            f"Unable to extract components for cloud region {invfacts.region}, no cloud name provided."
+            f"Unable to extract components for cloud region '{invfacts.region}', no cloud name provided."
         )
 
     if (
