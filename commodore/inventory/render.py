@@ -24,6 +24,10 @@ def extract_components(
         )
 
     global_dir = Path(invfacts.global_config).resolve().absolute()
+    if invfacts.tenant_config:
+        raise NotImplementedError(
+            "Extracting component versions from tenant config not yet implemented"
+        )
     work_dir = Path(tempfile.mkdtemp(prefix="renovate-reclass-")).resolve()
 
     if global_dir.is_dir():

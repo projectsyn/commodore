@@ -379,9 +379,6 @@ def inventory(config: Config, verbose):
     help="Specify the cloud region for which to extract component versions",
 )
 @click.option(
-    "-t", "--tenant-config", help="URL or path to tenant repo", metavar="URL/PATH"
-)
-@click.option(
     "-o",
     "--output-format",
     help="Output format",
@@ -399,16 +396,13 @@ def component_versions(
     distribution: Optional[str],
     cloud: Optional[str],
     cloud_region: Optional[str],
-    tenant_config: Optional[str],
     output_format: str,
 ):
     config.update_verbosity(verbose)
     try:
         components = extract_components(
             config,
-            InventoryFacts(
-                global_config, tenant_config, distribution, cloud, cloud_region
-            ),
+            InventoryFacts(global_config, None, distribution, cloud, cloud_region),
         )
     except ValueError as e:
         raise click.ClickException(f"While extracting components: {e}") from e
