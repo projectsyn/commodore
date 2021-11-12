@@ -163,7 +163,7 @@ class InventoryFactory:
         del params["parameters"]["component_versions"]
         params["parameters"]["openshift"] = {
             "infraID": "infra-id",
-            "clusterID": "clutster-id",
+            "clusterID": "cluster-id",
             "registryBucket": "x-fake-registry-bucket",
         }
         params["parameters"]["cloud"]["availabilityZones"] = []
