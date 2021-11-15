@@ -8,8 +8,7 @@ import click
 
 from commodore.config import Config
 
-from .parameters import InventoryFactory
-from .parameters import InventoryFacts
+from .parameters import ClassNotFound, InventoryFactory, InventoryFacts
 
 
 def extract_components(
@@ -19,8 +18,8 @@ def extract_components(
         click.echo(
             f"Called with: global_config={invfacts.global_config} "
             + f"tenant_config={invfacts.tenant_config} "
-            + f"distribution={invfacts.distribution} "
-            + f"cloud={invfacts.cloud} region={invfacts.region}"
+            + f"extra_classes={invfacts.extra_classes} "
+            + f"allow_missing_classes={invfacts.allow_missing_classes}."
         )
 
     global_dir = Path(invfacts.global_config).resolve().absolute()
@@ -31,35 +30,19 @@ def extract_components(
     work_dir = Path(tempfile.mkdtemp(prefix="renovate-reclass-")).resolve()
 
     if global_dir.is_dir():
-        invfactory = InventoryFactory.from_repo_dir(work_dir, global_dir)
+        invfactory = InventoryFactory.from_repo_dir(work_dir, global_dir, invfacts)
     else:
         raise NotImplementedError("Cloning the inventory first not yet implemented")
 
-    if invfacts.distribution and invfacts.distribution not in invfactory.distributions:
+    try:
+        inv = invfactory.reclass(invfacts)
+        components = inv.parameters("components")
+    except ClassNotFound as e:
         raise ValueError(
-            f"Unknown distribution '{invfacts.distribution}' in global defaults {global_dir}"
-        )
-
-    if invfacts.cloud and invfacts.cloud not in invfactory.clouds:
-        raise ValueError(
-            f"Unknown cloud '{invfacts.cloud}' in global defaults {global_dir}"
-        )
-
-    if invfacts.region and not invfacts.cloud:
-        raise ValueError(
-            f"Unable to extract components for cloud region '{invfacts.region}', no cloud name provided."
-        )
-
-    if (
-        invfacts.region
-        and invfacts.region not in invfactory.cloud_regions[invfacts.cloud]
-    ):
-        raise ValueError(
-            f"Unknown cloud region '{invfacts.region}' for cloud '{invfacts.cloud}'"
-        )
-
-    inv = invfactory.reclass(invfacts)
-    components = inv.parameters("components")
+            "Unable to render inventory with `--no-allow-missing-classes`. "
+            + f"Class '{e.name}' not found. "
+            + "Verify the provided values or allow missing classes."
+        ) from e
 
     if not cfg.debug:
         # Clean up work dir if we're not in debug mode

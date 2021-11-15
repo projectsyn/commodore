@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Iterable
 
 import click
 import yaml
@@ -361,29 +361,29 @@ def inventory(config: Config, verbose):
     short_help="Extract component URLs and versions from the inventory",
 )
 @click.option(
-    "-d",
-    "--distribution",
-    metavar="DIST",
-    help="Specify the distribution for which to extract component versions",
-)
-@click.option(
-    "-c",
-    "--cloud",
-    metavar="CLOUD",
-    help="Specify the cloud provider for which to extract component versions",
-)
-@click.option(
-    "-r",
-    "--cloud-region",
-    metavar="REGION",
-    help="Specify the cloud region for which to extract component versions",
-)
-@click.option(
     "-o",
     "--output-format",
     help="Output format",
     type=click.Choice(["json", "yaml"]),
     default="yaml",
+)
+@click.option(
+    "-f",
+    "--values",
+    help=(
+        "Extra values file to use when rendering inventory. "
+        + "Used as additional reclass class. "
+        + "Use a values file to specify any cluster facts. "
+        + "Can be repeated."
+    ),
+    multiple=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+)
+@click.option(
+    " / -A",
+    "--allow-missing-classes/--no-allow-missing-classes",
+    default=True,
+    help="Whether to allow missing classes when rendering the inventory. Defaults to true.",
 )
 @click.argument("global-config")
 @verbosity
@@ -393,16 +393,15 @@ def component_versions(
     config: Config,
     verbose,
     global_config: str,
-    distribution: Optional[str],
-    cloud: Optional[str],
-    cloud_region: Optional[str],
     output_format: str,
+    values: Iterable[Path],
+    allow_missing_classes: bool,
 ):
     config.update_verbosity(verbose)
     try:
         components = extract_components(
             config,
-            InventoryFacts(global_config, None, distribution, cloud, cloud_region),
+            InventoryFacts(global_config, None, values, allow_missing_classes),
         )
     except ValueError as e:
         raise click.ClickException(f"While extracting components: {e}") from e
