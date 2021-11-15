@@ -2,7 +2,7 @@ import os
 import pytest
 import random
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 from commodore.inventory import parameters
 from commodore.helpers import yaml_dump
@@ -216,6 +216,30 @@ def verify_components(
         assert c["version"] == ec["version"]
 
 
+def create_inventory_facts(
+    tmp_path: Path,
+    global_config: str,
+    distribution: Optional[str],
+    cloud: Optional[str],
+    region: Optional[str],
+    allow_missing_classes: Optional[bool] = True,
+) -> parameters.InventoryFacts:
+    params = {"parameters": {"facts": {}}}
+    if distribution:
+        params["parameters"]["facts"]["distribution"] = distribution
+    if cloud:
+        params["parameters"]["facts"]["cloud"] = cloud
+    if region:
+        params["parameters"]["facts"]["region"] = region
+
+    values = tmp_path / "values.yaml"
+    yaml_dump(params, values)
+
+    return parameters.InventoryFacts(
+        global_config, None, [values], allow_missing_classes
+    )
+
+
 def test_inventoryfactory_find_values(tmp_path: Path):
     distributions = {"a": {}, "b": {}, "c": {}, "d": {}}
     cloud_regions = {
@@ -246,8 +270,11 @@ def test_inventoryfactory_from_dir(tmp_path: Path):
         "z": [("a", {})],
     }
     global_dir = setup_global_repo_dir(tmp_path, {}, distributions, cloud_regions)
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, None, None)
 
-    invfactory = parameters.InventoryFactory.from_repo_dir(tmp_path, global_dir)
+    invfactory = parameters.InventoryFactory.from_repo_dir(
+        tmp_path, global_dir, invfacts
+    )
 
     assert invfactory.classes_dir == (tmp_path / "inventory" / "classes")
     assert invfactory.targets_dir == (tmp_path / "inventory" / "targets")
@@ -265,11 +292,12 @@ def test_inventoryfactory_reclass_distribution(tmp_path: Path, distribution: str
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfactory = parameters.InventoryFactory.from_repo_dir(tmp_path, global_dir)
-
-    inv = invfactory.reclass(
-        parameters.InventoryFacts(None, None, distribution, None, None)
+    invfacts = create_inventory_facts(tmp_path, global_dir, distribution, None, None)
+    invfactory = parameters.InventoryFactory.from_repo_dir(
+        tmp_path, global_dir, invfacts
     )
+
+    inv = invfactory.reclass(invfacts)
     components = inv.parameters("components")
 
     assert set(components.keys()) == set(GLOBAL_PARAMS["components"].keys())
@@ -281,9 +309,12 @@ def test_inventoryfactory_reclass_cloud(tmp_path: Path, cloud: str):
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfactory = parameters.InventoryFactory.from_repo_dir(tmp_path, global_dir)
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, None)
+    invfactory = parameters.InventoryFactory.from_repo_dir(
+        tmp_path, global_dir, invfacts
+    )
 
-    inv = invfactory.reclass(parameters.InventoryFacts(None, None, None, cloud, None))
+    inv = invfactory.reclass(invfacts)
     components = inv.parameters("components")
 
     assert set(components.keys()) == set(GLOBAL_PARAMS["components"].keys())
@@ -295,9 +326,12 @@ def test_inventoryfactory_reclass_cloud_region(tmp_path: Path, cloud: str, regio
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfactory = parameters.InventoryFactory.from_repo_dir(tmp_path, global_dir)
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, region)
+    invfactory = parameters.InventoryFactory.from_repo_dir(
+        tmp_path, global_dir, invfacts
+    )
 
-    inv = invfactory.reclass(parameters.InventoryFacts(None, None, None, cloud, region))
+    inv = invfactory.reclass(invfacts)
     components = inv.parameters("components")
 
     assert set(components.keys()) == set(GLOBAL_PARAMS["components"].keys())

@@ -38,6 +38,7 @@ def extract_components(
         inv = invfactory.reclass(invfacts)
         components = inv.parameters("components")
     except ClassNotFound as e:
+        print(e)
         raise ValueError(
             "Unable to render inventory with `--no-allow-missing-classes`. "
             + f"Class '{e.name}' not found. "
