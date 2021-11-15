@@ -86,7 +86,7 @@ The option `--alias` (or `-a`) can be used to compile an instance-aware componen
 
 This command lists all the components defined in `parameters.components` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
 
-The component takes optional argument which allow the user to specify a Kubernetes distribution, cloud provider and cloud region which should be considered when rendering the contents of `parameters.components`.
+The component takes a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the contents of `parameters.components`.
 
 The command supports both YAML and JSON output.
 

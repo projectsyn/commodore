@@ -155,14 +155,11 @@ This command doesn't have any command line options.
 
 == Inventory Components
 
-*-d, --distribution*::
-  Specify the distribution for which to extract component versions.
-
-*-c, --cloud*::
-  Specify the cloud provider for which to extract component versions.
-
-*-r, --cloud-region*::
-  Specify the cloud region for which to extract component versions.
+*-f, --values*::
+  Specify an additional inventory class in a YAML file.
+  This option can be repeated to provide multiple files.
+  Files specified later win when resolving inventory values.
+  Use this mechanism to specify any facts (such as the cluster's distribution) that should be taken into account when extracting component versions.
 
 *-o, --output-format*::
-    The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.
+  The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.
