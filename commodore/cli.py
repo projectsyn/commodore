@@ -1,6 +1,9 @@
+import json
 from pathlib import Path
+from typing import Iterable
 
 import click
+import yaml
 
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
@@ -10,6 +13,8 @@ from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
 from .component.compile import compile_component
+from .inventory.render import extract_components
+from .inventory.parameters import InventoryFacts
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -342,6 +347,69 @@ def component_compile(
 ):
     config.update_verbosity(verbose)
     compile_component(config, path, alias, values, search_paths, output)
+
+
+@commodore.group(short_help="Interact with a Commodore inventory")
+@verbosity
+@pass_config
+def inventory(config: Config, verbose):
+    config.update_verbosity(verbose)
+
+
+@inventory.command(
+    name="components",
+    short_help="Extract component URLs and versions from the inventory",
+)
+@click.option(
+    "-o",
+    "--output-format",
+    help="Output format",
+    type=click.Choice(["json", "yaml"]),
+    default="yaml",
+)
+@click.option(
+    "-f",
+    "--values",
+    help=(
+        "Extra values file to use when rendering inventory. "
+        + "Used as additional reclass class. "
+        + "Use a values file to specify any cluster facts. "
+        + "Can be repeated."
+    ),
+    multiple=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+)
+@click.option(
+    " / -A",
+    "--allow-missing-classes/--no-allow-missing-classes",
+    default=True,
+    help="Whether to allow missing classes when rendering the inventory. Defaults to true.",
+)
+@click.argument("global-config")
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def component_versions(
+    config: Config,
+    verbose,
+    global_config: str,
+    output_format: str,
+    values: Iterable[Path],
+    allow_missing_classes: bool,
+):
+    config.update_verbosity(verbose)
+    try:
+        components = extract_components(
+            config,
+            InventoryFacts(global_config, None, values, allow_missing_classes),
+        )
+    except ValueError as e:
+        raise click.ClickException(f"While extracting components: {e}") from e
+
+    if output_format == "json":
+        click.echo(json.dumps(components))
+    else:
+        click.echo(yaml.safe_dump(components))
 
 
 def main():

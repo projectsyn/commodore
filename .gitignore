@@ -1,13 +1,13 @@
 ## Ignore commodore output
-catalog
-compiled
-dependencies
-inventory
+/catalog
+/compiled
+/dependencies
+/inventory
 
 ## jsonnet-bundler
 
 jsonnetfile.*
-vendor/
+/vendor
 
 ## From here: GitHub's gitignore template for Python
 # Byte-compiled / optimized / DLL files
