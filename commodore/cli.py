@@ -377,7 +377,7 @@ def inventory(config: Config, verbose):
         + "Can be repeated."
     ),
     multiple=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     " / -A",
@@ -394,14 +394,15 @@ def component_versions(
     verbose,
     global_config: str,
     output_format: str,
-    values: Iterable[Path],
+    values: Iterable[str],
     allow_missing_classes: bool,
 ):
     config.update_verbosity(verbose)
+    extra_values = [Path(v) for v in values]
     try:
         components = extract_components(
             config,
-            InventoryFacts(global_config, None, values, allow_missing_classes),
+            InventoryFacts(global_config, None, extra_values, allow_missing_classes),
         )
     except ValueError as e:
         raise click.ClickException(f"While extracting components: {e}") from e
