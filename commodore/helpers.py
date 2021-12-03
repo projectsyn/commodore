@@ -3,6 +3,7 @@ import itertools
 import json
 import shutil
 import os
+from enum import Enum
 from pathlib import Path as P
 from typing import Callable, Dict, Iterable, Optional
 
@@ -92,14 +93,52 @@ def yaml_dump_all(obj, file):
         yaml.dump_all(obj, outf)
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+class QueryType(Enum):
+    GET = "get"
+    PATCH = "patch"
+
+
+class _QDMeta(type):
+    def __new__(mcs, name, bases, dct):
+        c = super().__new__(mcs, name, bases, dct)
+        setattr(c, "GET", c(QueryType.GET))
+        return c
+
+
+class QueryData(metaclass=_QDMeta):
+    def __init__(self, query_type: QueryType, **kwargs):
+        self._query_type = query_type
+        if self.query_type == QueryType.PATCH:
+            self._patch_data: Dict = kwargs.get("patch_data", {})
+
+    @property
+    def query_type(self):
+        return self._query_type
+
+    @property
+    def patch_data(self):
+        if self.query_type != QueryType.PATCH:
+            return {}
+        return self._patch_data
+
+
+def _lieutenant_request(
+    method: QueryData, api_url: str, api_token: str, api_endpoint: str, api_id: str
+):
+    url = url_normalize(f"{api_url}/{api_endpoint}/{api_id}")
+    headers = {"Authorization": f"Bearer {api_token}"}
     try:
-        r = requests.get(
-            url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
-            headers={"Authorization": f"Bearer {api_token}"},
-        )
+        if method.query_type == QueryType.GET:
+            r = requests.get(url, headers=headers)
+        elif method.query_type == QueryType.PATCH:
+            headers["Content-Type"] = "application/merge-patch+json"
+            r = requests.patch(url, json.dumps(method.patch_data), headers=headers)
+        else:
+            raise NotImplementedError(f"QueryType {method.query_type} not implemented")
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
+    except NotImplementedError as e:
+        raise e
     try:
         resp = json.loads(r.text)
     except json.JSONDecodeError:
@@ -113,6 +152,15 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
         raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp
+
+
+def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+    return _lieutenant_request(QueryData.GET, api_url, api_token, api_endpoint, api_id)
+
+
+def lieutenant_patch(api_url, api_token, api_endpoint, api_id, patch_data):
+    qm = QueryData(QueryType.PATCH, patch_data=patch_data)
+    return _lieutenant_request(qm, api_url, api_token, api_endpoint, api_id)
 
 
 def _verbose_rmtree(tree, *args, **kwargs):

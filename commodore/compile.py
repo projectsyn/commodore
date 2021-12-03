@@ -5,6 +5,7 @@ from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
     load_cluster_from_api,
+    report_cluster_component_versions,
     read_cluster_and_tenant,
     update_params,
     update_target,
@@ -196,6 +197,10 @@ def compile(config, cluster_id):
     postprocess_components(config, inventory, components)
 
     update_catalog(config, targets, catalog_repo)
+
+    if config.push:
+        click.secho("Reporting cluster component versions to Lieutenant...", bold=True)
+        report_cluster_component_versions(config, cluster_id)
 
     click.secho("Catalog compiled! 🎉", bold=True)
 

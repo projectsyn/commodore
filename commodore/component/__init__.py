@@ -88,6 +88,12 @@ class Component:
         self._version = version
 
     @property
+    def rendered_version(self) -> str:
+        if self._version is None:
+            return self._default_version()
+        return self._version
+
+    @property
     def target_directory(self) -> P:
         return self._dir
 
