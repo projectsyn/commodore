@@ -104,6 +104,18 @@ class _QDMeta(type):
         setattr(c, "GET", c(QueryType.GET))
         return c
 
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if args[0] != QueryType.GET:
+            return super(_QDMeta, cls).__call__(*args, **kwargs)
+
+        if QueryType.GET not in cls._instances:
+            cls._instances[QueryType.GET] = super(_QDMeta, cls).__call__(
+                *args, **kwargs
+            )
+        return cls._instances[QueryType.GET]
+
 
 class QueryData(metaclass=_QDMeta):
     def __init__(self, query_type: QueryType, **kwargs):
