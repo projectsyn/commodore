@@ -12,7 +12,6 @@ from .cluster import (
 from .config import Config
 from .dependency_mgmt import (
     fetch_components,
-    fetch_jsonnet_libs,
     fetch_jsonnet_libraries,
     register_components,
     jsonnet_dependencies,
@@ -164,14 +163,6 @@ def compile(config, cluster_id):
     for component in config.get_components().values():
         ckey = component.parameters_key
         component.render_jsonnetfile_json(cluster_parameters[ckey])
-
-    jsonnet_libs = cluster_parameters.get("commodore", {}).get("jsonnet_libs", None)
-    if jsonnet_libs and config.fetch_dependencies:
-        config.register_deprecation_notice(
-            "Parameter `commodore.jsonnet_libs` is deprecated. "
-            + "If your component needs Jsonnet dependencies, specify them in the component's `jsonnetfile.json`"
-        )
-        fetch_jsonnet_libs(config, jsonnet_libs)
 
     if config.fetch_dependencies:
         fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
