@@ -82,12 +82,28 @@ The option `--alias` (or `-a`) can be used to compile an instance-aware componen
 
 == Inventory Components
 
-  commodore inventory components GLOBAL_CONFIG
+  commodore inventory components GLOBAL_CONFIG [TENANT_CONFIG]
 
 This command lists all the components defined in `parameters.components` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
+If provided, the command also takes into account the tenant repo in directory `TENANT_CONFIG`.
+
+NOTE: The command doesn't currently support cloning either the global or tenant repository from a Git repo URL.
 
 The component takes a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the contents of `parameters.components`.
 
-The command supports both YAML and JSON output.
+When providing a tenant repo, users must specify the tenant ID and cluster ID for which the inventory should be rendered in a value class to obtain accurate results.
+See a sample `cluster-info.yaml` which can be used for this purpose below.
 
-NOTE: The command doesn't yet support taking into account a tenant repo when rendering the contents of `parameters.components`.
+.cluster-info.yaml
+[source,yaml]
+----
+parameters:
+  cluster:
+    name: c-cluster-id-1234 <1>
+    tenant: t-tenant-id-1234 <2>
+----
+<1> Specify the cluster ID for which the inventory should be rendered
+<2> Specify the tenant ID.
+This must match the tenant ID associated with the provided tenant repo for accurate results.
+
+The command supports both YAML and JSON output.
