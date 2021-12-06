@@ -5,6 +5,12 @@ We include a link to relevant documentation, if applicable.
 
 == Unreleased
 
+== https://github.com/projectsyn/commodore/releases/tag/v0.13.0[v0.13.0]
+
+=== `parameters.commodore.jsonnet_libs` is removed
+
+The parameter has been deprecated since Commodore v0.6.0, and is removed in v0.13.0.
+
 == https://github.com/projectsyn/commodore/releases/tag/v0.6.0[v0.6.0]
 
 === `parameters.commodore.jsonnet_libs` is deprecated

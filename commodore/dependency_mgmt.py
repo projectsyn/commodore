@@ -6,7 +6,6 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import click
 
-from . import git
 from .config import Config
 from .component import Component, component_dir
 from .helpers import relsymlink, kapitan_inventory
@@ -129,38 +128,6 @@ def fetch_components(cfg: Config):
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
-
-
-def fetch_jsonnet_libs(config: Config, libs):
-    """
-    Download all libraries specified in list `libs`.
-    Each entry in `libs` is assumed to be a dict with keys
-      * 'repository', the value of which is interpreted as a git repository to
-                      clone.
-      * 'files', a list of dicts which defines which files in the repository
-                 should be installed as template libraries.
-    Each entry in files is assumed to have the keys
-      * 'libfile', indicating a filename relative to the repository of the
-                   library to install
-      * 'targetfile', the file name to use as the symlink target when
-                      installing the library
-    """
-
-    click.secho("Updating Jsonnet libraries...", bold=True)
-    config.inventory.ensure_dirs()
-    for lib in libs:
-        libname = lib["name"]
-        if config.debug:
-            filestext = " ".join([f["targetfile"] for f in lib["files"]])
-            click.echo(f" > {libname}: {filestext}")
-        library_dir = config.inventory.libs_dir / libname
-        git.clone_repository(lib["repository"], library_dir, config)
-        for file in lib["files"]:
-            relsymlink(
-                library_dir / file["libfile"],
-                config.inventory.lib_dir,
-                dest_name=file["targetfile"],
-            )
 
 
 def jsonnet_dependencies(config: Config) -> Iterable:
