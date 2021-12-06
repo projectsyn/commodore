@@ -160,6 +160,26 @@ def test_read_components_multiple(patch_inventory, data: Config):
     )
 
 
+@patch("commodore.dependency_mgmt.kapitan_inventory")
+def test_read_components_deprecation(
+    patch_inventory, data: Config, tmp_path: Path, capsys
+):
+    components = _setup_mock_inventory(patch_inventory)
+
+    _ = dependency_mgmt._read_components(data, components.keys())
+
+    data.print_deprecation_notices()
+    captured = capsys.readouterr()
+
+    # We split and join captured.out to revert the formatting done by
+    # print_deprecation_notices().
+    assert (
+        "Component other-component doesn't have a version specified. "
+        + "See https://syn.tools/commodore/reference/deprecation-notices.html"
+        + "#_components_without_versions for more details."
+    ) in " ".join(captured.out.split())
+
+
 @patch.object(dependency_mgmt, "kapitan_inventory")
 def test_read_components_missing_component(patch_inventory, data: Config):
     _setup_mock_inventory(patch_inventory)
