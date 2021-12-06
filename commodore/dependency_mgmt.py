@@ -95,8 +95,8 @@ def _read_components(
             component_versions[component_name] = info["version"]
         else:
             cfg.register_deprecation_notice(
-                f"Component {component_name} doesn't have a version specified."
-                + "See https://syn.tools/commodore/reference/deprecation-notices.html#_components_without_versions for more details"
+                f"Component {component_name} doesn't have a version specified. "
+                + "See https://syn.tools/commodore/reference/deprecation-notices.html#_components_without_versions for more details."
             )
             # Note: We use version=None as a marker for checking out the remote repo's
             # default branch.
