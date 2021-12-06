@@ -272,8 +272,8 @@ def test_inventoryfactory_from_dir(tmp_path: Path):
     global_dir = setup_global_repo_dir(tmp_path, {}, distributions, cloud_regions)
     invfacts = create_inventory_facts(tmp_path, global_dir, None, None, None)
 
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     assert invfactory.classes_dir == (tmp_path / "inventory" / "classes")
@@ -293,8 +293,8 @@ def test_inventoryfactory_reclass_distribution(tmp_path: Path, distribution: str
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
     invfacts = create_inventory_facts(tmp_path, global_dir, distribution, None, None)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)
@@ -310,8 +310,8 @@ def test_inventoryfactory_reclass_cloud(tmp_path: Path, cloud: str):
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
     invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, None)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)
@@ -327,8 +327,8 @@ def test_inventoryfactory_reclass_cloud_region(tmp_path: Path, cloud: str, regio
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
     invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, region)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)

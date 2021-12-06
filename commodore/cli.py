@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 import click
 import yaml
@@ -386,6 +386,7 @@ def inventory(config: Config, verbose):
     help="Whether to allow missing classes when rendering the inventory. Defaults to true.",
 )
 @click.argument("global-config")
+@click.argument("tenant-config", required=False)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -393,6 +394,7 @@ def component_versions(
     config: Config,
     verbose,
     global_config: str,
+    tenant_config: Optional[str],
     output_format: str,
     values: Iterable[str],
     allow_missing_classes: bool,
@@ -402,7 +404,9 @@ def component_versions(
     try:
         components = extract_components(
             config,
-            InventoryFacts(global_config, None, extra_values, allow_missing_classes),
+            InventoryFacts(
+                global_config, tenant_config, extra_values, allow_missing_classes
+            ),
         )
     except ValueError as e:
         raise click.ClickException(f"While extracting components: {e}") from e

@@ -10,8 +10,11 @@ from kapitan.reclass.reclass import errors as reclass_errors
 
 from commodore.cluster import Cluster, render_params
 from commodore.component import component_parameters_key
-from commodore.helpers import yaml_dump
+from commodore.helpers import yaml_dump, yaml_load
 from commodore.inventory import Inventory
+
+FAKE_TENANT_ID = "t-foo"
+FAKE_CLUSTER_ID = "c-bar"
 
 
 class ClassNotFound(reclass_errors.ClassNotFound):
@@ -69,6 +72,34 @@ class InventoryFacts:
     def allow_missing_classes(self) -> bool:
         return self._allow_missing_classes
 
+    @property
+    def tenant_id(self) -> str:
+        tenant_id = None
+        for f in self.extra_class_files:
+            fc = yaml_load(f)
+            tenant_id = (
+                fc.get("parameters", {}).get("cluster", {}).get("tenant", tenant_id)
+            )
+
+        if not tenant_id:
+            tenant_id = FAKE_TENANT_ID
+
+        return tenant_id
+
+    @property
+    def cluster_id(self) -> str:
+        cluster_id = None
+        for f in self.extra_class_files:
+            fc = yaml_load(f)
+            cluster_id = (
+                fc.get("parameters", {}).get("cluster", {}).get("name", cluster_id)
+            )
+
+        if not cluster_id:
+            cluster_id = FAKE_CLUSTER_ID
+
+        return cluster_id
+
 
 class InventoryParameters:
     def __init__(self, inv):
@@ -105,11 +136,9 @@ class DefaultsFact(Enum):
 
 
 class InventoryFactory:
-    _FAKE_TENANT_ID = "t-foo"
-    _FAKE_CLUSTER_ID = "c-bar"
-
-    def __init__(self, work_dir: Path, global_dir: Path):
+    def __init__(self, work_dir: Path, global_dir: Path, tenant_dir: Optional[Path]):
         self._global_dir = global_dir
+        self._tenant_dir = tenant_dir
         self._inventory = Inventory(work_dir=work_dir)
         self._distributions = self._find_values(DefaultsFact.DISTRIBUTION)
         self._clouds = self._find_values(DefaultsFact.CLOUD)
@@ -133,6 +162,10 @@ class InventoryFactory:
     @property
     def global_dir(self) -> Path:
         return self._global_dir
+
+    @property
+    def tenant_dir(self) -> Optional[Path]:
+        return self._tenant_dir
 
     def _reclass_config(self, allow_missing_classes: bool) -> Dict:
         return {
@@ -175,8 +208,8 @@ class InventoryFactory:
 
     def reclass(self, invfacts: InventoryFacts) -> InventoryParameters:
         cluster_response: Dict[str, Any] = {
-            "id": self._FAKE_CLUSTER_ID,
-            "tenant": self._FAKE_TENANT_ID,
+            "id": invfacts.cluster_id,
+            "tenant": invfacts.tenant_id,
             "displayName": "Foo Inc. Bar cluster",
             "facts": {
                 "distribution": "x-fake-distribution",
@@ -191,7 +224,7 @@ class InventoryFactory:
         cluster = Cluster(
             cluster_response=cluster_response,
             tenant_response={
-                "id": self._FAKE_TENANT_ID,
+                "id": invfacts.tenant_id,
                 "displayName": "Foo Inc.",
                 "gitRepo": {
                     "url": "not-a-real-repo",
@@ -220,12 +253,13 @@ class InventoryFactory:
             self.targets_dir / "global.yml",
         )
 
-        # Create fake cluster class, this allows rendering the inventory with
-        # allow-missing-classes=False to work.
-        yaml_dump(
-            {},
-            self.classes_dir / self._FAKE_TENANT_ID / f"{self._FAKE_CLUSTER_ID}.yml",
-        )
+        if not invfacts.tenant_config:
+            # Create fake cluster class, this allows rendering the inventory with
+            # allow-missing-classes=False to work when no tenant is specified.
+            yaml_dump(
+                {},
+                self.classes_dir / FAKE_TENANT_ID / f"{FAKE_CLUSTER_ID}.yml",
+            )
 
         return InventoryParameters(
             self._render_inventory(
@@ -259,17 +293,31 @@ class InventoryFactory:
         return self._cloud_regions
 
     @classmethod
-    def _make_directories(cls, work_dir: Path):
+    def _make_directories(cls, work_dir: Path, fake_tenant=True):
         os.makedirs(work_dir / "inventory" / "targets", exist_ok=True)
-        os.makedirs(
-            work_dir / "inventory" / "classes" / cls._FAKE_TENANT_ID, exist_ok=True
-        )
+        os.makedirs(work_dir / "inventory" / "classes", exist_ok=True)
+        if fake_tenant:
+            os.makedirs(
+                work_dir / "inventory" / "classes" / FAKE_TENANT_ID, exist_ok=True
+            )
 
     @classmethod
-    def from_repo_dir(cls, work_dir: Path, global_dir: Path, invfacts: InventoryFacts):
-        cls._make_directories(work_dir)
+    def from_repo_dirs(
+        cls,
+        work_dir: Path,
+        global_dir: Path,
+        tenant_dir: Optional[Path],
+        invfacts: InventoryFacts,
+    ):
+        cls._make_directories(work_dir, fake_tenant=not tenant_dir)
         classes_dir = work_dir / "inventory" / "classes"
         os.symlink(global_dir.absolute(), classes_dir / "global")
+        if tenant_dir:
+            os.symlink(tenant_dir.absolute(), classes_dir / invfacts.tenant_id)
         for cf in invfacts.extra_class_files:
             os.symlink(cf.absolute(), classes_dir / cf.name)
-        return InventoryFactory(work_dir=work_dir, global_dir=classes_dir / "global")
+        return InventoryFactory(
+            work_dir=work_dir,
+            global_dir=classes_dir / "global",
+            tenant_dir=classes_dir / invfacts.tenant_id,
+        )
