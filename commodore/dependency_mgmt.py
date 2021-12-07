@@ -183,6 +183,7 @@ def write_jsonnetfile(file: P, deps: Iterable):
 
     with open(file, "w", encoding="utf-8") as f:
         f.write(json.dumps(data, indent=4))
+        f.write("\n")
 
 
 def fetch_jsonnet_libraries(cwd: P, deps: Iterable = None):
@@ -243,6 +244,7 @@ def inject_essential_libraries(file: P):
 
     with open(file, "w", encoding="utf-8") as j:
         json.dump(data, j, indent=4)
+        j.write("\n")
 
 
 def register_components(cfg: Config):
