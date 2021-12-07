@@ -160,28 +160,60 @@ def test_read_components_multiple(patch_inventory, data: Config):
     )
 
 
-@patch.object(dependency_mgmt, "kapitan_inventory")
-def test_read_components_missing_component(patch_inventory, data: Config):
-    _setup_mock_inventory(patch_inventory)
-    with pytest.raises(click.ClickException) as e:
-        dependency_mgmt._read_components(data, ["component-missing"])
+@patch("commodore.dependency_mgmt.kapitan_inventory")
+def test_read_components_deprecation(
+    patch_inventory, data: Config, tmp_path: Path, capsys
+):
+    components = _setup_mock_inventory(patch_inventory)
 
+    _ = dependency_mgmt._read_components(data, components.keys())
+
+    data.print_deprecation_notices()
+    captured = capsys.readouterr()
+
+    # We split and join captured.out to revert the formatting done by
+    # print_deprecation_notices().
     assert (
-        "Unknown component 'component-missing'. Please add it to 'parameters.components'"
-        in str(e)
-    )
+        "Component other-component doesn't have a version specified. "
+        + "See https://syn.tools/commodore/reference/deprecation-notices.html"
+        + "#_components_without_versions for more details."
+    ) in " ".join(captured.out.split())
 
 
-@patch.object(dependency_mgmt, "kapitan_inventory")
-def test_read_components_missing_component_url(patch_inventory, data: Config):
-    def inv(inventory_dir, key="nodes"):
-        return {"cluster": {"parameters": {"components": {"test-component": {}}}}}
+@pytest.mark.parametrize(
+    "components,ckeys,exctext",
+    [
+        ({}, [], "Component list ('parameters.components') missing"),
+        (
+            {"components": {"a": {"url": "a_url"}}},
+            ["b"],
+            "Unknown component 'b'. Please add it to 'parameters.components'",
+        ),
+        (
+            {"components": {"a": {"version": "a_version"}}},
+            ["a"],
+            "No url for component 'a' configured",
+        ),
+    ],
+)
+@patch("commodore.dependency_mgmt.kapitan_inventory")
+def test_read_components_exc(
+    patch_inventory,
+    data: Config,
+    tmp_path: Path,
+    capsys,
+    components,
+    ckeys,
+    exctext,
+):
+    patch_inventory.return_value = {
+        data.inventory.bootstrap_target: {"parameters": components},
+    }
 
-    patch_inventory.side_effect = inv
-    with pytest.raises(click.ClickException) as e:
-        dependency_mgmt._read_components(data, ["test-component"])
+    with pytest.raises(click.ClickException) as exc_info:
+        _ = dependency_mgmt._read_components(data, ckeys)
 
-    assert "No url for component 'test-component' configured" in str(e)
+    assert exc_info.value.args[0] == exctext
 
 
 @patch.object(dependency_mgmt, "kapitan_inventory")

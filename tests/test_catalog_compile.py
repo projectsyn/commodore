@@ -50,7 +50,7 @@ tenant_resp = {
         "url": "https://github.com/projectsyn/test-tenant.git",
     },
     "globalGitRepoURL": "https://github.com/projectsyn/commodore-defaults.git",
-    "globalGitRepoRevision": "ec9bba",
+    "globalGitRepoRevision": "v0.12.0",
 }
 
 
@@ -211,6 +211,10 @@ def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
     # Stdout success msg
     captured = capsys.readouterr()
     assert "Catalog compiled!" in captured.out
+    assert (
+        "https://syn.tools/commodore/reference/deprecation-notices.html#_components_without_versions"
+        not in captured.out
+    )
 
     # Check config for expected components
     assert sorted(config.get_components().keys()) == sorted(expected_components)

@@ -11,6 +11,14 @@ We include a link to relevant documentation, if applicable.
 
 The parameter has been deprecated since Commodore v0.6.0, and is removed in v0.13.0.
 
+[#_components_without_versions]
+=== Component specifications without explicit version are deprecated
+
+Users should always specify an explicit `version` in component specifications.
+In general, we encourage users to switch to explicitly tagged versions for all components.
+
+TIP: To keep the previous default behavior, users can specify `version: master` in the component specification.
+
 == https://github.com/projectsyn/commodore/releases/tag/v0.6.0[v0.6.0]
 
 === `parameters.commodore.jsonnet_libs` is deprecated
