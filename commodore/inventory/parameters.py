@@ -293,15 +293,6 @@ class InventoryFactory:
         return self._cloud_regions
 
     @classmethod
-    def _make_directories(cls, work_dir: Path, fake_tenant=True):
-        os.makedirs(work_dir / "inventory" / "targets", exist_ok=True)
-        os.makedirs(work_dir / "inventory" / "classes", exist_ok=True)
-        if fake_tenant:
-            os.makedirs(
-                work_dir / "inventory" / "classes" / FAKE_TENANT_ID, exist_ok=True
-            )
-
-    @classmethod
     def from_repo_dirs(
         cls,
         work_dir: Path,
@@ -309,8 +300,13 @@ class InventoryFactory:
         tenant_dir: Optional[Path],
         invfacts: InventoryFacts,
     ):
-        cls._make_directories(work_dir, fake_tenant=not tenant_dir)
         classes_dir = work_dir / "inventory" / "classes"
+        os.makedirs(work_dir / "inventory" / "targets", exist_ok=True)
+        os.makedirs(classes_dir, exist_ok=True)
+        if not tenant_dir:
+            os.makedirs(
+                work_dir / "inventory" / "classes" / FAKE_TENANT_ID, exist_ok=True
+            )
         os.symlink(global_dir.absolute(), classes_dir / "global")
         if tenant_dir:
             os.symlink(tenant_dir.absolute(), classes_dir / invfacts.tenant_id)
