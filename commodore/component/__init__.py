@@ -214,6 +214,7 @@ class Component:
             )
             with open(self._dir / "jsonnetfile.json", "w", encoding="utf-8") as fp:
                 fp.write(output)
+                fp.write("\n")
 
 
 def component_dir(work_dir: P, name: str) -> P:

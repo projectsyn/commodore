@@ -317,12 +317,35 @@ def test_write_jsonnetfile(data: Config, tmp_path: Path):
     dependency_mgmt.write_jsonnetfile(file, dependency_mgmt.jsonnet_dependencies(data))
 
     with open(file) as jf:
-        jf_contents = json.load(jf)
+        jf_string = jf.read()
+        assert jf_string[-1] == "\n"
+        jf_contents = json.loads(jf_string)
         assert jf_contents["version"] == 1
         assert jf_contents["legacyImports"]
         deps = jf_contents["dependencies"]
         for dep in deps:
             assert dep["source"]["local"]["directory"] in dirs
+
+
+def test_inject_essential_libraries(tmp_path: Path):
+    file = tmp_path / "jsonnetfile.json"
+    dependency_mgmt.write_jsonnetfile(file, [])
+
+    dependency_mgmt.inject_essential_libraries(file)
+
+    with open(file) as jf:
+        jf_string = jf.read()
+        assert jf_string[-1] == "\n"
+        jf_contents = json.loads(jf_string)
+        assert jf_contents["version"] == 1
+        assert jf_contents["legacyImports"]
+        deps = jf_contents["dependencies"]
+        assert len(deps) == 1
+        assert (
+            deps[0]["source"]["git"]["remote"]
+            == "https://github.com/bitnami-labs/kube-libsonnet"
+        )
+        assert deps[0]["version"] == "v1.14.6"
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):
