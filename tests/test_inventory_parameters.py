@@ -81,6 +81,17 @@ CLOUD_REGION_TESTCASES = [
     if region[0] != "params"
 ]
 
+CLUSTER_PARAMS = {
+    "common": {
+        "components": {
+            "tc3": {"url": "cluster_common_url", "version": "cluster_common_version"}
+        }
+    },
+    "c1": {},
+    "c2": {"components": {"tc1": {"url": "c2_url"}, "tc2": {"version": "c2_version"}}},
+    "c3": {"components": {"tc3": {"url": "c3_url"}}},
+}
+
 
 def setup_global_repo_dir(
     tmp_path: Path, global_params, distparams, cloud_region_params
@@ -150,6 +161,25 @@ def setup_global_repo_dir(
     return global_path
 
 
+def setup_tenant_repo_dir(tmp_path: Path, tenant_params) -> Path:
+    tenant_path = tmp_path / "tenant-config"
+    os.makedirs(tenant_path)
+
+    for cluster_id, cluster_params in tenant_params.items():
+        classes = []
+        if cluster_id != "common":
+            classes.append(".common")
+        yaml_dump(
+            {
+                "classes": classes,
+                "parameters": cluster_params,
+            },
+            tenant_path / f"{cluster_id}.yml",
+        )
+
+    return tenant_path
+
+
 def extract_cloud_region_params(cloud: str, region: str):
     cparams = None
     rparams = None
@@ -175,7 +205,13 @@ def _extract_component(params: Dict, cn: str):
     return params.get("components", {}).get(cn, {})
 
 
-def get_component(distribution: str, cloud: str, region: str, cn: str):
+def get_component(
+    distribution: Optional[str],
+    cloud: Optional[str],
+    region: Optional[str],
+    cluster_id: Optional[str],
+    cn: str,
+):
     if cloud:
         cparams, rparams = extract_cloud_region_params(cloud, region)
     else:
@@ -198,8 +234,22 @@ def get_component(distribution: str, cloud: str, region: str, cn: str):
     else:
         dc = {}
 
-    curl = rc.get("url", cc.get("url", dc.get("url", cn)))
-    cver = rc.get("version", cc.get("version", dc.get("version", "gp")))
+    if cluster_id:
+        tenantc = _extract_component(CLUSTER_PARAMS["common"], cn)
+        clusterc = _extract_component(CLUSTER_PARAMS[cluster_id], cn)
+    else:
+        tenantc = {}
+        clusterc = {}
+
+    curl = clusterc.get(
+        "url", tenantc.get("url", rc.get("url", cc.get("url", dc.get("url", cn))))
+    )
+    cver = clusterc.get(
+        "version",
+        tenantc.get(
+            "version", rc.get("version", cc.get("version", dc.get("version", "gp")))
+        ),
+    )
 
     return {
         "url": curl,
@@ -208,36 +258,84 @@ def get_component(distribution: str, cloud: str, region: str, cn: str):
 
 
 def verify_components(
-    components: Dict[str, Dict[str, str]], distribution: str, cloud: str, region: str
+    components: Dict[str, Dict[str, str]],
+    distribution: str,
+    cloud: str,
+    region: str,
+    cluster_id: Optional[str] = None,
 ):
     for cn, c in components.items():
-        ec = get_component(distribution, cloud, region, cn)
+        ec = get_component(distribution, cloud, region, cluster_id, cn)
         assert c["url"] == ec["url"]
         assert c["version"] == ec["version"]
 
 
 def create_inventory_facts(
     tmp_path: Path,
-    global_config: str,
+    global_config: Path,
+    tenant_config: Optional[Path],
     distribution: Optional[str],
     cloud: Optional[str],
     region: Optional[str],
+    cluster_id: Optional[str] = None,
+    tenant_id: Optional[str] = None,
     allow_missing_classes: Optional[bool] = True,
 ) -> parameters.InventoryFacts:
-    params = {"parameters": {"facts": {}}}
+    params = {"parameters": {"facts": {}, "cluster": {}}}
     if distribution:
         params["parameters"]["facts"]["distribution"] = distribution
     if cloud:
         params["parameters"]["facts"]["cloud"] = cloud
     if region:
         params["parameters"]["facts"]["region"] = region
+    if cluster_id:
+        params["parameters"]["cluster"]["name"] = cluster_id
+        params["parameters"]["cluster"]["tenant"] = tenant_id
 
     values = tmp_path / "values.yaml"
     yaml_dump(params, values)
 
     return parameters.InventoryFacts(
-        global_config, None, [values], allow_missing_classes
+        global_config, tenant_config, [values], allow_missing_classes
     )
+
+
+def test_invfacts_tenant_id(tmp_path: Path):
+    value_files = {
+        "a.yml": {"parameters": {"cluster": {"tenant": "t-qux"}}},
+        "b.yml": {},
+        "c.yml": {"parameters": {"cluster": {"tenant": "mytenant"}}},
+    }
+    expected_tenant_id = [parameters.FAKE_TENANT_ID, "t-qux", "t-qux", "mytenant"]
+
+    for fn, fc in value_files.items():
+        yaml_dump(fc, tmp_path / fn)
+
+    for s in range(len(value_files) + 1):
+        invfacts = parameters.InventoryFacts(
+            None, None, [tmp_path / fn for fn in list(value_files.keys())[:s]], True
+        )
+
+        assert invfacts.tenant_id == expected_tenant_id[s]
+
+
+def test_invfacts_cluster_id(tmp_path: Path):
+    value_files = {
+        "a.yml": {"parameters": {"cluster": {"name": "c-baz"}}},
+        "b.yml": {},
+        "c.yml": {"parameters": {"cluster": {"name": "mycluster"}}},
+    }
+    expected_cluster_id = [parameters.FAKE_CLUSTER_ID, "c-baz", "c-baz", "mycluster"]
+
+    for fn, fc in value_files.items():
+        yaml_dump(fc, tmp_path / fn)
+
+    for s in range(len(value_files) + 1):
+        invfacts = parameters.InventoryFacts(
+            None, None, [tmp_path / fn for fn in list(value_files.keys())[:s]], True
+        )
+
+        assert invfacts.cluster_id == expected_cluster_id[s]
 
 
 def test_inventoryfactory_find_values(tmp_path: Path):
@@ -254,7 +352,9 @@ def test_inventoryfactory_find_values(tmp_path: Path):
     }
     global_dir = setup_global_repo_dir(tmp_path, {}, distributions, cloud_regions)
 
-    invfactory = parameters.InventoryFactory(work_dir=tmp_path, global_dir=global_dir)
+    invfactory = parameters.InventoryFactory(
+        work_dir=tmp_path, global_dir=global_dir, tenant_dir=None
+    )
 
     assert set(invfactory.distributions) == set(distributions.keys())
     assert set(invfactory.clouds) == set(cloud_regions.keys())
@@ -262,7 +362,7 @@ def test_inventoryfactory_find_values(tmp_path: Path):
         assert set(invfactory.cloud_regions[cloud]) == set(expected_regions[cloud])
 
 
-def test_inventoryfactory_from_dir(tmp_path: Path):
+def test_inventoryfactory_from_dirs(tmp_path: Path):
     distributions = {"a": {}, "b": {}, "c": {}, "d": {}}
     cloud_regions = {
         "x": {},
@@ -270,10 +370,10 @@ def test_inventoryfactory_from_dir(tmp_path: Path):
         "z": [("a", {})],
     }
     global_dir = setup_global_repo_dir(tmp_path, {}, distributions, cloud_regions)
-    invfacts = create_inventory_facts(tmp_path, global_dir, None, None, None)
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, None, None, None)
 
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     assert invfactory.classes_dir == (tmp_path / "inventory" / "classes")
@@ -292,9 +392,11 @@ def test_inventoryfactory_reclass_distribution(tmp_path: Path, distribution: str
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfacts = create_inventory_facts(tmp_path, global_dir, distribution, None, None)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfacts = create_inventory_facts(
+        tmp_path, global_dir, None, distribution, None, None
+    )
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)
@@ -309,9 +411,9 @@ def test_inventoryfactory_reclass_cloud(tmp_path: Path, cloud: str):
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, None)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, None, cloud, None)
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)
@@ -326,9 +428,9 @@ def test_inventoryfactory_reclass_cloud_region(tmp_path: Path, cloud: str, regio
     global_dir = setup_global_repo_dir(
         tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
     )
-    invfacts = create_inventory_facts(tmp_path, global_dir, None, cloud, region)
-    invfactory = parameters.InventoryFactory.from_repo_dir(
-        tmp_path, global_dir, invfacts
+    invfacts = create_inventory_facts(tmp_path, global_dir, None, None, cloud, region)
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, None, invfacts
     )
 
     inv = invfactory.reclass(invfacts)
@@ -336,3 +438,23 @@ def test_inventoryfactory_reclass_cloud_region(tmp_path: Path, cloud: str, regio
 
     assert set(components.keys()) == set(GLOBAL_PARAMS["components"].keys())
     verify_components(components, None, cloud, region)
+
+
+@pytest.mark.parametrize("cluster_id", CLUSTER_PARAMS.keys())
+def test_inventoryfactory_reclass_tenant(tmp_path: Path, cluster_id: str):
+    global_dir = setup_global_repo_dir(
+        tmp_path, GLOBAL_PARAMS, DIST_PARAMS, CLOUD_REGION_PARAMS
+    )
+    tenant_dir = setup_tenant_repo_dir(tmp_path, CLUSTER_PARAMS)
+
+    invfacts = create_inventory_facts(
+        tmp_path, global_dir, tenant_dir, "a", "y", "m", cluster_id, "t-foo"
+    )
+    invfactory = parameters.InventoryFactory.from_repo_dirs(
+        tmp_path, global_dir, tenant_dir, invfacts
+    )
+    inv = invfactory.reclass(invfacts)
+    components = inv.parameters("components")
+
+    assert set(components.keys()) == set(GLOBAL_PARAMS["components"].keys())
+    verify_components(components, "a", "y", "m", cluster_id)

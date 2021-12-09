@@ -11,6 +11,12 @@ from commodore.config import Config
 from .parameters import ClassNotFound, InventoryFactory, InventoryFacts
 
 
+def _cleanup_work_dir(cfg: Config, work_dir: Path):
+    if not cfg.debug:
+        # Clean up work dir if we're not in debug mode
+        shutil.rmtree(work_dir)
+
+
 def extract_components(
     cfg: Config, invfacts: InventoryFacts
 ) -> Dict[str, Dict[str, str]]:
@@ -23,30 +29,31 @@ def extract_components(
         )
 
     global_dir = Path(invfacts.global_config).resolve().absolute()
+    tenant_dir = None
     if invfacts.tenant_config:
-        raise NotImplementedError(
-            "Extracting component versions from tenant config not yet implemented"
-        )
-    work_dir = Path(tempfile.mkdtemp(prefix="renovate-reclass-")).resolve()
+        tenant_dir = Path(invfacts.tenant_config).resolve().absolute()
 
-    if global_dir.is_dir():
-        invfactory = InventoryFactory.from_repo_dir(work_dir, global_dir, invfacts)
+    work_dir = Path(tempfile.mkdtemp(prefix="commodore-reclass-")).resolve()
+
+    if global_dir.is_dir() and (not tenant_dir or tenant_dir.is_dir()):
+        invfactory = InventoryFactory.from_repo_dirs(
+            work_dir, global_dir, tenant_dir, invfacts
+        )
     else:
-        raise NotImplementedError("Cloning the inventory first not yet implemented")
+        _cleanup_work_dir(cfg, work_dir)
+        raise NotImplementedError("Cloning global or tenant repo not yet implemented")
 
     try:
         inv = invfactory.reclass(invfacts)
         components = inv.parameters("components")
     except ClassNotFound as e:
-        print(e)
+        _cleanup_work_dir(cfg, work_dir)
         raise ValueError(
             "Unable to render inventory with `--no-allow-missing-classes`. "
             + f"Class '{e.name}' not found. "
             + "Verify the provided values or allow missing classes."
         ) from e
 
-    if not cfg.debug:
-        # Clean up work dir if we're not in debug mode
-        shutil.rmtree(work_dir)
+    _cleanup_work_dir(cfg, work_dir)
 
     return components
