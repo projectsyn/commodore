@@ -46,6 +46,8 @@ DIST_PARAMS = {
     },
     "c": {"other_key": {}},
     "d": {"test": "testing"},
+    # Test that multi-instance related params work correctly
+    "e": {"namespace": "${_instance}"},
 }
 
 CLOUD_REGION_PARAMS = {

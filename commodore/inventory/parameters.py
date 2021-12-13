@@ -249,7 +249,12 @@ class InventoryFactory:
         # - global.commodore
         classes = ["base"] + invfacts.extra_classes + ["global.commodore"]
         yaml_dump(
-            {"classes": classes},
+            {
+                "classes": classes,
+                "parameters": {
+                    "_instance": "global",
+                },
+            },
             self.targets_dir / "global.yml",
         )
 
