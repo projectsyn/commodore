@@ -238,17 +238,60 @@ def test_discover_components_aliases(patch_inventory, data: Config):
     assert aliases["aliased"] == "other-component"
 
 
+@pytest.mark.parametrize(
+    "components,expected",
+    [
+        ([], ""),
+        (["a"], "'a'"),
+        (["a", "b"], "'a' and 'b'"),
+        # Verify that Oxford comma is used in lists with >= items
+        (
+            ["a", "b", "c"],
+            "'a', 'b', and 'c'",
+        ),
+        (
+            ["a", "b", "c", "d", "e"],
+            "'a', 'b', 'c', 'd', and 'e'",
+        ),
+    ],
+)
+def test_format_component_list(components, expected):
+    assert dependency_mgmt._format_component_list(components) == expected
+
+
+@pytest.mark.parametrize(
+    "expected_aliases,expected_exception_msg",
+    [
+        (
+            {"other-component": "aliased", "third-component": "aliased"},
+            "Duplicate component alias 'aliased': components "
+            + "'other-component' and 'third-component' are aliased to 'aliased'",
+        ),
+        (
+            {"other-component": "third-component", "third-component": "aliased"},
+            "Component 'other-component' aliases existing component 'third-component'",
+        ),
+        (
+            {
+                "test-component": "third-component",
+                "other-component": "third-component",
+                "third-component": "aliased",
+            },
+            "Components 'other-component' and 'test-component' alias "
+            + "existing component 'third-component'",
+        ),
+    ],
+)
 @patch.object(dependency_mgmt, "kapitan_inventory")
-def test_discover_components_duplicate_aliases(patch_inventory, data: Config):
-    expected_aliases = {"other-component": "aliased", "third-component": "aliased"}
+def test_discover_components_duplicate_aliases(
+    patch_inventory, data: Config, expected_aliases, expected_exception_msg
+):
     _setup_mock_inventory(patch_inventory, expected_aliases)
 
     with pytest.raises(KeyError) as e:
         dependency_mgmt._discover_components(data)
-        assert (
-            "Duplicate component alias aliased: component other-component is already aliased to aliased"
-            in str(e)
-        )
+
+    assert e.value.args[0] == expected_exception_msg
 
 
 @patch("commodore.dependency_mgmt._read_components")
