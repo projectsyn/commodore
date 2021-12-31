@@ -312,7 +312,10 @@ def register_components(cfg: Config):
     Create component symlinks for discovered components which exist.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(cfg)
+    try:
+        components, component_aliases = _discover_components(cfg)
+    except KeyError as e:
+        raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
