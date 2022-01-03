@@ -2,7 +2,7 @@ import os
 import json
 from pathlib import Path as P
 from subprocess import call  # nosec
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Set
 
 import click
 
@@ -32,14 +32,36 @@ def create_component_symlinks(cfg, component: Component):
         relsymlink(file, cfg.inventory.lib_dir)
 
 
+def _format_component_list(components: Iterable[str]) -> str:
+    formatted_list = list(map(lambda c: f"'{c}'", sorted(components)))
+
+    if len(formatted_list) == 0:
+        return ""
+
+    if len(formatted_list) == 1:
+        return f"{formatted_list[0]}"
+
+    formatted = ", ".join(formatted_list[:-1])
+
+    # Use serial ("Oxford") comma when formatting lists of 3 or more items, cf.
+    # https://en.wikipedia.org/wiki/Serial_comma
+    serial_comma = ""
+    if len(formatted_list) > 2:
+        serial_comma = ","
+
+    formatted += f"{serial_comma} and {formatted_list[-1]}"
+
+    return formatted
+
+
 def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
     """
-    Discover components in `inventory_path/` by extracting all entries from
-    the reclass applications dictionary.
+    Discover components used by the currenct cluster by extracting all entries from the
+    reclass applications dictionary.
     """
     kapitan_applications = kapitan_inventory(cfg, key="applications")
     components = set()
-    component_aliases: Dict[str, str] = {}
+    all_component_aliases: Dict[str, Set[str]] = {}
     for component in kapitan_applications.keys():
         try:
             cn, alias = component.split(" as ")
@@ -52,13 +74,48 @@ def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
                 msg += f" aliased to {alias}"
             click.echo(msg)
         components.add(cn)
+        all_component_aliases.setdefault(alias, set()).add(cn)
 
-        if alias in component_aliases:
-            pc = component_aliases[alias]
-            raise KeyError(
-                f"Duplicate component alias {alias}: component {pc} is already aliased to {alias}"
+    component_aliases: Dict[str, str] = {}
+
+    for alias, cns in all_component_aliases.items():
+        if len(cns) == 0:
+            # NOTE(sg): This should never happen, but we add it for completeness' sake.
+            raise ValueError(
+                f"Discovered component alias '{alias}' with no associated components"
             )
-        component_aliases[alias] = cn
+
+        if len(cns) > 1:
+            if alias in cns:
+                other_aliases = list(cns - set([alias]))
+                if len(other_aliases) > 1:
+                    clist = _format_component_list(other_aliases)
+                    raise KeyError(
+                        f"Components {clist} alias existing component '{alias}'"
+                    )
+
+                # If this assertion fails we have a problem, since `other_aliases` is
+                # the result of removing a single element from a set which contains
+                # multiple elements and we've already handled the case for len() > 1.
+                # Since we don't mind if it's optimized out in some cases, we annotate
+                # it with `nosec` so bandit doesn't complain about it.
+                assert len(other_aliases) == 1  # nosec
+                raise KeyError(
+                    f"Component '{other_aliases[0]}' "
+                    + f"aliases existing component '{alias}'"
+                )
+
+            clist = _format_component_list(cns)
+            raise KeyError(
+                f"Duplicate component alias '{alias}': "
+                + f"components {clist} are aliased to '{alias}'"
+            )
+
+        # len(cns) must be 1 here, as we already raise an Exception for len(cns) ==
+        # 0 earlier. We still assert this condition here and annotate with `nosec`
+        # so bandit doesn't complain about it.
+        assert len(cns) == 1  # nosec
+        component_aliases[alias] = list(cns)[0]
 
     return sorted(components), component_aliases
 
@@ -255,7 +312,10 @@ def register_components(cfg: Config):
     Create component symlinks for discovered components which exist.
     """
     click.secho("Discovering included components...", bold=True)
-    components, component_aliases = _discover_components(cfg)
+    try:
+        components, component_aliases = _discover_components(cfg)
+    except KeyError as e:
+        raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
