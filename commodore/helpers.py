@@ -102,14 +102,17 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
     try:
         resp = json.loads(r.text)
-    except json.JSONDecodeError:
-        resp = {"message": "Client error: Unable to parse JSON"}
+    except json.JSONDecodeError as e:
+        raise ApiError("Client error: Unable to parse JSON") from e
     try:
         r.raise_for_status()
     except HTTPError as e:
         extra_msg = "."
         if r.status_code >= 400:
-            extra_msg = f": {resp['reason']}"
+            if "reason" in resp:
+                extra_msg = f": {resp['reason']}"
+            else:
+                extra_msg = f": {e}"
         raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp

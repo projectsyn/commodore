@@ -34,6 +34,7 @@ autopep8 = "*"
 pytest = "^5.4.3"
 pytest-xdist = "^1.32.0"
 pytest-benchmark = "^3.2.3"
+responses = "^0.16.0"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'

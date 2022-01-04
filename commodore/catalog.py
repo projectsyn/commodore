@@ -8,7 +8,7 @@ import click
 import yaml
 
 from . import git
-from .helpers import rm_tree_contents, lieutenant_query, sliding_window
+from .helpers import ApiError, rm_tree_contents, lieutenant_query, sliding_window
 from .cluster import Cluster
 from .config import Config, Migration
 from .k8sobject import K8sObject
@@ -226,7 +226,10 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
 
 
 def catalog_list(cfg):
-    clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+    try:
+        clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+    except ApiError as e:
+        raise click.ClickException(f"While listing clusters on Lieutenant: {e}") from e
     for cluster in clusters:
         display_name = cluster["displayName"]
         catalog_id = cluster["id"]
