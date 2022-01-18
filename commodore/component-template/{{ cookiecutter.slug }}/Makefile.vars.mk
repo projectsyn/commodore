@@ -7,7 +7,7 @@ compiled_volume ?= -v "$${PWD}/$(compiled_path):/$(COMPONENT_NAME)"
 commodore_args  ?= --search-paths ./dependencies --search-paths .
 
 DOCKER_CMD   ?= docker
-DOCKER_ARGS  ?= run --rm -u "$$(id -u)" -w /$(COMPONENT_NAME)
+DOCKER_ARGS  ?= run --rm -u "$$(id -u):$$(id -g)" -w /$(COMPONENT_NAME) -e HOME="/$(COMPONENT_NAME)"
 
 JSONNET_FILES   ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.*jsonnet' -or -name '*.libsonnet' \))
 JSONNETFMT_ARGS ?= --in-place --pad-arrays
