@@ -1,6 +1,7 @@
 import json
+import sys
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 import click
 import yaml
@@ -15,6 +16,7 @@ from .component.template import ComponentTemplater
 from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
+from .inventory.lint_components import lint_components
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -415,6 +417,46 @@ def component_versions(
         click.echo(json.dumps(components))
     else:
         click.echo(yaml.safe_dump(components))
+
+
+@inventory.group(
+    name="lint", short_help="Commands which lint the Commodore inventory structure"
+)
+@verbosity
+@pass_config
+def inventory_lint(config: Config, verbose):
+    config.update_verbosity(verbose)
+
+
+@inventory_lint.command(
+    name="components",
+    short_help="Lint component specifications in the provided paths (files and directories are accepted)",
+)
+@click.argument(
+    "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
+)
+@verbosity
+@pass_config
+def inventory_lint_components(
+    config: Config,
+    verbose,
+    target: Tuple[str],
+):
+    config.update_verbosity(verbose)
+
+    error_counts = []
+    for t in target:
+        lint_target = Path(t)
+        error_counts.append(lint_components(config, lint_target))
+
+    errors = sum(error_counts)
+    exit_status = 0 if errors == 0 else 1
+    if errors == 0:
+        click.secho("No errors 🎉 ✨", bold=True)
+    if errors > 0:
+        click.secho(f"Found {errors} errors", bold=True)
+
+    sys.exit(exit_status)
 
 
 def main():
