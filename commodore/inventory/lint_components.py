@@ -49,7 +49,9 @@ def _lint_file(cfg: Config, file: Path) -> int:
 
 
 def _lint_directory(cfg, path: Path) -> int:
-    assert path.is_dir()
+    if not path.is_dir():
+        raise ValueError("Unexpected path argument: expected to be a directory")
+
     errcount = 0
     for dentry in path.iterdir():
         if dentry.stem.startswith("."):
