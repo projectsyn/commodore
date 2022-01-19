@@ -55,3 +55,8 @@ def test_component_compile_command():
 def test_component_inventory_components_command():
     exit_status = call("commodore inventory components --help", shell=True)
     assert exit_status == 0
+
+
+def test_component_inventory_lint_components_command():
+    exit_status = call("commodore inventory lint components --help", shell=True)
+    assert exit_status == 0
