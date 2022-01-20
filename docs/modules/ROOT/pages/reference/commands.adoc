@@ -108,15 +108,18 @@ This must match the tenant ID associated with the provided tenant repo for accur
 
 The command supports both YAML and JSON output.
 
-== Inventory Lint Components
+== Inventory Lint
 
-  commodore inventory lint components [PATH, [PATH, [PATH, ...]]]
+  commodore inventory lint [PATH]...
 
-This command provides basic linting for Commodore component specifications.
+This command provides linting for Commodore inventory classes.
+
+Currently, the command only lints component specifications.
 It treats component specifications without explicit `version` field as errors.
 
 The command takes zero or more paths to files or directories to lint as command line arguments.
 It silently skips files which aren't valid YAML, as well as empty files and files containing multi-document YAML streams.
+All other files are assumed to be Commodore inventory classes.
 
 When linting directories, any hidden files (prefixed with a dot) are ignored.
 Directories are linted recursively and the same skipping logic as for individual files is applied.

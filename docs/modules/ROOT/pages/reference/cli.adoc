@@ -164,6 +164,6 @@ This command doesn't have any command line options.
 *-o, --output-format*::
   The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.
 
-== Inventory Lint Components
+== Inventory Lint
 
 No command line flags

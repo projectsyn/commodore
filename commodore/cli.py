@@ -419,30 +419,26 @@ def component_versions(
         click.echo(yaml.safe_dump(components))
 
 
-@inventory.group(
-    name="lint", short_help="Commands which lint the Commodore inventory structure"
-)
-@verbosity
-@pass_config
-def inventory_lint(config: Config, verbose):
-    config.update_verbosity(verbose)
-
-
-@inventory_lint.command(
-    name="components",
-    short_help="Lint component specifications in the provided paths (files and directories are accepted)",
+@inventory.command(
+    name="lint",
+    short_help="Lint YAML files for Commodore inventory structures in the provided paths",
+    no_args_is_help=True,
 )
 @click.argument(
     "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
 )
 @verbosity
 @pass_config
-def inventory_lint_components(
-    config: Config,
-    verbose,
-    target: Tuple[str],
-):
+def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
+    """Lint YAML files in the provided paths.
+
+    The command assumes that any YAML file found in the provided paths is part of a
+    Commodore inventory structure."""
     config.update_verbosity(verbose)
+
+    if len(target) == 0:
+        click.secho("> No files provided, exiting...", fg="yellow")
+        sys.exit(2)
 
     error_counts = []
     for t in target:
