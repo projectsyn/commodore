@@ -6,7 +6,15 @@ set -e
 # otherwise this will cause issues with things like cloning with git+ssh
 # reference: https://access.redhat.com/documentation/en-us/openshift_container_platform/3.11/html/creating_images/creating-images-guidelines#use-uid
 
-export LD_PRELOAD=/usr/lib/libnss_wrapper.so
+# Ensure that we're using the correct libnss_wrapper.so
+# This should only ever fail in CI
+readonly libnss_wrapper_so=/usr/lib/x86_64-linux-gnu/libnss_wrapper.so
+if [ ! -f "${libnss_wrapper_so}" ]; then
+  echo "${libnss_wrapper_so} doesn't exist."
+  exit 1
+fi
+
+export LD_PRELOAD="${libnss_wrapper_so}"
 export NSS_WRAPPER_PASSWD=/tmp/passwd
 export NSS_WRAPPER_GROUP=/etc/group
 
