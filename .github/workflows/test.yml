@@ -52,7 +52,9 @@ jobs:
         pip install tox
     - uses: actions/cache@v2
       with:
-        path: .tox/
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
     - name: Install jsonnet-bundler
       run: |
@@ -84,7 +86,9 @@ jobs:
         pip install tox
     - uses: actions/cache@v2
       with:
-        path: .tox/
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
     - name: Install jsonnet-bundler
       run: |
