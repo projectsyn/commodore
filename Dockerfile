@@ -1,4 +1,4 @@
-FROM docker.io/python:3.9.6-slim-buster AS base
+FROM docker.io/python:3.9.10-slim-bullseye AS base
 
 ENV HOME=/app
 
