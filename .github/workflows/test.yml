@@ -46,9 +46,14 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
       run: |
-        pip install poetry tox
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: .tox/
+        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
@@ -73,9 +78,14 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Poetry
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
       run: |
-        pip install poetry tox
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: .tox/
+        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
@@ -94,9 +104,13 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: '3.9'
+    - uses: Gr1N/setup-poetry@v7
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-integration-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
       run: |
-        pip install poetry
         poetry env use python3.9
         poetry install
     - name: Install jsonnet-bundler
