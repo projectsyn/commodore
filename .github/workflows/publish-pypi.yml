@@ -22,10 +22,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9.6'
+          python-version: '3.9'
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-publish-pypi-${{ hashFiles('poetry.lock') }}
       - name: Setup poetry environment
         run: |
-          pip install poetry
           poetry install
       - name: Inject package versions to action env
         run: make inject-version
