@@ -8,7 +8,7 @@ set -e
 
 # Ensure that we're using the correct libnss_wrapper.so
 # This should only ever fail in CI
-readonly libnss_wrapper_so=/usr/lib/libnss_wrapper.so
+readonly libnss_wrapper_so=/usr/lib/x86_64-linux-gnu/libnss_wrapper.so
 if [ ! -f "${libnss_wrapper_so}" ]; then
   echo "${libnss_wrapper_so} doesn't exist."
   exit 1
