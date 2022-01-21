@@ -177,15 +177,15 @@ class Component:
                     head = self._repo.create_head(branch, commit=commit)
 
                 head.set_tracking_branch(self.repo.remote().refs[branch])
-                self._repo.head.reference = head
+                self._repo.head.set_reference(head)
             elif tag:
                 # Simply create detached head pointing to tag
-                self._repo.head.reference = tag
+                self._repo.head.set_reference(tag)
             else:
                 # Create detached head by setting repo.head.reference as
                 # direct ref to commit object.
                 rev = self._repo.rev_parse(commit)
-                self._repo.head.reference = rev
+                self._repo.head.set_reference(rev)
 
             # Reset working tree to current HEAD reference
             self._repo.head.reset(index=True, working_tree=True)
