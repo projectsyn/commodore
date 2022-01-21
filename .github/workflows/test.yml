@@ -153,3 +153,5 @@ jobs:
         fetch-depth: "0"
     - name: Build image
       run: make docker
+    - name: Run image
+      run: docker run docker.io/projectsyn/commodore:test
