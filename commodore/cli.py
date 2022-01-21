@@ -1,6 +1,7 @@
 import json
+import sys
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 import click
 import yaml
@@ -15,6 +16,7 @@ from .component.template import ComponentTemplater
 from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
+from .inventory.lint_components import lint_components
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -415,6 +417,42 @@ def component_versions(
         click.echo(json.dumps(components))
     else:
         click.echo(yaml.safe_dump(components))
+
+
+@inventory.command(
+    name="lint",
+    short_help="Lint YAML files for Commodore inventory structures in the provided paths",
+    no_args_is_help=True,
+)
+@click.argument(
+    "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
+)
+@verbosity
+@pass_config
+def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
+    """Lint YAML files in the provided paths.
+
+    The command assumes that any YAML file found in the provided paths is part of a
+    Commodore inventory structure."""
+    config.update_verbosity(verbose)
+
+    if len(target) == 0:
+        click.secho("> No files provided, exiting...", fg="yellow")
+        sys.exit(2)
+
+    error_counts = []
+    for t in target:
+        lint_target = Path(t)
+        error_counts.append(lint_components(config, lint_target))
+
+    errors = sum(error_counts)
+    exit_status = 0 if errors == 0 else 1
+    if errors == 0:
+        click.secho("No errors 🎉 ✨", bold=True)
+    if errors > 0:
+        click.secho(f"Found {errors} errors", bold=True)
+
+    sys.exit(exit_status)
 
 
 def main():
