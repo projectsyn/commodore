@@ -1,0 +1,63 @@
+name: Build virtualenv caches
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build-test-virtualenvs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - '3.7'
+          - '3.8'
+          - '3.9.7'
+          - '3.9'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
+      run: |
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+    - name: Extract Python minor version from matrix python-version
+      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+    - run: |
+        make testenv_py${PYVER}
+
+  build-bench-virtualenvs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
+      run: |
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+    - name: Extract Python minor version from matrix python-version
+      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+    - run: |
+        make benchenv_py${PYVER}
