@@ -55,7 +55,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
@@ -89,7 +89,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
