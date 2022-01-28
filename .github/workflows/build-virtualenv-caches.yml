@@ -28,7 +28,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Extract Python minor version from matrix python-version
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - run: |
@@ -56,7 +56,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Extract Python minor version from matrix python-version
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - run: |
