@@ -93,15 +93,15 @@ def _verify_commit_message(
     Parse and check catalog commit message
     """
 
-    rev_re_fragment = fr"(?P<commit_sha>[0-9a-f]{{{short_sha_len}}})"
+    rev_re_fragment = rf"(?P<commit_sha>[0-9a-f]{{{short_sha_len}}})"
 
     component_commit_re = re.compile(
         r"^ \* (?P<component_name>[a-z-]+): "
         + r"(?P<component_version>(None|v[0-9]+.[0-9]+.[0-9]+|[a-z0-9]{40})) "
-        + fr"\({rev_re_fragment}\)$"
+        + rf"\({rev_re_fragment}\)$"
     )
-    global_commit_re = re.compile(fr"^ \* global: {rev_re_fragment}$")
-    tenant_commit_re = re.compile(fr"^ \* customer: {rev_re_fragment}$")
+    global_commit_re = re.compile(rf"^ \* global: {rev_re_fragment}$")
+    tenant_commit_re = re.compile(rf"^ \* customer: {rev_re_fragment}$")
     compile_ts_re = re.compile(r"^Compilation timestamp: (?P<ts>[0-9T.:-]+)$")
 
     global_rev = git.Repo(tmp_path / "inventory/classes/global").head.commit.hexsha[
