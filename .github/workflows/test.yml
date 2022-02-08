@@ -10,21 +10,28 @@ jobs:
     strategy:
       matrix:
         command:
-          - lint_flake8
-          - lint_pylint
-          - lint_bandit
-          - lint_mypy
-          - lint_black
+          - flake8
+          - pylint
+          - bandit
+          - mypy
+          - black
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
         python-version: '3.9'
-    - name: Install Poetry
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
       run: |
-        pip install poetry tox
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Run ${{ matrix.command }}
-      run: make ${{ matrix.command }}
+      run: make lint_${{ matrix.command }}
   editorconfig:
     runs-on: ubuntu-latest
     steps:

@@ -22,6 +22,23 @@ lint_black:
 
 lint: lint_flake8 lint_pylint lint_bandit lint_mypy lint_black
 
+.PHONY: lintenv_flake8 lintenv_pylint lintenv_bandit lintenv_mypy lintenv_black
+
+lintenv_flake8:
+	$(TOX_COMMAND) -e flake8 --notest
+
+lintenv_pylint:
+	$(TOX_COMMAND) -e pylint --notest
+
+lintenv_bandit:
+	$(TOX_COMMAND) -e bandit --notest
+
+lintenv_mypy:
+	$(TOX_COMMAND) -e mypy --notest
+
+lintenv_black:
+	$(TOX_COMMAND) -e black --notest
+
 .PHONY: test_py3.7 test_py3.8 test_py3.9
 
 test_py3.7:
