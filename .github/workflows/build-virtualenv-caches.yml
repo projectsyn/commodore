@@ -10,6 +10,33 @@ on:
     - cron: '0 4 * * MON'
 
 jobs:
+  build-lint-virtualenvs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        command:
+          - flake8
+          - pylint
+          - bandit
+          - mypy
+          - black
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - uses: Gr1N/setup-poetry@v7
+    - name: Install tox
+      run: |
+        pip install tox
+    - uses: actions/cache@v2
+      with:
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-test-py${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+    - name: Build virtualenv for ${{ matrix.command }}
+      run: make lintenv_${{ matrix.command }}
   build-test-virtualenvs:
     runs-on: ubuntu-latest
     strategy:
