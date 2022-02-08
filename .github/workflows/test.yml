@@ -29,7 +29,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+        key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Run ${{ matrix.command }}
       run: make lint_${{ matrix.command }}
   editorconfig:

@@ -34,7 +34,7 @@ jobs:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+        key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
     - name: Build virtualenv for ${{ matrix.command }}
       run: make lintenv_${{ matrix.command }}
   build-test-virtualenvs:
