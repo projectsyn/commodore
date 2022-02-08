@@ -90,8 +90,16 @@ Since Commodore won't re-read `parameters.components` after including the discov
 
 With https://syn.tools/syn/SDDs/0025-commodore-component-instantiation.html[SDD0025], we've introduced support for instantiating components multiple times.
 As discussed in the design document, component authors must explicitly declare that their component supports instantiation.
-Components declare that they support instantiation by setting the field `multi_instance` in `parameters.<component_name>` to `true`.
-Commodore will exit with an error if a hierarchy tries to instantiate a component which hasn't declared that it supports instantiation.
+Components advertise that they support instantiation by setting the field `multi_instance` in `parameters.<component_name>._metadata` to `true`.
+Commodore will exit with an error if a hierarchy tries to instantiate a component which doesn't explicitly advertise multi-instance support.
+
+[TIP]
+====
+Components which are generated with `commodore component new` by Commodore v0.7.0 or newer already have field `_metadata` in their component parameters.
+The component template prefixes the field with an equals sign, which makes the field constant.
+This ensures that the hierarchy can't change the contents of the field.
+See the https://github.com/kapicorp/reclass/blob/develop/README-extensions.rst#constant-parameters[Kapitan reclass documentation] for more details on constant parameters.
+====
 
 Component instance names aren't namespaced per component, but must be globally unique.
 Commodore will exit with an error if the hierarchy uses the same instance name twice.

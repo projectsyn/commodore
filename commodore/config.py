@@ -168,11 +168,27 @@ class Config:
     def register_component_aliases(self, aliases: Dict[str, str]):
         self._component_aliases = aliases
 
+    def _component_is_aliasable(self, cluster_parameters: Dict, component_name: str):
+        ckey = component_parameters_key(component_name)
+        deprecation_notice_url = (
+            "https://syn.tools/commodore/reference/"
+            + "deprecation-notices.html#_multi_instance_top_level"
+        )
+        if "multi_instance" in cluster_parameters[ckey]:
+            self.register_deprecation_notice(
+                f"Component `{component_name}` advertises multi-instance support in "
+                + "component parameter `multi_instance`. This has been deprecated "
+                + "in favor of using `_metadata.multi_instance`. "
+                + f"See {deprecation_notice_url} for more details."
+            )
+            return cluster_parameters[ckey]["multi_instance"]
+
+        cmeta = cluster_parameters[ckey].get("_metadata", {})
+        return cmeta.get("multi_instance", False)
+
     def verify_component_aliases(self, cluster_parameters: Dict):
         for alias, cn in self._component_aliases.items():
-            ckey = component_parameters_key(cn)
-            caliasable = cluster_parameters[ckey].get("multi_instance", False)
-            if alias != cn and not caliasable:
+            if alias != cn and not self._component_is_aliasable(cluster_parameters, cn):
                 raise click.ClickException(
                     f"Component {cn} with alias {alias} does not support instantiation."
                 )
