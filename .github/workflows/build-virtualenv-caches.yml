@@ -3,6 +3,11 @@ on:
   push:
     branches:
     - master
+  # Verify & rebuild caches every Monday at 04:00
+  # This should mostly ensure that the caches aren't evicted after 7 days of
+  # inactivity
+  schedule:
+    - cron: '0 4 * * MON'
 
 jobs:
   build-test-virtualenvs:
