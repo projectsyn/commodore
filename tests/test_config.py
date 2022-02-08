@@ -16,18 +16,61 @@ def config(tmp_path: P):
     )
 
 
-def test_verify_component_aliases(config):
+def test_verify_component_aliases_no_instance(config):
+    alias_data = {"bar": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"namespace": "syn-bar"}}
+
+    config.verify_component_aliases(params)
+
+
+def test_verify_component_aliases_explicit_no_instance(config):
+    alias_data = {"bar": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+
+    config.verify_component_aliases(params)
+
+
+def test_verify_component_aliases_metadata(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"_metadata": {"multi_instance": True}, "namespace": "syn-bar"}}
+
+    config.verify_component_aliases(params)
+
+    assert len(config._deprecation_notices) == 0
+
+
+def test_verify_component_aliases_deprecated(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
     params = {"bar": {"multi_instance": True, "namespace": "syn-bar"}}
 
     config.verify_component_aliases(params)
 
+    assert len(config._deprecation_notices) == 1
+    depnotice = config._deprecation_notices[0]
+    assert (
+        "Component `bar` advertises multi-instance support in component parameter "
+        + "`multi_instance`. This has been deprecated in favor of using "
+        + "`_metadata.multi_instance`."
+    ) in depnotice
+
 
 def test_verify_component_aliases_error(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
     params = {"bar": {"namespace": "syn-bar"}}
+
+    with pytest.raises(click.ClickException):
+        config.verify_component_aliases(params)
+
+
+def test_verify_component_aliases_explicit_no_instance_error(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
 
     with pytest.raises(click.ClickException):
         config.verify_component_aliases(params)

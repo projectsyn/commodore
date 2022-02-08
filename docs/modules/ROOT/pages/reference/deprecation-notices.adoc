@@ -3,7 +3,30 @@
 This page lists deprecations of Commodore features organized by version.
 We include a link to relevant documentation, if applicable.
 
-== Unreleased
+== https://github.com/projectsyn/commodore/releases/tag/v0.14.0[v0.14.0]
+
+[#_multi_instance_top_level]
+=== Advertising multi-instance support in component parameter `multi_instance` is deprecated
+
+Commodore v0.14.0 adds support for advertising multi-instance support in components to field `multi_instance` in the component metadata parameter `_metadata`.
+In turn the old location for advertising multi-instance support in component parameter `multi_instance` is deprecated.
+
+To update existing components, you can simply adjust the component's `class/defaults.yml` to match the sample shown below.
+
+[source,yaml]
+----
+parameters:
+  <component_name>: <1>
+    =_metadata: <2>
+      multi_instance: true
+----
+<1> `<component_name>` is a placeholder for the component's parameters key
+<2> By prefixing the `_metadata` key with an equals sign, we make the component metadata constant.
+This ensures that values in `_metadata` can't be changed in the hierarchy.
+See also the https://github.com/kapicorp/reclass/blob/develop/README-extensions.rst#constant-parameters[Kapitan reclass documentation].
+
+TIP: Depending on the age of the component, the `metadata` key may already exist with empty content.
+
 
 == https://github.com/projectsyn/commodore/releases/tag/v0.13.0[v0.13.0]
 
