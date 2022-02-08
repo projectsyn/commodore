@@ -24,6 +24,14 @@ def test_verify_component_aliases_no_instance(config):
     config.verify_component_aliases(params)
 
 
+def test_verify_component_aliases_explicit_no_instance(config):
+    alias_data = {"bar": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+
+    config.verify_component_aliases(params)
+
+
 def test_verify_component_aliases_metadata(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
@@ -54,6 +62,15 @@ def test_verify_component_aliases_error(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
     params = {"bar": {"namespace": "syn-bar"}}
+
+    with pytest.raises(click.ClickException):
+        config.verify_component_aliases(params)
+
+
+def test_verify_component_aliases_explicit_no_instance_error(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
 
     with pytest.raises(click.ClickException):
         config.verify_component_aliases(params)
