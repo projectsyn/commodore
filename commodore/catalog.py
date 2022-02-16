@@ -7,7 +7,8 @@ from typing import Iterable, Tuple
 import click
 import yaml
 
-from . import gitrepo
+from .component import Component
+from .gitrepo import GitRepo, GitCommandError
 from .helpers import ApiError, rm_tree_contents, lieutenant_query, sliding_window
 from .cluster import Cluster
 from .config import Config, Migration
@@ -19,19 +20,24 @@ def fetch_customer_catalog(config: Config, cluster: Cluster):
     repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
-    return gitrepo.clone_repository(repo_url, config.catalog_dir, config)
+    r = GitRepo(
+        repo_url,
+        config.catalog_dir,
+        force_init=True,
+        author_name=config.username,
+        author_email=config.usermail,
+    )
+    r.checkout()
+    return r
 
 
-def _pretty_print_component_commit(name, component):
-    repo = component.repo
-    sha = repo.head.commit.hexsha
-    short_sha = repo.git.rev_parse(sha, short=6)
+def _pretty_print_component_commit(name, component: Component):
+    short_sha = component.repo.head_short_sha
     return f" * {name}: {component.version} ({short_sha})"
 
 
-def _pretty_print_config_commit(name, repo):
-    sha = repo.head.commit.hexsha
-    short_sha = repo.git.rev_parse(sha, short=6)
+def _pretty_print_config_commit(name, repo: GitRepo):
+    short_sha = repo.head_short_sha
     return f" * {name}: {short_sha}"
 
 
@@ -63,7 +69,7 @@ Compilation timestamp: {now}
 """
 
 
-def clean_catalog(repo):
+def clean_catalog(repo: GitRepo):
     catalogdir = P(repo.working_tree_dir, "manifests")
     click.secho("Cleaning catalog repository...", bold=True)
     # delete everything in catalog
@@ -74,7 +80,7 @@ def clean_catalog(repo):
         rm_tree_contents(repo.working_tree_dir)
 
 
-def _push_catalog(cfg: Config, repo, commit_message):
+def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
     """Push catalog to catalog repo if conditions to allow push are met.
 
     Conditions to allow pushing are:
@@ -89,11 +95,11 @@ def _push_catalog(cfg: Config, repo, commit_message):
 
         if cfg.push:
             click.echo(" > Commiting changes...")
-            gitrepo.commit(repo, commit_message, cfg)
+            repo.commit(commit_message)
             click.echo(" > Pushing catalog to remote...")
             try:
-                pushinfos = repo.remotes.origin.push()
-            except gitrepo.GitCommandError as e:
+                pushinfos = repo.push()
+            except GitCommandError as e:
                 raise click.ClickException(
                     "Failed to push to the catalog repository: "
                     + f"Git exited with status code {e.status}"
@@ -113,7 +119,7 @@ def _push_catalog(cfg: Config, repo, commit_message):
                 " > Add flag --interactive to show the diff and decide on the push"
             )
     else:
-        repo.head.reset(working_tree=False)
+        repo.reset(working_tree=False)
         click.echo(" > Skipping commit+push to catalog in local mode...")
 
 
@@ -188,7 +194,7 @@ def _kapitan_029_030_difffunc(
     return diff_lines, suppress_diff
 
 
-def update_catalog(cfg: Config, targets: Iterable[str], repo):
+def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
     from distutils import dir_util
@@ -201,9 +207,9 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
     start = time.time()
     if cfg.migration == Migration.KAP_029_030:
         click.echo(" > Smart diffing started... (this can take a while)")
-        difftext, changed = gitrepo.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
+        difftext, changed = repo.stage_all(diff_func=_kapitan_029_030_difffunc)
     else:
-        difftext, changed = gitrepo.stage_all(repo)
+        difftext, changed = repo.stage_all()
     elapsed = time.time() - start
 
     if changed:
