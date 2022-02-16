@@ -15,7 +15,7 @@ from .config import Config, Migration
 from .k8sobject import K8sObject
 
 
-def fetch_customer_catalog(config: Config, cluster: Cluster):
+def fetch_catalog(config: Config, cluster: Cluster):
     click.secho("Updating cluster catalog...", bold=True)
     repo_url = cluster.catalog_repo_url
     if config.debug:

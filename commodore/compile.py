@@ -1,6 +1,6 @@
 import click
 
-from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
+from .catalog import fetch_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
     load_cluster_from_api,
@@ -70,7 +70,7 @@ def _regular_setup(config: Config, cluster_id):
         update_target(config, alias, component=component)
 
     # Fetch catalog
-    return fetch_customer_catalog(config, cluster)
+    return fetch_catalog(config, cluster)
 
 
 def _local_setup(config: Config, cluster_id):
