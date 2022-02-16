@@ -128,7 +128,7 @@ def _verify_commit_message(
         assert cname in components
         c = components[cname]
         assert str(c.version) == m.group("component_version")
-        assert c.repo.head.commit.hexsha[:short_sha_len] == m.group("commit_sha")
+        assert c.repo.repo.head.commit.hexsha[:short_sha_len] == m.group("commit_sha")
 
     # Remaining lines should be config commit shas and compilation timestamp
     rem_lines = commit_msg_lines[component_count:]
