@@ -15,7 +15,7 @@ from .config import Config, Migration
 from .k8sobject import K8sObject
 
 
-def fetch_catalog(config: Config, cluster: Cluster):
+def fetch_catalog(config: Config, cluster: Cluster) -> GitRepo:
     click.secho("Updating cluster catalog...", bold=True)
     repo_url = cluster.catalog_repo_url
     if config.debug:
@@ -31,17 +31,17 @@ def fetch_catalog(config: Config, cluster: Cluster):
     return r
 
 
-def _pretty_print_component_commit(name, component: Component):
+def _pretty_print_component_commit(name, component: Component) -> str:
     short_sha = component.repo.head_short_sha
     return f" * {name}: {component.version} ({short_sha})"
 
 
-def _pretty_print_config_commit(name, repo: GitRepo):
+def _pretty_print_config_commit(name, repo: GitRepo) -> str:
     short_sha = repo.head_short_sha
     return f" * {name}: {short_sha}"
 
 
-def _render_catalog_commit_msg(cfg):
+def _render_catalog_commit_msg(cfg) -> str:
     # pylint: disable=import-outside-toplevel
     import datetime
 
@@ -50,20 +50,20 @@ def _render_catalog_commit_msg(cfg):
     component_commits = [
         _pretty_print_component_commit(cn, c) for cn, c in cfg.get_components().items()
     ]
-    component_commits = "\n".join(component_commits)
+    component_commits_str = "\n".join(component_commits)
 
     config_commits = [
         _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()
     ]
-    config_commits = "\n".join(config_commits)
+    config_commits_str = "\n".join(config_commits)
 
     return f"""Automated catalog update from Commodore
 
 Component commits:
-{component_commits}
+{component_commits_str}
 
 Configuration commits:
-{config_commits}
+{config_commits_str}
 
 Compilation timestamp: {now}
 """
