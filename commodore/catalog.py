@@ -7,7 +7,7 @@ from typing import Iterable, Tuple
 import click
 import yaml
 
-from . import git
+from . import gitrepo
 from .helpers import ApiError, rm_tree_contents, lieutenant_query, sliding_window
 from .cluster import Cluster
 from .config import Config, Migration
@@ -19,7 +19,7 @@ def fetch_customer_catalog(config: Config, cluster: Cluster):
     repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
-    return git.clone_repository(repo_url, config.catalog_dir, config)
+    return gitrepo.clone_repository(repo_url, config.catalog_dir, config)
 
 
 def _pretty_print_component_commit(name, component):
@@ -89,11 +89,11 @@ def _push_catalog(cfg: Config, repo, commit_message):
 
         if cfg.push:
             click.echo(" > Commiting changes...")
-            git.commit(repo, commit_message, cfg)
+            gitrepo.commit(repo, commit_message, cfg)
             click.echo(" > Pushing catalog to remote...")
             try:
                 pushinfos = repo.remotes.origin.push()
-            except git.GitCommandError as e:
+            except gitrepo.GitCommandError as e:
                 raise click.ClickException(
                     "Failed to push to the catalog repository: "
                     + f"Git exited with status code {e.status}"
@@ -201,9 +201,9 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo):
     start = time.time()
     if cfg.migration == Migration.KAP_029_030:
         click.echo(" > Smart diffing started... (this can take a while)")
-        difftext, changed = git.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
+        difftext, changed = gitrepo.stage_all(repo, diff_func=_kapitan_029_030_difffunc)
     else:
-        difftext, changed = git.stage_all(repo)
+        difftext, changed = gitrepo.stage_all(repo)
     elapsed = time.time() - start
 
     if changed:

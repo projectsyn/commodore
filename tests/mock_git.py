@@ -1,4 +1,4 @@
-from commodore import git
+from commodore import gitrepo
 
 
 class Head:
@@ -48,4 +48,4 @@ def clone_repository(url, directory, cfg):
 
 def checkout_version(repo, rev):
     repo.call_counts["checkout_version"] += 1
-    git.checkout_version(repo, rev)
+    gitrepo.checkout_version(repo, rev)

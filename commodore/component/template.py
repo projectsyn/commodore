@@ -7,7 +7,7 @@ import click
 
 from cookiecutter.main import cookiecutter
 
-from commodore import git, __install_dir__
+from commodore import gitrepo, __install_dir__
 from commodore import config as CommodoreConfig
 from commodore.component import Component, component_dir
 
@@ -101,7 +101,7 @@ class ComponentTemplater:
         index.add(".gitignore")
         index.add(".*.yml")
         index.add(".editorconfig")
-        git.commit(repo, "Initial commit", self.config)
+        gitrepo.commit(repo, "Initial commit", self.config)
 
         click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 

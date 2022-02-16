@@ -88,7 +88,7 @@ def assert_result(cluster, repo, repourl, revision, override_revision):
     assert repo.head.call_counts["reset"] == cc
 
 
-@patch.object(compile, "git", new=mock_git)
+@patch.object(compile, "gitrepo", new=mock_git)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
@@ -105,7 +105,7 @@ def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
     )
 
 
-@patch.object(compile, "git", new=mock_git)
+@patch.object(compile, "gitrepo", new=mock_git)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_customer_config(tmp_path: P, config, revision, override_revision):

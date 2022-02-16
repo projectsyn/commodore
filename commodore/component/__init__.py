@@ -8,7 +8,7 @@ import click
 from git import Repo, BadName, GitCommandError
 from url_normalize.tools import deconstruct_url
 
-from commodore.git import RefError
+from commodore.gitrepo import RefError
 
 
 CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
