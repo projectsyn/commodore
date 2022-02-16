@@ -3,7 +3,7 @@ import hashlib
 
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Sequence, Tuple
 
 # We need to import Protocol from typing_extensions for Python 3.7
 from typing_extensions import Protocol
@@ -308,6 +308,9 @@ class GitRepo:
             raise RefError(f"Revision '{version}' not found in repository") from e
 
     def stage_all(self, diff_func: DiffFunc = _default_difffunc):
+        """Stage all changes.
+        This method currently doesn't handle hidden files correctly.
+        """
         index = self._repo.index
 
         # Stage deletions
@@ -341,6 +344,10 @@ class GitRepo:
                     difftext.extend(_process_diff(ct, c, diff_func))
 
         return "\n".join(difftext), changed
+
+    def stage_files(self, files: Sequence[str]):
+        """Add provided list of files to index."""
+        self._repo.index.add(files)
 
     def commit(self, commit_message):
         author = self._author

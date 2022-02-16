@@ -94,14 +94,16 @@ class ComponentTemplater:
             force_init=True,
         )
 
-        repo = component.repo
-        index = repo.repo.index
-        index.add("*")
-        index.add(".github")
-        index.add(".gitignore")
-        index.add(".*.yml")
-        index.add(".editorconfig")
-        repo.commit("Initial commit")
+        component.repo.stage_all()
+        component.repo.stage_files(
+            [
+                ".github",
+                ".gitignore",
+                ".*.yml",
+                ".editorconfig",
+            ]
+        )
+        component.repo.commit("Initial commit")
 
         click.secho(f"Component {self.name} successfully added 🎉", bold=True)
 
