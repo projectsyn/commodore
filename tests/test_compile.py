@@ -7,7 +7,7 @@ from commodore import compile
 from commodore.config import Config
 from commodore.cluster import Cluster
 
-import mock_git
+import mock_gitrepo
 
 
 @pytest.fixture
@@ -76,19 +76,13 @@ def assert_result(cluster, repo, repourl, revision, override_revision):
     if override_revision is not None:
         effective_revision = override_revision
 
-    assert repo.url == repourl
-    assert repo.head.reference == effective_revision
-    if effective_revision is not None:
-        cc = 1
-    else:
-        cc = 0
-    assert repo.call_counts["commit"] == cc
-    assert repo.call_counts["checkout_version"] == cc
-    assert repo.head.call_counts["reference.setter"] == cc
-    assert repo.head.call_counts["reset"] == cc
+    assert repo.remote == repourl
+    assert repo.version == effective_revision
+    assert repo.call_counts["commit"] == 0
+    assert repo.call_counts["checkout"] == 1
 
 
-@patch.object(compile, "gitrepo", new=mock_git)
+@patch.object(compile, "GitRepo", new=mock_gitrepo.GitRepo)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
@@ -105,7 +99,7 @@ def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
     )
 
 
-@patch.object(compile, "gitrepo", new=mock_git)
+@patch.object(compile, "GitRepo", new=mock_gitrepo.GitRepo)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
 def test_fetch_customer_config(tmp_path: P, config, revision, override_revision):

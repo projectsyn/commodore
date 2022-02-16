@@ -5,9 +5,9 @@ from pathlib import Path as P
 from typing import Dict, List, Optional
 
 import click
-from git import Repo
 
 from commodore.component import Component, component_parameters_key
+from .gitrepo import GitRepo
 from .inventory import Inventory
 
 
@@ -19,7 +19,7 @@ class Migration(Enum):
 class Config:
     _inventory: Inventory
     _components: Dict[str, Component]
-    _config_repos: Dict[str, Repo]
+    _config_repos: Dict[str, GitRepo]
     _component_aliases: Dict[str, str]
     _deprecation_notices: List[str]
     _migration: Optional[Migration]
@@ -159,7 +159,7 @@ class Config:
     def get_configs(self):
         return self._config_repos
 
-    def register_config(self, level, repo):
+    def register_config(self, level, repo: GitRepo):
         self._config_repos[level] = repo
 
     def get_component_aliases(self):
