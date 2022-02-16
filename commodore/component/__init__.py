@@ -1,22 +1,15 @@
-from collections import namedtuple
 from pathlib import Path as P
 from typing import Iterable, Optional
 
 import _jsonnet
 import click
 
-from git import Repo, BadName, GitCommandError
-from url_normalize.tools import deconstruct_url
-
-from commodore.gitrepo import RefError
-
-
-CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
+from commodore.gitrepo import GitRepo
 
 
 class Component:
     _name: str
-    _repo: Repo
+    _repo: GitRepo
     _version: Optional[str] = None
     _dir: P
 
@@ -39,45 +32,24 @@ class Component:
             raise click.ClickException(
                 "Either `work_dir` or `directory` must be provided."
             )
-        self._init_repo(force_init)
-        if repo_url:
-            self.repo_url = repo_url
-        if version:
-            self.version = version
-
-    def _init_repo(self, force: bool):
-        path = self.target_directory
-        if not force and path.exists():
-            self._repo = Repo(path)
-        else:
-            self._repo = Repo.init(path)
+        self._repo = GitRepo(repo_url, self._dir, force_init=force_init)
+        self.version = version
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def repo(self) -> Repo:
+    def repo(self) -> GitRepo:
         return self._repo
 
     @property
     def repo_url(self) -> str:
-        return self._repo.remote().url
+        return self._repo.remote
 
     @repo_url.setter
-    def repo_url(self, url: str):
-        try:
-            self._repo.remote().set_url(url)
-        except ValueError:
-            self._repo.create_remote("origin", url)
-
-        # Generate a best effort push-over-SSH URL for http(s) repo URLs.
-        if url.startswith(("http://", "https://")):
-            url_parts = deconstruct_url(url)
-            # Ignore everything but the host and path parts of the URL to
-            # build the push URL
-            pushurl = f"ssh://git@{url_parts.host}{url_parts.path}"
-            self._repo.remote().set_url(pushurl, push=True)
+    def repo_url(self, repo_url: str):
+        self._repo.remote = repo_url
 
     @property
     def version(self) -> Optional[str]:
@@ -115,84 +87,8 @@ class Component:
     def parameters_key(self):
         return component_parameters_key(self.name)
 
-    def _remote_prefix(self):
-        """
-        Find prefix of Git remote, will usually be 'origin/'.
-        """
-        return self._repo.remote().name + "/"
-
-    def _default_version(self):
-        """
-        Find default branch of the remote
-        """
-        try:
-            version = self._repo.remote().refs["HEAD"].reference.name
-        except IndexError:
-            self._repo.git.remote("set-head", "origin", "--auto")
-            version = self._repo.remote().refs["HEAD"].reference.name
-        return version.replace(self._remote_prefix(), "", 1)
-
-    def _find_commit_for_version(self, version, remote_heads):
-        remote_prefix = self._remote_prefix()
-        for head in remote_heads:
-            tag = None
-            branch = None
-            headname = head.name
-            if headname.startswith(remote_prefix):
-                branch = headname.replace(remote_prefix, "", 1)
-                headname = branch
-            else:
-                tag = headname
-
-            if headname == version:
-                commit = head.commit
-                break
-        else:
-            # If we haven't found a branch or tag matching the requested version,
-            # assume the version is a commit sha.
-            commit = version
-            branch = None
-            tag = None
-
-        return CommitInfo(commit=commit, branch=branch, tag=tag)
-
     def checkout(self):
-        remote_heads = self._repo.remote().fetch(prune=True, tags=True)
-        version = self._version
-        if self._version is None:
-            # Handle case where we want the default branch of the remote
-            version = self._default_version()
-
-        commit, branch, tag = self._find_commit_for_version(version, remote_heads)
-
-        try:
-            if branch:
-                # If we found a remote branch for the requested version, find
-                # or create a local branch and point HEAD to the branch.
-                _head = [h for h in self._repo.heads if h.name == branch]
-                if len(_head) > 0:
-                    head = _head[0]
-                    head.commit = commit
-                else:
-                    head = self._repo.create_head(branch, commit=commit)
-
-                head.set_tracking_branch(self.repo.remote().refs[branch])
-                self._repo.head.set_reference(head)
-            elif tag:
-                # Simply create detached head pointing to tag
-                self._repo.head.set_reference(tag)
-            else:
-                # Create detached head by setting repo.head.reference as
-                # direct ref to commit object.
-                rev = self._repo.rev_parse(commit)
-                self._repo.head.set_reference(rev)
-
-            # Reset working tree to current HEAD reference
-            self._repo.head.reset(index=True, working_tree=True)
-        except GitCommandError as e:
-            raise RefError(f"Failed to checkout revision '{self.version}'") from e
-        except BadName as e:
-            raise RefError(f"Revision '{self.version}' not found in repository") from e
+        self._repo.checkout(self.version)
 
     def render_jsonnetfile_json(self, component_params):
         """
@@ -201,7 +97,7 @@ class Component:
         jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
         jsonnetfile_json = self._dir / "jsonnetfile.json"
         if jsonnetfile_jsonnet.is_file():
-            if jsonnetfile_json.name in self.repo.tree():
+            if jsonnetfile_json.name in self._repo.repo.tree():
                 click.secho(
                     f" > [WARN] Component {self.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet, "
                     + "continuing with jsonnetfile.jsonnet",
