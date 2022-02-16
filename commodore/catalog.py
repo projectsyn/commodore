@@ -70,6 +70,9 @@ Compilation timestamp: {now}
 
 
 def clean_catalog(repo: GitRepo):
+    if repo.working_tree_dir is None:
+        raise click.ClickException("Catalog repo has no working tree")
+
     catalogdir = P(repo.working_tree_dir, "manifests")
     click.secho("Cleaning catalog repository...", bold=True)
     # delete everything in catalog
@@ -195,6 +198,9 @@ def _kapitan_029_030_difffunc(
 
 
 def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
+    if repo.working_tree_dir is None:
+        raise click.ClickException("Catalog repo has no working tree")
+
     click.secho("Updating catalog repository...", bold=True)
     # pylint: disable=import-outside-toplevel
     from distutils import dir_util

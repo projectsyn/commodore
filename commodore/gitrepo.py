@@ -10,7 +10,8 @@ from typing_extensions import Protocol
 
 import click
 
-from git import Actor, BadName, GitCommandError, Repo
+from git import Actor, BadName, FetchInfo, GitCommandError, PushInfo, Repo
+from git.objects import Tree
 
 from url_normalize.tools import deconstruct_url, reconstruct_url
 
@@ -29,7 +30,7 @@ class DiffFunc(Protocol):
         ...
 
 
-def _normalize_git_ssh(url):
+def _normalize_git_ssh(url: str) -> str:
     # pylint: disable=import-outside-toplevel
     from url_normalize.url_normalize import (
         normalize_userinfo,
@@ -54,7 +55,7 @@ def _normalize_git_ssh(url):
     return reconstruct_url(urlparts)
 
 
-def _colorize_diff(line):
+def _colorize_diff(line: str) -> str:
     if line.startswith("--- ") or line.startswith("+++ ") or line.startswith("@@ "):
         return click.style(line, fg="yellow")
     if line.startswith("+"):
@@ -210,32 +211,35 @@ class GitRepo:
             self._repo.remote().set_url(pushurl, push=True)
 
     @property
-    def working_tree_dir(self):
-        return self._repo.working_tree_dir
+    def working_tree_dir(self) -> Optional[Path]:
+        d = self._repo.working_tree_dir
+        if d:
+            return Path(d)
+        return None
 
     @property
-    def head_short_sha(self):
+    def head_short_sha(self) -> str:
         sha = self._repo.head.commit.hexsha
         return self._repo.git.rev_parse(sha, short=6)
 
     @property
-    def _null_tree(self):
-        """
-        An empty Git tree is represented by the C string "tree 0". The hash of the
-        empty tree is always SHA1("tree 0\\0").  This method computes the
-        hexdigest of this sha1 and creates a tree object for the empty tree of the
-        passed repo.
+    def _null_tree(self) -> Tree:
+        """Generate empty Tree for the repo.
+        An empty Git tree is represented by the C string "tree 0".
+        The hash of the empty tree is always SHA1("tree 0\\0").  This method computes
+        the hexdigest of this sha1 and creates a tree object for the empty tree of
+        `self._repo`.
         """
         null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()  # nosec
         return self._repo.tree(null_tree_sha)
 
-    def _remote_prefix(self):
+    def _remote_prefix(self) -> str:
         """
         Find prefix of Git remote, will usually be 'origin/'.
         """
         return self._repo.remote().name + "/"
 
-    def _default_version(self):
+    def _default_version(self) -> str:
         """
         Find default branch of the remote
         """
@@ -246,7 +250,9 @@ class GitRepo:
             version = self._repo.remote().refs["HEAD"].reference.name
         return version.replace(self._remote_prefix(), "", 1)
 
-    def _find_commit_for_version(self, version, remote_heads):
+    def _find_commit_for_version(
+        self, version: str, remote_heads: Iterable[FetchInfo]
+    ) -> CommitInfo:
         remote_prefix = self._remote_prefix()
         for head in remote_heads:
             tag = None
@@ -264,7 +270,7 @@ class GitRepo:
         else:
             # If we haven't found a branch or tag matching the requested version,
             # assume the version is a commit sha.
-            commit = version
+            commit = self._repo.rev_parse(version)
             branch = None
             tag = None
 
@@ -276,9 +282,8 @@ class GitRepo:
             # Handle case where we want the default branch of the remote
             version = self._default_version()
 
-        commit, branch, tag = self._find_commit_for_version(version, remote_heads)
-
         try:
+            commit, branch, tag = self._find_commit_for_version(version, remote_heads)
             if branch:
                 # If we found a remote branch for the requested version, find
                 # or create a local branch and point HEAD to the branch.
@@ -297,8 +302,7 @@ class GitRepo:
             else:
                 # Create detached head by setting repo.head.reference as
                 # direct ref to commit object.
-                rev = self._repo.rev_parse(commit)
-                self._repo.head.set_reference(rev)
+                self._repo.head.set_reference(commit)
 
             # Reset working tree to current HEAD reference
             self._repo.head.reset(index=True, working_tree=True)
@@ -307,9 +311,12 @@ class GitRepo:
         except BadName as e:
             raise RefError(f"Revision '{version}' not found in repository") from e
 
-    def stage_all(self, diff_func: DiffFunc = _default_difffunc):
+    def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> Tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
+
+        This method returns a tuple containing the colorized diff of the staged changes
+        and a boolean indicating whether any changes were staged.
         """
         index = self._repo.index
 
@@ -349,7 +356,7 @@ class GitRepo:
         """Add provided list of files to index."""
         self._repo.index.add(files)
 
-    def commit(self, commit_message):
+    def commit(self, commit_message: str):
         author = self._author
 
         if self._trace:
@@ -357,7 +364,7 @@ class GitRepo:
 
         self._repo.index.commit(commit_message, author=author, committer=author)
 
-    def push(self, remote: Optional[str] = None):
+    def push(self, remote: Optional[str] = None) -> Iterable[PushInfo]:
         if not remote:
             remote = "origin"
         return self._repo.remote(remote).push()
