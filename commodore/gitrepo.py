@@ -13,6 +13,7 @@ import click
 from git import Actor, BadName, FetchInfo, GitCommandError, PushInfo, Repo
 from git.objects import Tree
 
+from url_normalize import url_normalize
 from url_normalize.tools import deconstruct_url, reconstruct_url
 
 
@@ -169,10 +170,7 @@ class GitRepo:
             self._repo = Repo.init(targetdir)
 
         if remote:
-            sanitized_remote: str = remote
-            if "@" in sanitized_remote and "://" not in sanitized_remote:
-                sanitized_remote = _normalize_git_ssh(sanitized_remote)
-            self.remote = sanitized_remote
+            self.remote = remote
 
         if author_name and author_email:
             self._author = Actor(author_name, author_email)
@@ -196,6 +194,10 @@ class GitRepo:
 
     @remote.setter
     def remote(self, remote: str):
+        if "@" in remote and ("://" not in remote or remote.startswith("ssh://")):
+            remote = _normalize_git_ssh(remote)
+        elif remote.startswith("http://") or remote.startswith("https://"):
+            remote = url_normalize(remote)
         try:
             self._repo.remote().set_url(remote)
         except ValueError:
