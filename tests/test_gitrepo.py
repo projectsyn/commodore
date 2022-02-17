@@ -3,6 +3,7 @@ Unit-tests for git
 """
 
 import click
+import git
 import pytest
 
 from commodore import gitrepo
@@ -14,6 +15,17 @@ def test_clone_error(tmp_path: Path):
     with pytest.raises(click.ClickException) as excinfo:
         gitrepo.GitRepo.clone(inexistent_url, tmp_path, None)
     assert inexistent_url in str(excinfo.value)
+
+
+def test_clone_initial_commit(tmp_path: Path):
+    git.Repo.init(tmp_path / "repo.git")
+    url = f"file:///{tmp_path}/repo.git"
+
+    r = gitrepo.GitRepo.clone(url, tmp_path / "repo", None)
+
+    assert r.repo.head
+    assert r.repo.working_tree_dir
+    assert r.repo.head.commit.message == "Initial commit"
 
 
 def test_update_remote(tmp_path: Path):

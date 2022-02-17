@@ -20,15 +20,7 @@ def fetch_catalog(config: Config, cluster: Cluster) -> GitRepo:
     repo_url = cluster.catalog_repo_url
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
-    r = GitRepo(
-        repo_url,
-        config.catalog_dir,
-        force_init=True,
-        author_name=config.username,
-        author_email=config.usermail,
-    )
-    r.checkout()
-    return r
+    return GitRepo.clone(repo_url, config.catalog_dir, config)
 
 
 def _pretty_print_component_commit(name, component: Component) -> str:

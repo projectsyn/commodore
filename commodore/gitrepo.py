@@ -127,6 +127,9 @@ class GitRepo:
 
     @classmethod
     def clone(cls, repository_url: str, directory: Path, cfg):
+        """Clone repository.
+
+        Create initial commit on master branch, if remote is empty."""
         name = None
         email = None
         if cfg:
@@ -242,8 +245,13 @@ class GitRepo:
         try:
             version = self._repo.remote().refs["HEAD"].reference.name
         except IndexError:
-            self._repo.git.remote("set-head", "origin", "--auto")
-            version = self._repo.remote().refs["HEAD"].reference.name
+            try:
+                self._repo.git.remote("set-head", "origin", "--auto")
+                version = self._repo.remote().refs["HEAD"].reference.name
+            except GitCommandError:
+                # If we don't have a remote HEAD, we fall back to creating a master
+                # branch.
+                version = f"{self._remote_prefix()}master"
         return version.replace(self._remote_prefix(), "", 1)
 
     def _find_commit_for_version(
