@@ -33,3 +33,89 @@ def test_update_remote(tmp_path: Path):
     repo = gitrepo.GitRepo(None, tmp_path, force_init=True)
     repo.remote = new_url
     assert repo.repo.remotes.origin.url == new_url
+
+
+def test_remote(tmp_path: Path):
+    repo_url = "ssh://user@host/path/to/repo.git"
+    r = gitrepo.GitRepo(repo_url, tmp_path, force_init=True)
+
+    assert r.remote == repo_url
+    assert r.repo.git.remote("get-url", "origin") == repo_url
+
+
+@pytest.mark.parametrize(
+    "repo_url",
+    [
+        "ssh://user@host/path/to/repo.git",
+        "file:///path/to/repo.git",
+    ],
+)
+@pytest.mark.parametrize("init", [True, False])
+def test_remote_no_push_substitution(tmp_path: Path, repo_url: str, init):
+    """Test that push URLs are not substituted for non-HTTP(S) remote URLs."""
+    if init:
+        r = gitrepo.GitRepo(repo_url, tmp_path, force_init=True)
+    else:
+        r = gitrepo.GitRepo(None, tmp_path, force_init=True)
+        r.remote = repo_url
+
+    pull_remote = r.repo.git.remote("get-url", "origin")
+    push_remote = r.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == repo_url
+    assert push_remote == repo_url
+
+
+@pytest.mark.parametrize("init", [True, False])
+@pytest.mark.parametrize(
+    "repo_url,normalized_url",
+    [
+        ("user@host:path/to/repo.git", "ssh://user@host/path/to/repo.git"),
+        ("ssh://user@host///path/to/repo.git", "ssh://user@host/path/to/repo.git"),
+        (
+            "ssh://user@host:2222/path////to/repo.git",
+            "ssh://user@host:2222/path/to/repo.git",
+        ),
+    ],
+)
+def test_remote_normalize(tmp_path, init, repo_url, normalized_url):
+    """Test that ssh remotes are normalized to their
+    ssh://user@host[:port]/... form"""
+    if init:
+        r = gitrepo.GitRepo(repo_url, tmp_path, force_init=True)
+    else:
+        r = gitrepo.GitRepo(None, tmp_path, force_init=True)
+        r.remote = repo_url
+
+    pull_remote = r.repo.git.remote("get-url", "origin")
+    push_remote = r.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == normalized_url
+    assert push_remote == normalized_url
+
+
+@pytest.mark.parametrize(
+    "repo_url,push_url",
+    [
+        ("http://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://host:1234/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://user@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        ("https://user:pass@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
+        (
+            "https://user:pass@host:1234/path/to/repo.git",
+            "ssh://git@host/path/to/repo.git",
+        ),
+    ],
+)
+@pytest.mark.parametrize("init", [True, False])
+def test_remote_push_substitution(tmp_path, repo_url, push_url, init):
+    """Test that push URLs get substituted for common patterns."""
+    if init:
+        r = gitrepo.GitRepo(repo_url, tmp_path, force_init=True)
+    else:
+        r = gitrepo.GitRepo(None, tmp_path, force_init=True)
+        r.remote = repo_url
+
+    pull_remote = r.remote
+    push_remote = r.repo.git.remote("get-url", "--push", "origin")
+    assert pull_remote == repo_url
+    assert push_remote == push_url

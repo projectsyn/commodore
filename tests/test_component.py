@@ -47,50 +47,6 @@ def _setup_component(
     )
 
 
-@pytest.mark.parametrize(
-    "repo_url",
-    [
-        "ssh://user@host/path/to/repo.git",
-        "file:///path/to/repo.git",
-    ],
-)
-def test_component_setup_remote_no_sub(tmp_path, repo_url):
-    c = _setup_component(tmp_path, repo_url=repo_url)
-
-    pull_remote = c.repo.repo.git.remote("get-url", "origin")
-    push_remote = c.repo.repo.git.remote("get-url", "--push", "origin")
-    assert pull_remote == repo_url
-    assert push_remote == repo_url
-
-
-def test_component_setup_remote_normalize(tmp_path):
-    c = _setup_component(tmp_path, repo_url="user@host:path/to/repo.git")
-    assert c.repo.remote == "ssh://user@host/path/to/repo.git"
-
-
-@pytest.mark.parametrize(
-    "repo_url,push_url",
-    [
-        ("http://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://host:1234/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://user@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://user:pass@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        (
-            "https://user:pass@host:1234/path/to/repo.git",
-            "ssh://git@host/path/to/repo.git",
-        ),
-    ],
-)
-def test_component_setup_remote_sub(tmp_path, repo_url, push_url):
-    c = _setup_component(tmp_path, repo_url=repo_url)
-
-    pull_remote = c.repo.remote
-    push_remote = c.repo.repo.git.remote("get-url", "--push", "origin")
-    assert pull_remote == repo_url
-    assert push_remote == push_url
-
-
 def test_component_checkout(tmp_path):
     c = _setup_component(tmp_path)
 
