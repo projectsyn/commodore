@@ -126,10 +126,6 @@ class GitRepo:
     _repo: Repo
 
     @classmethod
-    def create(cls, path: Path):
-        return GitRepo(None, path, force_init=True)
-
-    @classmethod
     def clone(cls, repository_url: str, directory: Path, cfg):
         name = None
         email = None
