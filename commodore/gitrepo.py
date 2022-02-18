@@ -32,6 +32,8 @@ class DiffFunc(Protocol):
 
 
 def _normalize_git_ssh(url: str) -> str:
+    # Import url_normalize internal methods here, so they're not visible in the file
+    # scope of gitrepo.py
     # pylint: disable=import-outside-toplevel
     from url_normalize.url_normalize import (
         normalize_userinfo,
@@ -45,7 +47,9 @@ def _normalize_git_ssh(url: str) -> str:
         # the URL
         host, repo = url.split(":")
         url = f"{host}/{repo}"
-    # Import heavy lifting from url_normalize, simplify for Git-SSH usecase
+    # Reuse normalization logic from url_normalize, simplify for Git-SSH use case.
+    # We can't do `url_normalize(url, "ssh"), because the library doesn't know "ssh" as
+    # a scheme, and fails to look up the default port for "ssh".
     url = provide_url_scheme(url, "ssh")
     urlparts = deconstruct_url(url)
     urlparts = urlparts._replace(
