@@ -1,7 +1,6 @@
 import click
 
-from . import git
-from .catalog import fetch_customer_catalog, clean_catalog, update_catalog
+from .catalog import fetch_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
     load_cluster_from_api,
@@ -16,6 +15,7 @@ from .dependency_mgmt import (
     register_components,
     jsonnet_dependencies,
 )
+from .gitrepo import GitRepo
 from .helpers import (
     ApiError,
     clean_working_tree,
@@ -29,14 +29,11 @@ from .refs import update_refs
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
-    repo = git.clone_repository(
-        cluster.global_git_repo_url, cfg.inventory.global_config_dir, cfg
-    )
+    repo = GitRepo(cluster.global_git_repo_url, cfg.inventory.global_config_dir)
     rev = cluster.global_git_repo_revision
     if cfg.global_repo_revision_override:
         rev = cfg.global_repo_revision_override
-    if rev:
-        git.checkout_version(repo, rev)
+    repo.checkout(rev)
     cfg.register_config("global", repo)
 
 
@@ -45,14 +42,11 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     repo_url = cluster.config_repo_url
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
-    repo = git.clone_repository(
-        repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id), cfg
-    )
+    repo = GitRepo(repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id))
     rev = cluster.config_git_repo_revision
     if cfg.tenant_repo_revision_override:
         rev = cfg.tenant_repo_revision_override
-    if rev:
-        git.checkout_version(repo, rev)
+    repo.checkout(rev)
     cfg.register_config("customer", repo)
 
 
@@ -76,7 +70,7 @@ def _regular_setup(config: Config, cluster_id):
         update_target(config, alias, component=component)
 
     # Fetch catalog
-    return fetch_customer_catalog(config, cluster)
+    return fetch_catalog(config, cluster)
 
 
 def _local_setup(config: Config, cluster_id):
@@ -103,11 +97,9 @@ def _local_setup(config: Config, cluster_id):
         raise click.ClickException(error)
 
     click.secho("Registering config...", bold=True)
+    config.register_config("global", GitRepo(None, config.inventory.global_config_dir))
     config.register_config(
-        "global", git.init_repository(config.inventory.global_config_dir)
-    )
-    config.register_config(
-        "customer", git.init_repository(config.inventory.tenant_config_dir(tenant))
+        "customer", GitRepo(None, config.inventory.tenant_config_dir(tenant))
     )
 
     click.secho("Resetting targets...", bold=True)
@@ -127,7 +119,7 @@ def _local_setup(config: Config, cluster_id):
     update_target(config, config.inventory.bootstrap_target)
 
     click.secho("Configuring catalog repo...", bold=True)
-    return git.init_repository(config.catalog_dir)
+    return GitRepo(None, config.catalog_dir)
 
 
 def check_parameters_component_versions(config: Config, cluster_parameters):

@@ -16,6 +16,8 @@ from commodore.config import Config
 
 import commodore.compile as commodore_compile
 
+from test_catalog import cluster_resp, tenant_resp
+
 
 @pytest.fixture
 def config(tmp_path: Path):
@@ -28,30 +30,6 @@ def config(tmp_path: Path):
         api_url="https://syn.example.com",
         api_token="token",
     )
-
-
-cluster_resp = {
-    "id": "c-test",
-    "tenant": "t-test",
-    "displayName": "test-cluster",
-    "facts": {
-        "cloud": "local",
-        "distribution": "k3s",
-    },
-    "gitRepo": {
-        "url": "ssh://git@github.com/projectsyn/test-cluster-catalog.git",
-    },
-}
-
-tenant_resp = {
-    "id": "t-test",
-    "displayName": "Test tenant",
-    "gitRepo": {
-        "url": "https://github.com/projectsyn/test-tenant.git",
-    },
-    "globalGitRepoURL": "https://github.com/projectsyn/commodore-defaults.git",
-    "globalGitRepoRevision": "v0.12.0",
-}
 
 
 def _mock_load_cluster_from_api(cfg: Config, cluster_id: str):
@@ -128,7 +106,7 @@ def _verify_commit_message(
         assert cname in components
         c = components[cname]
         assert str(c.version) == m.group("component_version")
-        assert c.repo.head.commit.hexsha[:short_sha_len] == m.group("commit_sha")
+        assert c.repo.repo.head.commit.hexsha[:short_sha_len] == m.group("commit_sha")
 
     # Remaining lines should be config commit shas and compilation timestamp
     rem_lines = commit_msg_lines[component_count:]

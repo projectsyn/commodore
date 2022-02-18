@@ -9,9 +9,9 @@ from textwrap import dedent
 from commodore.component import (
     Component,
     component_dir,
-    RefError,
     component_parameters_key,
 )
+from commodore.gitrepo import RefError
 from commodore.inventory import Inventory
 
 
@@ -47,54 +47,15 @@ def _setup_component(
     )
 
 
-@pytest.mark.parametrize(
-    "repo_url",
-    [
-        "ssh://user@host/path/to/repo.git",
-        "user@host:path/to/repo.git",
-        "file:///path/to/repo.git",
-    ],
-)
-def test_component_setup_remote_no_sub(tmp_path, repo_url):
-    c = _setup_component(tmp_path, repo_url=repo_url)
-
-    pull_remote = c.repo.git.remote("get-url", "origin")
-    push_remote = c.repo.git.remote("get-url", "--push", "origin")
-    assert pull_remote == repo_url
-    assert push_remote == repo_url
-
-
-@pytest.mark.parametrize(
-    "repo_url,push_url",
-    [
-        ("http://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://host:1234/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://user@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        ("https://user:pass@host/path/to/repo.git", "ssh://git@host/path/to/repo.git"),
-        (
-            "https://user:pass@host:1234/path/to/repo.git",
-            "ssh://git@host/path/to/repo.git",
-        ),
-    ],
-)
-def test_component_setup_remote_sub(tmp_path, repo_url, push_url):
-    c = _setup_component(tmp_path, repo_url=repo_url)
-
-    pull_remote = c.repo.git.remote("get-url", "origin")
-    push_remote = c.repo.git.remote("get-url", "--push", "origin")
-    assert pull_remote == repo_url
-    assert push_remote == push_url
-
-
 def test_component_checkout(tmp_path):
     c = _setup_component(tmp_path)
 
     c.checkout()
 
-    assert c.repo.head.ref.name == "master"
-    pull_remote = c.repo.git.remote("get-url", "origin")
-    push_remote = c.repo.git.remote("get-url", "--push", "origin")
+    assert c.version == "master"
+    assert c.repo.repo.head.ref.name == "master"
+    pull_remote = c.repo.remote
+    push_remote = c.repo.repo.git.remote("get-url", "--push", "origin")
     assert pull_remote == REPO_URL
     assert push_remote.startswith("ssh://git@")
     assert push_remote == REPO_URL.replace("https://", "ssh://git@")
@@ -106,17 +67,19 @@ def test_component_checkout_branch(tmp_path):
 
     c.checkout()
 
-    assert c.repo.head.ref.name == branch
-    for rb in c.repo.remote().refs:
+    assert c.version == branch
+    repo = c.repo.repo
+    assert repo.head.ref.name == branch
+    for rb in repo.remote().refs:
         if rb.name.endswith(branch):
             remote_branch_commit = rb.commit
             break
     else:
         raise ValueError(f"No remote branch for {branch}")
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == branch
-    assert c.repo.head.commit == remote_branch_commit
+    assert not repo.head.is_detached
+    assert repo.head.ref.name == branch
+    assert repo.head.commit == remote_branch_commit
 
 
 def test_component_checkout_sha1version(tmp_path: P):
@@ -125,8 +88,8 @@ def test_component_checkout_sha1version(tmp_path: P):
 
     c.checkout()
 
-    assert c.repo.head.is_detached
-    assert c.repo.head.commit.hexsha == commit
+    assert c.repo.repo.head.is_detached
+    assert c.repo.repo.head.commit.hexsha == commit
 
 
 def test_component_checkout_tag(tmp_path: P):
@@ -139,8 +102,8 @@ def test_component_checkout_tag(tmp_path: P):
 
     c.checkout()
 
-    assert c.repo.head.is_detached
-    assert c.repo.head.commit.hexsha == c.repo.tags["v1.0.0"].commit.hexsha
+    assert c.repo.repo.head.is_detached
+    assert c.repo.repo.head.commit.hexsha == c.repo.repo.tags["v1.0.0"].commit.hexsha
 
 
 def test_component_checkout_nonexisting_version(tmp_path: P):
@@ -154,8 +117,8 @@ def test_component_checkout_existing_repo_update_version_branch(tmp_path: P):
     c = _setup_component(tmp_path, version="master")
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
 
     # update version
     branch = "component-defs-in-applications"
@@ -163,16 +126,16 @@ def test_component_checkout_existing_repo_update_version_branch(tmp_path: P):
 
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == branch
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == branch
 
 
 def test_component_checkout_existing_repo_update_version_sha1version(tmp_path: P):
     c = _setup_component(tmp_path, version="master")
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
 
     # update version
     commit = "696b4b4cb9a86ebc845daa314a0a98957f89e99b"
@@ -180,29 +143,29 @@ def test_component_checkout_existing_repo_update_version_sha1version(tmp_path: P
 
     c.checkout()
 
-    assert c.repo.head.is_detached
-    assert c.repo.head.commit.hexsha == commit
+    assert c.repo.repo.head.is_detached
+    assert c.repo.repo.head.commit.hexsha == commit
 
 
 def test_component_checkout_existing_repo_update_latest_upstream(tmp_path: P):
     c = _setup_component(tmp_path, version="master")
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
-    master_commit = c.repo.head.commit.hexsha
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
+    master_commit = c.repo.repo.head.commit.hexsha
 
-    c.repo.git.reset("HEAD^", hard=True)
+    c.repo.repo.git.reset("HEAD^", hard=True)
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
-    assert c.repo.head.commit.hexsha != master_commit
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
+    assert c.repo.repo.head.commit.hexsha != master_commit
 
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
-    assert not c.repo.is_dirty()
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
+    assert not c.repo.repo.is_dirty()
 
 
 @pytest.mark.parametrize(
@@ -213,11 +176,11 @@ def test_component_checkout_existing_repo_update_remote(tmp_path: P, mode: str):
     c = _setup_component(tmp_path, version="master")
     c.checkout()
 
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "master"
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "master"
 
     # remember original url of remote origin
-    orig_url = next(c.repo.remote().urls)
+    orig_url = next(c.repo.repo.remote().urls)
     # create local upstream repo
     local = tmp_path / "upstream" / "argocd.git"
     Repo.init(local, bare=True)
@@ -225,11 +188,11 @@ def test_component_checkout_existing_repo_update_remote(tmp_path: P, mode: str):
     local_ver = "local-branch"
 
     # push repo to local upstream with a custom branch
-    c.repo.create_remote("local", local_url)
-    c.repo.create_head(local_ver)
-    c.repo.remote("local").push(local_ver)
-    c.repo.delete_remote("local")
-    c.repo.delete_head(local_ver)
+    c.repo.repo.create_remote("local", local_url)
+    c.repo.repo.create_head(local_ver)
+    c.repo.repo.remote("local").push(local_ver)
+    c.repo.repo.delete_remote("local")
+    c.repo.repo.delete_head(local_ver)
 
     if mode == "reinit":
         # reinitialize component object on existing repo with different url/version info
@@ -242,10 +205,10 @@ def test_component_checkout_existing_repo_update_remote(tmp_path: P, mode: str):
     else:
         raise ValueError(f"Unknown mode {mode} for test")
 
-    assert local_url in c.repo.remote().urls
-    assert orig_url not in c.repo.remote().urls
-    assert not c.repo.head.is_detached
-    assert c.repo.head.ref.name == "local-branch"
+    assert local_url in c.repo.repo.remote().urls
+    assert orig_url not in c.repo.repo.remote().urls
+    assert not c.repo.repo.head.is_detached
+    assert c.repo.repo.head.ref.name == "local-branch"
 
 
 def test_init_existing_component(tmp_path: P):
@@ -257,7 +220,7 @@ def test_init_existing_component(tmp_path: P):
 
     c = Component(cn, directory=tmp_path)
 
-    for url in c.repo.remote().urls:
+    for url in c.repo.repo.remote().urls:
         assert url == orig_url
 
 
@@ -286,8 +249,8 @@ def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
             }"""
             )
         )
-    c.repo.index.add("*")
-    c.repo.index.commit("Initial commit")
+    c.repo.repo.index.add("*")
+    c.repo.repo.index.commit("Initial commit")
     return c
 
 
@@ -324,8 +287,8 @@ def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
     c = _setup_render_jsonnetfile_json(tmp_path)
     with open(tmp_path / "jsonnetfile.json", "w") as jf:
         jf.write("{}")
-    c.repo.index.add("*")
-    c.repo.index.commit("Add jsonnetfile.json")
+    c.repo.repo.index.add("*")
+    c.repo.repo.index.commit("Add jsonnetfile.json")
 
     c.render_jsonnetfile_json(
         {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}

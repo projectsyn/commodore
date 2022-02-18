@@ -1,4 +1,5 @@
-from commodore import git
+from pathlib import Path
+from typing import Optional
 
 
 class Head:
@@ -26,26 +27,35 @@ class Head:
 
 
 class Repo:
-    def __init__(self, url, directory, cfg):
-        self.url = url
-        self.directory = directory
-        self.config = cfg
+    def __init__(self):
         self.head = Head()
+
+
+class GitRepo:
+    def __init__(
+        self,
+        remote: str,
+        targetdir: Path,
+        force_init=False,
+        author_name: Optional[str] = None,
+        author_email: Optional[str] = None,
+        config=None,
+    ):
+        self.remote = remote
+        self.targetdir = targetdir
+        self.config = config
+        self.repo = Repo()
+        self.version = None
 
         self.call_counts = {
             "commit": 0,
-            "checkout_version": 0,
+            "checkout": 0,
         }
+
+    def checkout(self, rev):
+        self.call_counts["checkout"] += 1
+        self.version = rev
 
     def commit(self, rev):
         self.call_counts["commit"] += 1
         return rev
-
-
-def clone_repository(url, directory, cfg):
-    return Repo(url, directory, cfg)
-
-
-def checkout_version(repo, rev):
-    repo.call_counts["checkout_version"] += 1
-    git.checkout_version(repo, rev)
