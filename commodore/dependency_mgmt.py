@@ -295,7 +295,7 @@ def inject_essential_libraries(file: P):
                 "source": {
                     "git": {"remote": "https://github.com/bitnami-labs/kube-libsonnet"}
                 },
-                "version": "v1.14.6",
+                "version": "v1.19.0",
             },
         )
 
