@@ -408,7 +408,7 @@ def test_inject_essential_libraries(tmp_path: Path):
             deps[0]["source"]["git"]["remote"]
             == "https://github.com/bitnami-labs/kube-libsonnet"
         )
-        assert deps[0]["version"] == "v1.14.6"
+        assert deps[0]["version"] == "v1.19.0"
 
 
 def test_clear_jsonnet_lock_file(tmp_path: Path):
