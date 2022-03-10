@@ -166,3 +166,17 @@ def test_gitrepo_reset(tmp_path: Path):
     r.reset(working_tree=True)
 
     assert not r.repo.is_dirty()
+
+
+def test_gitrepo_push_empty_remote(tmp_path: Path):
+    git.Repo.init(tmp_path / "remote.git", mkdir=True, bare=True)
+    r = gitrepo.GitRepo(
+        f"file:///{tmp_path}/remote.git", tmp_path / "local", force_init=True
+    )
+
+    testf = r.working_tree_dir / "test.txt"
+    with open(testf, "w") as f:
+        f.write("Hello, world!\n")
+    r.stage_all()
+    r.commit("Initial commit")
+    r.push()
