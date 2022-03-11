@@ -374,10 +374,14 @@ class GitRepo:
 
         self._repo.index.commit(commit_message, author=author, committer=author)
 
-    def push(self, remote: Optional[str] = None) -> Iterable[PushInfo]:
+    def push(
+        self, remote: Optional[str] = None, version: Optional[str] = None
+    ) -> Iterable[PushInfo]:
         if not remote:
             remote = "origin"
-        return self._repo.remote(remote).push()
+        if not version:
+            version = self._default_version()
+        return self._repo.remote(remote).push(version)
 
     def reset(self, working_tree: bool = False):
         self._repo.head.reset(working_tree=working_tree)
