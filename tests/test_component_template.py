@@ -141,6 +141,23 @@ def test_run_component_new_command(
             else:
                 assert run_step["run"] == "make golden-diff"
 
+    with open(tmp_path / "dependencies" / component_name / ".sync.yml") as syncyml:
+        syncconfig = yaml.safe_load(syncyml)
+        assert ":global" in syncconfig
+
+        globalconfig = syncconfig[":global"]
+        assert "componentName" in globalconfig
+        assert "feature_goldenTests" in globalconfig
+        assert ("testMatrix" in globalconfig) == has_matrix
+
+        assert globalconfig["componentName"] == component_name
+        assert globalconfig["feature_goldenTests"] == has_golden
+
+        assert (".github/workflows/test.yaml" in syncconfig) == has_matrix
+        if has_matrix:
+            ghconfig = syncconfig[".github/workflows/test.yaml"]
+            assert ("goldenTest_makeTarget" in ghconfig) == has_golden
+
     with open(
         tmp_path / "dependencies" / component_name / "renovate.json"
     ) as renovatejson:
