@@ -1,6 +1,7 @@
 """
 Tests for component new command
 """
+import json
 import os
 import pytest
 import yaml
@@ -139,6 +140,20 @@ def test_run_component_new_command(
                 )
             else:
                 assert run_step["run"] == "make golden-diff"
+
+    with open(
+        tmp_path / "dependencies" / component_name / "renovate.json"
+    ) as renovatejson:
+        renovateconfig = json.load(renovatejson)
+        assert ("postUpgradeTasks" in renovateconfig) == has_golden
+        if has_golden:
+            assert len(renovateconfig["postUpgradeTasks"]["commands"]) == 1
+            cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
+            expected_cmd = {
+                "--matrix-tests": "make gen-golden-all",
+                "--no-matrix-tests": "make gen-golden",
+            }
+            assert cmd == expected_cmd[matrix]
 
 
 def test_run_component_new_command_with_name(tmp_path: P):
