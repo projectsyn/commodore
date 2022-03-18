@@ -1,6 +1,5 @@
 :global:
   componentName: {{ cookiecutter.name }}
-  githubUrl: {{ cookiecutter.github_url }}
   feature_goldenTests: true
 
 docs/antora.yml:
