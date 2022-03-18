@@ -29,3 +29,6 @@ COMMODORE_CMD  ?= $(DOCKER_CMD) $(DOCKER_ARGS) $(root_volume) docker.io/projects
 JB_CMD         ?= $(DOCKER_CMD) $(DOCKER_ARGS) --entrypoint /usr/local/bin/jb docker.io/projectsyn/commodore:latest install
 
 instance ?= defaults
+{%- if cookiecutter.add_matrix == "y" and cookiecutter.add_golden == "y" %}
+test_instances = tests/defaults.yml
+{%- endif %}

@@ -61,6 +61,20 @@ gen-golden: clean .compile ## Update the reference version for target `golden-di
 golden-diff: commodore_args += -f tests/$(instance).yml
 golden-diff: clean .compile ## Diff compile output against the reference version. Review output and run `make gen-golden golden-diff` if this target fails.
 	@git diff --exit-code --minimal --no-index -- tests/golden/$(instance) compiled/
+{%- if cookiecutter.add_matrix == "y" %}
+
+.PHONY: golden-diff-all
+golden-diff-all: recursive_target=golden-diff
+golden-diff-all: $(test_instances) ## Run golden-diff for all instances. Note: this doesn't work when running make with multiple parallel jobs (-j != 1).
+
+.PHONY: gen-golden-all
+gen-golden-all: recursive_target=gen-golden
+gen-golden-all: $(test_instances) ## Run gen-golden for all instances. Note: this doesn't work when running make with multiple parallel jobs (-j != 1).
+
+.PHONY: $(test_instances)
+$(test_instances):
+	$(MAKE) $(recursive_target) -e instance=$(basename $(@F))
+{%- endif -%}
 {%- endif %}
 
 .PHONY: clean
