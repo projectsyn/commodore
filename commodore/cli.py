@@ -17,6 +17,7 @@ from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
 from .inventory.lint_components import lint_components
+from .login import login
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -453,6 +454,18 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
         click.secho(f"Found {errors} errors", bold=True)
 
     sys.exit(exit_status)
+
+
+@commodore.command(
+    name="login",
+    short_help="Login to Lieutenant",
+)
+@verbosity
+@pass_config
+def commodore_login(config: Config, verbose: int):
+    """Login to Lieutenant"""
+
+    login(config)
 
 
 def main():
