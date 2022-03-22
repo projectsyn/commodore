@@ -65,7 +65,7 @@ testenv_py3.9:
 	$(TOX_COMMAND) -e py39 --notest
 
 testenv_py3.10:
-	$(TOX_COMMAND) -e py3.10 --notest
+	$(TOX_COMMAND) -e py310 --notest
 
 .PHONY: bench_py3.7 bench_py3.8 bench_py3.9 bench_py3.10
 
