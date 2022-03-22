@@ -24,6 +24,9 @@ class Config:
     _deprecation_notices: List[str]
     _migration: Optional[Migration]
 
+    oidc_client: Optional[str]
+    oidc_discovery_url: Optional[str]
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,

@@ -1,17 +1,15 @@
-import time
 import threading
 from queue import Queue
 import webbrowser
 import json
 
-import click
-
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
-from oauthlib.oauth2 import WebApplicationClient
-
+import click
 import requests
+
+from oauthlib.oauth2 import WebApplicationClient
 
 from .config import Config
 
@@ -23,6 +21,8 @@ class OIDCHandler(BaseHTTPRequestHandler):
     token_url: str
     redirect_url: str
 
+    # pylint: disable=unused-argument
+    # pylint: disable=redefined-builtin
     def log_message(self, format, *args):
         return
 
@@ -66,46 +66,46 @@ success_page = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Authorized</title>
-	<script>
-		window.close()
-	</script>
-	<style>
-		body {
-			background-color: #eee;
-			margin: 0;
-			padding: 0;
-			font-family: sans-serif;
-		}
-		.placeholder {
-			margin: 2em;
-			padding: 2em;
-			background-color: #fff;
-			border-radius: 1em;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <title>Authorized</title>
+    <script>
+        window.close()
+    </script>
+     <style>
+        body {
+            background-color: #eee;
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
+        .placeholder {
+            margin: 2em;
+            padding: 2em;
+            background-color: #fff;
+            border-radius: 1em;
+        }
+    </style>
 </head>
 <body>
-	<div class="placeholder">
-		<h1>Authorized</h1>
-		<p>You can close this window.</p>
-	</div>
+    <div class="placeholder">
+        <h1>Authorized</h1>
+        <p>You can close this window.</p>
+    </div>
 </body>
 </html>
 """
 
 
 def login(config: Config):
-    if config.oidc_client == None:
-        raise click.ClickException(f"Required OIDC client not set")
+    if config.oidc_client is None:
+        raise click.ClickException("Required OIDC client not set")
     client = WebApplicationClient(config.oidc_client)
 
-    if config.oidc_discovery_url == None:
-        raise click.ClickException(f"Required OIDC discovery URL not set")
+    if config.oidc_discovery_url is None:
+        raise click.ClickException("Required OIDC discovery URL not set")
     idp_cfg = requests.get(config.oidc_discovery_url).json()
 
-    done_queue = Queue()
+    done_queue: Queue = Queue()
 
     OIDCHandler.client = client
     OIDCHandler.done = done_queue

@@ -472,11 +472,8 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     help="The OIDC client name.",
     metavar="URL",
 )
-@verbosity
 @pass_config
-def commodore_login(
-    config: Config, verbose: int, oidc_discovery_url: str, oidc_client: str
-):
+def commodore_login(config: Config, oidc_discovery_url: str, oidc_client: str):
     """Login to Lieutenant"""
     config.oidc_client = oidc_client
     config.oidc_discovery_url = oidc_discovery_url
