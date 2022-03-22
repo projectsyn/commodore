@@ -1,3 +1,4 @@
+from typing import Optional
 import threading
 from queue import Queue
 import webbrowser
@@ -12,6 +13,7 @@ import requests
 from oauthlib.oauth2 import WebApplicationClient
 
 from .config import Config
+from . import tokencache
 
 
 class OIDCHandler(BaseHTTPRequestHandler):
@@ -20,6 +22,8 @@ class OIDCHandler(BaseHTTPRequestHandler):
 
     token_url: str
     redirect_url: str
+
+    lieutenant_url: Optional[str]
 
     # pylint: disable=unused-argument
     # pylint: disable=redefined-builtin
@@ -47,11 +51,13 @@ class OIDCHandler(BaseHTTPRequestHandler):
             data=body,
         )
 
-        print(
-            self.client.parse_request_body_response(json.dumps(token_response.json()))[
-                "id_token"
-            ]
-        )
+        id_token = self.client.parse_request_body_response(
+            json.dumps(token_response.json())
+        )["id_token"]
+        if self.lieutenant_url is None:
+            print(id_token)
+        else:
+            tokencache.save(self.lieutenant_url, id_token)
 
         self.send_response(200)
         self.send_header("Content-type", "text/html")
@@ -112,6 +118,7 @@ def login(config: Config):
 
     OIDCHandler.token_url = idp_cfg["token_endpoint"]
     OIDCHandler.redirect_url = "http://localhost:8000"
+    OIDCHandler.lieutenant_url = config.api_url
 
     server = HTTPServer(("localhost", 8000), OIDCHandler)
     server_thread = threading.Thread(target=server.serve_forever)
@@ -124,6 +131,7 @@ def login(config: Config):
         redirect_uri="http://localhost:8000",
         scope=["openid", "email", "profile"],
     )
+
     print(f"Follow this link if it doesn't open automatically \n\n{request_uri}\n")
     webbrowser.open(request_uri)
 

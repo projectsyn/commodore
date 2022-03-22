@@ -9,6 +9,7 @@ import click
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
 from .inventory import Inventory
+from . import tokencache
 
 
 class Migration(Enum):
@@ -102,6 +103,8 @@ class Config:
 
     @property
     def api_token(self):
+        if self._api_token is None and self.api_url:
+            self._api_token = tokencache.get(self.api_url)
         return self._api_token
 
     @api_token.setter
@@ -119,6 +122,8 @@ class Config:
                 else:
                     raise
             self._api_token = api_token.strip()
+        else:
+            self._api_token = None
 
     @property
     def global_repo_revision_override(self):

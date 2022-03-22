@@ -70,11 +70,14 @@ def clean(config: Config, verbose):
     clean_working_tree(config)
 
 
-@catalog.command(name="compile", short_help="Compile the catalog.")
-@click.argument("cluster")
-@click.option(
+api_url_option = click.option(
     "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
 )
+
+
+@catalog.command(name="compile", short_help="Compile the catalog.")
+@click.argument("cluster")
+@api_url_option
 @click.option(
     "--api-token",
     envvar="COMMODORE_API_TOKEN",
@@ -472,11 +475,15 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     help="The OIDC client name.",
     metavar="URL",
 )
+@api_url_option
 @pass_config
-def commodore_login(config: Config, oidc_discovery_url: str, oidc_client: str):
+def commodore_login(
+    config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str
+):
     """Login to Lieutenant"""
     config.oidc_client = oidc_client
     config.oidc_discovery_url = oidc_discovery_url
+    config.api_url = api_url
 
     login(config)
 
