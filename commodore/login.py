@@ -1,5 +1,6 @@
 import time
 import threading
+from queue import Queue
 import webbrowser
 import json
 
@@ -13,16 +14,29 @@ import requests
 from .config import Config
 
 
-class OIDCServer(BaseHTTPRequestHandler):
-    client = WebApplicationClient("syn-lieutenant-dev")
+class OIDCHandler(BaseHTTPRequestHandler):
+    client: WebApplicationClient
+    done: Queue
+
+    token_url: str
+    redirect_url: str
+
+    def log_message(self, format, *args):
+        return
 
     def do_GET(self):
-        print(self.path)
         query_components = parse_qs(urlparse(self.path).query)
         code = query_components["code"]
+
+        if len(code) == 0:
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            return
+
         token_url, headers, body = self.client.prepare_token_request(
-            "https://id.test.vshn.net/auth/realms/VSHN-main-dev-realm/protocol/openid-connect/token",
-            redirect_url="http://localhost:8000",
+            self.token_url,
+            redirect_url=self.redirect_url,
             code=code[0],
         )
         token_response = requests.post(
@@ -42,6 +56,7 @@ class OIDCServer(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(str.encode(success_page))
 
+        self.done.put(True)
         return
 
 
@@ -79,22 +94,30 @@ success_page = """
 """
 
 
-def start_server():
-    webServer = HTTPServer(("localhost", 8000), OIDCServer)
-    webServer.serve_forever()
-
-
 def login(config: Config):
-    server_thread = threading.Thread(target=start_server)
+    client = WebApplicationClient("syn-lieutenant-dev")
+    done_queue = Queue()
+
+    OIDCHandler.client = client
+    OIDCHandler.done = done_queue
+
+    OIDCHandler.token_url = "https://id.test.vshn.net/auth/realms/VSHN-main-dev-realm/protocol/openid-connect/token"
+    OIDCHandler.redirect_url = "http://localhost:8000"
+
+    server = HTTPServer(("localhost", 8000), OIDCHandler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
     server_thread.start()
 
     # TODO(glrf) That's racy
-    c = WebApplicationClient("syn-lieutenant-dev")
-    request_uri = c.prepare_request_uri(
+    request_uri = client.prepare_request_uri(
         "https://id.test.vshn.net/auth/realms/VSHN-main-dev-realm/protocol/openid-connect/auth",
         redirect_uri="http://localhost:8000",
         scope=["openid", "email", "profile"],
     )
-    print(request_uri + "\n")
+    print(f"Follow this link if it doesn't open automatically \n\n{request_uri}\n")
     webbrowser.open(request_uri)
+
+    done_queue.get()
+    server.shutdown()
     server_thread.join()
