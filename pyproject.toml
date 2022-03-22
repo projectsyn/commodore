@@ -18,7 +18,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = ">=3.7, <3.10"
-kapitan = {version = "0.30.0rc1", allow-prereleases = true}
+kapitan = "0.30.0"
 click = "*"
 cookiecutter = "*"
 gitpython = "*"
