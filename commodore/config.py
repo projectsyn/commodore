@@ -37,6 +37,8 @@ class Config:
         self._work_dir = work_dir.resolve()
         self.api_url = api_url
         self.api_token = api_token
+        self.oidc_client = None
+        self.oidc_discovery_url = None
         self._components = {}
         self._config_repos = {}
         self._component_aliases = {}

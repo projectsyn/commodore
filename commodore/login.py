@@ -4,6 +4,8 @@ from queue import Queue
 import webbrowser
 import json
 
+import click
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -95,13 +97,20 @@ success_page = """
 
 
 def login(config: Config):
-    client = WebApplicationClient("syn-lieutenant-dev")
+    if config.oidc_client == None:
+        raise click.ClickException(f"Required OIDC client not set")
+    client = WebApplicationClient(config.oidc_client)
+
+    if config.oidc_discovery_url == None:
+        raise click.ClickException(f"Required OIDC discovery URL not set")
+    idp_cfg = requests.get(config.oidc_discovery_url).json()
+
     done_queue = Queue()
 
     OIDCHandler.client = client
     OIDCHandler.done = done_queue
 
-    OIDCHandler.token_url = "https://id.test.vshn.net/auth/realms/VSHN-main-dev-realm/protocol/openid-connect/token"
+    OIDCHandler.token_url = idp_cfg["token_endpoint"]
     OIDCHandler.redirect_url = "http://localhost:8000"
 
     server = HTTPServer(("localhost", 8000), OIDCHandler)
@@ -111,7 +120,7 @@ def login(config: Config):
 
     # TODO(glrf) That's racy
     request_uri = client.prepare_request_uri(
-        "https://id.test.vshn.net/auth/realms/VSHN-main-dev-realm/protocol/openid-connect/auth",
+        idp_cfg["authorization_endpoint"],
         redirect_uri="http://localhost:8000",
         scope=["openid", "email", "profile"],
     )

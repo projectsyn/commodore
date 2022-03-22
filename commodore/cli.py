@@ -460,10 +460,26 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     name="login",
     short_help="Login to Lieutenant",
 )
+@click.option(
+    "--oidc-discovery-url",
+    envvar="COMMODORE_OIDC_DISCOVERY_URL",
+    help="The discovery URL of the IdP.",
+    metavar="URL",
+)
+@click.option(
+    "--oidc-client",
+    envvar="COMMODORE_OIDC_CLIENT",
+    help="The OIDC client name.",
+    metavar="URL",
+)
 @verbosity
 @pass_config
-def commodore_login(config: Config, verbose: int):
+def commodore_login(
+    config: Config, verbose: int, oidc_discovery_url: str, oidc_client: str
+):
     """Login to Lieutenant"""
+    config.oidc_client = oidc_client
+    config.oidc_discovery_url = oidc_discovery_url
 
     login(config)
 
