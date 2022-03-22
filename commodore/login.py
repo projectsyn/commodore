@@ -117,18 +117,18 @@ def login(config: Config):
     OIDCHandler.done = done_queue
 
     OIDCHandler.token_url = idp_cfg["token_endpoint"]
-    OIDCHandler.redirect_url = "http://localhost:8000"
+    OIDCHandler.redirect_url = "http://localhost:18000"
     OIDCHandler.lieutenant_url = config.api_url
 
-    server = HTTPServer(("localhost", 8000), OIDCHandler)
+    server = HTTPServer(("localhost", 18000), OIDCHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
 
-    # TODO(glrf) That's racy
+    # That's racy, but it should work most of the time and if not the browser shoudld retry
     request_uri = client.prepare_request_uri(
         idp_cfg["authorization_endpoint"],
-        redirect_uri="http://localhost:8000",
+        redirect_uri="http://localhost:18000",
         scope=["openid", "email", "profile"],
     )
 
