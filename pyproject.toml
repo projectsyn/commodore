@@ -27,6 +27,7 @@ url-normalize = "*"
 python-dotenv = "*"
 importlib_metadata = "*"
 typing-extensions = "^3.7.4"
+pyfakefs = "^4.5.6"
 
 [tool.poetry.dev-dependencies]
 tox = "*"
