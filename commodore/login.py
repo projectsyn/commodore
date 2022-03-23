@@ -89,40 +89,58 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         query_components = parse_qs(urlparse(self.path).query)
-        code = query_components["code"]
-
-        if len(code) == 0:
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
+        if "code" not in query_components or len(query_components["code"]) == 0:
+            self.close(422, "invalid callback: no code provided")
             return
 
+        code = query_components["code"][0]
+        try:
+            id_token = self.get_oidc_token(code)
+        except (ConnectionError, HTTPError) as e:
+            self.close(500, f"failed to connect to IdP: {e}")
+            return
+
+        if id_token is None:
+            self.close(500, "no id_token provided")
+            return
+
+        if self.lieutenant_url is None:
+            print(id_token)
+        else:
+            try:
+                tokencache.save(self.lieutenant_url, id_token)
+            except IOError as e:
+                self.close(500, f"failed to save token {e}")
+                return
+
+        self.close(200, success_page)
+        return
+
+    def get_oidc_token(self, code) -> Optional[str]:
         token_url, headers, body = self.client.prepare_token_request(
             self.token_url,
             redirect_url=self.redirect_url,
-            code=code[0],
+            code=code,
         )
+
         token_response = requests.post(
             token_url,
             headers=headers,
             data=body,
         )
+        token_response.raise_for_status()
 
-        id_token = self.client.parse_request_body_response(
-            json.dumps(token_response.json())
-        )["id_token"]
-        if self.lieutenant_url is None:
-            print(id_token)
-        else:
-            tokencache.save(self.lieutenant_url, id_token)
+        token = self.client.parse_request_body_response(token_response.text)
+        if "id_token" in token:
+            return token["id_token"]
+        return None
 
-        self.send_response(200)
+    def close(self, code: int, msg: str):
+        self.send_response(code)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(str.encode(success_page))
-
+        self.wfile.write(str.encode(msg))
         self.done.put(True)
-        return
 
 
 success_page = """
