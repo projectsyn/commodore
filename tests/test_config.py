@@ -202,9 +202,10 @@ def test_print_deprecation_notices(config, capsys):
 
 
 def mock_get_token(url: str) -> Optional[str]:
-        if url != "https://syn.example.com":
-            return None
-        return "from_token_cache"
+    if url != "https://syn.example.com":
+        return None
+    return "from_token_cache"
+
 
 @patch("commodore.tokencache.get")
 def test_use_token_cache(test_patch):
