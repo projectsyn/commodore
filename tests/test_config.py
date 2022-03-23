@@ -201,16 +201,13 @@ def test_print_deprecation_notices(config, capsys):
 
 
 def test_use_token_cache(monkeypatch):
-    def mock_get_token(url: str)  -> Optional[str]:
+    def mock_get_token(url: str) -> Optional[str]:
         if url != "https://syn.example.com":
             return None
         return "from_token_cache"
 
     monkeypatch.setattr(tokencache, "get", mock_get_token)
 
-    conf = Config(
-        P("."),
-        api_url="https://syn.example.com"
-    )
+    conf = Config(P("."), api_url="https://syn.example.com")
     tokencache.save("https://syn.example.com", "from_token_cache")
     assert conf.api_token == "from_token_cache"

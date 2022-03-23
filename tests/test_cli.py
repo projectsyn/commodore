@@ -60,3 +60,8 @@ def test_component_inventory_components_command():
 def test_component_inventory_lint():
     exit_status = call("commodore inventory lint --help", shell=True)
     assert exit_status == 0
+
+
+def test_login():
+    exit_status = call("commodore login --help", shell=True)
+    assert exit_status == 0
