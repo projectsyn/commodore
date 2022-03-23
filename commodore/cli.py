@@ -473,7 +473,7 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     "--oidc-client",
     envvar="COMMODORE_OIDC_CLIENT",
     help="The OIDC client name.",
-    metavar="URL",
+    metavar="TEXT",
 )
 @api_url_option
 @pass_config

@@ -167,3 +167,16 @@ This command doesn't have any command line options.
 == Inventory Lint
 
 No command line flags
+
+== Login
+
+*--oidc-discovery-url* URL::
+  The discovery URL of the IdP.
+  OpenID Connect defines a discovery mechanism, called OpenID Connect Discovery, where an OpenID server publishes its metadata at a well-known URL.
+  Typically this is at `https://auth.example.com/.well-known/openid-configuration`.
+
+*--oidc-client* TEXT::
+  The OIDC client-id.
+
+*--api-url* URL::
+  Lieutenant API URL.
