@@ -11,8 +11,9 @@ ENV PATH=${PATH}:${HOME}/.poetry/bin
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
+      libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
- && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.1.0 \
+ && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.1.13 \
  && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./
@@ -53,7 +54,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
+      /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
