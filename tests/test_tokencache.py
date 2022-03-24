@@ -2,7 +2,6 @@
 Unit-tests for tokencache
 """
 import json
-from pathlib import Path
 
 from xdg.BaseDirectory import xdg_cache_home
 from commodore import tokencache
