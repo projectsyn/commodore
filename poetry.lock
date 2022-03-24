@@ -1004,6 +1004,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "pyxdg"
+version = "0.27"
+description = "PyXDG contains implementations of freedesktop.org standards in python."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pyyaml"
 version = "5.4.1"
 description = "YAML parser and emitter for Python"
@@ -1266,7 +1274,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7, <3.11"
-content-hash = "872cf9e4bbb88334ff36e9c274e8ec56922402b7c7e9b35767e8e0274b056b67"
+content-hash = "68344a5d491b9cd9681b2c093337d7466f454f3b38ae216c8407257301773c2d"
 
 [metadata.files]
 addict = [
@@ -1797,6 +1805,10 @@ pywin32 = [
     {file = "pywin32-227-cp38-cp38-win_amd64.whl", hash = "sha256:7c1ae32c489dc012930787f06244426f8356e129184a02c25aef163917ce158e"},
     {file = "pywin32-227-cp39-cp39-win32.whl", hash = "sha256:c054c52ba46e7eb6b7d7dfae4dbd987a1bb48ee86debe3f245a2884ece46e295"},
     {file = "pywin32-227-cp39-cp39-win_amd64.whl", hash = "sha256:f27cec5e7f588c3d1051651830ecc00294f90728d19c3bf6916e6dba93ea357c"},
+]
+pyxdg = [
+    {file = "pyxdg-0.27-py2.py3-none-any.whl", hash = "sha256:2d6701ab7c74bbab8caa6a95e0a0a129b1643cf6c298bf7c569adec06d0709a0"},
+    {file = "pyxdg-0.27.tar.gz", hash = "sha256:80bd93aae5ed82435f20462ea0208fb198d8eec262e831ee06ce9ddb6b91c5a5"},
 ]
 pyyaml = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},

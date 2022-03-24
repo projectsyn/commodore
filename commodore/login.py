@@ -150,7 +150,7 @@ success_page = """
     <meta charset="UTF-8">
     <title>Authorized</title>
     <script>
-        window.close()
+        setTimeout(window.close, 5000);
     </script>
      <style>
         body {

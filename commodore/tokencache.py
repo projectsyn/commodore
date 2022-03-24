@@ -3,7 +3,9 @@ from typing import Optional
 from pathlib import Path
 import json
 
-cache_name = f"{Path.home()}/.cache/commodore/token"
+from xdg.BaseDirectory import xdg_cache_home
+
+cache_name = Path(xdg_cache_home) / "commodore" / "token"
 
 
 def save(lieutenant: str, token: str):
