@@ -88,6 +88,12 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self):
+        if self.path == "/healthz":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(str.encode("ok"))
+            return
+
         query_components = parse_qs(urlparse(self.path).query)
         if "code" not in query_components or len(query_components["code"]) == 0:
             self.close(422, "invalid callback: no code provided")
@@ -206,7 +212,15 @@ def login(config: Config):
     server = OIDCCallbackServer(client, idp_cfg["token_endpoint"], config.api_url)
     server.start()
 
-    # That's racy, but it should work most of the time and if not the browser should retry
+    # Wait for server to run
+    r = requests.Response()
+    r.status_code = 500
+    while r.status_code != 200:
+        try:
+            r = requests.get("http://localhost:18000/healthz")
+        except ConnectionError:
+            pass
+
     request_uri = client.prepare_request_uri(
         idp_cfg["authorization_endpoint"],
         redirect_uri="http://localhost:18000",
