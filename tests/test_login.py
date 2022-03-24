@@ -2,10 +2,10 @@
 Unit-tests for login
 """
 
-from unittest.mock import patch, Mock
+from unittest.mock import patch
+import responses
 
 import requests
-
 
 from commodore.config import Config
 from commodore import login
@@ -33,11 +33,10 @@ def mock_tokencache_save(url: str, token: str):
     return mock
 
 
-@patch("commodore.login.get_idp_cfg")
 @patch("webbrowser.open")
-@patch("requests.post")
 @patch("commodore.tokencache.save")
-def test_login(mock_tokencache, mock_token_post, mock_browser, mock_idp, tmp_path):
+@responses.activate
+def test_login(mock_tokencache, mock_browser, tmp_path):
     discovery_url = "https://idp.example.com/discovery"
     token_url = "https://idp.example.com/token"
     auth_url = "https://idp.example.com/auth"
@@ -53,13 +52,21 @@ def test_login(mock_tokencache, mock_token_post, mock_browser, mock_idp, tmp_pat
     config.oidc_client = client
     config.oidc_discovery_url = discovery_url
 
-    mock_idp.return_value = {
-        "authorization_endpoint": auth_url,
-        "token_endpoint": token_url,
-    }
-    mock_token_post.return_value = Mock(
-        status_code=200,
-        text=f'{{"id_token":"{id_token}", "access_token": "{access_token}"}}',
+    responses.add_passthru("http://localhost:18000/")
+    responses.add(
+        responses.GET,
+        discovery_url,
+        json={
+            "authorization_endpoint": auth_url,
+            "token_endpoint": token_url,
+        },
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        token_url,
+        json={"id_token": id_token, "access_token": access_token},
+        status=200,
     )
 
     mock_tokencache.side_effect = mock_tokencache_save(api_url, id_token)
