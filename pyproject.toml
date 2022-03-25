@@ -27,6 +27,7 @@ url-normalize = "*"
 python-dotenv = "*"
 importlib_metadata = "*"
 typing-extensions = "^3.7.4"
+pyxdg = "^0.27"
 
 [tool.poetry.dev-dependencies]
 tox = "*"
@@ -36,6 +37,7 @@ pytest-xdist = "^1.32.0"
 pytest-benchmark = "^3.2.3"
 responses = "^0.16.0"
 black = "^22.1.0"
+pyfakefs = "^4.5.6"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'

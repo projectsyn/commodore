@@ -9,6 +9,7 @@ import click
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
 from .inventory import Inventory
+from . import tokencache
 
 
 class Migration(Enum):
@@ -24,6 +25,9 @@ class Config:
     _deprecation_notices: List[str]
     _migration: Optional[Migration]
 
+    oidc_client: Optional[str]
+    oidc_discovery_url: Optional[str]
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -37,6 +41,8 @@ class Config:
         self._work_dir = work_dir.resolve()
         self.api_url = api_url
         self.api_token = api_token
+        self.oidc_client = None
+        self.oidc_discovery_url = None
         self._components = {}
         self._config_repos = {}
         self._component_aliases = {}
@@ -97,6 +103,8 @@ class Config:
 
     @property
     def api_token(self):
+        if self._api_token is None and self.api_url:
+            self._api_token = tokencache.get(self.api_url)
         return self._api_token
 
     @api_token.setter
@@ -114,6 +122,8 @@ class Config:
                 else:
                     raise
             self._api_token = api_token.strip()
+        else:
+            self._api_token = None
 
     @property
     def global_repo_revision_override(self):

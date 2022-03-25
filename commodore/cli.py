@@ -17,6 +17,7 @@ from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
 from .inventory.lint_components import lint_components
+from .login import login
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -69,11 +70,14 @@ def clean(config: Config, verbose):
     clean_working_tree(config)
 
 
-@catalog.command(name="compile", short_help="Compile the catalog.")
-@click.argument("cluster")
-@click.option(
+api_url_option = click.option(
     "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
 )
+
+
+@catalog.command(name="compile", short_help="Compile the catalog.")
+@click.argument("cluster")
+@api_url_option
 @click.option(
     "--api-token",
     envvar="COMMODORE_API_TOKEN",
@@ -453,6 +457,35 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
         click.secho(f"Found {errors} errors", bold=True)
 
     sys.exit(exit_status)
+
+
+@commodore.command(
+    name="login",
+    short_help="Login to Lieutenant",
+)
+@click.option(
+    "--oidc-discovery-url",
+    envvar="COMMODORE_OIDC_DISCOVERY_URL",
+    help="The discovery URL of the IdP.",
+    metavar="URL",
+)
+@click.option(
+    "--oidc-client",
+    envvar="COMMODORE_OIDC_CLIENT",
+    help="The OIDC client name.",
+    metavar="TEXT",
+)
+@api_url_option
+@pass_config
+def commodore_login(
+    config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str
+):
+    """Login to Lieutenant"""
+    config.oidc_client = oidc_client
+    config.oidc_discovery_url = oidc_discovery_url
+    config.api_url = api_url
+
+    login(config)
 
 
 def main():
