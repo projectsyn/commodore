@@ -21,5 +21,14 @@
   ],
   "labels": [
     "dependency"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG KUSTOMIZE_VERSION=(?<currentValue>.*?)\\n"],
+      "extractVersionTemplate": "^kustomize/v(?<version>.*)$",
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "kubernetes-sigs/kustomize"
+    }
   ]
 }
