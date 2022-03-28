@@ -1,3 +1,5 @@
+import time
+
 import pytest
 import textwrap
 from pathlib import Path as P
@@ -5,10 +7,11 @@ from pathlib import Path as P
 from unittest.mock import patch
 from typing import Optional
 
+import jwt
+
 import click
 
 from commodore.config import Config
-from commodore import tokencache
 
 
 @pytest.fixture
@@ -202,14 +205,31 @@ def test_print_deprecation_notices(config, capsys):
 
 
 def mock_get_token(url: str) -> Optional[str]:
-    if url != "https://syn.example.com":
+    if url == "https://syn.example.com":
+        return jwt.encode(
+            {"exp": time.time() + 100, "from_cache": True}, "secret", algorithm="HS256"
+        )
+    elif url == "https://expired.example.com":
+        return jwt.encode(
+            {"exp": time.time() - 100, "from_cache": True}, "secret", algorithm="HS256"
+        )
+
+    else:
         return None
-    return "from_token_cache"
 
 
 @patch("commodore.tokencache.get")
 def test_use_token_cache(test_patch):
     test_patch.side_effect = mock_get_token
-    tokencache.save("https://syn.example.com", "from_token_cache")
     conf = Config(P("."), api_url="https://syn.example.com")
-    assert conf.api_token == "from_token_cache"
+    t = jwt.decode(
+        conf.api_token, algorithms=["RS256"], options={"verify_signature": False}
+    )
+    assert t["from_cache"]
+
+
+@patch("commodore.tokencache.get")
+def test_expired_token_cache(test_patch):
+    test_patch.side_effect = mock_get_token
+    conf = Config(P("."), api_url="https://expired.example.com")
+    assert conf.api_token is None

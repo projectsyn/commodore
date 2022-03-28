@@ -73,13 +73,13 @@ def clean(config: Config, verbose):
 api_url_option = click.option(
     "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
 )
-oidc_discovery_url = click.option(
+oidc_discovery_url_option = click.option(
     "--oidc-discovery-url",
     envvar="COMMODORE_OIDC_DISCOVERY_URL",
     help="The discovery URL of the IdP.",
     metavar="URL",
 )
-oidc_client = click.option(
+oidc_client_option = click.option(
     "--oidc-client",
     envvar="COMMODORE_OIDC_CLIENT",
     help="The OIDC client name.",
@@ -96,8 +96,8 @@ oidc_client = click.option(
     help="Lieutenant API token.",
     metavar="TOKEN",
 )
-@oidc_discovery_url
-@oidc_client
+@oidc_discovery_url_option
+@oidc_client_option
 @click.option(
     "--local",
     is_flag=True,
@@ -170,6 +170,7 @@ oidc_client = click.option(
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
 def compile_catalog(
     config: Config,
     cluster,
@@ -234,10 +235,11 @@ def compile_catalog(
     help="Lieutenant API token.",
     metavar="TOKEN",
 )
-@oidc_client
-@oidc_discovery_url
+@oidc_client_option
+@oidc_discovery_url_option
 @verbosity
 @pass_config
+# pylint: disable=too-many-arguments
 def clusters_list_command(
     config: Config, api_url, api_token, oidc_client, oidc_discovery_url, verbose
 ):
@@ -512,8 +514,8 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     metavar="TEXT",
 )
 @api_url_option
-@oidc_discovery_url
-@oidc_client
+@oidc_discovery_url_option
+@oidc_client_option
 @pass_config
 def commodore_login(
     config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str
