@@ -1,10 +1,16 @@
 MAKEFLAGS += -j4
 
-docker_cmd  ?= docker
-docker_opts ?= --rm --tty --user "$$(id -u):$$(id -g)"
+ifneq "$(shell which docker 2>/dev/null)" ""
+	DOCKER_CMD    ?= $(shell which docker)
+	DOCKER_USERNS ?= ""
+else
+	DOCKER_CMD    ?= podman
+	DOCKER_USERNS ?= keep-id
+endif
+DOCKER_ARGS ?= --rm --tty --user "$$(id -u):$$(id -g)" --userns=$(DOCKER_USERNS)
 
-vale_cmd           ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages docker.io/vshn/vale:2.6.1 --minAlertLevel=error --config=/pages/.vale.ini /pages
-antora_preview_cmd ?= $(docker_cmd) run --rm --publish 35729:35729 --publish 2020:2020 --volume "${PWD}/.git":/preview/antora/.git --volume "${PWD}/docs":/preview/antora/docs docker.io/vshn/antora-preview:3.0.1.1 --style=syn --antora=docs
+vale_cmd           ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages docker.io/vshn/vale:2.6.1 --minAlertLevel=error --config=/pages/.vale.ini /pages
+antora_preview_cmd ?= $(DOCKER_CMD) run --rm --publish 35729:35729 --publish 2020:2020 --volume "${PWD}/.git":/preview/antora/.git --volume "${PWD}/docs":/preview/antora/docs docker.io/vshn/antora-preview:3.0.1.1 --style=syn --antora=docs
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
@@ -49,7 +55,7 @@ IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):test
 .PHONY: docker
 
 docker:
-	docker build --build-arg PYVERSION=$(PYVERSION) \
+	$(DOCKER_CMD) build --build-arg PYVERSION=$(PYVERSION) \
 		--build-arg GITVERSION=$(GITVERSION) \
 		-t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
