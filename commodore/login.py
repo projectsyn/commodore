@@ -1,3 +1,4 @@
+import sys
 from typing import Optional, Any
 import threading
 from queue import Queue
@@ -226,7 +227,10 @@ def login(config: Config):
         redirect_uri="http://localhost:18000",
         scope=["openid", "email", "profile"],
     )
-    print(f"Follow this link if it doesn't open automatically \n\n{request_uri}\n")
+    print(
+        f"Follow this link if it doesn't open automatically \n\n{request_uri}\n",
+        file=sys.stderr,
+    )
     webbrowser.open(request_uri)
 
     server.join()

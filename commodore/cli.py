@@ -73,6 +73,18 @@ def clean(config: Config, verbose):
 api_url_option = click.option(
     "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
 )
+oidc_discovery_url_option = click.option(
+    "--oidc-discovery-url",
+    envvar="COMMODORE_OIDC_DISCOVERY_URL",
+    help="The discovery URL of the IdP.",
+    metavar="URL",
+)
+oidc_client_option = click.option(
+    "--oidc-client",
+    envvar="COMMODORE_OIDC_CLIENT",
+    help="The OIDC client name.",
+    metavar="TEXT",
+)
 
 
 @catalog.command(name="compile", short_help="Compile the catalog.")
@@ -84,6 +96,8 @@ api_url_option = click.option(
     help="Lieutenant API token.",
     metavar="TOKEN",
 )
+@oidc_discovery_url_option
+@oidc_client_option
 @click.option(
     "--local",
     is_flag=True,
@@ -156,11 +170,14 @@ api_url_option = click.option(
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
 def compile_catalog(
     config: Config,
     cluster,
     api_url,
     api_token,
+    oidc_client,
+    oidc_discovery_url,
     local,
     push,
     interactive,
@@ -183,6 +200,8 @@ def compile_catalog(
     config.global_repo_revision_override = global_repo_revision_override
     config.tenant_repo_revision_override = tenant_repo_revision_override
     config.migration = migration
+    config.oidc_client = oidc_client
+    config.oidc_discovery_url = oidc_discovery_url
     if config.push and (
         config.global_repo_revision_override or config.tenant_repo_revision_override
     ):
@@ -198,25 +217,44 @@ def compile_catalog(
         # Ensure we always fetch dependencies in regular mode
         fetch_dependencies = True
     config.fetch_dependencies = fetch_dependencies
+
+    if config.api_token is None and not local:
+        try:
+            login(config)
+        except click.ClickException:
+            pass
+
     _compile(config, cluster)
 
 
 @catalog.command(name="list", short_help="List available catalog cluster IDs")
-@click.option(
-    "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
-)
+@api_url_option
 @click.option(
     "--api-token",
     envvar="COMMODORE_API_TOKEN",
     help="Lieutenant API token.",
     metavar="TOKEN",
 )
+@oidc_client_option
+@oidc_discovery_url_option
 @verbosity
 @pass_config
-def clusters_list_command(config: Config, api_url, api_token, verbose):
+# pylint: disable=too-many-arguments
+def clusters_list_command(
+    config: Config, api_url, api_token, oidc_client, oidc_discovery_url, verbose
+):
     config.update_verbosity(verbose)
     config.api_url = api_url
     config.api_token = api_token
+    config.oidc_client = oidc_client
+    config.oidc_discovery_url = oidc_discovery_url
+
+    if config.api_token is None:
+        try:
+            login(config)
+        except click.ClickException:
+            pass
+
     catalog_list(config)
 
 
@@ -476,6 +514,8 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     metavar="TEXT",
 )
 @api_url_option
+@oidc_discovery_url_option
+@oidc_client_option
 @pass_config
 def commodore_login(
     config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str

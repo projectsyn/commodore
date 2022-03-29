@@ -1,8 +1,11 @@
+import time
 import textwrap
 
 from enum import Enum
 from pathlib import Path as P
 from typing import Dict, List, Optional
+
+import jwt
 
 import click
 
@@ -104,7 +107,19 @@ class Config:
     @property
     def api_token(self):
         if self._api_token is None and self.api_url:
-            self._api_token = tokencache.get(self.api_url)
+            token = tokencache.get(self.api_url)
+            if token is not None:
+                # We don't verify the signature, we just want to know if the token is expired
+                # lieutenant will decide if it's valid
+                try:
+                    t = jwt.decode(
+                        token, algorithms=["RS256"], options={"verify_signature": False}
+                    )
+                    if "exp" in t and t["exp"] < time.time() + 10:
+                        return None
+                except jwt.exceptions.InvalidTokenError:
+                    return None
+                self._api_token = token
         return self._api_token
 
     @api_token.setter
