@@ -6,8 +6,14 @@ root_volume     ?= -v "$${PWD}:/$(COMPONENT_NAME)"
 compiled_volume ?= -v "$${PWD}/$(compiled_path):/$(COMPONENT_NAME)"
 commodore_args  ?= --search-paths ./dependencies --search-paths .
 
-DOCKER_CMD   ?= docker
-DOCKER_ARGS  ?= run --rm -u "$$(id -u):$$(id -g)" -w /$(COMPONENT_NAME) -e HOME="/$(COMPONENT_NAME)"
+ifneq "$(shell which docker 2>/dev/null)" ""
+	DOCKER_CMD    ?= $(shell which docker)
+	DOCKER_USERNS ?= ""
+else
+	DOCKER_CMD    ?= podman
+	DOCKER_USERNS ?= keep-id
+endif
+DOCKER_ARGS ?= run --rm -u "$$(id -u):$$(id -g)" --userns=$(DOCKER_USERNS) -w /$(COMPONENT_NAME) -e HOME="/$(COMPONENT_NAME)"
 
 JSONNET_FILES   ?= $(shell find . -type f -not -path './vendor/*' \( -name '*.*jsonnet' -or -name '*.libsonnet' \))
 JSONNETFMT_ARGS ?= --in-place --pad-arrays
