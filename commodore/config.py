@@ -115,7 +115,7 @@ class Config:
                     t = jwt.decode(
                         token, algorithms=["RS256"], options={"verify_signature": False}
                     )
-                    if "exp" in t and t["exp"] < time.time():
+                    if "exp" in t and t["exp"] < time.time() + 10:
                         return None
                 except jwt.exceptions.InvalidTokenError:
                     return None
