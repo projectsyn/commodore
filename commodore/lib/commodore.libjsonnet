@@ -219,9 +219,12 @@ local fixupDir(dir, fixupfn) =
  * \brief Render array of strings with removable entries
  *
  * This function renders an array which allows removing entries by prefixing
- * them with `~`. The filtering is processed based on element order, adding
- * the same element again after removing it results in the element being
- * present in the final array.
+ * them with `~`.
+ * The filtering is processed based on element order, adding the same element
+ * again after removing it results in the element being present in the final
+ * array.
+ *
+ * NOTE: The function doesn't conserve element order in the resulting array.
  *
  * This function only supports arrays of strings.
  *

@@ -1,0 +1,15 @@
+{
+  "ns1": {
+    "metadata": {
+      "annotations": {
+        "a": "1"
+      },
+      "namespace": "test"
+    }
+  },
+  "ns2": {
+    "metadata": {
+      "namespace": "test"
+    }
+  }
+}
