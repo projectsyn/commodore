@@ -49,10 +49,14 @@ def test_login(mock_tokencache, mock_browser, tmp_path):
         tmp_path,
         api_url=api_url,
     )
-    config.oidc_client = client
-    config.oidc_discovery_url = discovery_url
 
     responses.add_passthru("http://localhost:18000/")
+    responses.add(
+        responses.GET,
+        api_url,
+        json={"oidc": {"discoveryUrl": discovery_url, "clientId": client}},
+        status=200,
+    )
     responses.add(
         responses.GET,
         discovery_url,
