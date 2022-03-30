@@ -14,7 +14,7 @@ import click
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, RequestException
 
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -202,6 +202,22 @@ def get_idp_cfg(discovery_url: str) -> Any:
 
 
 def login(config: Config):
+    if (
+        config.oidc_client is None
+        and config.oidc_discovery_url is None
+        and config.api_url is not None
+    ):
+        api_cfg: Any = {}
+        try:
+            r = requests.get(config.api_url)
+            api_cfg = json.loads(r.text)
+        except (RequestException, json.JSONDecodeError):
+            # We do this on a best effort basis
+            pass
+        if "oidc" in api_cfg:
+            config.oidc_client = api_cfg["oidc"]["clientId"]
+            config.oidc_discovery_url = api_cfg["oidc"]["discoveryUrl"]
+
     if config.oidc_client is None:
         raise click.ClickException("Required OIDC client not set")
     if config.oidc_discovery_url is None:
