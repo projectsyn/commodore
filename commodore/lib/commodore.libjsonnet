@@ -168,8 +168,55 @@ local makeMergeable(o) = {
   if !std.isObject(o[key]) && !std.isArray(o[key])
 };
 
+/**
+ * \brief compute file name without extension for `file`
+ *
+ * \arg file the file name (without path) for which to compute the name w/o
+ * extension.
+ */
+local stem(elem) =
+  local elems = std.split(elem, '.');
+  std.join('.', elems[:std.length(elems) - 1]);
+
+/**
+ * \brief apply fixupfn to all objects in `obj_file`
+ *
+ * \arg obj_file the YAML document containing the objects to fixup
+ * \arg fixupfn A Jsonnet function taking one argument (the object) and
+ * returning the adjusted object.
+ */
+local fixup(obj_file, fixupfn) =
+  local objs = std.filter(
+    function(it) it != null,
+    yaml_load_all(obj_file)
+  );
+  // process all objects
+  std.map(fixupfn, objs);
+
+/**
+ * \brief apply `fixupfn` to all objects in all files in directory `dir`
+ *
+ * This function assumes that all files in `dir` are YAML files
+ *
+ * \arg dir The directory in which to look for files
+ * \arg fixupfn A Jsonnet function taking one argument (the object) and
+ * returning the adjusted object. The function is applied to all objects in
+ * all files.
+ *
+ * \returns A Jsonnet object suitable as output for a Commodore postprocessing
+ * filter.
+ */
+local fixupDir(dir, fixupfn) =
+  local files = list_dir(dir);
+  local filepath(file) = dir + '/' + file;
+  {
+    [stem(file)]: fixup(filepath(file), fixupfn)
+    for file in files
+  };
+
 {
   inventory: std.native('inventory'),
+  list_dir: list_dir,
   yaml_load: std.native('yaml_load'),
   yaml_load_all: yaml_load_all,
   namespaced: namespaced,
@@ -180,4 +227,5 @@ local makeMergeable(o) = {
   envList: envList,
   getValueOrDefault: getValueOrDefault,
   makeMergeable: makeMergeable,
+  fixupDir: fixupDir,
 }
