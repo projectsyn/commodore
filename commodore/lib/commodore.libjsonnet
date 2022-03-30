@@ -15,6 +15,11 @@ local namespaced(ns, obj) =
  */
 local filterNull(list) = std.trace('filterNull is deprecated, use std.prune(a) instead', std.filter(function(obj) obj != null, list));
 
+/**
+ * \brief Load all objects from a YAML stream document
+ *
+ * \arg yaml_file the YAML document to load
+ */
 local yaml_load_all = std.native('yaml_load_all');
 
 /**
@@ -58,6 +63,13 @@ local patch_namespace(obj_file, namespace, kinds=null, exclude_objects=[]) =
     for obj in objs
   ];
 
+/**
+ * \brief list files in a directory
+ *
+ * \arg dir The directory to list
+ * \arg basename if true, only return the name of the file, otherwise return
+ * the full path.
+ */
 local list_dir(dir, basename=true) =
   std.native('list_dir')(dir, basename);
 
@@ -123,7 +135,7 @@ local envList(map) = [
   for x in std.objectFields(map)
 ];
 
-/*
+/**
  * \brief Helper to get a fields value or a default.
  *
  * \arg dict An arbitrary dictionary data structure.
@@ -133,7 +145,7 @@ local envList(map) = [
 local getValueOrDefault(dict, field, default) =
   if std.objectHas(dict, field) then dict[field] else default;
 
-/*
+/**
  * \brief makes an object deep mergeable
  *
  * Builds a new object from its input.
