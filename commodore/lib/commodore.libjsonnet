@@ -214,6 +214,42 @@ local fixupDir(dir, fixupfn) =
     for file in files
   };
 
+/**
+ * \brief Render array of strings with removable entries
+ *
+ * This function renders an array which allows removing entries by prefixing
+ * them with `~`. The filtering is processed based on element order, adding
+ * the same element again after removing it results in the element being
+ * present in the final array.
+ *
+ * This function only supports arrays of strings.
+ *
+ * \returns The filtered array
+ */
+local renderArray(arr) =
+  // extract real value of array entry
+  local realval(v) = std.lstripChars(v, '~');
+  // Compute whether each element should be included by keeping track of
+  // whether its last occurrence in the input array was prefixed with ~ or
+  // not.
+  local val_state = std.foldl(
+    function(a, it) a + it,
+    [
+      assert
+        std.isString(v) :
+        "renderArray() doesn't support arrays with non-string entries";
+      { [realval(v)]: !std.startsWith(v, '~') }
+      for v in arr
+    ],
+    {}
+  );
+  // Return filtered array containing only elements whose last occurrence
+  // wasn't prefixed by ~.
+  std.filter(
+    function(val) val_state[val],
+    std.objectFields(val_state)
+  );
+
 {
   inventory: std.native('inventory'),
   list_dir: list_dir,
@@ -228,4 +264,5 @@ local fixupDir(dir, fixupfn) =
   getValueOrDefault: getValueOrDefault,
   makeMergeable: makeMergeable,
   fixupDir: fixupDir,
+  renderArray: renderArray,
 }
