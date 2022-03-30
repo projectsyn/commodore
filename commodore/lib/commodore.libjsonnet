@@ -1,4 +1,5 @@
 local kap = import 'lib/kapitan.libjsonnet';
+local kube = import 'lib/kube.libjsonnet';
 local params = kap.inventory().parameters;
 
 local namespaced(ns, obj) =
@@ -250,6 +251,45 @@ local renderArray(arr) =
     std.objectFields(val_state)
   );
 
+/**
+ * \brief Generate array of Resources based on `resourceFn`
+ *
+ * \arg resources Object containing (partial) resource definitions
+ * \arg resourceFn Kube-libsonnet style function which emits a valid minimal
+ *                 Kubernetes manifest. The function is expected to take one
+ *                 argument which is used as `.metadata.name` of the resulting
+ *                 manifest.
+ *
+ * The function renders resource manifests based on the output of `resourceFn`
+ * overlaid with each value specified in `resources`. The keys of `resources`
+ * are used as resource names in the resulting manifests.
+ *
+ * The function provides the usual convenience features we use when generating
+ * resources in components, such as ignoring input entries which are
+ * null-values, to allow removing resources defined higher-up in the
+ * hierarchy.
+ *
+ * The function supports both supplying a kube-libsonnet resource function as
+ * `resourceFn()` or a custom function which wraps or mimics a kube-libsonnet
+ * resource function.
+ *
+ * The object values overlaid on the result of `resourceFn()` without any
+ * validation. If validation is wanted or required, callers must validate the
+ * contents of `resources` before calling this function.
+ *
+ * \returns Array of rendered resources
+ */
+local generateResources(resources, resourceFn) =
+  std.filter(
+    function(it) it != null,
+    [
+      local rname = kube.hyphenate(r);
+      if resources[r] != null then
+        resourceFn(rname) + makeMergeable(resources[r])
+      for r in std.objectFields(resources)
+    ]
+  );
+
 {
   inventory: std.native('inventory'),
   list_dir: list_dir,
@@ -265,4 +305,5 @@ local renderArray(arr) =
   makeMergeable: makeMergeable,
   fixupDir: fixupDir,
   renderArray: renderArray,
+  generateResources: generateResources,
 }
