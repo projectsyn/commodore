@@ -36,6 +36,7 @@ def render_jsonnet(tmp_path: Path, inputf: Path):
     "tc",
     [
         "jsonnet/namespaced",
+        "jsonnet/makeMergeable",
         "jsonnet/renderArray",
         "jsonnet/generateResources",
     ],
