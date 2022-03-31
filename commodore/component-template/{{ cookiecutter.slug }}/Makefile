@@ -43,7 +43,7 @@ docs-serve: ## Preview the documentation
 .PHONY: compile
 .compile:
 	mkdir -p dependencies
-	$(COMMODORE_CMD)
+	$(COMPILE_CMD)
 
 .PHONY: test
 test: commodore_args += -f tests/$(instance).yml
