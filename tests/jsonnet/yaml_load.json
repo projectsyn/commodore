@@ -1,0 +1,55 @@
+{
+  "f0": {
+    "metadata": {
+      "name": "obj1"
+    },
+    "spec": {
+      "a": "a",
+      "b": "b",
+      "c": "c",
+      "d": "d"
+    }
+  },
+  "f1": [
+    {
+      "metadata": {
+        "name": "obj1"
+      },
+      "spec": {
+        "a": "a",
+        "b": "b",
+        "c": "c",
+        "d": "d"
+      }
+    },
+    {
+      "metadata": {
+        "name": "obj2",
+        "namespace": "foo"
+      },
+      "spec": 5
+    },
+    {
+      "metadata": {
+        "name": "obj3",
+        "namespace": "test"
+      },
+      "spec": {"a": [1, 2, 3], "b": [4, 5, 6]}
+    }
+  ],
+  "f2": [
+    {
+      "metadata": {
+        "name": "obj4",
+        "namespace": "test"
+      },
+      "spec": {
+        "list": [1]
+      }
+    },
+    {
+      "metadata": {"name": "obj5"},
+      "spec": {"value": "aaa"}
+    }
+  ]
+}
