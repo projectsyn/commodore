@@ -10,6 +10,7 @@ from commodore.postprocess.jsonnet import _import_cb, _native_callbacks
 import _jsonnet
 import requests
 import pytest
+import yaml
 
 
 TESTS_DIR = Path(__file__).parent / "jsonnet"
@@ -26,12 +27,21 @@ def discover_tc():
 
 
 def tc_files(tc: str) -> (str, Path):
-    return TESTS_DIR / f"{tc}.jsonnet", TESTS_DIR / f"{tc}.json"
+    return (
+        TESTS_DIR / f"{tc}.jsonnet",
+        TESTS_DIR / f"{tc}.yaml",
+        TESTS_DIR / f"{tc}.json",
+    )
 
 
-def render_jsonnet(tmp_path: Path, inputf: Path):
+def render_jsonnet(tmp_path: Path, inputf: Path, invf: Path):
+    inv = {}
+    if invf.is_file():
+        with open(invf) as invf:
+            inv = yaml.safe_load(invf)
+
     def _inventory() -> Dict[str, Any]:
-        return {}
+        return inv
 
     _native_cb = _native_callbacks
     _native_cb["inventory"] = ((), _inventory)
@@ -49,14 +59,14 @@ def render_jsonnet(tmp_path: Path, inputf: Path):
     discover_tc(),
 )
 def test_jsonnet(tmp_path: Path, tc):
-    inputf, expectedf = tc_files(tc)
+    inputf, invf, expectedf = tc_files(tc)
     os.makedirs(tmp_path / "lib")
     resp = requests.get(
         "https://raw.githubusercontent.com/bitnami-labs/kube-libsonnet/v1.19.0/kube.libsonnet"
     )
     with open(tmp_path / "lib" / "kube.libjsonnet", "w") as f:
         f.write(resp.text)
-    result = render_jsonnet(tmp_path, inputf)
+    result = render_jsonnet(tmp_path, inputf, invf)
     with open(expectedf) as e:
         expected = json.load(e)
 
