@@ -1,0 +1,19 @@
+[
+  {
+    "name": "VAR1",
+    "value": "aaa"
+  },
+  {
+    "name": "VAR2",
+    "valueFrom": {
+      "configMapRef": {
+        "name": "test",
+        "key": "var2"
+      }
+    }
+  },
+  {
+    "name": "VAR3",
+    "value": null
+  }
+]

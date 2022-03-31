@@ -1,0 +1,5 @@
+parameters:
+  global:
+    http_proxy: http://proxy.example.com:8000/
+    https_proxy: https://proxy.example.com:8443/
+    no_proxy: "10.0.0.0/8"

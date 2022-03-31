@@ -1,0 +1,271 @@
+= `commodore.libjsonnet` API reference
+
+Commodore provides a Jsonnet library which can be used both when compiling components and in postprocessing filters.
+
+This page documents all the functions provided by the library.
+
+== Usage
+
+[source,jsonnet]
+----
+local com = import 'lib/commodore.libjsonnet'; <1>
+
+local array = com.renderArray(params.alerts); <2>
+----
+<1> Import the library
+<2> Use `com.<FunctionName>` to access the library functions.
+
+== `inventory()`
+
+Provides access to the Kapitan inventory in postprocessing filters.
+
+This function is backed by Kapitan's `inventory()` function when compiling components.
+
+=== Return value
+
+The Kapitan inventory for the cluster which is getting compiled.
+
+== `list_dir(dir, basename=true)`
+
+List files in a directory.
+
+=== Arguments
+
+`dir`:: The directory to list
+`basename`::
+This argument is optional.
+If `true`, only return the name of the file, otherwise return the full path.
+
+=== Return value
+
+An array containing all the entries of directory `dir`.
+
+== `proxyVars`
+
+A helper to inject proxy variables into a container's environment.
+
+HTTP proxy configuration is supposed to be done in `parameters.global` and meant to be used by all components.
+This helper makes it easy to add those values to a containers environment.
+No need to do any checks whether or not they have to be added.
+
+This helper is suitable to be used with `env_:` from the Kubernetes Jsonnet library.
+If the list form is used, combine it with <<_envlistmap,`envList()`>>.
+
+=== Return value
+
+A Dictionary which contains the http proxy environment variables in both upper and lower case form.
+The resulting dictionary only contains environment variable config if any proxy configuration is present in `parameters.global`.
+
+== `envList(map)`
+
+A helper function to convert a dictionary into an environment list.
+
+Kubernetes containers require environment variables to be a list of objects.
+In its simplest form, the object contains the keys `name` and `value`.
+
+This helper converts a dictionary into such a list where keys become `name`, and values become `value`.
+If the value of an entry in the input dictionary is an object, the resulting dictionary for that key uses `valueFrom` instead of `value`.
+
+=== Arguments
+
+`map`:: Dictionary to be converted.
+
+=== Return value
+
+A list of dictionaries with `name`, `value` keys, suitable to use as container environment.
+
+== `getValueOrDefault(dict, field, default)`
+
+A helper function to get a field's value or a default.
+
+=== Arguments
+
+`dict`:: An arbitrary dictionary data structure.
+`field`:: The name of a field.
+`default`:: The value to return if the field isn't present on the dict.
+
+=== Return value
+
+If `field` is present in dict, the function returns `dict[field]`.
+Otherwise, it returns `default`.
+
+== `makeMergeable(o)`
+
+Makes an object deep mergeable
+
+This function builds a new object from its input.
+All keys which contain an object or array will be suffixed with `+` in the result.
+
+=== Arguments
+
+`o`:: An arbitrary object.
+
+=== Return value
+
+The transformed object.
+
+== `fixupDir(dir, fixupfn)`
+
+Apply `fixupfn` to all objects in all files in directory `dir`
+
+This function assumes that all files in `dir` are YAML files
+
+=== Arguments
+`dir`:: The directory in which to look for files
+`fixupfn`::
+A Jsonnet function taking one argument (the object) and returning the adjusted object.
+The function is applied to all objects in all files.
+
+=== Return value
+
+A Jsonnet object suitable as output for a Commodore postprocessing filter.
+
+
+== `renderArray(arr)`
+
+Render array of strings with removable entries
+
+This function renders an array which allows removing entries by prefixing them with `~`.
+
+The filtering is processed based on element order, adding the same element again after removing it results in the element being present in the final array.
+
+NOTE: The function doesn't conserve element order in the resulting array.
+
+This function only supports arrays of strings.
+
+=== Arguments
+
+`arr`:: Array of strings
+
+=== Return value
+
+The filtered array
+
+== `generateResources(resources, resourceFn)`
+
+Generate array of Resources based on `resourceFn`
+
+The function renders resource manifests based on the output of `resourceFn` overlaid with each value specified in `resources`.
+The keys of `resources` are used as resource names in the resulting manifests.
+
+The function provides the usual convenience features we use when generating resources in components.
+For example it filters out input entries which are null-values to allow removing resources defined higher-up in the hierarchy.
+
+The function supports both supplying a kube-libsonnet resource function as `resourceFn()` or a custom function which wraps or mimics a kube-libsonnet resource function.
+
+The object values overlaid on the result of `resourceFn()` without any validation.
+If validation is wanted or required, callers must validate the contents of `resources` before calling this function.
+
+=== Arguments
+
+`resources`:: Object containing (partial) resource definitions
+`resourceFn`::
+Kube-libsonnet style function which emits a valid minimal Kubernetes manifest.
+The function is expected to take one argument which is used as `.metadata.name` of the resulting manifest.
+
+=== Return value
+
+Array of rendered resources
+
+=== Example
+
+The following Jsonnet takes the contents of `resources` and generates a list of Kubernetes `Secret` manifests by applying each provided configuration to an empty `Secret` manifest.
+
+[source,jsonnet]
+----
+local com = import 'lib/commodore.libjsonnet';
+local kube = import 'lib/kube.libjsonnet';
+
+local resources = {
+  res1: {
+    stringData: {
+      secret: 'value',
+    },
+  },
+  res2: {
+    stringData: {
+      secret: 'another',
+    },
+  },
+  res3: null,
+};
+
+local secrets = com.generateResources(resources, kube.Secret);
+
+{
+  secrets: secrets,
+}
+----
+
+The JSON output generated by Jsonnet looks as follows.
+Note that the field `res3` has been omitted in the output.
+
+[source,json]
+----
+{
+  "secrets": [
+    {
+      "apiVersion": "v1",
+      "data": {},
+      "kind": "Secret",
+      "metadata": {
+        "annotations": {},
+        "labels": {
+          "name": "res1"
+        },
+        "name": "res1"
+      },
+      "stringData": {
+        "secret": "value"
+      },
+      "type": "Opaque"
+    },
+    {
+      "apiVersion": "v1",
+      "data": {},
+      "kind": "Secret",
+      "metadata": {
+        "annotations": {},
+        "labels": {
+          "name": "res2"
+        },
+        "name": "res2"
+      },
+      "stringData": {
+        "secret": "another"
+      },
+      "type": "Opaque"
+    }
+  ]
+}
+----
+
+If the initial Jsonnet is part of a Commodore component, the final result will be a file `secrets.yaml` with the following content:
+
+[source,yaml]
+----
+---
+apiVersion: v1
+data: {}
+kind: Secret
+metadata:
+  annotations: {}
+  labels:
+    name: res1
+  name: res1
+stringData:
+  secret: value
+type: Opaque
+---
+apiVersion: v1
+data: {}
+kind: Secret
+metadata:
+  annotations: {}
+  labels:
+    name: res2
+  name: res2
+stringData:
+  secret: another
+type: Opaque
+----

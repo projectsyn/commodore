@@ -1,0 +1,12 @@
+{
+  "o0": { "base": { "v2": "test" }},
+  "o1": { "base": { "v": "value", "v2": "test" }},
+  "o2": {
+    "base": "test",
+    "nestedArr": [ 1, 2, 3, 4 ],
+    "nestedObj": {
+      "a": "aaa",
+      "b": "bbb"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+parameters:
+  param1:
+    a: a
+    b: b
+  param2:
+    c: c
+    d: d

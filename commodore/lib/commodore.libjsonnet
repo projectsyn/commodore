@@ -1,5 +1,18 @@
 local kap = import 'lib/kapitan.libjsonnet';
-local params = kap.inventory().parameters;
+local kube = import 'lib/kube.libjsonnet';
+
+local inventory =
+  // std.native() returns null if the function isn't defined.
+  // We name our native inventory function `commodore_inventory` to avoid
+  // accidentally binding Kapitan's native `inventory` function which has
+  // different arguments.
+  local comInv = std.native('commodore_inventory');
+  if comInv == null then
+    kap.inventory
+  else
+    comInv;
+
+local params = inventory().parameters;
 
 local namespaced(ns, obj) =
   obj {
@@ -15,6 +28,11 @@ local namespaced(ns, obj) =
  */
 local filterNull(list) = std.trace('filterNull is deprecated, use std.prune(a) instead', std.filter(function(obj) obj != null, list));
 
+/**
+ * \brief Load all objects from a YAML stream document
+ *
+ * \arg yaml_file the YAML document to load
+ */
 local yaml_load_all = std.native('yaml_load_all');
 
 /**
@@ -58,6 +76,13 @@ local patch_namespace(obj_file, namespace, kinds=null, exclude_objects=[]) =
     for obj in objs
   ];
 
+/**
+ * \brief list files in a directory
+ *
+ * \arg dir The directory to list
+ * \arg basename if true, only return the name of the file, otherwise return
+ * the full path.
+ */
 local list_dir(dir, basename=true) =
   std.native('list_dir')(dir, basename);
 
@@ -123,7 +148,7 @@ local envList(map) = [
   for x in std.objectFields(map)
 ];
 
-/*
+/**
  * \brief Helper to get a fields value or a default.
  *
  * \arg dict An arbitrary dictionary data structure.
@@ -133,7 +158,7 @@ local envList(map) = [
 local getValueOrDefault(dict, field, default) =
   if std.objectHas(dict, field) then dict[field] else default;
 
-/*
+/**
  * \brief makes an object deep mergeable
  *
  * Builds a new object from its input.
@@ -156,8 +181,236 @@ local makeMergeable(o) = {
   if !std.isObject(o[key]) && !std.isArray(o[key])
 };
 
+/**
+ * \brief compute file name without extension for `file`
+ *
+ * \arg file the file name (without path) for which to compute the name w/o
+ * extension.
+ */
+local stem(elem) =
+  local elems = std.split(elem, '.');
+  std.join('.', elems[:std.length(elems) - 1]);
+
+/**
+ * \brief apply fixupfn to all objects in `obj_file`
+ *
+ * \arg obj_file the YAML document containing the objects to fixup
+ * \arg fixupfn A Jsonnet function taking one argument (the object) and
+ * returning the adjusted object.
+ */
+local fixup(obj_file, fixupfn) =
+  local objs = std.filter(
+    function(it) it != null,
+    yaml_load_all(obj_file)
+  );
+  // process all objects
+  std.map(fixupfn, objs);
+
+/**
+ * \brief apply `fixupfn` to all objects in all files in directory `dir`
+ *
+ * This function assumes that all files in `dir` are YAML files
+ *
+ * \arg dir The directory in which to look for files
+ * \arg fixupfn A Jsonnet function taking one argument (the object) and
+ * returning the adjusted object. The function is applied to all objects in
+ * all files.
+ *
+ * \returns A Jsonnet object suitable as output for a Commodore postprocessing
+ * filter.
+ */
+local fixupDir(dir, fixupfn) =
+  local files = list_dir(dir);
+  local filepath(file) = dir + '/' + file;
+  {
+    [stem(file)]: fixup(filepath(file), fixupfn)
+    for file in files
+  };
+
+/**
+ * \brief Render array of strings with removable entries
+ *
+ * This function renders an array which allows removing entries by prefixing
+ * them with `~`.
+ * The filtering is processed based on element order, adding the same element
+ * again after removing it results in the element being present in the final
+ * array.
+ *
+ * NOTE: The function doesn't conserve element order in the resulting array.
+ *
+ * This function only supports arrays of strings.
+ *
+ * \returns The filtered array
+ */
+local renderArray(arr) =
+  // extract real value of array entry
+  local realval(v) = std.lstripChars(v, '~');
+  // Compute whether each element should be included by keeping track of
+  // whether its last occurrence in the input array was prefixed with ~ or
+  // not.
+  local val_state = std.foldl(
+    function(a, it) a + it,
+    [
+      assert
+        std.isString(v) :
+        "renderArray() doesn't support arrays with non-string entries";
+      { [realval(v)]: !std.startsWith(v, '~') }
+      for v in arr
+    ],
+    {}
+  );
+  // Return filtered array containing only elements whose last occurrence
+  // wasn't prefixed by ~.
+  std.filter(
+    function(val) val_state[val],
+    std.objectFields(val_state)
+  );
+
+/**
+ * \brief Generate array of Resources based on `resourceFn`
+ *
+ * \arg resources Object containing (partial) resource definitions
+ * \arg resourceFn Kube-libsonnet style function which emits a valid minimal
+ *                 Kubernetes manifest. The function is expected to take one
+ *                 argument which is used as `.metadata.name` of the resulting
+ *                 manifest.
+ *
+ * \returns Array of rendered resources
+ *
+ * The function renders resource manifests based on the output of `resourceFn`
+ * overlaid with each value specified in `resources`. The keys of `resources`
+ * are used as resource names in the resulting manifests.
+ *
+ * The function provides the usual convenience features we use when generating
+ * resources in components, such as ignoring input entries which are
+ * null-values, to allow removing resources defined higher-up in the
+ * hierarchy.
+ *
+ * The function supports both supplying a kube-libsonnet resource function as
+ * `resourceFn()` or a custom function which wraps or mimics a kube-libsonnet
+ * resource function.
+ *
+ * The object values overlaid on the result of `resourceFn()` without any
+ * validation. If validation is wanted or required, callers must validate the
+ * contents of `resources` before calling this function.
+ *
+ * Example:
+ *
+ * The following Jsonnet takes the contents of `resources` and generates a
+ * list of Kubernetes `Secret` manifests by applying each provided
+ * configuration to an empty `Secret` manifest.
+ *
+ * ```jsonnet
+ * local com = import 'lib/commodore.libjsonnet';
+ * local kube = import 'lib/kube.libjsonnet';
+ *
+ * local resources = {
+ *   secret1: {
+ *     stringData: {
+ *       secret: 'value',
+ *     },
+ *   },
+ *   secret2: {
+ *     stringData: {
+ *       secret: 'another',
+ *     },
+ *   },
+ *   secret3: null,
+ * };
+ *
+ * local secrets = com.generateResources(resources, kube.Secret);
+ *
+ * {
+ *   secrets: secrets,
+ * }
+ * ```
+ *
+ * The JSON output generated by Jsonnet looks as follows.
+ * Note that the field `res3` has been omitted in the output.
+ *
+ * ```json
+ * {
+ *   "secrets": [
+ *     {
+ *       "apiVersion": "v1",
+ *       "data": {},
+ *       "kind": "Secret",
+ *       "metadata": {
+ *         "annotations": {},
+ *         "labels": {
+ *           "name": "res1"
+ *         },
+ *         "name": "res1"
+ *       },
+ *       "stringData": {
+ *         "secret": "value"
+ *       },
+ *       "type": "Opaque"
+ *     },
+ *     {
+ *       "apiVersion": "v1",
+ *       "data": {},
+ *       "kind": "Secret",
+ *       "metadata": {
+ *         "annotations": {},
+ *         "labels": {
+ *           "name": "res2"
+ *         },
+ *         "name": "res2"
+ *       },
+ *       "stringData": {
+ *         "secret": "another"
+ *       },
+ *       "type": "Opaque"
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * If the initial Jsonnet is part of a Commodore component, the final
+ * result will be a file `secrets.yaml` with the following content
+ *
+ * ```yaml
+ * ---
+ * apiVersion: v1
+ * data: {}
+ * kind: Secret
+ * metadata:
+ *   annotations: {}
+ *   labels:
+ *     name: res1
+ *   name: res1
+ * stringData:
+ *   secret: value
+ * type: Opaque
+ * ---
+ * apiVersion: v1
+ * data: {}
+ * kind: Secret
+ * metadata:
+ *   annotations: {}
+ *   labels:
+ *     name: res2
+ *   name: res2
+ * stringData:
+ *   secret: another
+ * type: Opaque
+ * ```
+ */
+local generateResources(resources, resourceFn) =
+  std.filter(
+    function(it) it != null,
+    [
+      local rname = kube.hyphenate(r);
+      if resources[r] != null then
+        resourceFn(rname) + makeMergeable(resources[r])
+      for r in std.objectFields(resources)
+    ]
+  );
+
 {
-  inventory: std.native('inventory'),
+  inventory: inventory,
+  list_dir: list_dir,
   yaml_load: std.native('yaml_load'),
   yaml_load_all: yaml_load_all,
   namespaced: namespaced,
@@ -168,4 +421,7 @@ local makeMergeable(o) = {
   envList: envList,
   getValueOrDefault: getValueOrDefault,
   makeMergeable: makeMergeable,
+  fixupDir: fixupDir,
+  renderArray: renderArray,
+  generateResources: generateResources,
 }
