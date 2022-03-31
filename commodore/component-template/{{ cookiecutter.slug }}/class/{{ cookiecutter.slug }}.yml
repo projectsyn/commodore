@@ -2,11 +2,11 @@ parameters:
   kapitan:
     compile:
       - input_paths:
-          - {{ cookiecutter.slug }}/component/app.jsonnet
+          - ${_base_directory}/component/app.jsonnet
         input_type: jsonnet
         output_path: apps/
       - input_paths:
-          - {{ cookiecutter.slug }}/component/main.jsonnet
+          - ${_base_directory}/component/main.jsonnet
         input_type: jsonnet
         output_path: {{ cookiecutter.slug }}/
 {% if cookiecutter.add_pp == "y" %}
