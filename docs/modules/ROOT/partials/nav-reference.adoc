@@ -10,3 +10,4 @@
 ** xref:commodore:ROOT:reference/deprecation-policy.adoc[Deprecation policy]
 ** xref:commodore:ROOT:reference/deprecation-notices.adoc[Deprecation notices]
 ** xref:commodore:ROOT:reference/component-deprecation.adoc[Component deprecation]
+* xref:commodore:ROOT:reference/commodore-libjsonnet.adoc[`commodore.libjsonnet` API reference]
