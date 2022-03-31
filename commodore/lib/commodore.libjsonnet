@@ -1,6 +1,18 @@
 local kap = import 'lib/kapitan.libjsonnet';
 local kube = import 'lib/kube.libjsonnet';
-local params = kap.inventory().parameters;
+
+local inventory =
+  // std.native() returns null if the function isn't defined.
+  // We name our native inventory function `commodore_inventory` to avoid
+  // accidentally binding Kapitan's native `inventory` function which has
+  // different arguments.
+  local comInv = std.native('commodore_inventory');
+  if comInv == null then
+    kap.inventory
+  else
+    comInv;
+
+local params = inventory().parameters;
 
 local namespaced(ns, obj) =
   obj {
@@ -294,7 +306,7 @@ local generateResources(resources, resourceFn) =
   );
 
 {
-  inventory: std.native('inventory'),
+  inventory: inventory,
   list_dir: list_dir,
   yaml_load: std.native('yaml_load'),
   yaml_load_all: yaml_load_all,

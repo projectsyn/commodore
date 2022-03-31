@@ -107,7 +107,7 @@ def jsonnet_runner(
         return inv
 
     _native_cb = _native_callbacks
-    _native_cb["inventory"] = ((), _inventory)
+    _native_cb["commodore_inventory"] = ((), _inventory)
     kwargs["target"] = component
     kwargs["component"] = component
     output_dir = work_dir / "compiled" / instance / path

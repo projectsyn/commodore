@@ -98,7 +98,7 @@ def render_jsonnet(tmp_path: Path, inputf: Path, invf: Path, **kwargs):
         return inv
 
     _native_cb = _native_callbacks
-    _native_cb["inventory"] = ((), _inventory)
+    _native_cb["commodore_inventory"] = ((), _inventory)
 
     resstr = _jsonnet.evaluate_file(
         str(inputf),
