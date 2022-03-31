@@ -12,9 +12,21 @@ import requests
 import pytest
 
 
+TESTS_DIR = Path(__file__).parent / "jsonnet"
+
+
+def discover_tc():
+    files = {
+        f.stem
+        for f in TESTS_DIR.iterdir()
+        if f.is_file() and not f.name.startswith(".")
+    }
+    print(files)
+    return list(files)
+
+
 def tc_files(tc: str) -> (str, Path):
-    basedir = Path(__file__).parent
-    return basedir / f"{tc}.jsonnet", basedir / f"{tc}.json"
+    return TESTS_DIR / f"{tc}.jsonnet", TESTS_DIR / f"{tc}.json"
 
 
 def render_jsonnet(tmp_path: Path, inputf: Path):
@@ -34,12 +46,7 @@ def render_jsonnet(tmp_path: Path, inputf: Path):
 
 @pytest.mark.parametrize(
     "tc",
-    [
-        "jsonnet/namespaced",
-        "jsonnet/makeMergeable",
-        "jsonnet/renderArray",
-        "jsonnet/generateResources",
-    ],
+    discover_tc(),
 )
 def test_jsonnet(tmp_path: Path, tc):
     inputf, expectedf = tc_files(tc)
