@@ -320,9 +320,14 @@ def test_check_golden_diff(tmp_path: P):
     )
     assert exit_status == 0
 
-    # Call `make lint` in component directory
+    # Override component Makefile COMMODORE_CMD to use the local Commodore binary
+    env = os.environ
+    env["COMMODORE_CMD"] = "commodore"
+
+    # Call `make golden-diff` in component directory
     exit_status = call(
         "make golden-diff",
+        env=env,
         shell=True,
         cwd=tmp_path / "dependencies" / component_name,
     )
