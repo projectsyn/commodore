@@ -1,6 +1,6 @@
 import os
 
-from typing import Any, Iterable, Tuple, Dict, Optional, Union
+from typing import Any, Tuple, Dict, Optional, Union
 
 import click
 
@@ -10,7 +10,7 @@ from .helpers import (
     yaml_load,
 )
 
-from .component import component_parameters_key
+from .component import component_parameters_key, Component
 from .config import Config
 from .inventory import Inventory
 
@@ -126,7 +126,7 @@ def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:
 def render_target(
     inv: Inventory,
     target: str,
-    components: Iterable[str],
+    components: Dict[str, Component],
     # pylint: disable=unsubscriptable-object
     component: Optional[str] = None,
 ):
@@ -140,6 +140,8 @@ def render_target(
     parameters: Dict[str, Union[Dict, str]] = {
         "_instance": target,
     }
+    if not bootstrap:
+        parameters["_base_directory"] = str(components[component].target_directory)
 
     for c in components:
         if inv.defaults_file(c).is_file():
@@ -181,7 +183,7 @@ def update_target(cfg: Config, target: str, component: Optional[str] = None):
     file = cfg.inventory.target_file(target)
     os.makedirs(file.parent, exist_ok=True)
     targetdata = render_target(
-        cfg.inventory, target, cfg.get_components().keys(), component=component
+        cfg.inventory, target, cfg.get_components(), component=component
     )
     yaml_dump(targetdata, file)
 

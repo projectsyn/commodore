@@ -97,6 +97,7 @@ def compile_component(
                 {value_classes}
                 parameters:
                   _instance: {instance_name}
+                  _base_directory: {str(component.target_directory)}
                 """
                 )
             )

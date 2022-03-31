@@ -14,6 +14,16 @@ from commodore.inventory import Inventory
 from commodore.config import Config
 
 
+class MockComponent:
+    def __init__(self, base_dir: P, name: str):
+        self.name = name
+        self._target_directory = base_dir / name
+
+    @property
+    def target_directory(self):
+        return self._target_directory
+
+
 @pytest.fixture
 def data():
     """
@@ -68,7 +78,13 @@ def test_render_bootstrap_target(tmp_path: P):
     inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(inv, components)
 
-    target = cluster.render_target(inv, "cluster", ["foo", "bar", "baz"])
+    components = {
+        "foo": MockComponent(tmp_path, "foo"),
+        "bar": MockComponent(tmp_path, "bar"),
+        "baz": MockComponent(tmp_path, "baz"),
+    }
+
+    target = cluster.render_target(inv, "cluster", components)
 
     classes = [
         "params.cluster",
@@ -84,6 +100,7 @@ def test_render_bootstrap_target(tmp_path: P):
     for i in range(len(classes)):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["_instance"] == "cluster"
+    assert "_base_directory" not in target["parameters"]
 
 
 def test_render_target(tmp_path: P):
@@ -91,7 +108,13 @@ def test_render_target(tmp_path: P):
     inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(inv, components)
 
-    target = cluster.render_target(inv, "foo", ["foo", "bar", "baz"])
+    components = {
+        "foo": MockComponent(tmp_path, "foo"),
+        "bar": MockComponent(tmp_path, "bar"),
+        "baz": MockComponent(tmp_path, "baz"),
+    }
+
+    target = cluster.render_target(inv, "foo", components)
 
     classes = [
         "params.cluster",
@@ -109,6 +132,7 @@ def test_render_target(tmp_path: P):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo"
     assert target["parameters"]["_instance"] == "foo"
+    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo")
 
 
 def test_render_aliased_target(tmp_path: P):
@@ -116,7 +140,13 @@ def test_render_aliased_target(tmp_path: P):
     inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(inv, components)
 
-    target = cluster.render_target(inv, "fooer", ["foo", "bar", "baz"], component="foo")
+    components = {
+        "foo": MockComponent(tmp_path, "foo"),
+        "bar": MockComponent(tmp_path, "bar"),
+        "baz": MockComponent(tmp_path, "baz"),
+    }
+
+    target = cluster.render_target(inv, "fooer", components, component="foo")
 
     classes = [
         "params.cluster",
@@ -135,6 +165,7 @@ def test_render_aliased_target(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "fooer"
     assert target["parameters"]["foo"] == "${fooer}"
     assert target["parameters"]["_instance"] == "fooer"
+    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo")
 
 
 def test_render_aliased_target_with_dash(tmp_path: P):
@@ -142,9 +173,13 @@ def test_render_aliased_target_with_dash(tmp_path: P):
     inv = Inventory(work_dir=tmp_path)
     _setup_working_dir(inv, components)
 
-    target = cluster.render_target(
-        inv, "foo-1", ["foo-comp", "bar", "baz"], component="foo-comp"
-    )
+    components = {
+        "foo-comp": MockComponent(tmp_path, "foo-comp"),
+        "bar": MockComponent(tmp_path, "bar"),
+        "baz": MockComponent(tmp_path, "baz"),
+    }
+
+    target = cluster.render_target(inv, "foo-1", components, component="foo-comp")
 
     classes = [
         "params.cluster",
@@ -163,6 +198,7 @@ def test_render_aliased_target_with_dash(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo-1"
     assert target["parameters"]["foo_comp"] == "${foo_1}"
     assert target["parameters"]["_instance"] == "foo-1"
+    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo-comp")
 
 
 def test_render_params(data, tmp_path: P):
