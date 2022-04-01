@@ -10,6 +10,7 @@ from .cluster import (
 )
 from .config import Config
 from .dependency_mgmt import (
+    create_component_library_aliases,
     fetch_components,
     fetch_jsonnet_libraries,
     register_components,
@@ -148,6 +149,7 @@ def compile(config, cluster_id):
     inventory = kapitan_inventory(config)
     cluster_parameters = inventory[config.inventory.bootstrap_target]["parameters"]
     check_parameters_component_versions(config, cluster_parameters)
+    create_component_library_aliases(config, cluster_parameters)
 
     # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)

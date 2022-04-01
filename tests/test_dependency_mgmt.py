@@ -9,7 +9,7 @@ import pytest
 import json
 from unittest.mock import patch
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -72,8 +72,8 @@ def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
         dependency_mgmt.create_component_symlinks(data, component)
 
 
-def test_create_component_symlinks(capsys, data: Config, tmp_path):
-    component = Component("my-component", work_dir=tmp_path)
+def setup_mock_component(tmp_path: Path, name="my-component") -> Component:
+    component = Component(name, work_dir=tmp_path)
     component.class_file.parent.mkdir(parents=True, exist_ok=True)
     with open(component.class_file, "w") as f:
         f.writelines(["class"])
@@ -81,16 +81,21 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
         f.writelines(["default"])
     lib_dir = component.target_directory / "lib"
     lib_dir.mkdir(parents=True, exist_ok=True)
-    lib_file = lib_dir / "my-component.libjsonnet"
+    lib_file = lib_dir / f"{component.name}.libjsonnet"
     with open(lib_file, "w") as f:
         f.writelines(["lib"])
 
+    return component
+
+
+def test_create_component_symlinks(capsys, data: Config, tmp_path):
+    component = setup_mock_component(tmp_path)
     inv = Inventory(work_dir=tmp_path)
     inv.ensure_dirs()
 
     dependency_mgmt.create_component_symlinks(data, component)
 
-    for path, marker in [
+    expected_symlinks = [
         (
             tmp_path / "inventory" / "classes" / "components" / f"{component.name}.yml",
             "class",
@@ -100,7 +105,9 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
             "default",
         ),
         (tmp_path / "dependencies" / "lib" / "my-component.libjsonnet", "lib"),
-    ]:
+    ]
+
+    for path, marker in expected_symlinks:
         # Ensure symlinks exist
         assert path.is_symlink()
         # Ensure symlink targets exist
@@ -110,6 +117,142 @@ def test_create_component_symlinks(capsys, data: Config, tmp_path):
             fcontents = f.readlines()
             assert fcontents[0] == marker
     assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize(
+    "libaliases,expected_paths,stdout",
+    [
+        (None, [], ""),
+        ({}, [], ""),
+        (
+            {"foo.libsonnet": "my-component.libjsonnet"},
+            ["dependencies/lib/foo.libsonnet"],
+            "",
+        ),
+        (
+            {"foo.libsonnet": "bar.libjsonnet"},
+            [],
+            " > [WARN] 'my-component' template library alias 'foo.libsonnet' "
+            + "refers to nonexistent template library 'bar.libjsonnet'",
+        ),
+        (
+            {
+                "foo.libsonnet": "my-component.libjsonnet",
+                "bar.libsonnet": "my-component.libsonnet",
+            },
+            ["dependencies/lib/foo.libsonnet"],
+            " > [WARN] 'my-component' template library alias 'bar.libsonnet' "
+            + "refers to nonexistent template library 'my-component.libsonnet'",
+        ),
+    ],
+)
+def test_create_component_library_aliases_single_component(
+    capsys,
+    tmp_path: Path,
+    data: Config,
+    libaliases: Optional[Dict],
+    expected_paths: Iterable[str],
+    stdout: str,
+):
+    component = setup_mock_component(tmp_path)
+    data.register_component(component)
+    inv = Inventory(work_dir=tmp_path)
+    inv.ensure_dirs()
+
+    cluster_params = {
+        component.parameters_key: {},
+        "components": {
+            component.name: {
+                "url": f"https://example.com/{component.name}.git",
+                "version": "master",
+            }
+        },
+    }
+    if libaliases is not None:
+        cluster_params[component.parameters_key] = {
+            "_metadata": {
+                "library_aliases": libaliases,
+            },
+        }
+
+    dependency_mgmt.create_component_library_aliases(data, cluster_params)
+
+    expected_aliases = [(tmp_path / path, "lib") for path in expected_paths]
+    for path, marker in expected_aliases:
+        # Ensure symlinks exist
+        assert path.is_symlink()
+        # Ensure symlink targets exist
+        assert path.resolve().is_file()
+        # Ensure symlinked file contains correct marker content
+        with open(path) as f:
+            fcontents = f.readlines()
+            assert fcontents[0] == marker
+
+    captured = capsys.readouterr()
+    assert stdout in captured.out
+
+
+@pytest.mark.parametrize(
+    "tc1_libalias,tc2_libalias,tc3_libalias,err",
+    [
+        ({}, {}, {}, None),
+        (
+            {"foo.libsonnet": "tc1.libjsonnet"},
+            {},
+            {},
+            None,
+        ),
+        (
+            {},
+            {"foo.libsonnet": "tc2.libjsonnet"},
+            {},
+            None,
+        ),
+        (
+            {"foo.libsonnet": "tc1.libjsonnet"},
+            {"foo.libsonnet": "tc2.libjsonnet"},
+            {},
+            "Components 'tc1' and 'tc2' both define component library alias 'foo.libsonnet'",
+        ),
+        (
+            {"foo.libsonnet": "tc1.libjsonnet"},
+            {"foo.libsonnet": "tc2.libjsonnet"},
+            {"foo.libsonnet": "tc3.libjsonnet"},
+            "Components 'tc1', 'tc2' and 'tc3' all define component library alias 'foo.libsonnet'",
+        ),
+    ],
+)
+def test_create_component_library_aliases_multiple_component(
+    tmp_path: Path,
+    data: Config,
+    tc1_libalias: Dict[str, str],
+    tc2_libalias: Dict[str, str],
+    tc3_libalias: Dict[str, str],
+    err: Optional[str],
+):
+    c1 = setup_mock_component(tmp_path, name="tc1")
+    c2 = setup_mock_component(tmp_path, name="tc2")
+    c3 = setup_mock_component(tmp_path, name="tc3")
+
+    data.register_component(c1)
+    data.register_component(c2)
+
+    cluster_params = {
+        c1.parameters_key: {
+            "_metadata": {"library_aliases": tc1_libalias},
+        },
+        c2.parameters_key: {
+            "_metadata": {"library_aliases": tc2_libalias},
+        },
+        c3.parameters_key: {
+            "_metadata": {"library_aliases": tc3_libalias},
+        },
+    }
+
+    if err:
+        with pytest.raises(click.ClickException) as e:
+            dependency_mgmt.create_component_library_aliases(data, cluster_params)
+            assert err in str(e)
 
 
 def _setup_mock_inventory(patch_inventory, aliases={}):
@@ -474,6 +617,9 @@ def _setup_register_components(tmp_path: Path):
         os.makedirs(cpath, exist_ok=True)
         r = git.Repo.init(cpath)
         r.create_remote("origin", f"ssh://git@example.com/git/{directory}")
+        os.makedirs(cpath / "class", exist_ok=True)
+        with open(cpath / "class" / "defaults.yml", "w") as f:
+            f.write("")
 
     return component_dirs, other_dirs
 
