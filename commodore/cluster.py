@@ -5,6 +5,7 @@ from typing import Any, Tuple, Dict, Optional, Union
 import click
 
 from .helpers import (
+    lieutenant_patch,
     lieutenant_query,
     yaml_dump,
     yaml_load,
@@ -240,3 +241,20 @@ def update_params(inv: Inventory, cluster: Cluster):
     file = inv.params_file
     os.makedirs(file.parent, exist_ok=True)
     yaml_dump(render_params(inv, cluster), file)
+
+
+def report_cluster_component_versions(cfg: Config, cluster_id: str):
+    component_versions = {
+        cn: c.rendered_version for cn, c in cfg.get_components().items()
+    }
+    lieutenant_patch(
+        cfg.api_url,
+        cfg.api_token,
+        "clusters",
+        cluster_id,
+        {
+            "dynamicFacts": {
+                "componentVersions": component_versions,
+            }
+        },
+    )
