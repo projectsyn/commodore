@@ -1,7 +1,7 @@
 version: "2"
 
 checks:
-  argument_count:
+  argument-count:
     enabled: true
     config:
       threshold: 10
@@ -37,3 +37,12 @@ checks:
     enabled: true
   identical-code:
     enabled: true
+
+exclude_patterns:
+  - 'catalog/'
+  - 'compiled/'
+  - 'dependencies/'
+  - 'inventory/'
+  - 'vendor/'
+  - '.tox/'
+  - 'tests/'
