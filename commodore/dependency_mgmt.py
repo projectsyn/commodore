@@ -359,3 +359,16 @@ def register_components(cfg: Config):
             f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"
         )
     cfg.register_component_aliases(pruned_aliases)
+
+
+def verify_component_version_overrides(cluster_parameters):
+    errors = []
+    for cname, cspec in cluster_parameters["components"].items():
+        if "url" not in cspec:
+            errors.append(cname)
+
+    if len(errors) > 0:
+        cnames = _format_component_list(errors)
+        raise click.ClickException(
+            f"Version override(s) specified for component(s) {cnames} without URL"
+        )

@@ -14,6 +14,7 @@ from .dependency_mgmt import (
     fetch_jsonnet_libraries,
     register_components,
     jsonnet_dependencies,
+    verify_component_version_overrides,
 )
 from .gitrepo import GitRepo
 from .helpers import (
@@ -151,6 +152,9 @@ def compile(config, cluster_id):
     # Verify that all aliased components support instantiation
     config.verify_component_aliases(cluster_parameters)
     config.register_component_deprecations(cluster_parameters)
+    # Raise exception if component version override without URL is present in the
+    # hierarchy.
+    verify_component_version_overrides(cluster_parameters)
 
     for component in config.get_components().values():
         ckey = component.parameters_key
