@@ -74,3 +74,7 @@ inject-version:
 .PHONY: test_integration
 test_integration:
 	poetry run pytest -m integration
+
+.PHONY: test_coverage
+test_coverage:
+	poetry run pytest -m "not bench" -n auto --cov="commodore" --cov-report xml
