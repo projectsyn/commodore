@@ -23,7 +23,7 @@ def discover_tc() -> List[str]:
         if f.is_file() and not f.name.startswith(".")
     }
     print(files)
-    return list(files)
+    return list(sorted(files))
 
 
 def tc_files(tc: str) -> (Path, Path, Path):
