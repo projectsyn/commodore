@@ -85,6 +85,11 @@ parameters:
 Since Commodore won't re-read `parameters.components` after including the discovered components' default classes, entries in `parameters.components` in a component's `defaults.yml` will be ignored.
 ====
 
+[TIP]
+====
+Commodore will raise an error if it finds an entry in `parameters.components` which only has the `version` key.
+This error is intended to protect users from typos in component names when configuring version overrides.
+====
 
 === Component instantiation
 
