@@ -25,6 +25,17 @@ git commit -m "Move postprocessing filter definitions to component class"
 
 TIP: The provided snippet uses https://github.com/mikefarah/yq[mikefarah/yq v4].
 
+[#_component_lib_naming]
+=== Component library names which aren't prefixed with the component name are deprecated
+
+Commodore v0.16.0 adds support for explicitly specifying component library aliases.
+In turn, the previous approach of allowing components to provide libraries with arbitrary names is deprecated.
+Instead components should always prefix their component libraries with the component name.
+This introduces namespacing for component libraries by default.
+
+The aliasing mechanism still allows multiple components which implement the same interface to expose their implementation of the shared interface under an arbitrary alias.
+
+NOTE: Commodore will raise an error if multiple components in the hierarchy try to use the same component library alias.
 
 == https://github.com/projectsyn/commodore/releases/tag/v0.14.0[v0.14.0]
 

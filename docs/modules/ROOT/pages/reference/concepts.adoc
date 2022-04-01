@@ -43,6 +43,8 @@ inventory to install the software.
 
 Components can optionally provide Jsonnet libraries which can be used by other components.
 To allow Commodore to make component libraries available to other components, they must be placed in directory `lib/`.
+Components must ensure that all Jsonnet libraries which they provide are prefixed with the component name.
+For example, component `foo-bar` can only contain libraries whose file name starts with `foo-bar`, such as `foo-bar.libsonnet`, or `foo-bar-baz.libsonnet`.
 
 Components can specify Jsonnet dependencies in a `jsonnetfile.json` in the component's root directory.
 Commodore uses https://github.com/jsonnet-bundler/jsonnet-bundler[jsonnet-bundler] to fetch all components' dependencies.

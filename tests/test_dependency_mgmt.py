@@ -9,7 +9,7 @@ import pytest
 import json
 from unittest.mock import patch
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -551,3 +551,29 @@ def test_register_dangling_aliases(
     assert (
         f"Dropping alias(es) {should_miss} with missing component(s)." in captured.out
     )
+
+
+@pytest.mark.parametrize(
+    "libname,expected",
+    [
+        ("test-component.libsonnet", []),
+        ("test-component-lib.libsonnet", []),
+        (
+            "lib.libsonnet",
+            [
+                "Component 'test-component' uses component library name lib.libsonnet "
+                + "which isn't prefixed with the component's name."
+            ],
+        ),
+    ],
+)
+def test_validate_component_library_name(
+    tmp_path: Path, data: Config, libname: str, expected: List[str]
+):
+    dependency_mgmt.validate_component_library_name(
+        data, "test-component", Path(tmp_path / "lib" / libname)
+    )
+
+    assert len(data._deprecation_notices) == len(expected)
+    if len(expected) == 1:
+        assert expected[0] in data._deprecation_notices[0]
