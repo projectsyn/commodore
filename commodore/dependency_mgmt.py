@@ -369,6 +369,8 @@ def verify_component_version_overrides(cluster_parameters):
 
     if len(errors) > 0:
         cnames = _format_component_list(errors)
+        s = "s" if len(errors) > 1 else ""
+        have = "have" if len(errors) > 1 else "has"
         raise click.ClickException(
-            f"Version override(s) specified for component(s) {cnames} without URL"
+            f"Version override{s} specified for component{s} {cnames} which {have} no URL"
         )
