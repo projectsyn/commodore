@@ -77,4 +77,4 @@ test_integration:
 
 .PHONY: test_coverage
 test_coverage:
-	poetry run pytest -m "not bench and not integration" -n auto --cov="commodore" --cov-report xml
+	poetry run pytest -m "not bench" -n auto --cov="commodore" --cov-report xml
