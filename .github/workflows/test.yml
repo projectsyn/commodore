@@ -86,7 +86,7 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-coverage-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry and setup Poetry virtualenv
       run: |
         poetry env use python3.9
@@ -162,7 +162,7 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-integration-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
       run: |
         poetry env use python3.9

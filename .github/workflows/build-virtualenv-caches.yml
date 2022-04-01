@@ -96,7 +96,7 @@ jobs:
     - run: |
         make benchenv_py${PYVER}
 
-  build_integration_virtualenv:
+  build_poetry_virtualenv:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -107,24 +107,7 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-integration-${{ hashFiles('poetry.lock') }}
-    - name: Install Poetry and setup Poetry virtualenv
-      run: |
-        poetry env use python3.9
-        poetry install
-
-  build_coverage_virtualenv:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-coverage-${{ hashFiles('poetry.lock') }}
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry and setup Poetry virtualenv
       run: |
         poetry env use python3.9
