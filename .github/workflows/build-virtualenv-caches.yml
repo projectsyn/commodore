@@ -95,3 +95,37 @@ jobs:
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - run: |
         make benchenv_py${PYVER}
+
+  build_integration_virtualenv:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+    - uses: Gr1N/setup-poetry@v7
+    - uses: actions/cache@v3
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-integration-${{ hashFiles('poetry.lock') }}
+    - name: Install Poetry and setup Poetry virtualenv
+      run: |
+        poetry env use python3.9
+        poetry install
+
+  build_coverage_virtualenv:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+    - uses: Gr1N/setup-poetry@v7
+    - uses: actions/cache@v3
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-coverage-${{ hashFiles('poetry.lock') }}
+    - name: Install Poetry and setup Poetry virtualenv
+      run: |
+        poetry env use python3.9
+        poetry install
