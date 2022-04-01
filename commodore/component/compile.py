@@ -11,6 +11,7 @@ from commodore.component import Component
 from commodore.dependency_mgmt import (
     fetch_jsonnet_libraries,
     validate_component_library_name,
+    create_component_library_aliases,
 )
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.inventory import Inventory
@@ -60,6 +61,8 @@ def compile_component(
         # Validate component libraries
         for lib in component.lib_files:
             validate_component_library_name(config, component.name, lib)
+
+        create_component_library_aliases(config, component)
 
         # Create class for fake parameters
         with open(inv.params_file, "w", encoding="utf-8") as file:

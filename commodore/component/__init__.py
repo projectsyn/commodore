@@ -1,8 +1,9 @@
 from pathlib import Path as P
-from typing import Iterable, Optional
+from typing import Dict, Iterable, Optional
 
 import _jsonnet
 import click
+import yaml
 
 from commodore.gitrepo import GitRepo
 
@@ -72,12 +73,29 @@ class Component:
         return self.target_directory / "class" / "defaults.yml"
 
     @property
+    def default_values(self) -> Dict:
+        with open(self.defaults_file, "r", encoding="utf-8") as f:
+            defyaml = list(yaml.safe_load_all(f))
+        return defyaml[0]["parameters"][self.parameters_key]
+
+    @property
     def lib_files(self) -> Iterable[P]:
         lib_dir = self.target_directory / "lib"
         if lib_dir.exists():
             return lib_dir.iterdir()
 
         return []
+
+    def get_library(self, libname: str) -> P:
+        lib_dir = self.target_directory / "lib"
+        if not lib_dir.exists():
+            return None
+
+        for f in self.lib_files:
+            if f.absolute() == P(lib_dir / libname).absolute():
+                return f.absolute()
+
+        return None
 
     @property
     def filters_file(self) -> P:

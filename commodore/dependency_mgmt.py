@@ -26,6 +26,25 @@ def validate_component_library_name(cfg: Config, cname: str, lib: P) -> P:
     return lib
 
 
+def create_component_library_aliases(cfg: Config, component: Component):
+    aliases = (
+        component.default_values.get("=_metadata", {})
+        .get("library_aliases", {})
+        .items()
+    )
+    for libalias, libname in aliases:
+        if cfg.debug:
+            click.echo(f"     > aliasing template library {libname} to {libalias}")
+        libf = component.get_library(libname)
+        if not libf:
+            click.secho(
+                f" > [WARN] {component.name} template library alias refers to nonexistent template library",
+                fg="yellow",
+            )
+        else:
+            relsymlink(libf, cfg.inventory.lib_dir, dest_name=libalias)
+
+
 def create_component_symlinks(cfg, component: Component):
     """
     Create symlinks in the inventory subdirectory.
@@ -48,6 +67,8 @@ def create_component_symlinks(cfg, component: Component):
             validate_component_library_name(cfg, component.name, file),
             cfg.inventory.lib_dir,
         )
+
+    create_component_library_aliases(cfg, component)
 
 
 def _format_component_list(components: Iterable[str]) -> str:
