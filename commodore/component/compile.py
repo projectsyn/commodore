@@ -147,6 +147,7 @@ def compile_component(
         # prepare inventory and fake component object for postprocess
         config.work_dir = output_path
         postprocess_components(config, nodes, config.get_components())
+        config.print_deprecation_notices()
     finally:
         if config.trace:
             click.echo(f" > Temp dir left in place {temp_dir}")
