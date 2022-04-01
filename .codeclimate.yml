@@ -32,7 +32,7 @@ checks:
   return-statements:
     enabled: true
     config:
-      threshold: 4
+      threshold: 10
   similar-code:
     enabled: true
   identical-code:
