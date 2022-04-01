@@ -3,6 +3,29 @@
 This page lists deprecations of Commodore features organized by version.
 We include a link to relevant documentation, if applicable.
 
+== https://github.com/projectsyn/commodore/releases/tag/v0.16.0[v0.16.0]
+
+[#_external_pp_filters]
+=== External postprocessing filter definitions are deprecated
+
+Commodore v0.4.0 introduced support for defining postprocessing filters in the component class.
+However, defining postprocessing filters in `postprocess/filters.yml` was never formally deprecated.
+
+To migrate a component which still uses `postprocess/filters.yml`, you can simply move the contents of the file to parameter `commodore.postprocess`, remove the file and commit the changes.
+
+[source,bash]
+----
+component_name=component-name
+export filters=$(yq e '.' postprocess/filters.yml)
+yq e -i '.parameters.commodore.postprocess = env(filters)' "class/${component_name}.yml"
+rm -rf postprocess/
+git add -u
+git commit -m "Move postprocessing filter definitions to component class"
+----
+
+TIP: The provided snippet uses https://github.com/mikefarah/yq[mikefarah/yq v4].
+
+
 == https://github.com/projectsyn/commodore/releases/tag/v0.14.0[v0.14.0]
 
 [#_multi_instance_top_level]

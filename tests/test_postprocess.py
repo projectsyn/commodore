@@ -181,6 +181,13 @@ def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, a
         captured = capsys.readouterr()
         assert "Skipping disabled filter" in captured.out
 
+    if not invfilter:
+        assert len(config._deprecation_notices) == 1
+        assert (
+            "Component 'test-component' uses deprecated external postprocessing filter definitions"
+            in config._deprecation_notices[0]
+        )
+
 
 # We keep the enabledref tests separate as we don't actually
 # render the inventory with reclass in the test above.
