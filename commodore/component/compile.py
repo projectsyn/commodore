@@ -18,7 +18,7 @@ from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
-# pylint: disable=too-many-arguments disable=too-many-locals disable=too-many-statements
+# pylint: disable=too-many-arguments disable=too-many-locals
 def compile_component(
     config: Config,
     component_path,
@@ -33,6 +33,7 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths]
     search_paths.append(component_path / "vendor")
     output_path = P(output_path).resolve()
+
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace("component-", "")
 
@@ -53,83 +54,10 @@ def compile_component(
         inv = config.inventory
         inv.ensure_dirs()
         search_paths.append(inv.dependencies_dir)
-        component = Component(component_name, directory=component_path)
-        config.register_component(component)
-        config.register_component_aliases({instance_name: component_name})
-        _prepare_fake_inventory(inv, component, value_files)
-
-        # Validate component libraries
-        for lib in component.lib_files:
-            validate_component_library_name(config, component.name, lib)
-
-        # Create class for fake parameters
-        with open(inv.params_file, "w", encoding="utf-8") as file:
-            file.write(
-                dedent(
-                    f"""
-                parameters:
-                  cloud:
-                    provider: ${{facts:cloud}}
-                    region: ${{facts:region}}
-                  cluster:
-                    catalog_url: ssh://git@git.example.com/org/repo.git
-                    dist: test-distribution
-                    name: c-green-test-1234
-                    tenant: t-silent-test-1234
-                  customer:
-                    name: ${{cluster:tenant}}
-                  facts:
-                    distribution: test-distribution
-                    cloud: cloudscale
-                    region: rma1
-                  argocd:
-                    namespace: test
-                  components:
-                    {component.name}:
-                      url: https://example.com/{component.name}.git
-                      version: master
-
-                  kapitan:
-                    vars:
-                        target: {instance_name}
-                        namespace: test"""
-                )
-            )
-
-        # Create test target
-        with open(inv.target_file(instance_name), "w", encoding="utf-8") as file:
-            value_classes = "\n".join([f"- {c.stem}" for c in value_files])
-            file.write(
-                dedent(
-                    f"""
-                classes:
-                - params.{inv.bootstrap_target}
-                - defaults.{component_name}
-                - components.{component_name}
-                {value_classes}
-                parameters:
-                  _instance: {instance_name}
-                  _base_directory: {str(component.target_directory)}
-                """
-                )
-            )
-
-        # Fake Argo CD lib
-        # We plug "fake" Argo CD library here because every component relies on it
-        # and we don't want to provide it every time when compiling a single component.
-        with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as file:
-            file.write(
-                dedent(
-                    """
-                local ArgoApp(component, namespace, project='', secrets=true) = {};
-                local ArgoProject(name) = {};
-
-                {
-                  App: ArgoApp,
-                  Project: ArgoProject,
-                }"""
-                )
-            )
+        component = _setup_component(
+            config, component_name, instance_name, component_path
+        )
+        _prepare_kapitan_inventory(inv, component, value_files, instance_name)
 
         # Verify component alias
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
@@ -172,7 +100,29 @@ def compile_component(
             shutil.rmtree(temp_dir)
 
 
-def _prepare_fake_inventory(inv: Inventory, component: Component, value_files):
+def _setup_component(
+    config: Config, component_name: str, instance_name: str, component_path: P
+) -> Component:
+    component = Component(component_name, directory=component_path)
+    config.register_component(component)
+    config.register_component_aliases({instance_name: component_name})
+
+    # Validate component libraries
+    for lib in component.lib_files:
+        validate_component_library_name(config, component.name, lib)
+
+    return component
+
+
+def _prepare_kapitan_inventory(
+    inv: Inventory, component: Component, value_files, instance_name: str
+):
+    """
+    Setup Kapitan inventory.
+
+    Create component symlinks, values file symlinks, setup params class with fake values
+    and Kapitan target for the component, create a fake `lib/argocd.libjsonnet`.
+    """
     component_class_file = component.class_file
     component_defaults_file = component.defaults_file
     if not component_class_file.exists():
@@ -197,3 +147,72 @@ def _prepare_fake_inventory(inv: Inventory, component: Component, value_files):
     # Create value symlinks
     for file in value_files:
         relsymlink(file.parent / file.name, inv.classes_dir)
+
+    # Create class for fake parameters
+    with open(inv.params_file, "w", encoding="utf-8") as file:
+        file.write(
+            dedent(
+                f"""
+            parameters:
+              cloud:
+                provider: ${{facts:cloud}}
+                region: ${{facts:region}}
+              cluster:
+                catalog_url: ssh://git@git.example.com/org/repo.git
+                dist: test-distribution
+                name: c-green-test-1234
+                tenant: t-silent-test-1234
+              customer:
+                name: ${{cluster:tenant}}
+              facts:
+                distribution: test-distribution
+                cloud: cloudscale
+                region: rma1
+              argocd:
+                namespace: test
+              components:
+                {component.name}:
+                  url: https://example.com/{component.name}.git
+                  version: master
+
+              kapitan:
+                vars:
+                    target: {instance_name}
+                    namespace: test"""
+            )
+        )
+
+    # Create test target
+    with open(inv.target_file(instance_name), "w", encoding="utf-8") as file:
+        value_classes = "\n".join([f"- {c.stem}" for c in value_files])
+        file.write(
+            dedent(
+                f"""
+            classes:
+            - params.{inv.bootstrap_target}
+            - defaults.{component.name}
+            - components.{component.name}
+            {value_classes}
+            parameters:
+              _instance: {instance_name}
+              _base_directory: {str(component.target_directory)}
+            """
+            )
+        )
+
+    # Fake Argo CD lib
+    # We plug "fake" Argo CD library here because every component relies on it
+    # and we don't want to provide it every time when compiling a single component.
+    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as file:
+        file.write(
+            dedent(
+                """
+            local ArgoApp(component, namespace, project='', secrets=true) = {};
+            local ArgoProject(name) = {};
+
+            {
+              App: ArgoApp,
+              Project: ArgoProject,
+            }"""
+            )
+        )
