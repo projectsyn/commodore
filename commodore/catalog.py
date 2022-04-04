@@ -105,7 +105,8 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
             ) from e
         for pi in pushinfos:
             # Any error has pi.ERROR set in the `flags` bitmask
-            # We just forward the summary from the pushinfo
+            # We just forward the summary from the first pushinfo which has the error
+            # flag set.
             summary = pi.summary.strip()
             if (pi.flags & pi.ERROR) != 0:
                 raise click.ClickException(
