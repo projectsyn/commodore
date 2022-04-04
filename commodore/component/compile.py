@@ -13,7 +13,7 @@ from commodore.dependency_mgmt import (
     validate_component_library_name,
     create_component_library_aliases,
 )
-from commodore.helpers import kapitan_compile, relsymlink
+from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
@@ -149,56 +149,64 @@ def _prepare_kapitan_inventory(
         relsymlink(file.parent / file.name, inv.classes_dir)
 
     # Create class for fake parameters
-    with open(inv.params_file, "w", encoding="utf-8") as file:
-        file.write(
-            dedent(
-                f"""
-            parameters:
-              cloud:
-                provider: ${{facts:cloud}}
-                region: ${{facts:region}}
-              cluster:
-                catalog_url: ssh://git@git.example.com/org/repo.git
-                dist: test-distribution
-                name: c-green-test-1234
-                tenant: t-silent-test-1234
-              customer:
-                name: ${{cluster:tenant}}
-              facts:
-                distribution: test-distribution
-                cloud: cloudscale
-                region: rma1
-              argocd:
-                namespace: test
-              components:
-                {component.name}:
-                  url: https://example.com/{component.name}.git
-                  version: master
-
-              kapitan:
-                vars:
-                    target: {instance_name}
-                    namespace: test"""
-            )
-        )
+    yaml_dump(
+        {
+            "parameters": {
+                "cloud": {
+                    "provider": "${facts:cloud}",
+                    "region": "${facts:region}",
+                },
+                "cluster": {
+                    "catalog_url": "ssh://git@git.example.com/org/repo.git",
+                    "dist": "test-distribution",
+                    "name": "c-green-test-1234",
+                    "tenant": "t-silent-test-1234",
+                },
+                "customer": {
+                    "name": "${cluster:tenant}",
+                },
+                "facts": {
+                    "distribution": "test-distribution",
+                    "cloud": "cloudscale",
+                    "region": "rma1",
+                },
+                "argocd": {
+                    "namespace": "test",
+                },
+                "components": {
+                    component.name: {
+                        "url": "https://example.com/{component.name}.git",
+                        "version": "master",
+                    }
+                },
+                "kapitan": {
+                    "vars": {
+                        "target": instance_name,
+                    },
+                    "namespace": "test",
+                },
+            }
+        },
+        inv.params_file,
+    )
 
     # Create test target
-    with open(inv.target_file(instance_name), "w", encoding="utf-8") as file:
-        value_classes = "\n".join([f"- {c.stem}" for c in value_files])
-        file.write(
-            dedent(
-                f"""
-            classes:
-            - params.{inv.bootstrap_target}
-            - defaults.{component.name}
-            - components.{component.name}
-            {value_classes}
-            parameters:
-              _instance: {instance_name}
-              _base_directory: {str(component.target_directory)}
-            """
-            )
-        )
+    value_classes = [f"{c.stem}" for c in value_files]
+    yaml_dump(
+        {
+            "classes": [
+                f"params.{inv.bootstrap_target}",
+                f"defaults.{component.name}",
+                f"components.{component.name}",
+            ]
+            + value_classes,
+            "parameters": {
+                "_instance": instance_name,
+                "_base_directory": str(component.target_directory),
+            },
+        },
+        inv.target_file(instance_name),
+    )
 
     # Fake Argo CD lib
     # We plug "fake" Argo CD library here because every component relies on it
