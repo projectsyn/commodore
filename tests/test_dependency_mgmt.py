@@ -9,7 +9,7 @@ import pytest
 import json
 from unittest.mock import patch
 from pathlib import Path
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -577,3 +577,77 @@ def test_validate_component_library_name(
     assert len(data._deprecation_notices) == len(expected)
     if len(expected) == 1:
         assert expected[0] in data._deprecation_notices[0]
+
+
+@pytest.mark.parametrize(
+    "cluster_params,expected",
+    [
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "url": "https://example.com/component-1.git",
+                        "version": "v1.2.3",
+                    },
+                    "component-2": {
+                        "url": "https://example.com/component-2.git",
+                        "version": "v4.5.6",
+                    },
+                    "component-3": {
+                        "url": "https://example.com/component-3.git",
+                        "version": "v7.8.9",
+                    },
+                },
+            },
+            "",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "url": "https://example.com/component-1.git",
+                        "version": "v1.2.3",
+                    },
+                    "component_1": {"version": "feat/test"},
+                    "component-2": {
+                        "url": "https://example.com/component-2.git",
+                        "version": "v4.5.6",
+                    },
+                    "component-3": {
+                        "url": "https://example.com/component-3.git",
+                        "version": "v7.8.9",
+                    },
+                },
+            },
+            "Version override specified for component 'component_1' which has no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "url": "https://example.com/component-1.git",
+                        "version": "v1.2.3",
+                    },
+                    "component_1": {"version": "feat/test"},
+                    "component-2": {
+                        "url": "https://example.com/component-2.git",
+                        "version": "v4.5.6",
+                    },
+                    "component_2": {"version": "feat/test2"},
+                    "component-3": {
+                        "url": "https://example.com/component-3.git",
+                        "version": "v7.8.9",
+                    },
+                },
+            },
+            "Version overrides specified for components 'component_1' and 'component_2' which have no URL",
+        ),
+    ],
+)
+def test_verify_component_version_overrides(cluster_params: Dict, expected: str):
+    if expected == "":
+        dependency_mgmt.verify_component_version_overrides(cluster_params)
+    else:
+        with pytest.raises(click.ClickException) as e:
+            dependency_mgmt.verify_component_version_overrides(cluster_params)
+            assert expected in e
