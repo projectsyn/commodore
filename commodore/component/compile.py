@@ -11,13 +11,14 @@ from commodore.component import Component
 from commodore.dependency_mgmt import (
     fetch_jsonnet_libraries,
     validate_component_library_name,
+    create_component_library_aliases,
 )
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments disable=too-many-locals disable=too-many-statements
 def compile_component(
     config: Config,
     component_path,
@@ -83,6 +84,10 @@ def compile_component(
                     region: rma1
                   argocd:
                     namespace: test
+                  components:
+                    {component.name}:
+                      url: https://example.com/{component.name}.git
+                      version: master
 
                   kapitan:
                     vars:
@@ -129,6 +134,9 @@ def compile_component(
         # Verify component alias
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
         config.verify_component_aliases(nodes[instance_name]["parameters"])
+
+        cluster_params = nodes[instance_name]["parameters"]
+        create_component_library_aliases(config, cluster_params)
 
         # Render jsonnetfile.jsonnet if necessary
         component_params = nodes[instance_name]["parameters"].get(

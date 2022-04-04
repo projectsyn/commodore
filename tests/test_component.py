@@ -1,7 +1,9 @@
 import json
 import pytest
+import yaml
 
 from pathlib import Path as P
+from typing import Iterable
 from git import Repo
 from textwrap import dedent
 
@@ -308,3 +310,46 @@ def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
 )
 def test_component_parameters_key(name: str, key: str):
     assert component_parameters_key(name) == key
+
+
+def _setup_libfiles(c: Component, libfiles: Iterable[str]):
+    lib_dir = c.target_directory / "lib"
+    if len(libfiles) > 0:
+        lib_dir.mkdir(parents=True, exist_ok=True)
+    for libf in libfiles:
+        with open(lib_dir / libf, "w") as f:
+            yaml.safe_dump({"libf": libf}, f)
+
+
+@pytest.mark.parametrize(
+    "libfiles",
+    [
+        [],
+        ["foo.libsonnet"],
+        ["foo.libsonnet", "bar.libsonnet"],
+    ],
+)
+def test_component_lib_files(tmp_path: P, libfiles: Iterable[str]):
+    c = _setup_component(tmp_path, name="tc1")
+    _setup_libfiles(c, libfiles)
+
+    assert sorted(c.lib_files) == sorted(tmp_path / "tc1" / "lib" / f for f in libfiles)
+
+
+@pytest.mark.parametrize(
+    "libfiles",
+    [
+        [],
+        ["foo.libsonnet"],
+        ["foo.libsonnet", "bar.libsonnet"],
+    ],
+)
+def test_component_get_library(tmp_path: P, libfiles: Iterable[str]):
+    c = _setup_component(tmp_path, name="tc1")
+    _setup_libfiles(c, libfiles)
+
+    if len(libfiles) == 0:
+        assert c.get_library("foo.libsonnet") is None
+
+    for f in libfiles:
+        assert c.get_library(f) == tmp_path / "tc1" / "lib" / f

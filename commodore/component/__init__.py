@@ -79,6 +79,17 @@ class Component:
 
         return []
 
+    def get_library(self, libname: str) -> Optional[P]:
+        lib_dir = self.target_directory / "lib"
+        if not lib_dir.exists():
+            return None
+
+        for f in self.lib_files:
+            if f.absolute() == P(lib_dir / libname).absolute():
+                return f.absolute()
+
+        return None
+
     @property
     def filters_file(self) -> P:
         return self.target_directory / "postprocess" / "filters.yml"
