@@ -26,14 +26,27 @@ def validate_component_library_name(cfg: Config, cname: str, lib: P) -> P:
     return lib
 
 
+def _check_library_alias_prefixes(libalias: str, cn: str, component_prefixes: Set[str]):
+    for p in component_prefixes - {cn}:
+        if libalias.startswith(p):
+            raise click.ClickException(
+                f"Invalid alias prefix '{p}' "
+                + f"for template library alias of component '{cn}'"
+            )
+
+
 def _check_library_alias_collisions(cfg: Config, cluster_params: Dict[str, Any]):
     # map of library alias to set(originating components)
     collisions: Dict[str, Set[str]] = {}
 
-    for cn, component in cfg.get_components().items():
+    components = cfg.get_components()
+    component_prefixes = set(cluster_params["components"].keys())
+
+    for cn, component in components.items():
         cmeta = cluster_params[component.parameters_key].get("_metadata", {})
         aliases = cmeta.get("library_aliases", {})
         for libalias in aliases.keys():
+            _check_library_alias_prefixes(libalias, cn, component_prefixes)
             collisions.setdefault(libalias, set()).add(cn)
 
     for libalias, cnames in collisions.items():

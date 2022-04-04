@@ -220,6 +220,12 @@ def test_create_component_library_aliases_single_component(
             {"foo.libsonnet": "tc3.libjsonnet"},
             "Components 'tc1', 'tc2' and 'tc3' all define component library alias 'foo.libsonnet'",
         ),
+        (
+            {"tc2-fake.libsonnet": "tc1.libjsonnet"},
+            {},
+            {},
+            "Invalid alias prefix 'tc2' for template library alias of component 'tc1'",
+        ),
     ],
 )
 def test_create_component_library_aliases_multiple_component(
@@ -246,6 +252,20 @@ def test_create_component_library_aliases_multiple_component(
         },
         c3.parameters_key: {
             "_metadata": {"library_aliases": tc3_libalias},
+        },
+        "components": {
+            "tc1": {
+                "url": "https://example.com/tc1.git",
+                "version": "master",
+            },
+            "tc2": {
+                "url": "https://example.com/tc2.git",
+                "version": "master",
+            },
+            "tc3": {
+                "url": "https://example.com/tc3.git",
+                "version": "master",
+            },
         },
     }
 
