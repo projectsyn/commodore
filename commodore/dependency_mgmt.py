@@ -11,6 +11,21 @@ from .component import Component, component_dir
 from .helpers import relsymlink, kapitan_inventory
 
 
+def validate_component_library_name(cfg: Config, cname: str, lib: P) -> P:
+    if not lib.stem.startswith(cname):
+        deprecation_notice_url = (
+            "https://syn.tools/commodore/reference/"
+            + "deprecation-notices.html#_component_lib_naming"
+        )
+        cfg.register_deprecation_notice(
+            f"Component '{cname}' uses component library name {lib.name} "
+            + "which isn't prefixed with the component's name. "
+            + f"See {deprecation_notice_url} for more details."
+        )
+
+    return lib
+
+
 def create_component_symlinks(cfg, component: Component):
     """
     Create symlinks in the inventory subdirectory.
@@ -29,7 +44,10 @@ def create_component_symlinks(cfg, component: Component):
     for file in component.lib_files:
         if cfg.debug:
             click.echo(f"     > installing template library: {file}")
-        relsymlink(file, cfg.inventory.lib_dir)
+        relsymlink(
+            validate_component_library_name(cfg, component.name, file),
+            cfg.inventory.lib_dir,
+        )
 
 
 def _format_component_list(components: Iterable[str]) -> str:

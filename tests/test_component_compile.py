@@ -19,7 +19,7 @@ from test_component_template import call_component_new
 
 
 def _prepare_component(tmp_path, component_name="test-component"):
-    call_component_new(tmp_path)
+    call_component_new(tmp_path, lib="--lib")
 
     with open(
         tmp_path / "dependencies" / component_name / "component/main.jsonnet", "a"

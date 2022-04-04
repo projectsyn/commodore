@@ -8,7 +8,10 @@ from kapitan.resources import inventory_reclass
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.dependency_mgmt import fetch_jsonnet_libraries
+from commodore.dependency_mgmt import (
+    fetch_jsonnet_libraries,
+    validate_component_library_name,
+)
 from commodore.helpers import kapitan_compile, relsymlink
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
@@ -53,6 +56,10 @@ def compile_component(
         config.register_component(component)
         config.register_component_aliases({instance_name: component_name})
         _prepare_fake_inventory(inv, component, value_files)
+
+        # Validate component libraries
+        for lib in component.lib_files:
+            validate_component_library_name(config, component.name, lib)
 
         # Create class for fake parameters
         with open(inv.params_file, "w", encoding="utf-8") as file:
