@@ -179,6 +179,15 @@ def postprocess_components(
 
         # "old", external filters
         extfilters = _get_external_filters(inv, c)
+        if len(extfilters) > 0:
+            deprecation_notice_url = (
+                "https://syn.tools/commodore/reference/"
+                + "deprecation-notices.html#_external_pp_filters"
+            )
+            config.register_deprecation_notice(
+                f"Component '{c.name}' uses deprecated external postprocessing "
+                + f"filter definitions. See {deprecation_notice_url} for more details."
+            )
 
         filters: List[Filter] = []
         for fd in invfilters + extfilters:
