@@ -2,6 +2,7 @@ from pathlib import Path as P
 import shutil
 import tempfile
 from textwrap import dedent
+from typing import Iterable, Optional
 
 import click
 from kapitan.resources import inventory_reclass
@@ -21,27 +22,28 @@ from commodore.postprocess import postprocess_components
 # pylint: disable=too-many-arguments disable=too-many-locals
 def compile_component(
     config: Config,
-    component_path,
-    instance_name,
-    value_files,
-    search_paths,
-    output_path,
+    component_path_: str,
+    instance_name_: Optional[str],
+    value_files_: Iterable[str],
+    search_paths_: Iterable[str],
+    output_path_: str,
 ):
     # Resolve all input to absolute paths to fix symlinks
-    component_path = P(component_path).resolve()
-    value_files = [P(f).resolve() for f in value_files]
-    search_paths = [P(d).resolve() for d in search_paths]
+    component_path = P(component_path_).resolve()
+    value_files = [P(f).resolve() for f in value_files_]
+    search_paths = [P(d).resolve() for d in search_paths_]
     search_paths.append(component_path / "vendor")
-    output_path = P(output_path).resolve()
+    output_path = P(output_path_).resolve()
 
     # Ignore 'component-' prefix in dir name
     component_name = component_path.stem.replace("component-", "")
 
     # Fall back to `component as component` when instance_name is empty
-    if instance_name is None or instance_name == "":
+    if instance_name_ is None or instance_name_ == "":
         instance_name = component_name
         click.secho(f"Compile component {component_name}...", bold=True)
     else:
+        instance_name = instance_name_
         click.secho(
             f"Compile component {component_name} as {instance_name}...", bold=True
         )
@@ -115,7 +117,7 @@ def _setup_component(
 
 
 def _prepare_kapitan_inventory(
-    inv: Inventory, component: Component, value_files, instance_name: str
+    inv: Inventory, component: Component, value_files: Iterable[P], instance_name: str
 ):
     """
     Setup Kapitan inventory.
@@ -211,8 +213,8 @@ def _prepare_kapitan_inventory(
     # Fake Argo CD lib
     # We plug "fake" Argo CD library here because every component relies on it
     # and we don't want to provide it every time when compiling a single component.
-    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as file:
-        file.write(
+    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
+        argocd_libf.write(
             dedent(
                 """
             local ArgoApp(component, namespace, project='', secrets=true) = {};
