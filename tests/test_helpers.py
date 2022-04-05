@@ -257,6 +257,27 @@ def test_lieutenant_query_response_errors(response, expected):
     _verify_call_status(query_url)
 
 
+def test_relsymlink(tmp_path: Path):
+    test_file = tmp_path / "src" / "test"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_file, "w") as f:
+        f.write("test")
+
+    helpers.relsymlink(test_file, tmp_path)
+    assert (tmp_path / "test").is_symlink()
+    assert (tmp_path / "test").exists()
+    with open(tmp_path / "test") as f:
+        assert f.read() == "test"
+
+
+def test_override_relsymlink(tmp_path: Path):
+    test_file = tmp_path / "src" / "test2"
+    test_file.parent.mkdir()
+    test_file.touch()
+    helpers.relsymlink(test_file, tmp_path)
+    assert (tmp_path / "test2").is_symlink()
+
+
 @pytest.mark.parametrize("dst_is_dangling", [None, True, False])
 def test_relsymlink_dest_name(tmp_path: Path, dst_is_dangling: Optional[bool]):
     src = tmp_path / "src.txt"

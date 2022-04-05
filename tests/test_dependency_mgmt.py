@@ -14,7 +14,6 @@ from typing import Dict, Iterable, List, Optional
 from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
-from commodore.helpers import relsymlink
 from commodore.inventory import Inventory
 
 
@@ -51,27 +50,6 @@ def data(tmp_path):
         api_url="https://syn.example.com",
         api_token="token",
     )
-
-
-def test_symlink(tmp_path: Path):
-    test_file = tmp_path / "src" / "test"
-    test_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(test_file, "w") as f:
-        f.write("test")
-
-    relsymlink(test_file, tmp_path)
-    assert (tmp_path / "test").is_symlink()
-    assert (tmp_path / "test").exists()
-    with open(tmp_path / "test") as f:
-        assert f.read() == "test"
-
-
-def test_override_symlink(tmp_path: Path):
-    test_file = tmp_path / "src" / "test2"
-    test_file.parent.mkdir()
-    test_file.touch()
-    relsymlink(test_file, tmp_path)
-    assert (tmp_path / "test2").is_symlink()
 
 
 def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
