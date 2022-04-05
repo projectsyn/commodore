@@ -30,7 +30,7 @@ def _make_builtin_filter(ns, enabled=None):
     return f
 
 
-def _make_jsonnet_filter(tmp_path, ns, enabled=None, invfilter=False):
+def _make_jsonnet_filter(tmp_path, ns, enabled=None):
     filter_file = (
         tmp_path / "dependencies" / "test-component" / "postprocess" / "filter.jsonnet"
     )
@@ -53,40 +53,29 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, invfilter=False):
             )
         )
 
-    if invfilter:
-        f = {
-            "filters": [
-                {
-                    "path": "test/object.yaml",
-                    "type": "jsonnet",
-                    "filter": "postprocess/filter.jsonnet",
-                }
-            ]
-        }
-    else:
-        f = {
-            "filters": [
-                {
-                    "output_path": "test/object.yaml",
-                    "type": "jsonnet",
-                    "filter": "filter.jsonnet",
-                }
-            ]
-        }
+    f = {
+        "filters": [
+            {
+                "path": "test/object.yaml",
+                "type": "jsonnet",
+                "filter": "postprocess/filter.jsonnet",
+            }
+        ]
+    }
 
     if enabled is not None:
         f["filters"][0]["enabled"] = enabled
     return f
 
 
-def _make_ns_filter(tmp_path, ns, enabled=None, jsonnet=False, invfilter=False):
+def _make_ns_filter(tmp_path, ns, enabled=None, jsonnet=False):
     if jsonnet:
-        return _make_jsonnet_filter(tmp_path, ns, enabled=enabled, invfilter=invfilter)
+        return _make_jsonnet_filter(tmp_path, ns, enabled=enabled)
 
     return _make_builtin_filter(ns, enabled=enabled)
 
 
-def _setup(tmp_path, f, invfilter=False, alias="test-component"):
+def _setup(tmp_path, f, alias="test-component"):
     targetdir = tmp_path / "compiled" / alias / "test"
     os.makedirs(targetdir, exist_ok=True)
 
@@ -110,9 +99,6 @@ def _setup(tmp_path, f, invfilter=False, alias="test-component"):
         tmp_path / "dependencies" / "test-component" / "postprocess" / "filters.yml"
     )
     os.makedirs(pp_file.parent, exist_ok=True)
-    if not invfilter:
-        with open(pp_file, "w") as filterf:
-            yaml.dump(f, filterf)
 
     config = Config(work_dir=tmp_path)
     component = Component(
@@ -132,14 +118,12 @@ def _setup(tmp_path, f, invfilter=False, alias="test-component"):
                 "test_component": {
                     "namespace": "syn-test-component",
                 },
+                "commodore": {
+                    "postprocess": f,
+                },
             },
         },
     }
-
-    if invfilter:
-        inventory[alias]["parameters"]["commodore"] = {
-            "postprocess": f,
-        }
 
     return testf, config, inventory, config.get_components()
 
@@ -152,22 +136,14 @@ def _expected_ns(enabled):
 
 
 @pytest.mark.parametrize("enabled", [None, True, False])
-@pytest.mark.parametrize("invfilter", [True, False])
 @pytest.mark.parametrize("alias", ["test-component", "component-alias"])
 @pytest.mark.parametrize("jsonnet", [False, True])
-def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, alias):
+def test_postprocess_components(tmp_path, capsys, enabled, jsonnet, alias):
     call_component_new(tmp_path=tmp_path)
 
-    f = _make_ns_filter(
-        tmp_path, "myns", enabled=enabled, jsonnet=jsonnet, invfilter=invfilter
-    )
+    f = _make_ns_filter(tmp_path, "myns", enabled=enabled, jsonnet=jsonnet)
 
-    testf, config, inventory, components = _setup(
-        tmp_path,
-        f,
-        invfilter=invfilter,
-        alias=alias,
-    )
+    testf, config, inventory, components = _setup(tmp_path, f, alias=alias)
 
     postprocess_components(config, inventory, components)
 
@@ -178,38 +154,5 @@ def test_postprocess_components(tmp_path, capsys, enabled, invfilter, jsonnet, a
         assert obj["metadata"]["namespace"] == expected_ns
 
     if enabled is not None and not enabled:
-        captured = capsys.readouterr()
-        assert "Skipping disabled filter" in captured.out
-
-    if not invfilter:
-        assert len(config._deprecation_notices) == 1
-        assert (
-            "Component 'test-component' uses deprecated external postprocessing filter definitions"
-            in config._deprecation_notices[0]
-        )
-
-
-# We keep the enabledref tests separate as we don't actually
-# render the inventory with reclass in the test above.
-@pytest.mark.parametrize("enabledref", [True, False])
-def test_postprocess_components_enabledref(tmp_path, capsys, enabledref):
-    call_component_new(tmp_path=tmp_path)
-
-    f = _make_builtin_filter("myns", enabled="${test_component:filter:enabled}")
-
-    testf, config, inventory, components = _setup(tmp_path, f)
-    inventory["test-component"]["parameters"]["test_component"]["filter"] = {
-        "enabled": enabledref,
-    }
-
-    postprocess_components(config, inventory, components)
-
-    assert testf.exists()
-    expected_ns = _expected_ns(enabledref)
-    with open(testf) as objf:
-        obj = yaml.safe_load(objf)
-        assert obj["metadata"]["namespace"] == expected_ns
-
-    if enabledref is False:
         captured = capsys.readouterr()
         assert "Skipping disabled filter" in captured.out
