@@ -125,15 +125,19 @@ def _format_component_list(components: Iterable[str]) -> str:
     return formatted
 
 
-def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
+def _extract_component_aliases(
+    cfg: Config, kapitan_applications: Iterable[str]
+) -> Tuple[Set[str], Dict[str, Set[str]]]:
     """
-    Discover components used by the currenct cluster by extracting all entries from the
-    reclass applications dictionary.
+    Extract components and all aliases from Kapitan applications array.
+
+    This function doesn't validate the resulting data. Generally, callers will want to
+    use `_discover_components()` to extract components and their aliases from the
+    applications array.
     """
-    kapitan_applications = kapitan_inventory(cfg, key="applications")
     components = set()
     all_component_aliases: Dict[str, Set[str]] = {}
-    for component in kapitan_applications.keys():
+    for component in kapitan_applications:
         try:
             cn, alias = component.split(" as ")
         except ValueError:
@@ -146,6 +150,23 @@ def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
             click.echo(msg)
         components.add(cn)
         all_component_aliases.setdefault(alias, set()).add(cn)
+
+    return components, all_component_aliases
+
+
+def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
+    """
+    Discover components used by the current cluster by extracting all entries from the
+    reclass applications dictionary.
+
+    The function also verifies the extracted entries, and raises an exception if any
+    invalid aliases are found.
+    """
+    kapitan_applications = kapitan_inventory(cfg, key="applications")
+
+    components, all_component_aliases = _extract_component_aliases(
+        cfg, kapitan_applications.keys()
+    )
 
     component_aliases: Dict[str, str] = {}
 
