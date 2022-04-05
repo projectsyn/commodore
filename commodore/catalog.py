@@ -84,38 +84,38 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
 
     Ask user to confirm push if `--interactive` is specified
     """
-    if not cfg.local:
-        if cfg.interactive and cfg.push:
-            cfg.push = click.confirm(" > Should the push be done?")
-
-        if cfg.push:
-            click.echo(" > Commiting changes...")
-            repo.commit(commit_message)
-            click.echo(" > Pushing catalog to remote...")
-            try:
-                pushinfos = repo.push()
-            except GitCommandError as e:
-                raise click.ClickException(
-                    "Failed to push to the catalog repository: "
-                    + f"Git exited with status code {e.status}"
-                ) from e
-            for pi in pushinfos:
-                # Any error has pi.ERROR set in the `flags` bitmask
-                # We just forward the summary from the pushinfo
-                summary = pi.summary.strip()
-                if (pi.flags & pi.ERROR) != 0:
-                    raise click.ClickException(
-                        f"Failed to push to the catalog repository: {summary}"
-                    )
-        else:
-            click.echo(" > Skipping commit+push to catalog...")
-            click.echo(" > Use flag --push to commit and push the catalog repo")
-            click.echo(
-                " > Add flag --interactive to show the diff and decide on the push"
-            )
-    else:
+    if cfg.local:
         repo.reset(working_tree=False)
         click.echo(" > Skipping commit+push to catalog in local mode...")
+        return
+
+    if cfg.interactive and cfg.push:
+        cfg.push = click.confirm(" > Should the push be done?")
+
+    if cfg.push:
+        click.echo(" > Commiting changes...")
+        repo.commit(commit_message)
+        click.echo(" > Pushing catalog to remote...")
+        try:
+            pushinfos = repo.push()
+        except GitCommandError as e:
+            raise click.ClickException(
+                "Failed to push to the catalog repository: "
+                + f"Git exited with status code {e.status}"
+            ) from e
+        for pi in pushinfos:
+            # Any error has pi.ERROR set in the `flags` bitmask
+            # We just forward the summary from the first pushinfo which has the error
+            # flag set.
+            summary = pi.summary.strip()
+            if (pi.flags & pi.ERROR) != 0:
+                raise click.ClickException(
+                    f"Failed to push to the catalog repository: {summary}"
+                )
+    else:
+        click.echo(" > Skipping commit+push to catalog...")
+        click.echo(" > Use flag --push to commit and push the catalog repo")
+        click.echo(" > Add flag --interactive to show the diff and decide on the push")
 
 
 def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
