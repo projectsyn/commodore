@@ -230,8 +230,6 @@ def test_render_params(data, tmp_path: P):
     assert target_params["tenant"] == "mytenant"
     assert "tenant_display_name" in target_params
     assert target_params["tenant_display_name"] == "My Test Tenant"
-    assert "dist" in target_params
-    assert target_params["dist"] == "rancher"
 
     assert "facts" in params
     assert params["facts"] == data["cluster"]["facts"]
@@ -246,14 +244,6 @@ def test_render_params(data, tmp_path: P):
     assert "1" == k8s_ver["major"]
     assert "21" == k8s_ver["minor"]
     assert "v1.21.3" == k8s_ver["gitVersion"]
-
-    assert "cloud" in params
-    assert "provider" in params["cloud"]
-    assert params["cloud"]["provider"] == "cloudscale"
-
-    assert "customer" in params
-    assert "name" in params["customer"]
-    assert params["customer"]["name"] == "mytenant"
 
 
 def test_missing_facts(data, tmp_path: P):

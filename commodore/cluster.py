@@ -195,14 +195,6 @@ def render_params(inv: Inventory, cluster: Cluster):
         if fact not in facts or not facts[fact]:
             raise click.ClickException(f"Required fact '{fact}' not set")
 
-    cloud = {
-        "provider": facts["cloud"],
-    }
-
-    # TODO Remove after deprecation phase.
-    if "region" in facts:
-        cloud["region"] = facts["region"]
-
     data = {
         "parameters": {
             inv.bootstrap_target: {
@@ -211,16 +203,9 @@ def render_params(inv: Inventory, cluster: Cluster):
                 "catalog_url": cluster.catalog_repo_url,
                 "tenant": cluster.tenant_id,
                 "tenant_display_name": cluster.tenant_display_name,
-                # TODO Remove dist after deprecation phase.
-                "dist": facts["distribution"],
             },
             "facts": facts,
             "dynamic_facts": dynfacts,
-            # TODO Remove the cloud and customer parameters after deprecation phase.
-            "cloud": cloud,
-            "customer": {
-                "name": cluster.tenant_id,
-            },
         },
     }
 
