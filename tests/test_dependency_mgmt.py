@@ -32,8 +32,9 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
         class_dir = repo_path / "class"
         class_dir.mkdir(parents=True, exist_ok=True)
         (class_dir / "defaults.yml").touch(exist_ok=True)
+        (class_dir / f"{component}.yml").touch(exist_ok=True)
 
-        repo.index.add(["class/defaults.yml"])
+        repo.index.add(["class/defaults.yml", f"class/{component}.yml"])
         repo.index.commit("component defaults")
 
     return component_urls, component_versions
@@ -53,23 +54,32 @@ def data(tmp_path):
 
 
 def test_symlink(tmp_path: Path):
-    test_file = tmp_path / "test1"
+    test_file = tmp_path / "src" / "test"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_file, "w") as f:
+        f.write("test")
+
     relsymlink(test_file, tmp_path)
-    assert test_file.is_symlink()
+    assert (tmp_path / "test").is_symlink()
+    assert (tmp_path / "test").exists()
+    with open(tmp_path / "test") as f:
+        assert f.read() == "test"
 
 
 def test_override_symlink(tmp_path: Path):
-    test_file = tmp_path / "test2"
+    test_file = tmp_path / "src" / "test2"
+    test_file.parent.mkdir()
     test_file.touch()
-    assert not test_file.is_symlink()
     relsymlink(test_file, tmp_path)
-    assert test_file.is_symlink()
+    assert (tmp_path / "test2").is_symlink()
 
 
 def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
     component = Component("my-component", work_dir=tmp_path)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(click.ClickException) as e:
         dependency_mgmt.create_component_symlinks(data, component)
+
+    assert "Source does not exist" in str(e.value)
 
 
 def setup_mock_component(tmp_path: Path, name="my-component") -> Component:
@@ -639,6 +649,8 @@ def _setup_register_components(tmp_path: Path):
         r.create_remote("origin", f"ssh://git@example.com/git/{directory}")
         os.makedirs(cpath / "class", exist_ok=True)
         with open(cpath / "class" / "defaults.yml", "w") as f:
+            f.write("")
+        with open(cpath / "class" / f"{directory}.yml", "w") as f:
             f.write("")
 
     return component_dirs, other_dirs
