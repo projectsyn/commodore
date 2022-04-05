@@ -229,7 +229,7 @@ def relsymlink(src: P, dest_dir: P, dest_name: Optional[str] = None):
         click.ClickException(
             f"Can't link {link_src} to {link_dst}. Source does not exist."
         )
-    if link_dst.exists():
+    if link_dst.exists() or link_dst.is_symlink():
         os.remove(link_dst)
     os.symlink(link_src, link_dst)
 
