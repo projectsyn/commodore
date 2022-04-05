@@ -49,20 +49,17 @@ def test_verify_component_aliases_metadata(config):
     assert len(config._deprecation_notices) == 0
 
 
-def test_verify_component_aliases_deprecated(config):
+def test_verify_toplevel_component_aliases_exception(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
     params = {"bar": {"multi_instance": True, "namespace": "syn-bar"}}
 
-    config.verify_component_aliases(params)
+    with pytest.raises(click.ClickException) as e:
+        config.verify_component_aliases(params)
 
-    assert len(config._deprecation_notices) == 1
-    depnotice = config._deprecation_notices[0]
-    assert (
-        "Component `bar` advertises multi-instance support in component parameter "
-        + "`multi_instance`. This has been deprecated in favor of using "
-        + "`_metadata.multi_instance`."
-    ) in depnotice
+    assert "Component bar with alias baz does not support instantiation." in str(
+        e.value
+    )
 
 
 def test_verify_component_aliases_error(config):
