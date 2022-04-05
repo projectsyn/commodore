@@ -387,7 +387,13 @@ def component_delete(config: Config, slug, force, verbose):
 @pass_config
 # pylint: disable=too-many-arguments
 def component_compile(
-    config: Config, path, values, alias, search_paths, output, verbose
+    config: Config,
+    path: str,
+    values: Iterable[str],
+    alias: Optional[str],
+    search_paths: Iterable[str],
+    output: str,
+    verbose: int,
 ):
     config.update_verbosity(verbose)
     compile_component(config, path, alias, values, search_paths, output)
