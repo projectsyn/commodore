@@ -8,6 +8,7 @@ from unittest.mock import patch
 import click
 import git
 import pytest
+import yaml
 
 from commodore import catalog
 from commodore.config import Config
@@ -226,3 +227,115 @@ def test_push_catalog_remoteerror(
             "Failed to push to the catalog repository: [remote rejected] (pre-receive hook declined)"
             in str(e)
         )
+
+
+def write_target_file_1(target: Path, name="test.txt"):
+    with open(target / name, "w") as f:
+        yaml.safe_dump_all(
+            [
+                None,
+                {
+                    "kind": "test1",
+                    "metadata": {"namespace": "test"},
+                    "spec": {"key": "value", "data": ["a", "b", "c"]},
+                },
+            ],
+            f,
+        )
+
+
+def write_target_file_2(target: Path, name="test.txt", change=True):
+    data = ["a", "b"] + (["d"] if change else ["c"])
+    with open(target / name, "w") as f:
+        yaml.safe_dump_all(
+            [
+                {
+                    "kind": "test1",
+                    "metadata": {"namespace": "test"},
+                    "spec": {"key": "value", "data": data},
+                },
+            ],
+            f,
+        )
+
+
+@pytest.mark.parametrize("migration", ["", "kapitan-0.29-to-0.30"])
+def test_update_catalog(
+    capsys, tmp_path: Path, config: Config, fresh_cluster: Cluster, migration: str
+):
+    repo = catalog.fetch_catalog(config, fresh_cluster)
+    upstream = git.Repo(tmp_path / "repo.git")
+
+    config.push = True
+
+    target = tmp_path / "compiled" / "test"
+    target.mkdir(parents=True, exist_ok=True)
+
+    _ = capsys.readouterr()
+
+    write_target_file_1(target, name="a.yaml")
+    write_target_file_1(target, name="b.yaml")
+    catalog.update_catalog(config, ["test"], repo)
+
+    captured = capsys.readouterr()
+    assert upstream.active_branch.commit.message.startswith(
+        "Automated catalog update from Commodore"
+    )
+    assert repo.repo.untracked_files == []
+    assert not repo.repo.is_dirty()
+    assert captured.out.startswith("Updating catalog repository...")
+    assert (
+        "Changes:\n     Added file manifests/a.yaml\n     Added file manifests/b.yaml\n"
+        in captured.out
+    )
+    assert "Commiting changes..." in captured.out
+    assert "Pushing catalog to remote..." in captured.out
+
+    write_target_file_2(target, name="a.yaml")
+    write_target_file_2(target, name="b.yaml", change=False)
+    config.migration = migration
+    catalog.update_catalog(config, ["test"], repo)
+
+    expected_diff = (
+        "     --- manifests/a.yaml\n"
+        + "     +++ manifests/a.yaml\n"
+        + "     @@ -1,5 +1,3 @@\n"
+        + "     -null\n"
+        + "     ----\n"
+        + "      kind: test1\n"
+        + "      metadata:\n"
+        + "        namespace: test\n"
+        + "     @@ -7,6 +5,6 @@\n"
+        + "        data:\n"
+        + "        - a\n"
+        + "        - b\n"
+        + "     -  - c\n"
+        + "     +  - d\n"
+        + "        key: value\n"
+    )
+
+    if migration == "":
+        # The diff of b.yaml gets suppressed by the Kapitan 0.29 to 0.30 migration
+        # diffing.
+        expected_diff += (
+            "     --- manifests/b.yaml\n"
+            + "     +++ manifests/b.yaml\n"
+            + "     @@ -1,5 +1,3 @@\n"
+            + "     -null\n"
+            + "     ----\n"
+            + "      kind: test1\n"
+            + "      metadata:\n"
+            + "        namespace: test\n"
+        )
+
+    captured = capsys.readouterr()
+    print(captured.out)
+    assert upstream.active_branch.commit.message.startswith(
+        "Automated catalog update from Commodore"
+    )
+    assert repo.repo.untracked_files == []
+    assert not repo.repo.is_dirty()
+    assert captured.out.startswith("Updating catalog repository...")
+    assert (" > Changes:\n" + expected_diff) in captured.out
+    assert "Commiting changes..." in captured.out
+    assert "Pushing catalog to remote..." in captured.out
