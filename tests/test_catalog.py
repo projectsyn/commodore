@@ -203,10 +203,11 @@ def test_push_catalog_giterror(config: Config, fresh_cluster: Cluster):
 
     with pytest.raises(click.ClickException) as e:
         catalog._push_catalog(config, repo, "Add test.txt")
-        assert (
-            "Failed to push to the catalog repository: Git exited with status code"
-            in str(e)
-        )
+
+    assert (
+        "Failed to push to the catalog repository: Git exited with status code"
+        in str(e)
+    )
 
 
 def test_push_catalog_remoteerror(
@@ -223,10 +224,11 @@ def test_push_catalog_remoteerror(
 
     with pytest.raises(click.ClickException) as e:
         catalog._push_catalog(config, repo, "Add test.txt")
-        assert (
-            "Failed to push to the catalog repository: [remote rejected] (pre-receive hook declined)"
-            in str(e)
-        )
+
+    assert (
+        "Failed to push to the catalog repository: [remote rejected] (pre-receive hook declined)"
+        in str(e)
+    )
 
 
 def write_target_file_1(target: Path, name="test.txt"):
