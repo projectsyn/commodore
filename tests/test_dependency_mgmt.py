@@ -808,4 +808,5 @@ def test_verify_component_version_overrides(cluster_params: Dict, expected: str)
     else:
         with pytest.raises(click.ClickException) as e:
             dependency_mgmt.verify_component_version_overrides(cluster_params)
-            assert expected in e
+
+        assert expected in str(e)
