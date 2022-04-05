@@ -6,6 +6,7 @@ We include a link to relevant documentation, if applicable.
 == https://github.com/projectsyn/commodore/releases/tag/v1.0.0[v1.0.0]
 
 * Support for external postprocessing filter definitions is removed [<<_external_pp_filters,deprecated in v0.16.0>>].
+* Support for `parameters.component_versions` is removed [<<_parameters_component_versions_is_deprecated,deprecated in v0.5.0>>].
 
 == https://github.com/projectsyn/commodore/releases/tag/v0.16.0[v0.16.0]
 

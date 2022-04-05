@@ -233,11 +233,6 @@ class InventoryFactory:
         )
         params = render_params(self._inventory, cluster)
 
-        # Don't support legacy component_versions key
-        # TODO: remove this when implementing issue #375
-        del params["parameters"]["components"]
-        del params["parameters"]["component_versions"]
-
         yaml_dump(params, self.classes_dir / "base.yml")
 
         # Create the following fake hierarchy for the render target:
