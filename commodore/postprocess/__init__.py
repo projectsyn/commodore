@@ -5,9 +5,6 @@ from typing_extensions import Protocol
 import click
 
 from commodore.config import Config, Component
-from commodore.helpers import yaml_load
-
-from .inventory import resolve_inventory_vars, InventoryError
 
 from .jsonnet import run_jsonnet_filter, validate_jsonnet_filter
 from .builtin_filters import run_builtin_filter, validate_builtin_filter
@@ -127,37 +124,6 @@ def _get_inventory_filters(inv: Dict[str, Any]) -> List[Dict[str, Any]]:
     return commodore.get("postprocess", {}).get("filters", [])
 
 
-def _get_external_filters(inv: Dict[str, Any], c: Component) -> List[Dict[str, Any]]:
-    filters_file = c.filters_file
-    filters = []
-    if filters_file.is_file():
-        _filters = yaml_load(filters_file).get("filters", [])
-        for f in _filters:
-            # Resolve any inventory references in filter definition
-            try:
-                f = resolve_inventory_vars(inv, f)
-            except InventoryError as e:
-                raise click.ClickException(
-                    f"Failed to resolve reclass references for external filter: {e}"
-                ) from e
-
-            # external filters without 'type' always have type 'jsonnet'
-            if "type" not in f:
-                click.secho(
-                    "   > [WARN] component uses untyped external postprocessing filter",
-                    fg="yellow",
-                )
-                f["type"] = "jsonnet"
-
-            if f["type"] == "jsonnet":
-                f["path"] = f["output_path"]
-                del f["output_path"]
-                f["filter"] = str(P("postprocess") / f["filter"])
-            filters.append(f)
-
-    return filters
-
-
 def postprocess_components(
     config: Config,
     kapitan_inventory: Dict[str, Dict[str, Any]],
@@ -177,20 +143,8 @@ def postprocess_components(
         # inventory filters
         invfilters = _get_inventory_filters(inv)
 
-        # "old", external filters
-        extfilters = _get_external_filters(inv, c)
-        if len(extfilters) > 0:
-            deprecation_notice_url = (
-                "https://syn.tools/commodore/reference/"
-                + "deprecation-notices.html#_external_pp_filters"
-            )
-            config.register_deprecation_notice(
-                f"Component '{c.name}' uses deprecated external postprocessing "
-                + f"filter definitions. See {deprecation_notice_url} for more details."
-            )
-
         filters: List[Filter] = []
-        for fd in invfilters + extfilters:
+        for fd in invfilters:
             try:
                 filters.append(Filter.from_dict(config, c, a, fd))
             except (KeyError, ValueError) as e:
