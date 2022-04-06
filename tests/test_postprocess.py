@@ -2,13 +2,15 @@
 Tests for postprocessing
 """
 import os
+
+import click
 import pytest
 import yaml
 from textwrap import dedent
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.postprocess import postprocess_components
+from commodore.postprocess import postprocess_components, builtin_filters
 from test_component_template import call_component_new
 
 
@@ -238,7 +240,9 @@ def test_postprocess_components(
         ),
     ],
 )
-def test_postprocess_invalid_filter(capsys, tmp_path, error: str, expected: str):
+def test_postprocess_invalid_jsonnet_filter(
+    capsys, tmp_path, error: str, expected: str
+):
     call_component_new(tmp_path=tmp_path)
 
     f = _make_jsonnet_filter(tmp_path, "override", enabled=True)
@@ -263,3 +267,75 @@ def test_postprocess_invalid_filter(capsys, tmp_path, error: str, expected: str)
     captured = capsys.readouterr()
     msg = f"Skipping filter '{filtername}' with invalid definition {f['filters'][0]}: {expected}"
     assert msg in captured.out
+
+
+@pytest.mark.parametrize(
+    "filtername,error,expected",
+    [
+        (
+            "helm_namespace",
+            "no-namespace",
+            "Builtin filter 'helm_namespace': filter argument 'namespace' is required",
+        ),
+        (
+            "helm_namespace",
+            "no-filterargs",
+            "\"Builtin filter is missing required key 'filterargs'\"",
+        ),
+        (
+            "helm_namespace",
+            "invalid-output-path",
+            "Builtin filter called on path which doesn't exist",
+        ),
+        (
+            "foo_filter",
+            "no-filter",
+            "Unknown builtin filter: foo_filter",
+        ),
+    ],
+)
+def test_postprocess_invalid_builtin_filter(
+    capsys, tmp_path, filtername: str, error: str, expected: str
+):
+    call_component_new(tmp_path=tmp_path)
+
+    f = _make_builtin_filter("myns")
+    f["filters"][0]["filter"] = filtername
+
+    raises = True
+
+    if error == "no-namespace":
+        del f["filters"][0]["filterargs"]["namespace"]
+    elif error == "no-filterargs":
+        del f["filters"][0]["filterargs"]
+        raises = False
+    elif error == "invalid-output-path":
+        f["filters"][0]["path"] = "does-not-exist"
+        raises = False
+    elif error == "no-filter":
+        raises = False
+    else:
+        raise NotImplementedError(f"Unknown test case {error}")
+
+    testf, config, inventory, components = _setup(tmp_path, f)
+
+    if raises:
+        with pytest.raises(click.ClickException) as e:
+            postprocess_components(config, inventory, components)
+
+        assert expected in str(e.value)
+
+    else:
+        postprocess_components(config, inventory, components)
+
+        captured = capsys.readouterr()
+        msg = f"Skipping filter '{filtername}' with invalid definition {f['filters'][0]}: {expected}"
+        assert msg in captured.out
+
+
+def test_postprocess_run_builtin_filter_raises_exception(tmp_path):
+    config = Config(work_dir=tmp_path)
+    with pytest.raises(builtin_filters.UnknownBuiltinFilter):
+        builtin_filters.run_builtin_filter(
+            config, {}, {}, "my-component", "foo_filter", tmp_path
+        )
