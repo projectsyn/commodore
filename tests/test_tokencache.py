@@ -16,6 +16,14 @@ def test_get_token(fs):
     assert tokencache.get("https://syn2.example.com") == "token2"
 
 
+def test_get_nonexistent_token(fs):
+    fs.create_file(
+        f"{xdg_cache_home}/commodore/token",
+        contents='{"https://syn.example.com":"token","https://syn2.example.com":"token2"}',
+    )
+    assert tokencache.get("https://syn3.example.com") is None
+
+
 def test_save_token(fs):
     tokencache.save("https://syn.example.com", "save")
     tokencache.save("https://syn2.example.com", "save2")
