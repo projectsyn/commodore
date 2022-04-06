@@ -10,7 +10,11 @@ from textwrap import dedent
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.postprocess import postprocess_components, builtin_filters
+from commodore.postprocess import (
+    postprocess_components,
+    builtin_filters,
+    jsonnet as jsonnet_pp,
+)
 from test_component_template import call_component_new
 
 
@@ -369,3 +373,19 @@ def test_postprocess_run_builtin_filter_raises_exception(tmp_path):
         builtin_filters.run_builtin_filter(
             config, {}, {}, "my-component", "foo_filter", tmp_path
         )
+
+
+@pytest.mark.parametrize("basename", [True, False])
+def test_postprocess_jsonnet_list_dir(tmp_path, basename):
+    files = ["1.txt", "2.txt", "3.txt"]
+    for f in files:
+        (tmp_path / f).touch()
+
+    result = jsonnet_pp._list_dir(tmp_path, basename=basename)
+
+    if basename:
+        expected = files
+    else:
+        expected = sorted(tmp_path / f for f in files)
+
+    assert sorted(result) == sorted(expected)
