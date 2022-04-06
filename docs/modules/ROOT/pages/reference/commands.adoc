@@ -114,8 +114,11 @@ The command supports both YAML and JSON output.
 
 This command provides linting for Commodore inventory classes.
 
-Currently, the command only lints component specifications.
-It treats component specifications without explicit `version` field as errors.
+Currently, the command can lint component specifications and deprecated parameters.
+
+The component specification linter treats component specifications without explicit `version` field as errors.
+
+The deprecated parameter linter treats any occurrences of the reclass parameters `${customer:name}`, `${cloud:provider}`, `${cloud:region}` and `${cluster:dist}` as errors.
 
 The command takes zero or more paths to files or directories to lint as command line arguments.
 It silently skips files which aren't valid YAML, as well as empty files and files containing multi-document YAML streams.

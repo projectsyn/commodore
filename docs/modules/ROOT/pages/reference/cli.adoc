@@ -166,7 +166,11 @@ This command doesn't have any command line options.
 
 == Inventory Lint
 
-No command line flags
+*-l, --linter*::
+  Which linters to enable.
+  Supported values are `component-versions` and `deprecated-parameters`.
+  Can be repeated.
+  If this parameter isn't specified, all known linters are enabled.
 
 == Login
 
