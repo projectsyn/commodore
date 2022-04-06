@@ -1,9 +1,12 @@
 """
 Unit-tests for helpers
 """
+import os
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 import textwrap
+
+import click
 import pytest
 import responses
 from url_normalize import url_normalize
@@ -252,3 +255,54 @@ def test_lieutenant_query_response_errors(response, expected):
         helpers.lieutenant_query(base_url, "token", "clusters", "")
 
     _verify_call_status(query_url)
+
+
+def test_relsymlink(tmp_path: Path):
+    test_file = tmp_path / "src" / "test"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_file, "w") as f:
+        f.write("test")
+
+    helpers.relsymlink(test_file, tmp_path)
+    assert (tmp_path / "test").is_symlink()
+    assert (tmp_path / "test").exists()
+    with open(tmp_path / "test") as f:
+        assert f.read() == "test"
+
+
+def test_override_relsymlink(tmp_path: Path):
+    test_file = tmp_path / "src" / "test2"
+    test_file.parent.mkdir()
+    test_file.touch()
+    helpers.relsymlink(test_file, tmp_path)
+    assert (tmp_path / "test2").is_symlink()
+
+
+@pytest.mark.parametrize("dst_is_dangling", [None, True, False])
+def test_relsymlink_dest_name(tmp_path: Path, dst_is_dangling: Optional[bool]):
+    src = tmp_path / "src.txt"
+    dst = tmp_path / "dst.txt"
+
+    with open(src, "w") as f:
+        f.write("Test")
+
+    if dst_is_dangling is not None:
+        if dst_is_dangling:
+            os.symlink(tmp_path / "err.txt", dst)
+        else:
+            os.symlink(tmp_path / "src.txt", dst)
+
+    helpers.relsymlink(src, tmp_path, dest_name="dst.txt")
+
+
+def test_relsymlink_invalid_src_exception(tmp_path: Path):
+    src = tmp_path / "src.txt"
+
+    with pytest.raises(click.ClickException) as e:
+        helpers.relsymlink(src, tmp_path, dest_name="dst.txt")
+
+    print(str(e.value))
+    assert (
+        f"Can't link {src.name} to {tmp_path / 'dst.txt'}. Source does not exist."
+        in str(e.value)
+    )
