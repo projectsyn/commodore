@@ -206,7 +206,7 @@ def test_create_component_library_aliases_single_component(
             {"foo.libsonnet": "tc1.libjsonnet"},
             {"foo.libsonnet": "tc2.libjsonnet"},
             {"foo.libsonnet": "tc3.libjsonnet"},
-            "Components 'tc1', 'tc2' and 'tc3' all define component library alias 'foo.libsonnet'",
+            "Components 'tc1', 'tc2', and 'tc3' all define component library alias 'foo.libsonnet'",
         ),
         (
             {"tc2-fake.libsonnet": "tc1.libjsonnet"},
@@ -230,6 +230,7 @@ def test_create_component_library_aliases_multiple_component(
 
     data.register_component(c1)
     data.register_component(c2)
+    data.register_component(c3)
 
     cluster_params = {
         c1.parameters_key: {
@@ -260,7 +261,8 @@ def test_create_component_library_aliases_multiple_component(
     if err:
         with pytest.raises(click.ClickException) as e:
             dependency_mgmt.create_component_library_aliases(data, cluster_params)
-            assert err in str(e)
+
+        assert err in str(e.value)
 
 
 def _setup_mock_inventory(patch_inventory, aliases={}):
@@ -806,4 +808,5 @@ def test_verify_component_version_overrides(cluster_params: Dict, expected: str)
     else:
         with pytest.raises(click.ClickException) as e:
             dependency_mgmt.verify_component_version_overrides(cluster_params)
-            assert expected in e
+
+        assert expected in str(e)
