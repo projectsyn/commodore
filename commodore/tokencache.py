@@ -28,4 +28,4 @@ def get(lieutenant: str) -> Optional[str]:
             cache = json.load(f)
     except (IOError, FileNotFoundError):
         return None
-    return cache[lieutenant]
+    return cache.get(lieutenant)
