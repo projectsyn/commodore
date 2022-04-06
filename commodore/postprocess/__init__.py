@@ -148,8 +148,9 @@ def postprocess_components(
             try:
                 filters.append(Filter.from_dict(config, c, a, fd))
             except (KeyError, ValueError) as e:
+                filtername = fd.get("filter", "<unknown>")
                 click.secho(
-                    f" > Skipping filter '{fd['filter']}' with invalid definition {fd}: {e}",
+                    f" > Skipping filter '{filtername}' with invalid definition {fd}: {e}",
                     fg="yellow",
                 )
 
