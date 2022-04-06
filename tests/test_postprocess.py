@@ -238,6 +238,10 @@ def test_postprocess_components(
             "unknown-type",
             "Filter has unknown type jinja2",
         ),
+        (
+            "no-filter",
+            "Jsonnet filter definition does not exist",
+        ),
     ],
 )
 def test_postprocess_invalid_jsonnet_filter(
@@ -256,6 +260,9 @@ def test_postprocess_invalid_jsonnet_filter(
         filtername = "<unknown>"
     elif error == "unknown-type":
         f["filters"][0]["type"] = "jinja2"
+    elif error == "no-filter":
+        f["filters"][0]["filter"] = "invalid.jsonnet"
+        filtername = "invalid.jsonnet"
     else:
         raise NotImplementedError(f"Unknown test case {error}")
 
