@@ -221,14 +221,6 @@ def render_params(inv: Inventory, cluster: Cluster):
             "customer": {
                 "name": cluster.tenant_id,
             },
-            # Merge component_versions into components in params.cluster for
-            # backwards-compatibility.
-            # We do this here instead of the target to ensure values in
-            # `components` have precedence over values in
-            # `component_versions`.
-            # TODO Remove once the deprecated `component_versions` field is removed
-            "component_versions": {},
-            "components": "${component_versions}",
         },
     }
 
