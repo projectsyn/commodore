@@ -391,3 +391,57 @@ def test_postprocess_jsonnet_list_dir(tmp_path, basename):
         expected = sorted(tmp_path / f for f in files)
 
     assert sorted(result) == sorted(expected)
+
+
+@pytest.mark.parametrize("full_rel", [True, False])
+def test_postprocess_jsonnet_try_path(tmp_path, full_rel):
+    rel = "test.txt"
+    testf = tmp_path / rel
+    if full_rel:
+        rel = str((tmp_path / "test.txt").absolute())
+
+    with open(testf, "w") as fh:
+        fh.write("Test")
+
+    path, contents = jsonnet_pp._try_path(tmp_path, rel)
+
+    assert path == testf.name
+    assert contents == "Test"
+
+
+@pytest.mark.parametrize(
+    "rel,expected",
+    [
+        ("./", "Attempted to import a directory"),
+        ("", "Got invalid filename (empty string)."),
+    ],
+)
+def test_postprocess_jsonnet_try_path_dir(tmp_path, rel, expected):
+    with pytest.raises(RuntimeError) as e:
+        jsonnet_pp._try_path(tmp_path, rel)
+
+    assert expected in str(e.value)
+
+
+@pytest.mark.parametrize("basedir", ["src", "."])
+@pytest.mark.parametrize("floc", ["vendor", "."])
+def test_postprocess_jsonnet_import_cb(tmp_path, basedir, floc):
+    testf = tmp_path / floc / "test.txt"
+    testf.parent.mkdir(exist_ok=True, parents=True)
+    with open(testf, "w") as fh:
+        fh.write(f"Test {testf.parent}")
+
+    # Relative basedir doesn't pick up file in basedir/rel, so we pass the absolute
+    # basedir.
+    bdir = str((tmp_path / basedir).absolute())
+    path, contents = jsonnet_pp._import_cb(tmp_path, bdir, "test.txt")
+
+    assert path == "test.txt"
+    assert contents == f"Test {tmp_path / floc}"
+
+
+def test_postprocess_jsonnet_import_cb_notfound(tmp_path):
+    with pytest.raises(RuntimeError) as e:
+        jsonnet_pp._import_cb(tmp_path, ".", "test.txt")
+
+    assert "File not found" in str(e.value)
