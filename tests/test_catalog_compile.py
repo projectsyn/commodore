@@ -206,18 +206,11 @@ def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
         fcontents = yaml.safe_load(f)
         assert "parameters" in fcontents
         params = fcontents["parameters"]
-        assert all(k in params for k in ["cloud", "cluster", "customer", "facts"])
-        assert "provider" in params["cloud"]
-        assert params["cloud"]["provider"] == cluster_resp["facts"]["cloud"]
-        assert all(
-            k in params["cluster"] for k in ["catalog_url", "dist", "name", "tenant"]
-        )
+        assert all(k in params for k in ["cluster", "facts"])
+        assert all(k in params["cluster"] for k in ["catalog_url", "name", "tenant"])
         assert params["cluster"]["catalog_url"] == cluster_resp["gitRepo"]["url"]
-        assert params["cluster"]["dist"] == cluster_resp["facts"]["distribution"]
         assert params["cluster"]["name"] == cluster_resp["id"]
         assert params["cluster"]["tenant"] == cluster_resp["tenant"]
-        assert "name" in params["customer"]
-        assert params["customer"]["name"] == cluster_resp["tenant"]
         for k, v in params["facts"].items():
             assert v == cluster_resp["facts"][k]
 

@@ -154,18 +154,10 @@ def _prepare_kapitan_inventory(
     yaml_dump(
         {
             "parameters": {
-                "cloud": {
-                    "provider": "${facts:cloud}",
-                    "region": "${facts:region}",
-                },
                 "cluster": {
                     "catalog_url": "ssh://git@git.example.com/org/repo.git",
-                    "dist": "test-distribution",
                     "name": "c-green-test-1234",
                     "tenant": "t-silent-test-1234",
-                },
-                "customer": {
-                    "name": "${cluster:tenant}",
                 },
                 "facts": {
                     "distribution": "test-distribution",
