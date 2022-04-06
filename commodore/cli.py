@@ -17,6 +17,7 @@ from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
 from .inventory.lint_components import lint_components
+from .inventory.lint_deprecated_parameters import lint_deprecated_parameters
 from .login import login
 
 pass_config = click.make_pass_decorator(Config)
@@ -492,6 +493,7 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     for t in target:
         lint_target = Path(t)
         error_counts.append(lint_components(config, lint_target))
+        error_counts.append(lint_deprecated_parameters(config, lint_target))
 
     errors = sum(error_counts)
     exit_status = 0 if errors == 0 else 1
