@@ -12,7 +12,7 @@ from commodore.postprocess import postprocess_components
 from test_component_template import call_component_new
 
 
-def _make_builtin_filter(ns, enabled=None):
+def _make_builtin_filter(ns, enabled=None, create_namespace="false"):
     f = {
         "filters": [
             {
@@ -21,6 +21,7 @@ def _make_builtin_filter(ns, enabled=None):
                 "filter": "helm_namespace",
                 "filterargs": {
                     "namespace": ns,
+                    "create_namespace": create_namespace,
                 },
             }
         ]
@@ -68,16 +69,37 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None):
     return f
 
 
-def _make_ns_filter(tmp_path, ns, enabled=None, jsonnet=False):
+def _make_ns_filter(
+    tmp_path, ns, enabled=None, jsonnet=False, create_namespace="false"
+):
     if jsonnet:
         return _make_jsonnet_filter(tmp_path, ns, enabled=enabled)
 
-    return _make_builtin_filter(ns, enabled=enabled)
+    return _make_builtin_filter(ns, enabled=enabled, create_namespace=create_namespace)
 
 
 def _setup(tmp_path, f, alias="test-component"):
     targetdir = tmp_path / "compiled" / alias / "test"
     os.makedirs(targetdir, exist_ok=True)
+
+    libdir = tmp_path / "vendor" / "lib"
+    os.makedirs(libdir, exist_ok=True)
+
+    with open(libdir / "kube.libjsonnet", "w") as kf:
+        kf.write(
+            dedent(
+                """
+                {
+                    Namespace(name): {
+                        apiVersion: "v1",
+                        kind: "Namespace",
+                        metadata: {
+                            name: name,
+                        },
+                    }
+                }"""
+            )
+        )
 
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
@@ -137,11 +159,29 @@ def _expected_ns(enabled):
 
 @pytest.mark.parametrize("enabled", [None, True, False])
 @pytest.mark.parametrize("alias", ["test-component", "component-alias"])
-@pytest.mark.parametrize("jsonnet", [False, True])
-def test_postprocess_components(tmp_path, capsys, enabled, jsonnet, alias):
+@pytest.mark.parametrize(
+    "jsonnet,create_namespace",
+    [
+        (False, False),
+        (False, True),
+        (False, "false"),
+        (False, "true"),
+        # create_namespace is not relevant for the custom Jsonnet filter
+        (True, "false"),
+    ],
+)
+def test_postprocess_components(
+    tmp_path, capsys, enabled, jsonnet, alias, create_namespace
+):
     call_component_new(tmp_path=tmp_path)
 
-    f = _make_ns_filter(tmp_path, "myns", enabled=enabled, jsonnet=jsonnet)
+    f = _make_ns_filter(
+        tmp_path,
+        "myns",
+        enabled=enabled,
+        jsonnet=jsonnet,
+        create_namespace=create_namespace,
+    )
 
     testf, config, inventory, components = _setup(tmp_path, f, alias=alias)
 
@@ -152,6 +192,25 @@ def test_postprocess_components(tmp_path, capsys, enabled, jsonnet, alias):
     with open(testf) as objf:
         obj = yaml.safe_load(objf)
         assert obj["metadata"]["namespace"] == expected_ns
+
+    create_ns = create_namespace
+    if isinstance(create_ns, str):
+        create_ns = create_ns == "true"
+
+    if create_ns:
+        nsf = testf.parent / "00_namespace.yaml"
+        # Namespace should only be created if filter is enabled. Since filters are
+        # implicitly enabled, enabled=None should cause the namespace to be created too.
+        ns_created = enabled is None or enabled
+        assert nsf.exists() == ns_created
+        if ns_created:
+            with open(nsf) as ns:
+                obj = yaml.safe_load(ns)
+                assert obj == {
+                    "apiVersion": "v1",
+                    "kind": "Namespace",
+                    "metadata": {"name": expected_ns},
+                }
 
     if enabled is not None and not enabled:
         captured = capsys.readouterr()
