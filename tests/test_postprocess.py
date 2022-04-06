@@ -53,7 +53,7 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
                     apiVersion: "v1",
                     kind: "Namespace",
                     metadata: {
-                        "name": "myns",
+                        name: params.namespace,
                     }
                 }
             }
@@ -65,12 +65,14 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
             dedent(
                 """
                 local com = import 'lib/commodore.libjsonnet';
+                local inv = com.inventory();
+                local params = inv.parameters.test_component;
                 local file = std.extVar('output_path') + '/object.yaml';
                 local objs = com.yaml_load_all(file);
                 local stem(elem) =
                     local elems = std.split(elem, '.');
                     std.join('.', elems[:std.length(elems) - 1]);
-                local fixup(objs) = [ obj { metadata+: { namespace: 'myns' }} for obj in objs ];
+                local fixup(objs) = [ obj { metadata+: { namespace: params.namespace }} for obj in objs ];
                 {
                     [stem(file)]: fixup(objs),
                 }
@@ -158,14 +160,14 @@ def _setup(tmp_path, f, alias="test-component"):
     config.register_component_aliases(aliases)
     inventory = {
         alias: {
-            "classes": {
+            "classes": [
                 "defaults.test-component",
                 "global.common",
                 "components.test-component",
-            },
+            ],
             "parameters": {
                 "test_component": {
-                    "namespace": "syn-test-component",
+                    "namespace": "myns",
                 },
                 "commodore": {
                     "postprocess": f,
