@@ -16,8 +16,7 @@ from .component.template import ComponentTemplater
 from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
-from .inventory.lint_components import lint_components
-from .inventory.lint_deprecated_parameters import lint_deprecated_parameters
+from .inventory.lint import LINTERS
 from .login import login
 
 pass_config = click.make_pass_decorator(Config)
@@ -473,12 +472,25 @@ def component_versions(
     short_help="Lint YAML files for Commodore inventory structures in the provided paths",
     no_args_is_help=True,
 )
+@click.option(
+    "-l",
+    "--linter",
+    help="Which linters to enable. Can be repeated.",
+    type=click.Choice(
+        list(LINTERS.keys()),
+        case_sensitive=False,
+    ),
+    multiple=True,
+    default=tuple(LINTERS.keys()),
+)
 @click.argument(
     "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
 )
 @verbosity
 @pass_config
-def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
+def inventory_lint(
+    config: Config, verbose: int, target: Tuple[str], linter: Tuple[str]
+):
     """Lint YAML files in the provided paths.
 
     The command assumes that any YAML file found in the provided paths is part of a
@@ -492,8 +504,8 @@ def inventory_lint(config: Config, verbose: int, target: Tuple[str]):
     error_counts = []
     for t in target:
         lint_target = Path(t)
-        error_counts.append(lint_components(config, lint_target))
-        error_counts.append(lint_deprecated_parameters(config, lint_target))
+        for lint in linter:
+            error_counts.append(LINTERS[lint](config, lint_target))
 
     errors = sum(error_counts)
     exit_status = 0 if errors == 0 else 1

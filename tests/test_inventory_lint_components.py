@@ -8,6 +8,7 @@ import pytest
 from commodore.config import Config
 from commodore.helpers import yaml_dump, yaml_dump_all
 from commodore.inventory import lint_components
+from commodore.inventory import lint
 
 
 @pytest.fixture
@@ -104,7 +105,7 @@ def test_lint_component_versions(
 ):
     p = tmp_path / "test.yml"
 
-    ec = lint_components._lint_component_versions(p, filecontents)
+    ec = lint_components.lint_component_versions(p, filecontents)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -117,7 +118,7 @@ def test_lint_valid_file(
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
 
-    ec = lint_components.lint_components(config, testf)
+    ec = lint.ComponentVersionLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -130,7 +131,7 @@ def test_lint_valid_file_stream(
     testf = tmp_path / "test.yml"
     yaml_dump_all([filecontents], testf)
 
-    ec = lint_components.lint_components(config, testf)
+    ec = lint.ComponentVersionLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -158,7 +159,7 @@ def test_lint_skip_file(
     testf = tmp_path / "test.yml"
     _dump_skip_file(filecontents, testf)
 
-    ec = lint_components.lint_components(config, testf)
+    ec = lint.ComponentVersionLinter()(config, testf)
 
     captured = capsys.readouterr()
     stdout: str = captured.out
@@ -206,7 +207,7 @@ def _setup_directory(tmp_path: Path):
 def test_lint_directory(tmp_path: Path, capsys, config: Config):
     expected_errcount = _setup_directory(tmp_path)
 
-    ec = lint_components.lint_components(config, tmp_path)
+    ec = lint.ComponentVersionLinter()(config, tmp_path)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -232,7 +233,7 @@ def test_lint_components_file(tmp_path: Path, config: Config, capsys):
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
 
-    ec = lint_components.lint_components(config, testf)
+    ec = lint.ComponentVersionLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -241,7 +242,7 @@ def test_lint_components_file(tmp_path: Path, config: Config, capsys):
 def test_lint_components_directory(tmp_path: Path, config: Config, capsys):
     expected_errcount = _setup_directory(tmp_path)
 
-    ec = lint_components.lint_components(config, tmp_path)
+    ec = lint.ComponentVersionLinter()(config, tmp_path)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)

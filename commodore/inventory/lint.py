@@ -1,3 +1,4 @@
+import abc
 from pathlib import Path
 from typing import Any, Dict
 from typing_extensions import Protocol
@@ -9,9 +10,35 @@ from commodore.config import Config
 from commodore.helpers import yaml_load_all
 
 
+from .lint_components import lint_component_versions
+from .lint_deprecated_parameters import lint_deprecated_parameters
+
+
 class LintFunc(Protocol):
     def __call__(self, file: Path, filecontents: Dict[str, Any]) -> int:
         ...
+
+
+class Linter:
+    @abc.abstractmethod
+    def __call__(self, config: Config, path: Path) -> int:
+        ...
+
+
+class ComponentVersionLinter(Linter):
+    def __call__(self, config: Config, path: Path) -> int:
+        return run_linter(config, path, lint_component_versions)
+
+
+class DeprecatedParameterLinter(Linter):
+    def __call__(self, config: Config, path: Path) -> int:
+        return run_linter(config, path, lint_deprecated_parameters)
+
+
+LINTERS = {
+    "component-versions": ComponentVersionLinter(),
+    "deprecated-parameters": DeprecatedParameterLinter(),
+}
 
 
 def _lint_file(cfg: Config, file: Path, lintfunc: LintFunc) -> int:

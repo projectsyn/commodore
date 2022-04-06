@@ -3,10 +3,6 @@ from typing import Any, Dict, List
 
 import click
 
-from commodore.config import Config
-
-from .lint import run_linter
-
 DEPRECATED_PARAMS = [
     "${customer:name}",
     "${cloud:provider}",
@@ -59,10 +55,6 @@ def _lint_dict(file: Path, prefix: str, data: Dict[str, Any]) -> int:
     return errcount
 
 
-def _lint_deprecated_params(file: Path, filecontents: Dict[str, Any]) -> int:
+def lint_deprecated_parameters(file: Path, filecontents: Dict[str, Any]) -> int:
     prefix = ""
     return _lint_dict(file, prefix, filecontents)
-
-
-def lint_deprecated_parameters(cfg: Config, path: Path) -> int:
-    return run_linter(cfg, path, _lint_deprecated_params)
