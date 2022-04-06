@@ -117,7 +117,7 @@ def test_lint_valid_file(
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
 
-    ec = lint_components._lint_file(config, testf)
+    ec = lint_components.lint_components(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -130,7 +130,7 @@ def test_lint_valid_file_stream(
     testf = tmp_path / "test.yml"
     yaml_dump_all([filecontents], testf)
 
-    ec = lint_components._lint_file(config, testf)
+    ec = lint_components.lint_components(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -158,7 +158,7 @@ def test_lint_skip_file(
     testf = tmp_path / "test.yml"
     _dump_skip_file(filecontents, testf)
 
-    ec = lint_components._lint_file(config, testf)
+    ec = lint_components.lint_components(config, testf)
 
     captured = capsys.readouterr()
     stdout: str = captured.out
@@ -206,7 +206,7 @@ def _setup_directory(tmp_path: Path):
 def test_lint_directory(tmp_path: Path, capsys, config: Config):
     expected_errcount = _setup_directory(tmp_path)
 
-    ec = lint_components._lint_directory(config, tmp_path)
+    ec = lint_components.lint_components(config, tmp_path)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
