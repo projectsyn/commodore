@@ -44,7 +44,7 @@ The key `parameters.components` holds a dictionary of dictionaries mapping compo
 The remote repository location is specified in key `url`.
 The version is specified in key `version`.
 The version can be any Git https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddeftree-ishatree-ishalsotreeish[tree-ish].
-If no version is given for a component, Commodore defaults to the remote repository's default branch for the version.
+Commodore will exit with an error, if no version is given for a component.
 Commodore fetches the remote repository and directly checks out the specified version.
 
 [source,yaml]

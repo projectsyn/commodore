@@ -265,7 +265,7 @@ def test_create_component_library_aliases_multiple_component(
         assert err in str(e.value)
 
 
-def _setup_mock_inventory(patch_inventory, aliases={}):
+def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
     components = {
         "test-component": {
             "url": "https://github.com/projectsyn/component-test-component.git",
@@ -273,12 +273,16 @@ def _setup_mock_inventory(patch_inventory, aliases={}):
         },
         "other-component": {
             "url": "ssh://git@git.acme.com/some/component.git",
+            "version": "v1.0.0",
         },
         "third-component": {
             "url": "https://github.com/projectsyn/component-third-component.git",
             "version": "feat/test",
         },
     }
+    if omit_version:
+        del components["other-component"]["version"]
+
     assert set(aliases.keys()) <= set(components.keys())
     applications = list(components.keys())
     for c, a in aliases.items():
@@ -334,23 +338,17 @@ def test_read_components_multiple(patch_inventory, data: Config):
 
 
 @patch("commodore.dependency_mgmt.kapitan_inventory")
-def test_read_components_deprecation(
+def test_read_components_exception(
     patch_inventory, data: Config, tmp_path: Path, capsys
 ):
-    components = _setup_mock_inventory(patch_inventory)
+    components = _setup_mock_inventory(patch_inventory, omit_version=True)
 
-    _ = dependency_mgmt._read_components(data, components.keys())
+    with pytest.raises(click.ClickException) as e:
+        _ = dependency_mgmt._read_components(data, components.keys())
 
-    data.print_deprecation_notices()
-    captured = capsys.readouterr()
-
-    # We split and join captured.out to revert the formatting done by
-    # print_deprecation_notices().
-    assert (
-        "Component other-component doesn't have a version specified. "
-        + "See https://syn.tools/commodore/reference/deprecation-notices.html"
-        + "#_components_without_versions for more details."
-    ) in " ".join(captured.out.split())
+    assert "Component 'other-component' doesn't have a version specified" in str(
+        e.value
+    )
 
 
 @pytest.mark.parametrize(
