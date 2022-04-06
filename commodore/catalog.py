@@ -136,8 +136,10 @@ def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
 
     # Ignore context and metadata lines:
     if (
-        line_a.startswith(" ")
-        or line_b.startswith(" ")
+        # We don't use line_a/line_b here, as it's possible that the leading space of a
+        # context line gets stripped if the line is empty.
+        win[0].startswith(" ")
+        or win[1].startswith(" ")
         or line_a.startswith("@@")
         or line_b.startswith("@@")
     ):
@@ -147,7 +149,7 @@ def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
     # by a stream separator anymore
     if line_a == "-null" and line_b in ("----", "---- null"):
         return False
-    if line_a == "---- null" and line_b == "----":
+    if line_a == "---- null" and line_b in ("----", "---- null"):
         return False
 
     # Ignore changes which are only about Tiller -> Helm as object manager

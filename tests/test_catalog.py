@@ -339,3 +339,93 @@ def test_update_catalog(
     assert (" > Changes:\n" + expected_diff) in captured.out
     assert "Commiting changes..." in captured.out
     assert "Pushing catalog to remote..." in captured.out
+
+
+def test_kapitan_029_030_difffunc_sorts_by_k8s_kind():
+    before_text = yaml.safe_dump_all(
+        [
+            {"kind": "AAA", "metadata": {"namespace": "test"}},
+            {"kind": "VVV"},
+            {"kind": "AAA", "metadata": {"namespace": "foo"}},
+            {"kind": "BBB"},
+        ]
+    )
+    after_text = yaml.safe_dump_all(
+        [
+            {"kind": "AAA", "metadata": {"namespace": "test"}, "spec": {"data": ["a"]}},
+            {"kind": "BBB"},
+            {"kind": "AAA", "metadata": {"namespace": "foo"}},
+            {"kind": "VVV"},
+        ]
+    )
+
+    diffs, suppressed = catalog._kapitan_029_030_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    expected_diff = (
+        "--- test\n"
+        + "+++ test\n"
+        + "@@ -5,6 +5,9 @@\n"
+        + " kind: AAA\n"
+        + " metadata:\n"
+        + "   namespace: test\n"
+        + "+spec:\n"
+        + "+  data:\n"
+        + "+  - a\n"
+        + " ---\n"
+        + " kind: BBB\n"
+        + " ---"
+    )
+
+    assert not suppressed
+    assert "\n".join(diffs) == expected_diff
+
+
+def test_kapitan_029_030_difffunc_suppresses_noise():
+    before_text = yaml.safe_dump_all(
+        [
+            None,
+            None,
+            {
+                "kind": "AAA",
+                "metadata": {
+                    "labels": {"app.kubernetes.io/managed-by": "Tiller"},
+                },
+            },
+            {
+                "kind": "BBB",
+                "metadata": {
+                    "labels": {"app.kubernetes.io/managed-by": "Tiller"},
+                },
+            },
+            None,
+            {"kind": "VVV", "metadata": {"labels": {"heritage": "Tiller"}}},
+            None,
+        ]
+    )
+    after_text = yaml.safe_dump_all(
+        [
+            {
+                "kind": "AAA",
+                "metadata": {
+                    "labels": {"app.kubernetes.io/managed-by": "Helm"},
+                },
+            },
+            {
+                "kind": "BBB",
+                "metadata": {
+                    "labels": {"app.kubernetes.io/managed-by": "Helm"},
+                },
+            },
+            {"kind": "VVV", "metadata": {"labels": {"heritage": "Helm"}}},
+        ]
+    )
+
+    diffs, suppressed = catalog._kapitan_029_030_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    print("\n".join(diffs))
+
+    assert suppressed
