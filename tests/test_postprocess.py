@@ -156,3 +156,51 @@ def test_postprocess_components(tmp_path, capsys, enabled, jsonnet, alias):
     if enabled is not None and not enabled:
         captured = capsys.readouterr()
         assert "Skipping disabled filter" in captured.out
+
+
+@pytest.mark.parametrize(
+    "error,expected",
+    [
+        (
+            "enabled-not-bool",
+            "Filter key 'enabled' is not a boolean",
+        ),
+        (
+            "missing-key-type",
+            "\"Filter is missing required key(s) {'type'}\"",
+        ),
+        (
+            "missing-key-filter",
+            "\"Filter is missing required key(s) {'filter'}\"",
+        ),
+        (
+            "unknown-type",
+            "Filter has unknown type jinja2",
+        ),
+    ],
+)
+def test_postprocess_invalid_filter(capsys, tmp_path, error: str, expected: str):
+    call_component_new(tmp_path=tmp_path)
+
+    f = _make_jsonnet_filter(tmp_path, "override", enabled=True)
+    filtername = f["filters"][0]["filter"]
+    if error == "enabled-not-bool":
+        f["filters"][0]["enabled"] = "true"
+    elif error == "missing-key-type":
+        del f["filters"][0]["type"]
+    elif error == "missing-key-filter":
+        del f["filters"][0]["filter"]
+        filtername = "<unknown>"
+    elif error == "unknown-type":
+        f["filters"][0]["type"] = "jinja2"
+    else:
+        raise NotImplementedError(f"Unknown test case {error}")
+
+    testf, config, inventory, components = _setup(tmp_path, f)
+
+    postprocess_components(config, inventory, components)
+
+    assert testf.exists()
+    captured = capsys.readouterr()
+    msg = f"Skipping filter '{filtername}' with invalid definition {f['filters'][0]}: {expected}"
+    assert msg in captured.out
