@@ -33,17 +33,35 @@ def _make_builtin_filter(ns, enabled=None, create_namespace="false"):
     return f
 
 
-def _make_jsonnet_filter(tmp_path, ns, enabled=None):
+def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
     filter_file = (
         tmp_path / "dependencies" / "test-component" / "postprocess" / "filter.jsonnet"
     )
     os.makedirs(filter_file.parent)
+    assert isinstance(create_namespace, bool)
+
+    create_ns_jsonnet = ""
+    if create_namespace:
+        create_ns_jsonnet = dedent(
+            """
+            {
+                "00_namespace": {
+                    apiVersion: "v1",
+                    kind: "Namespace",
+                    metadata: {
+                        "name": "myns",
+                    }
+                }
+            }
+            """
+        )
+
     with open(filter_file, "w") as ff:
         ff.write(
             dedent(
                 """
                 local com = import 'lib/commodore.libjsonnet';
-                local file = std.extVar('output_path');
+                local file = std.extVar('output_path') + '/object.yaml';
                 local objs = com.yaml_load_all(file);
                 local stem(elem) =
                     local elems = std.split(elem, '.');
@@ -53,13 +71,14 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None):
                     [stem(file)]: fixup(objs),
                 }
                 """
+                + create_ns_jsonnet
             )
         )
 
     f = {
         "filters": [
             {
-                "path": "test/object.yaml",
+                "path": "test",
                 "type": "jsonnet",
                 "filter": "postprocess/filter.jsonnet",
             }
@@ -75,7 +94,9 @@ def _make_ns_filter(
     tmp_path, ns, enabled=None, jsonnet=False, create_namespace="false"
 ):
     if jsonnet:
-        return _make_jsonnet_filter(tmp_path, ns, enabled=enabled)
+        return _make_jsonnet_filter(
+            tmp_path, ns, enabled=enabled, create_namespace=create_namespace
+        )
 
     return _make_builtin_filter(ns, enabled=enabled, create_namespace=create_namespace)
 
@@ -168,8 +189,10 @@ def _expected_ns(enabled):
         (False, True),
         (False, "false"),
         (False, "true"),
-        # create_namespace is not relevant for the custom Jsonnet filter
-        (True, "false"),
+        # We don't need to test the bool->str conversion of arguments for the custom
+        # Jsonnet filter.
+        (True, False),
+        (True, True),
     ],
 )
 def test_postprocess_components(
@@ -249,7 +272,7 @@ def test_postprocess_invalid_jsonnet_filter(
 ):
     call_component_new(tmp_path=tmp_path)
 
-    f = _make_jsonnet_filter(tmp_path, "override", enabled=True)
+    f = _make_jsonnet_filter(tmp_path, "override")
     filtername = f["filters"][0]["filter"]
     if error == "enabled-not-bool":
         f["filters"][0]["enabled"] = "true"
