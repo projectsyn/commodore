@@ -73,7 +73,7 @@ inject-version:
 
 .PHONY: test_integration
 test_integration:
-	poetry run pytest -m integration
+	poetry run pytest -m integration -n auto
 
 .PHONY: test_coverage
 test_coverage:
