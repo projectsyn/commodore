@@ -19,14 +19,17 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.7, <3.11"
 kapitan = "0.30.0"
-click = "*"
-cookiecutter = "*"
-gitpython = "*"
-requests = "*"
-url-normalize = "*"
-python-dotenv = "*"
-importlib_metadata = "*"
-typing-extensions = "^3.7.4"
+click = "^8.1.2"
+cookiecutter = "^1.7.3"
+# Kapitan requires exactly 3.1.24
+gitpython = "3.1.24"
+# Kapitan requires exactly 2.26.0
+requests = "2.26.0"
+url-normalize = "^1.4.3"
+python-dotenv = "^0.20.0"
+importlib-metadata = "^4.11.3"
+# Kapitan requires exactly 3.10.0.0
+typing-extensions = "3.10.0.0"
 pyxdg = "^0.27"
 
 [tool.poetry.dev-dependencies]
