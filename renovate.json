@@ -7,6 +7,12 @@
   "python": {
     "enabled": false
   },
+  "poetry": {
+    "enabled": true
+  },
+  "lockfileMaintenance": {
+    "enabled": true
+  },
   "labels": [
     "dependency"
   ]
