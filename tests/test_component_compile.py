@@ -71,7 +71,7 @@ def _make_instance_aware(tmp_path, component_name="test-component"):
     with open(component_defaults, "r") as file:
         file_contents = yaml.safe_load(file)
 
-    file_contents["parameters"][component_parameters_key(component_name)][
+    file_contents["parameters"][component_parameters_key(component_name)]["=_metadata"][
         "multi_instance"
     ] = True
 
