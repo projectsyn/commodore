@@ -10,7 +10,11 @@ from textwrap import dedent
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.postprocess import postprocess_components, builtin_filters
+from commodore.postprocess import (
+    postprocess_components,
+    builtin_filters,
+    jsonnet as jsonnet_pp,
+)
 from test_component_template import call_component_new
 
 
@@ -33,33 +37,54 @@ def _make_builtin_filter(ns, enabled=None, create_namespace="false"):
     return f
 
 
-def _make_jsonnet_filter(tmp_path, ns, enabled=None):
+def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
     filter_file = (
         tmp_path / "dependencies" / "test-component" / "postprocess" / "filter.jsonnet"
     )
     os.makedirs(filter_file.parent)
+    assert isinstance(create_namespace, bool)
+
+    create_ns_jsonnet = ""
+    if create_namespace:
+        create_ns_jsonnet = dedent(
+            """
+            {
+                "00_namespace": {
+                    apiVersion: "v1",
+                    kind: "Namespace",
+                    metadata: {
+                        name: params.namespace,
+                    }
+                }
+            }
+            """
+        )
+
     with open(filter_file, "w") as ff:
         ff.write(
             dedent(
                 """
                 local com = import 'lib/commodore.libjsonnet';
-                local file = std.extVar('output_path');
+                local inv = com.inventory();
+                local params = inv.parameters.test_component;
+                local file = std.extVar('output_path') + '/object.yaml';
                 local objs = com.yaml_load_all(file);
                 local stem(elem) =
                     local elems = std.split(elem, '.');
                     std.join('.', elems[:std.length(elems) - 1]);
-                local fixup(objs) = [ obj { metadata+: { namespace: 'myns' }} for obj in objs ];
+                local fixup(objs) = [ obj { metadata+: { namespace: params.namespace }} for obj in objs ];
                 {
                     [stem(file)]: fixup(objs),
                 }
                 """
+                + create_ns_jsonnet
             )
         )
 
     f = {
         "filters": [
             {
-                "path": "test/object.yaml",
+                "path": "test",
                 "type": "jsonnet",
                 "filter": "postprocess/filter.jsonnet",
             }
@@ -75,7 +100,9 @@ def _make_ns_filter(
     tmp_path, ns, enabled=None, jsonnet=False, create_namespace="false"
 ):
     if jsonnet:
-        return _make_jsonnet_filter(tmp_path, ns, enabled=enabled)
+        return _make_jsonnet_filter(
+            tmp_path, ns, enabled=enabled, create_namespace=create_namespace
+        )
 
     return _make_builtin_filter(ns, enabled=enabled, create_namespace=create_namespace)
 
@@ -133,14 +160,14 @@ def _setup(tmp_path, f, alias="test-component"):
     config.register_component_aliases(aliases)
     inventory = {
         alias: {
-            "classes": {
+            "classes": [
                 "defaults.test-component",
                 "global.common",
                 "components.test-component",
-            },
+            ],
             "parameters": {
                 "test_component": {
-                    "namespace": "syn-test-component",
+                    "namespace": "myns",
                 },
                 "commodore": {
                     "postprocess": f,
@@ -168,8 +195,10 @@ def _expected_ns(enabled):
         (False, True),
         (False, "false"),
         (False, "true"),
-        # create_namespace is not relevant for the custom Jsonnet filter
-        (True, "false"),
+        # We don't need to test the bool->str conversion of arguments for the custom
+        # Jsonnet filter.
+        (True, False),
+        (True, True),
     ],
 )
 def test_postprocess_components(
@@ -238,6 +267,10 @@ def test_postprocess_components(
             "unknown-type",
             "Filter has unknown type jinja2",
         ),
+        (
+            "no-filter",
+            "Jsonnet filter definition does not exist",
+        ),
     ],
 )
 def test_postprocess_invalid_jsonnet_filter(
@@ -245,7 +278,7 @@ def test_postprocess_invalid_jsonnet_filter(
 ):
     call_component_new(tmp_path=tmp_path)
 
-    f = _make_jsonnet_filter(tmp_path, "override", enabled=True)
+    f = _make_jsonnet_filter(tmp_path, "override")
     filtername = f["filters"][0]["filter"]
     if error == "enabled-not-bool":
         f["filters"][0]["enabled"] = "true"
@@ -256,6 +289,9 @@ def test_postprocess_invalid_jsonnet_filter(
         filtername = "<unknown>"
     elif error == "unknown-type":
         f["filters"][0]["type"] = "jinja2"
+    elif error == "no-filter":
+        f["filters"][0]["filter"] = "invalid.jsonnet"
+        filtername = "invalid.jsonnet"
     else:
         raise NotImplementedError(f"Unknown test case {error}")
 
@@ -339,3 +375,73 @@ def test_postprocess_run_builtin_filter_raises_exception(tmp_path):
         builtin_filters.run_builtin_filter(
             config, {}, {}, "my-component", "foo_filter", tmp_path
         )
+
+
+@pytest.mark.parametrize("basename", [True, False])
+def test_postprocess_jsonnet_list_dir(tmp_path, basename):
+    files = ["1.txt", "2.txt", "3.txt"]
+    for f in files:
+        (tmp_path / f).touch()
+
+    result = jsonnet_pp._list_dir(tmp_path, basename=basename)
+
+    if basename:
+        expected = files
+    else:
+        expected = sorted(tmp_path / f for f in files)
+
+    assert sorted(result) == sorted(expected)
+
+
+@pytest.mark.parametrize("full_rel", [True, False])
+def test_postprocess_jsonnet_try_path(tmp_path, full_rel):
+    rel = "test.txt"
+    testf = tmp_path / rel
+    if full_rel:
+        rel = str((tmp_path / "test.txt").absolute())
+
+    with open(testf, "w") as fh:
+        fh.write("Test")
+
+    path, contents = jsonnet_pp._try_path(tmp_path, rel)
+
+    assert path == testf.name
+    assert contents == "Test"
+
+
+@pytest.mark.parametrize(
+    "rel,expected",
+    [
+        ("./", "Attempted to import a directory"),
+        ("", "Got invalid filename (empty string)."),
+    ],
+)
+def test_postprocess_jsonnet_try_path_dir(tmp_path, rel, expected):
+    with pytest.raises(RuntimeError) as e:
+        jsonnet_pp._try_path(tmp_path, rel)
+
+    assert expected in str(e.value)
+
+
+@pytest.mark.parametrize("basedir", ["src", "."])
+@pytest.mark.parametrize("floc", ["vendor", "."])
+def test_postprocess_jsonnet_import_cb(tmp_path, basedir, floc):
+    testf = tmp_path / floc / "test.txt"
+    testf.parent.mkdir(exist_ok=True, parents=True)
+    with open(testf, "w") as fh:
+        fh.write(f"Test {testf.parent}")
+
+    # Relative basedir doesn't pick up file in basedir/rel, so we pass the absolute
+    # basedir.
+    bdir = str((tmp_path / basedir).absolute())
+    path, contents = jsonnet_pp._import_cb(tmp_path, bdir, "test.txt")
+
+    assert path == "test.txt"
+    assert contents == f"Test {tmp_path / floc}"
+
+
+def test_postprocess_jsonnet_import_cb_notfound(tmp_path):
+    with pytest.raises(RuntimeError) as e:
+        jsonnet_pp._import_cb(tmp_path, ".", "test.txt")
+
+    assert "File not found" in str(e.value)
