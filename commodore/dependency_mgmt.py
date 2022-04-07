@@ -11,16 +11,11 @@ from .component import Component, component_dir
 from .helpers import relsymlink, kapitan_inventory
 
 
-def validate_component_library_name(cfg: Config, cname: str, lib: P) -> P:
+def validate_component_library_name(cname: str, lib: P) -> P:
     if not lib.stem.startswith(cname):
-        deprecation_notice_url = (
-            "https://syn.tools/commodore/reference/"
-            + "deprecation-notices.html#_component_lib_naming"
-        )
-        cfg.register_deprecation_notice(
-            f"Component '{cname}' uses component library name {lib.name} "
-            + "which isn't prefixed with the component's name. "
-            + f"See {deprecation_notice_url} for more details."
+        raise click.ClickException(
+            f"Component '{cname}' uses invalid component library name '{lib.name}'. "
+            + "Consider using a library alias."
         )
 
     return lib
@@ -98,7 +93,7 @@ def create_component_symlinks(cfg, component: Component):
         if cfg.debug:
             click.echo(f"     > installing template library: {file}")
         relsymlink(
-            validate_component_library_name(cfg, component.name, file),
+            validate_component_library_name(component.name, file),
             cfg.inventory.lib_dir,
         )
 
