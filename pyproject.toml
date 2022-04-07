@@ -32,14 +32,14 @@ pyxdg = "^0.27"
 [tool.poetry.dev-dependencies]
 tox = "*"
 autopep8 = "*"
-pytest = "^5.4.3"
-pytest-xdist = "^1.32.0"
-pytest-benchmark = "^3.2.3"
-responses = "^0.16.0"
-black = "^22.1.0"
+pytest = "^7.1.1"
+pytest-xdist = "^2.5.0"
+pytest-benchmark = "^3.4.1"
+responses = "^0.20.0"
+black = "^22.3.0"
 pyfakefs = "^4.5.6"
 pytest-cov = "^3.0.0"
-pylint = "^2.13.4"
+pylint = "^2.13.5"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
