@@ -1,3 +1,4 @@
+---
 :global:
   componentName: {{ cookiecutter.name }}
   feature_goldenTests: {% if cookiecutter.add_golden == "y" %}true{% else %}false{% endif %}

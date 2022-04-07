@@ -1,3 +1,4 @@
+---
 parameters:
   global:
     http_proxy: http://proxy.example.com:8000/

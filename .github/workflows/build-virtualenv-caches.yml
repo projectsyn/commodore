@@ -1,13 +1,14 @@
+---
 name: Build virtualenv caches
 on:
   push:
     branches:
-    - master
+      - master
   # Verify & rebuild caches every Monday at 04:00
   # This should mostly ensure that the caches aren't evicted after 7 days of
   # inactivity
   schedule:
-    - cron: '0 4 * * MON'
+    - cron: "0 4 * * MON"
 
 jobs:
   build-lint-virtualenvs:
@@ -21,94 +22,94 @@ jobs:
           - mypy
           - black
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Build virtualenv for ${{ matrix.command }}
-      run: make lintenv_${{ matrix.command }}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Build virtualenv for ${{ matrix.command }}
+        run: make lintenv_${{ matrix.command }}
   build-test-virtualenvs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - '3.7'
-          - '3.8'
-          - '3.9.7'
-          - '3.9'
-          - '3.10'
+          - "3.7"
+          - "3.8"
+          - "3.9.7"
+          - "3.9"
+          - "3.10"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Extract Python minor version from matrix python-version
-      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
-    - run: |
-        make testenv_py${PYVER}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Extract Python minor version from matrix python-version
+        run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+      - run: |
+          make testenv_py${PYVER}
 
   build-bench-virtualenvs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Extract Python minor version from matrix python-version
-      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
-    - run: |
-        make benchenv_py${PYVER}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Extract Python minor version from matrix python-version
+        run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+      - run: |
+          make benchenv_py${PYVER}
 
   build_poetry_virtualenv:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-    - name: Install Poetry and setup Poetry virtualenv
-      run: |
-        poetry env use python3.9
-        poetry install
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - name: Install Poetry and setup Poetry virtualenv
+        run: |
+          poetry env use python3.9
+          poetry install

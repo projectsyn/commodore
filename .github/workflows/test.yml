@@ -1,8 +1,9 @@
+---
 name: Pull Request
 on:
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
   lints:
@@ -16,151 +17,151 @@ jobs:
           - mypy
           - black
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Run ${{ matrix.command }}
-      run: make lint_${{ matrix.command }}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-lint-${{ matrix.command }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Run ${{ matrix.command }}
+        run: make lint_${{ matrix.command }}
   editorconfig:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: snow-actions/eclint@v1.0.1
-      with:
-        args: 'check'
+      - uses: actions/checkout@v3
+      - uses: snow-actions/eclint@v1.0.1
+        with:
+          args: "check"
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - '3.7'
-          - '3.8'
-          - '3.9.7'
-          - '3.9'
-          - '3.10'
+          - "3.7"
+          - "3.8"
+          - "3.9.7"
+          - "3.9"
+          - "3.10"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Install jsonnet-bundler
-      run: |
-        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
-          && chmod +x /opt/bin/jb
-    - name: Update PATH
-      run: echo "/opt/bin" >> $GITHUB_PATH
-    - name: Extract Python minor version from matrix python-version
-      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
-    - name: Run tests on Python ${{ matrix.python-version }}
-      run: make test_py${PYVER}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Install jsonnet-bundler
+        run: |
+          mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+            https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+            && chmod +x /opt/bin/jb
+      - name: Update PATH
+        run: echo "/opt/bin" >> $GITHUB_PATH
+      - name: Extract Python minor version from matrix python-version
+        run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+      - name: Run tests on Python ${{ matrix.python-version }}
+        run: make test_py${PYVER}
   benchs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v7
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v3
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - name: Install jsonnet-bundler
-      run: |
-        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
-          && chmod +x /opt/bin/jb
-    - name: Update PATH
-      run: echo "/opt/bin" >> $GITHUB_PATH
-    - name: Extract Python minor version from matrix python-version
-      run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
-    - name: Run benchmarks on Python ${{ matrix.python-version }}
-      run: make bench_py${PYVER}
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: Gr1N/setup-poetry@v7
+      - name: Install tox
+        run: |
+          pip install tox
+      - uses: actions/cache@v3
+        with:
+          path: |
+            .tox
+            ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+      - name: Install jsonnet-bundler
+        run: |
+          mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+            https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+            && chmod +x /opt/bin/jb
+      - name: Update PATH
+        run: echo "/opt/bin" >> $GITHUB_PATH
+      - name: Extract Python minor version from matrix python-version
+        run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
+      - name: Run benchmarks on Python ${{ matrix.python-version }}
+        run: make bench_py${PYVER}
   integration:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - uses: actions/cache@v3
-      with:
-        path: ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-    - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
-      run: |
-        poetry env use python3.9
-        poetry install
-    - name: Install jsonnet-bundler
-      run: |
-        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
-          && chmod +x /opt/bin/jb
-    - name: Update PATH
-      run: echo "/opt/bin" >> $GITHUB_PATH
-    - name: Pull in SSH deploy key for integration tests
-      env:
-        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      run: |
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - uses: Gr1N/setup-poetry@v7
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
+        run: |
+          poetry env use python3.9
+          poetry install
+      - name: Install jsonnet-bundler
+        run: |
+          mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+            https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+            && chmod +x /opt/bin/jb
+      - name: Update PATH
+        run: echo "/opt/bin" >> $GITHUB_PATH
+      - name: Pull in SSH deploy key for integration tests
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
           mkdir -p ~/.ssh
           echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> ~/.ssh/known_hosts
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< "${{ secrets.CATALOG_DEPLOY_KEY }}"
-    - name: Run catalog compile integration test
-      run: make test_integration
-      env:
-        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Run catalog compile integration test
+        run: make test_integration
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Check Docs
-      run: make docs-vale
+      - uses: actions/checkout@v3
+      - name: Check Docs
+        run: make docs-vale
   build:
     needs:
-    - lints
-    - tests
+      - lints
+      - tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: "0"
-    - name: Build image
-      run: make docker
-    - name: Run image
-      run: docker run docker.io/projectsyn/commodore:test
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: "0"
+      - name: Build image
+        run: make docker
+      - name: Run image
+        run: docker run docker.io/projectsyn/commodore:test

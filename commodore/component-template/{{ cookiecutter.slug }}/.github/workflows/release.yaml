@@ -1,4 +1,5 @@
 {%- raw -%}
+---
 name: Release
 on:
   push:

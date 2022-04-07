@@ -1,6 +1,7 @@
+---
 name: commodore
 title: "Project Syn: Commodore"
 version: master
 start_page: ROOT:index.adoc
 nav:
-- modules/ROOT/nav.adoc
+  - modules/ROOT/nav.adoc

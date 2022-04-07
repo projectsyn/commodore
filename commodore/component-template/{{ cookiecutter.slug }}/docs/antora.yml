@@ -1,3 +1,4 @@
+---
 name: {{ cookiecutter.slug }}
 title: {{ cookiecutter.name }}
 version: master
