@@ -497,10 +497,6 @@ def inventory_lint(
     Commodore inventory structure."""
     config.update_verbosity(verbose)
 
-    if len(target) == 0:
-        click.secho("> No files provided, exiting...", fg="yellow")
-        sys.exit(2)
-
     error_counts = []
     for t in target:
         lint_target = Path(t)
