@@ -10,7 +10,7 @@
   "poetry": {
     "enabled": true
   },
-  "lockfileMaintenance": {
+  "lockFileMaintenance": {
     "enabled": true
   },
   "labels": [
