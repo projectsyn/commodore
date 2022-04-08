@@ -1,6 +1,8 @@
+import click
 import pytest
 
 from pathlib import Path as P
+from typing import Dict
 from unittest.mock import patch
 
 from commodore import compile
@@ -112,3 +114,51 @@ def test_fetch_customer_config(tmp_path: P, config, revision, override_revision)
     repo = config.get_configs()["customer"]
 
     assert_result(cluster, repo, cluster.config_repo_url, revision, override_revision)
+
+
+@pytest.mark.parametrize(
+    "cluster_params,raises",
+    [
+        ({}, False),
+        (
+            {
+                "components": {
+                    "tc1": {
+                        "url": "https://example.com/tc1.git",
+                        "version": "1",
+                    }
+                },
+                "component_versions": {},
+            },
+            False,
+        ),
+        (
+            {
+                "components": {
+                    "tc1": {
+                        "url": "https://example.com/tc1.git",
+                        "version": "1",
+                    }
+                },
+                "component_versions": {
+                    "tc1": {
+                        "version": "2",
+                    }
+                },
+            },
+            True,
+        ),
+    ],
+)
+def test_check_parameters_component_versions(cluster_params: Dict, raises: bool):
+    if raises:
+        with pytest.raises(click.ClickException) as e:
+            compile.check_parameters_component_versions(cluster_params)
+
+        assert (
+            "Specifying component versions in parameter `component_versions` is no longer suppported."
+            in str(e.value)
+        )
+
+    else:
+        compile.check_parameters_component_versions(cluster_params)
