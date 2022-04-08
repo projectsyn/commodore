@@ -127,3 +127,26 @@ def test_inventory_lint_cli(
 
     assert result.exit_code == exitcode
     assert all(line.format(tmp_path) in result.stdout for line in stdout)
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [{}, {"components": {"tc1": {"url": "https://example.com", "version": "v1"}}}],
+)
+def test_component_versions_cli(
+    cli_runner: RunnerFunc, tmp_path: Path, parameters: Dict[str, Any]
+):
+    global_config = tmp_path / "global"
+    global_config.mkdir()
+    with open(global_config / "commodore.yml", "w") as f:
+        yaml.safe_dump({"classes": ["global.test"]}, f)
+
+    with open(global_config / "test.yml", "w") as f:
+        yaml.safe_dump({"parameters": parameters}, f)
+
+    result = cli_runner(["inventory", "components", str(global_config)])
+
+    assert result.exit_code == 0
+    components = yaml.safe_load(result.stdout)
+    expected_components = parameters.get("components", {})
+    assert components == expected_components
