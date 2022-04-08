@@ -1,13 +1,24 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Protocol
 from unittest import mock
 
 import pytest
 import yaml
 
-from click.testing import CliRunner
+from click.testing import CliRunner, Result
 
 from commodore import cli
+
+
+class RunnerFunc(Protocol):
+    def __call__(self, args: List[str]) -> Result:
+        ...
+
+
+@pytest.fixture
+def cli_runner() -> RunnerFunc:
+    r = CliRunner()
+    return lambda args: r.invoke(cli.commodore, args)
 
 
 @pytest.mark.parametrize(
@@ -27,12 +38,15 @@ from commodore import cli
 )
 @mock.patch.object(cli, "fetch_token")
 def test_commodore_fetch_token(
-    fetch_token, capsys, args: List[str], exitcode: int, output: str
+    fetch_token,
+    args: List[str],
+    exitcode: int,
+    output: str,
+    cli_runner: RunnerFunc,
 ):
     fetch_token.side_effect = lambda cfg: "id-1234"
-    runner = CliRunner()
 
-    result = runner.invoke(cli.commodore, ["fetch-token"] + args)
+    result = cli_runner(["fetch-token"] + args)
 
     assert result.exit_code == exitcode
     assert result.stdout == output
@@ -103,14 +117,13 @@ def test_inventory_lint_cli(
     files: Dict[str, Dict[str, Any]],
     exitcode: int,
     stdout: List[str],
+    cli_runner: RunnerFunc,
 ):
-    runner = CliRunner()
-
     for f, data in files.items():
         with open(tmp_path / f, "w") as fh:
             yaml.safe_dump(data, fh)
 
-    result = runner.invoke(cli.commodore, ["inventory", "lint", str(tmp_path)])
+    result = cli_runner(["inventory", "lint", str(tmp_path)])
 
     assert result.exit_code == exitcode
     assert all(line.format(tmp_path) in result.stdout for line in stdout)
