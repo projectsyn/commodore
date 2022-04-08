@@ -90,10 +90,18 @@ def test_login(mock_tokencache, mock_browser, config, tmp_path):
     login.login(config)
 
 
-@patch("webbrowser.open")
+def mocked_login(expected_token):
+    def mock(config):
+        with open(f"{xdg_cache_home}/commodore/token", "w") as f:
+            json.dump({config.api_url: expected_token}, f)
+
+    return mock
+
+
 @responses.activate
 @pytest.mark.parametrize("cached", [True, False])
-def test_fetch_token(mock_browser, config, tmp_path, fs, cached):
+@patch("commodore.login.login")
+def test_fetch_token(mock_login, config, tmp_path, fs, cached):
     auth_url = "https://idp.example.com/auth"
     expected_token_payload = {"marker": "id-123", "exp": time.time() + 600}
     cache_contents = {}
@@ -109,7 +117,7 @@ def test_fetch_token(mock_browser, config, tmp_path, fs, cached):
         f"{xdg_cache_home}/commodore/token", contents=json.dumps(cache_contents)
     )
 
-    mock_browser.side_effect = mock_open_browser(auth_url)
+    mock_login.side_effect = mocked_login(expected_token)
 
     token = login.fetch_token(config)
 
