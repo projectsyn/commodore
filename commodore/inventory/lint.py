@@ -1,7 +1,6 @@
 import abc
 from pathlib import Path
-from typing import Any, Dict
-from typing_extensions import Protocol
+from typing import Any, Dict, Protocol
 
 import click
 import yaml
