@@ -10,9 +10,14 @@
   "poetry": {
     "enabled": true
   },
-  "lockfileMaintenance": {
+  "lockFileMaintenance": {
     "enabled": true
   },
+  "ignoreDeps": [
+    "gitpython",
+    "requests",
+    "typing-extensions"
+  ],
   "labels": [
     "dependency"
   ]
