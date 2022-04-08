@@ -241,23 +241,25 @@ def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
     assert not catalog_repo.untracked_files
 
 
-def _prepare_commodore_working_dir(w: Path, config: Config, components):
+def _prepare_commodore_working_dir(config: Config, components):
     cluster = _mock_load_cluster_from_api(config, "c-test")
     # Clone global config, tenant config, and cluster catalog
-    (w / "inventory/classes").mkdir(parents=True, exist_ok=True)
+    config.inventory.classes_dir.mkdir(parents=True, exist_ok=True)
     gr = git.Repo.clone_from(
-        cluster.global_git_repo_url, w / "inventory/classes/global"
+        cluster.global_git_repo_url, config.inventory.global_config_dir
     )
     gr.git.checkout(cluster.global_git_repo_revision)
-    tr = git.Repo.clone_from(cluster.config_repo_url, w / "inventory/classes/t-test")
-    _ = git.Repo.clone_from(cluster.catalog_repo_url, w / "catalog")
+    tr = git.Repo.clone_from(
+        cluster.config_repo_url, config.inventory.tenant_config_dir("t-test")
+    )
+    _ = git.Repo.clone_from(cluster.catalog_repo_url, config.catalog_dir)
 
     # Verify that we cloned the global, tenant and catalog repos correctly
     for d in [
-        w / "catalog",
-        w / "catalog/manifests",
-        w / "inventory/classes/global",
-        w / "inventory/classes/t-test",
+        config.catalog_dir,
+        config.catalog_dir / "manifests",
+        config.inventory.global_config_dir,
+        config.inventory.tenant_config_dir("t-test"),
     ]:
         assert d.exists()
         assert d.is_dir()
@@ -265,14 +267,14 @@ def _prepare_commodore_working_dir(w: Path, config: Config, components):
     # Create directories which aren't created in local mode
     config.inventory.ensure_dirs()
 
-    depdir = w / "dependencies"
-    with open(Path(gr.working_tree_dir) / "params.yml") as pf:
+    with open(config.inventory.global_config_dir / "params.yml") as pf:
         global_params = yaml.safe_load(pf)
     with open(Path(tr.working_tree_dir) / "c-test.yml") as cf:
         cluster_params = yaml.safe_load(cf)
     gvers = global_params["parameters"]["components"]
     tvers = cluster_params["parameters"]["components"]
     for c in components:
+        # Extract component URL and version from global and cluster config
         gspec = gvers.get(c)
         cspec = tvers.get(c)
         if gspec or cspec:
@@ -289,7 +291,7 @@ def _prepare_commodore_working_dir(w: Path, config: Config, components):
                 raise ValueError(f"No url for component {c}")
             if not cver:
                 raise ValueError(f"No version for component {c}")
-            r = git.Repo.clone_from(curl, depdir / c)
+            r = git.Repo.clone_from(curl, config.inventory.dependencies_dir / c)
             r.git.checkout(cver)
         else:
             raise ValueError(f"No spec for component {c}")
@@ -305,7 +307,7 @@ def test_catalog_compile_local(capsys, tmp_path: Path, config: Config):
     cluster_id = "c-test"
     components = ["argocd", "metrics-server", "resource-locker"]
 
-    _prepare_commodore_working_dir(tmp_path, config, components)
+    _prepare_commodore_working_dir(config, components)
 
     # Clear captured stdout/stderr before running compile()
     _ = capsys.readouterr()
