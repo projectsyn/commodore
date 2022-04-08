@@ -124,17 +124,18 @@ def _local_setup(config: Config, cluster_id):
     return GitRepo(None, config.catalog_dir)
 
 
-def check_parameters_component_versions(config: Config, cluster_parameters):
+def check_parameters_component_versions(cluster_parameters):
     """
-    Deprecation handler for `parameters.component_versions`.
+    Check inventory for `parameters.component_versions`.
 
-    Registers a deprecation notice if uses of `parameters.component_versions`
-    are found in the rendered inventory.
+    Raise an error if the parameter has any contents.
     """
     cvers = cluster_parameters.get("component_versions", {})
     if len(cvers.keys()) > 0:
-        config.register_deprecation_notice(
-            "`parameters.component_versions` is deprecated, please migrate to `parameters.components`"
+        raise click.ClickException(
+            "Specifying component versions in parameter `component_versions` "
+            + "is no longer suppported. Please migrate your configuration to "
+            + "parameter `components`."
         )
 
 
@@ -148,7 +149,7 @@ def compile(config, cluster_id):
 
     inventory = kapitan_inventory(config)
     cluster_parameters = inventory[config.inventory.bootstrap_target]["parameters"]
-    check_parameters_component_versions(config, cluster_parameters)
+    check_parameters_component_versions(cluster_parameters)
     create_component_library_aliases(config, cluster_parameters)
 
     # Verify that all aliased components support instantiation
