@@ -521,18 +521,6 @@ def inventory_lint(
     name="login",
     short_help="Login to Lieutenant",
 )
-@click.option(
-    "--oidc-discovery-url",
-    envvar="COMMODORE_OIDC_DISCOVERY_URL",
-    help="The discovery URL of the IdP.",
-    metavar="URL",
-)
-@click.option(
-    "--oidc-client",
-    envvar="COMMODORE_OIDC_CLIENT",
-    help="The OIDC client name.",
-    metavar="TEXT",
-)
 @api_url_option
 @oidc_discovery_url_option
 @oidc_client_option
