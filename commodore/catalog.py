@@ -1,5 +1,7 @@
 import difflib
+import shutil
 import time
+import textwrap
 
 from pathlib import Path as P
 from typing import Iterable, Tuple
@@ -196,13 +198,12 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
         raise click.ClickException("Catalog repo has no working tree")
 
     click.secho("Updating catalog repository...", bold=True)
-    # pylint: disable=import-outside-toplevel
-    from distutils import dir_util
-    import textwrap
 
     catalogdir = P(repo.working_tree_dir, "manifests")
     for target_name in targets:
-        dir_util.copy_tree(str(cfg.inventory.output_dir / target_name), str(catalogdir))
+        shutil.copytree(
+            cfg.inventory.output_dir / target_name, catalogdir, dirs_exist_ok=True
+        )
 
     start = time.time()
     if cfg.migration == Migration.KAP_029_030:

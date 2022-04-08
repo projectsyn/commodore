@@ -1,6 +1,5 @@
 from pathlib import Path as P
-from typing import Any, Callable, ClassVar, Dict, List, Set
-from typing_extensions import Protocol
+from typing import Any, Callable, ClassVar, Dict, List, Protocol, Set
 
 import click
 

@@ -15,8 +15,7 @@
   },
   "ignoreDeps": [
     "gitpython",
-    "requests",
-    "typing-extensions"
+    "requests"
   ],
   "labels": [
     "dependency"

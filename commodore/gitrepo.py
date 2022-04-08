@@ -3,10 +3,7 @@ import hashlib
 
 from collections import namedtuple
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
-
-# We need to import Protocol from typing_extensions for Python 3.7
-from typing_extensions import Protocol
+from typing import Iterable, List, Optional, Protocol, Sequence, Tuple
 
 import click
 
