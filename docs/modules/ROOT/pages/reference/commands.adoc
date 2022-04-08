@@ -139,3 +139,10 @@ This command allows you to authenticate yourself to Lieutenant using OIDC, if OI
 
 The command will open a web-browser where you can authenticate yourself to the configured IdP.
 Commodore will use the returned token for future commands if no other token is explicitly provided.
+
+== Fetch Token
+
+  commodore fetch-token
+
+This command prints the OIDC token for the specified Lieutenant API to stdout.
+If necessary, the command will call `commodore login` internally to fetch a valid token for the provided API URL.
