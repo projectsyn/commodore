@@ -3,11 +3,13 @@ from typing import Any, Dict, List, Protocol
 from unittest import mock
 
 import pytest
+import responses
 import yaml
 
 from click.testing import CliRunner, Result
 
 from commodore import cli
+from test_catalog import cluster_resp
 
 
 class RunnerFunc(Protocol):
@@ -150,3 +152,29 @@ def test_component_versions_cli(
     components = yaml.safe_load(result.stdout)
     expected_components = parameters.get("components", {})
     assert components == expected_components
+
+
+@responses.activate
+def test_catalog_list_cli(cli_runner: RunnerFunc):
+    responses.add(
+        responses.GET,
+        "https://syn.example.com/clusters/",
+        status=200,
+        json=[cluster_resp],
+    )
+
+    result = cli_runner(
+        [
+            "catalog",
+            "list",
+            "--api-url",
+            "https://syn.example.com",
+            # Provide fake token to avoid having to mock the OIDC login for this test
+            "--api-token",
+            "token",
+        ]
+    )
+    print(result.stdout)
+
+    assert result.exit_code == 0
+    assert result.stdout.strip() == cluster_resp["id"]
