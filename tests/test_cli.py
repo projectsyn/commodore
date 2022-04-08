@@ -65,3 +65,8 @@ def test_component_inventory_lint():
 def test_login():
     exit_status = call("commodore login --help", shell=True)
     assert exit_status == 0
+
+
+def test_fetch_token():
+    exit_status = call("commodore fetch-token --help", shell=True)
+    assert exit_status == 0
