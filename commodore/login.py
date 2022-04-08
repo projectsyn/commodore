@@ -250,3 +250,15 @@ def login(config: Config):
     webbrowser.open(request_uri)
 
     server.join()
+
+
+def fetch_token(config) -> str:
+    """Return cached API token if it's fresh enough.
+
+    Otherwise, call login() and return the resulting token.
+    """
+    if config.api_token:
+        return config.api_token
+
+    login(config)
+    return config.api_token

@@ -17,7 +17,7 @@ from .component.compile import compile_component
 from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
 from .inventory.lint import LINTERS
-from .login import login
+from .login import login, fetch_token
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -521,18 +521,6 @@ def inventory_lint(
     name="login",
     short_help="Login to Lieutenant",
 )
-@click.option(
-    "--oidc-discovery-url",
-    envvar="COMMODORE_OIDC_DISCOVERY_URL",
-    help="The discovery URL of the IdP.",
-    metavar="URL",
-)
-@click.option(
-    "--oidc-client",
-    envvar="COMMODORE_OIDC_CLIENT",
-    help="The OIDC client name.",
-    metavar="TEXT",
-)
 @api_url_option
 @oidc_discovery_url_option
 @oidc_client_option
@@ -546,6 +534,43 @@ def commodore_login(
     config.api_url = api_url
 
     login(config)
+
+
+@commodore.command(
+    name="fetch-token",
+    short_help="Fetch Lieutenant token",
+)
+@api_url_option
+@oidc_discovery_url_option
+@oidc_client_option
+@pass_config
+@verbosity
+def commodore_fetch_token(
+    config: Config,
+    oidc_discovery_url: str,
+    oidc_client: str,
+    api_url: str,
+    verbose: int,
+):
+    """Fetch Lieutenant token
+
+    Get the token from the cache, if it's still valid, otherwise fetch a new token based
+    on the provided OIDC config and Lieutenant URL.
+
+    The command prints the token to stdout.
+    """
+    if api_url is None:
+        raise click.ClickException(
+            "Can't fetch Lieutenant token. Please provide the Lieutenant API URL."
+        )
+
+    config.api_url = api_url
+    config.oidc_client = oidc_client
+    config.oidc_discovery_url = oidc_discovery_url
+    config.update_verbosity(verbose)
+
+    token = fetch_token(config)
+    click.echo(token)
 
 
 def main():

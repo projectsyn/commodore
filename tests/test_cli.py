@@ -52,16 +52,21 @@ def test_component_compile_command():
     assert exit_status == 0
 
 
-def test_component_inventory_components_command():
+def test_inventory_components_command():
     exit_status = call("commodore inventory components --help", shell=True)
     assert exit_status == 0
 
 
-def test_component_inventory_lint():
+def test_inventory_lint_command():
     exit_status = call("commodore inventory lint --help", shell=True)
     assert exit_status == 0
 
 
-def test_login():
+def test_login_command():
     exit_status = call("commodore login --help", shell=True)
+    assert exit_status == 0
+
+
+def test_fetch_token_command():
+    exit_status = call("commodore fetch-token --help", shell=True)
     assert exit_status == 0

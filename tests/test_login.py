@@ -3,12 +3,24 @@ Unit-tests for login
 """
 
 from unittest.mock import patch
+
+import json
+import time
+
+import jwt
+import pytest
+import requests
 import responses
 
-import requests
+from xdg.BaseDirectory import xdg_cache_home
 
 from commodore.config import Config
 from commodore import login
+
+
+@pytest.fixture
+def config(tmp_path) -> Config:
+    return Config(tmp_path, api_url="https://syn.example.com")
 
 
 def mock_open_browser(authorization_endpoint: str):
@@ -33,22 +45,11 @@ def mock_tokencache_save(url: str, token: str):
     return mock
 
 
-@patch("webbrowser.open")
-@patch("commodore.tokencache.save")
-@responses.activate
-def test_login(mock_tokencache, mock_browser, tmp_path):
+def _setup_responses(api_url, auth_url, id_token):
     discovery_url = "https://idp.example.com/discovery"
     token_url = "https://idp.example.com/token"
-    auth_url = "https://idp.example.com/auth"
     client = "syn-test"
-    api_url = "https://syn.example.com"
     access_token = "access-123"
-    id_token = "id-123"
-
-    config = Config(
-        tmp_path,
-        api_url=api_url,
-    )
 
     responses.add_passthru("http://localhost:18000/")
     responses.add(
@@ -73,6 +74,51 @@ def test_login(mock_tokencache, mock_browser, tmp_path):
         status=200,
     )
 
-    mock_tokencache.side_effect = mock_tokencache_save(api_url, id_token)
+
+@patch("webbrowser.open")
+@patch("commodore.tokencache.save")
+@responses.activate
+def test_login(mock_tokencache, mock_browser, config, tmp_path):
+    auth_url = "https://idp.example.com/auth"
+    id_token = "id-123"
+
+    _setup_responses(config.api_url, auth_url, id_token)
+
+    mock_tokencache.side_effect = mock_tokencache_save(config.api_url, id_token)
     mock_browser.side_effect = mock_open_browser(auth_url)
+
     login.login(config)
+
+
+def mocked_login(expected_token):
+    def mock(config):
+        with open(f"{xdg_cache_home}/commodore/token", "w") as f:
+            json.dump({config.api_url: expected_token}, f)
+
+    return mock
+
+
+@responses.activate
+@pytest.mark.parametrize("cached", [True, False])
+@patch("commodore.login.login")
+def test_fetch_token(mock_login, config, tmp_path, fs, cached):
+    auth_url = "https://idp.example.com/auth"
+    expected_token_payload = {"marker": "id-123", "exp": time.time() + 600}
+    cache_contents = {}
+    if cached:
+        expected_token_payload["marker"] = "id-456"
+
+    expected_token = jwt.encode(expected_token_payload, "aaaaaa")
+    if cached:
+        cache_contents = {config.api_url: expected_token}
+
+    _setup_responses(config.api_url, auth_url, expected_token)
+    fs.create_file(
+        f"{xdg_cache_home}/commodore/token", contents=json.dumps(cache_contents)
+    )
+
+    mock_login.side_effect = mocked_login(expected_token)
+
+    token = login.fetch_token(config)
+
+    assert token == expected_token
