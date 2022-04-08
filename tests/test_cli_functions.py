@@ -1,3 +1,5 @@
+import json
+
 from pathlib import Path
 from typing import Any, Dict, List, Protocol
 from unittest import mock
@@ -133,11 +135,21 @@ def test_inventory_lint_cli(
 
 
 @pytest.mark.parametrize(
-    "parameters",
-    [{}, {"components": {"tc1": {"url": "https://example.com", "version": "v1"}}}],
+    "parameters,args",
+    [
+        ({}, []),
+        ({"components": {"tc1": {"url": "https://example.com", "version": "v1"}}}, []),
+        (
+            {"components": {"tc1": {"url": "https://example.com", "version": "v1"}}},
+            ["-o", "json"],
+        ),
+    ],
 )
 def test_component_versions_cli(
-    cli_runner: RunnerFunc, tmp_path: Path, parameters: Dict[str, Any]
+    cli_runner: RunnerFunc,
+    tmp_path: Path,
+    parameters: Dict[str, Any],
+    args: List[str],
 ):
     global_config = tmp_path / "global"
     global_config.mkdir()
@@ -147,10 +159,13 @@ def test_component_versions_cli(
     with open(global_config / "test.yml", "w") as f:
         yaml.safe_dump({"parameters": parameters}, f)
 
-    result = cli_runner(["inventory", "components", str(global_config)])
+    result = cli_runner(["inventory", "components", str(global_config)] + args)
 
     assert result.exit_code == 0
-    components = yaml.safe_load(result.stdout)
+    if "json" in args:
+        components = json.loads(result.stdout)
+    else:
+        components = yaml.safe_load(result.stdout)
     expected_components = parameters.get("components", {})
     assert components == expected_components
 
