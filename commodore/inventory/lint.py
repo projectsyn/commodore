@@ -1,6 +1,6 @@
 import abc
 from pathlib import Path
-from typing import Any, Dict, Protocol
+from typing import Any, Dict, Iterable, Protocol
 
 import click
 import yaml
@@ -98,3 +98,20 @@ def run_linter(cfg: Config, path: Path, lintfunc: LintFunc) -> int:
         return _lint_directory(cfg, path, lintfunc)
 
     return _lint_file(cfg, path, lintfunc)
+
+
+def check_removed_reclass_variables(
+    config: Config, location: str, paths: Iterable[Path]
+):
+    lint = DeprecatedParameterLinter()
+
+    errcount = 0
+    for path in paths:
+        errcount += lint(config, path)
+
+    # Raise error if any linting errors occurred
+    if errcount > 0:
+        raise click.ClickException(
+            f"Found {errcount} usages of removed reclass variables "
+            + f"in the {location}. See individual lint errors for details."
+        )

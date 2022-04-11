@@ -28,26 +28,9 @@ from .helpers import (
     kapitan_inventory,
     rm_tree_contents,
 )
-from .inventory.lint import DeprecatedParameterLinter
+from .inventory.lint import check_removed_reclass_variables
 from .postprocess import postprocess_components
 from .refs import update_refs
-
-
-def _check_removed_reclass_variables(
-    config: Config, location: str, paths: Iterable[Path]
-):
-    lint = DeprecatedParameterLinter()
-
-    errcount = 0
-    for path in paths:
-        errcount += lint(config, path)
-
-    # Raise error if any linting errors occurred
-    if errcount > 0:
-        raise click.ClickException(
-            f"Found {errcount} usages of removed reclass variables "
-            + f"in the {location}. See individual lint errors for details."
-        )
 
 
 def check_removed_reclass_variables_inventory(config: Config, tenant: str):
@@ -58,7 +41,7 @@ def check_removed_reclass_variables_inventory(config: Config, tenant: str):
         config.inventory.tenant_config_dir(tenant),
     ]
 
-    _check_removed_reclass_variables(config, "hierarchy", paths)
+    check_removed_reclass_variables(config, "hierarchy", paths)
 
 
 def check_removed_reclass_variables_components(config: Config):
@@ -68,7 +51,7 @@ def check_removed_reclass_variables_components(config: Config):
         [],
     )
 
-    _check_removed_reclass_variables(config, "enabled components", paths)
+    check_removed_reclass_variables(config, "enabled components", paths)
 
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
