@@ -3,11 +3,13 @@ Tests for catalog internals
 """
 import copy
 from pathlib import Path
+from typing import Dict, List
 from unittest.mock import patch
 
 import click
 import git
 import pytest
+import responses
 import yaml
 
 from commodore import catalog
@@ -36,6 +38,14 @@ tenant_resp = {
     "globalGitRepoURL": "https://github.com/projectsyn/commodore-defaults.git",
     "globalGitRepoRevision": "v0.12.0",
 }
+
+
+def make_cluster_resp(id: str, displayName: str = "Test cluster") -> Dict:
+    r = copy.deepcopy(cluster_resp)
+    r["id"] = id
+    r["displayName"] = displayName
+
+    return r
 
 
 @pytest.fixture
@@ -431,3 +441,62 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
     print("\n".join(diffs))
 
     assert suppressed
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "api_resp,verbose,expected",
+    [
+        ([cluster_resp], 0, ["c-test"]),
+        (
+            [
+                make_cluster_resp("c-test"),
+                make_cluster_resp("c-foo"),
+                make_cluster_resp("c-bar"),
+            ],
+            0,
+            ["c-test", "c-foo", "c-bar"],
+        ),
+        (
+            [
+                make_cluster_resp("c-test", "Test cluster"),
+                make_cluster_resp("c-foo", "Foo cluster"),
+                make_cluster_resp("c-bar", "Bar cluster"),
+            ],
+            1,
+            ["c-test - Test cluster", "c-foo - Foo cluster", "c-bar - Bar cluster"],
+        ),
+    ],
+)
+def test_catalog_list(
+    config: Config, capsys, api_resp: List, expected: List[str], verbose: int
+):
+    responses.add(
+        responses.GET,
+        "https://syn.example.com/clusters/",
+        status=200,
+        json=api_resp,
+    )
+
+    config.update_verbosity(verbose)
+    catalog.catalog_list(config)
+
+    captured = capsys.readouterr()
+
+    result = captured.out.strip().split("\n")
+    assert result == expected
+
+
+@responses.activate
+def test_catalog_list_error(config: Config):
+    responses.add(
+        responses.GET,
+        "https://syn.example.com/clusters/",
+        status=200,
+        body="Not JSON",
+    )
+
+    with pytest.raises(click.ClickException) as e:
+        catalog.catalog_list(config)
+
+    assert "While listing clusters on Lieutenant:" in str(e.value)
