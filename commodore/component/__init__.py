@@ -91,10 +91,6 @@ class Component:
         return None
 
     @property
-    def filters_file(self) -> P:
-        return self.target_directory / "postprocess" / "filters.yml"
-
-    @property
     def parameters_key(self):
         return component_parameters_key(self.name)
 
