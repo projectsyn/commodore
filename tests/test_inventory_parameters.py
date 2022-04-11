@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import os
 import pytest
 import random
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from commodore.inventory import parameters
 from commodore.helpers import yaml_dump
@@ -203,7 +205,7 @@ def extract_cloud_region_params(cloud: str, region: str):
     return cparams, rparams
 
 
-def _extract_component(params: Dict, cn: str):
+def _extract_component(params: dict, cn: str):
     return params.get("components", {}).get(cn, {})
 
 
@@ -260,7 +262,7 @@ def get_component(
 
 
 def verify_components(
-    components: Dict[str, Dict[str, str]],
+    components: dict[str, dict[str, str]],
     distribution: str,
     cloud: str,
     region: str,

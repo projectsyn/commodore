@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import difflib
 import hashlib
 
 from collections import namedtuple
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, List, Optional, Protocol, Sequence, Tuple
+from typing import Optional, Protocol
 
 import click
 
@@ -24,7 +27,7 @@ CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
 class DiffFunc(Protocol):
     def __call__(
         self, before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-    ) -> Tuple[Iterable[str], bool]:
+    ) -> tuple[Iterable[str], bool]:
         ...
 
 
@@ -80,7 +83,7 @@ def _compute_similarity(change):
 
 def _default_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-) -> Tuple[Iterable[str], bool]:
+) -> tuple[Iterable[str], bool]:
     before_lines = before_text.split("\n")
     after_lines = after_text.split("\n")
     diff_lines = difflib.unified_diff(
@@ -318,7 +321,7 @@ class GitRepo:
         except BadName as e:
             raise RefError(f"Revision '{version}' not found in repository") from e
 
-    def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> Tuple[str, bool]:
+    def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
 
@@ -347,7 +350,7 @@ class GitRepo:
             diff = index.diff(self._null_tree)
 
         changed = False
-        difftext: List[str] = []
+        difftext: list[str] = []
         if diff:
             changed = True
             for ct in diff.change_type:

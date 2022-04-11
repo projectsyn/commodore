@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import yaml
@@ -76,7 +78,7 @@ def config(tmp_path: Path):
         ),
     ],
 )
-def test_lint_deprecated_parameters(capsys, data: Dict[str, Any], expected: str):
+def test_lint_deprecated_parameters(capsys, data: dict[str, Any], expected: str):
     file = Path("test.yaml")
 
     ec = lint_deprecated_parameters.lint_deprecated_parameters(file, data)

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import json
 import os
 import functools
 
+from collections.abc import Callable, Iterable
 from pathlib import Path as P
-from typing import Any, Callable, Dict, Iterable
+from typing import Any
 
 import _jsonnet
 
@@ -95,7 +98,7 @@ def write_jsonnet_output(output_dir: P, output: str):
 # pylint: disable=too-many-arguments
 def jsonnet_runner(
     work_dir: P,
-    inv: Dict[str, Any],
+    inv: dict[str, Any],
     component: str,
     instance: str,
     path: os.PathLike,
@@ -103,7 +106,7 @@ def jsonnet_runner(
     jsonnet_input: os.PathLike,
     **kwargs: str,
 ):
-    def _inventory() -> Dict[str, Any]:
+    def _inventory() -> dict[str, Any]:
         return inv
 
     _native_cb = _native_callbacks
@@ -127,7 +130,7 @@ def _filter_file(component: Component, filterpath: str) -> P:
 
 def run_jsonnet_filter(
     config: Config,
-    inv: Dict,
+    inv: dict,
     component: Component,
     instance: str,
     filterid: str,
@@ -153,7 +156,7 @@ def run_jsonnet_filter(
 
 
 # pylint: disable=unused-argument
-def validate_jsonnet_filter(config: Config, c: Component, instance: str, fd: Dict):
+def validate_jsonnet_filter(config: Config, c: Component, instance: str, fd: dict):
     filterfile = _filter_file(c, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")

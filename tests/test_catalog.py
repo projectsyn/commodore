@@ -1,9 +1,10 @@
 """
 Tests for catalog internals
 """
+from __future__ import annotations
+
 import copy
 from pathlib import Path
-from typing import Dict, List
 from unittest.mock import patch
 
 import click
@@ -40,7 +41,7 @@ tenant_resp = {
 }
 
 
-def make_cluster_resp(id: str, displayName: str = "Test cluster") -> Dict:
+def make_cluster_resp(id: str, displayName: str = "Test cluster") -> dict:
     r = copy.deepcopy(cluster_resp)
     r["id"] = id
     r["displayName"] = displayName
@@ -469,7 +470,7 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
     ],
 )
 def test_catalog_list(
-    config: Config, capsys, api_resp: List, expected: List[str], verbose: int
+    config: Config, capsys, api_resp: list, expected: list[str], verbose: int
 ):
     responses.add(
         responses.GET,

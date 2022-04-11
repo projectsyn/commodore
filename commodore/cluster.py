@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 
-from typing import Any, Tuple, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import click
 
@@ -16,10 +18,10 @@ from .inventory import Inventory
 
 
 class Cluster:
-    _cluster_response: Dict
-    _tenant_response: Dict
+    _cluster_response: dict
+    _tenant_response: dict
 
-    def __init__(self, cluster_response: Dict, tenant_response: Dict):
+    def __init__(self, cluster_response: dict, tenant_response: dict):
         self._cluster = cluster_response
         self._tenant = tenant_response
         if (
@@ -87,11 +89,11 @@ class Cluster:
         return self._tenant["displayName"]
 
     @property
-    def facts(self) -> Dict[str, str]:
+    def facts(self) -> dict[str, str]:
         return self._cluster.get("facts", {})
 
     @property
-    def dynamic_facts(self) -> Dict[str, Any]:
+    def dynamic_facts(self) -> dict[str, Any]:
         return self._cluster.get("dynamicFacts", {})
 
 
@@ -107,7 +109,7 @@ def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     return Cluster(cluster_response, tenant_response)
 
 
-def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:
+def read_cluster_and_tenant(inv: Inventory) -> tuple[str, str]:
     """
     Reads the cluster and tenant ID from the current target.
     """
@@ -126,7 +128,7 @@ def read_cluster_and_tenant(inv: Inventory) -> Tuple[str, str]:
 def render_target(
     inv: Inventory,
     target: str,
-    components: Dict[str, Component],
+    components: dict[str, Component],
     # pylint: disable=unsubscriptable-object
     component: Optional[str] = None,
 ):
@@ -137,7 +139,7 @@ def render_target(
         raise click.ClickException(f"Target {target} is not a component")
 
     classes = [f"params.{inv.bootstrap_target}"]
-    parameters: Dict[str, Union[Dict, str]] = {
+    parameters: dict[str, Union[dict, str]] = {
         "_instance": target,
     }
     if not bootstrap:

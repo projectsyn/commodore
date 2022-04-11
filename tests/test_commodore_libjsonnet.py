@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import functools
 import json
 import os
 
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any
 
 from commodore.postprocess.jsonnet import _import_cb, _native_callbacks
 
@@ -16,7 +18,7 @@ import yaml
 TESTS_DIR = Path(__file__).parent / "jsonnet"
 
 
-def discover_tc() -> List[str]:
+def discover_tc() -> list[str]:
     files = {
         f.stem
         for f in TESTS_DIR.iterdir()
@@ -94,7 +96,7 @@ def render_jsonnet(tmp_path: Path, inputf: Path, invf: Path, **kwargs):
         with open(invf) as invfh:
             inv = yaml.safe_load(invfh)
 
-    def _inventory() -> Dict[str, Any]:
+    def _inventory() -> dict[str, Any]:
         return inv
 
     _native_cb = _native_callbacks

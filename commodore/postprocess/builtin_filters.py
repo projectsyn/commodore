@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import json
 
 from pathlib import Path as P
-from typing import Dict
 
 import _jsonnet
 import click
@@ -64,7 +65,7 @@ class UnknownBuiltinFilter(ValueError):
 # pylint: disable=too-many-arguments
 def run_builtin_filter(
     config: Config,
-    inv: Dict,
+    inv: dict,
     component: Component,
     instance: str,
     filterid: str,
@@ -79,7 +80,7 @@ def run_builtin_filter(
 
 
 # pylint: disable=unused-argument
-def validate_builtin_filter(config: Config, c: Component, instance: str, fd: Dict):
+def validate_builtin_filter(config: Config, c: Component, instance: str, fd: dict):
     if fd["filter"] not in _builtin_filters:
         raise UnknownBuiltinFilter(fd["filter"])
 

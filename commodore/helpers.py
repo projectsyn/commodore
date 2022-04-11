@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import json
 import shutil
 import os
+from collections.abc import Callable, Iterable
 from pathlib import Path as P
-from typing import Callable, Dict, Iterable, Optional
+from typing import Optional
 
 import click
 import requests
@@ -188,7 +191,7 @@ def kapitan_compile(
     )
 
 
-def kapitan_inventory(config: Config, key="nodes") -> Dict:
+def kapitan_inventory(config: Config, key="nodes") -> dict:
     """
     Reset reclass cache and render inventory.
     Returns the top-level key according to the kwarg.

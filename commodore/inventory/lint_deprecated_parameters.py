@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import click
 
@@ -37,7 +39,7 @@ def _lint_string(file: Path, prefix: str, data: str) -> int:
     return errcount
 
 
-def _lint_list(file: Path, prefix: str, data: List) -> int:
+def _lint_list(file: Path, prefix: str, data: list) -> int:
     errcount = 0
     for i, v in enumerate(data):
         errcount += _lint_data(file, prefix + f"[{i}]", v)
@@ -45,7 +47,7 @@ def _lint_list(file: Path, prefix: str, data: List) -> int:
     return errcount
 
 
-def _lint_dict(file: Path, prefix: str, data: Dict[str, Any]) -> int:
+def _lint_dict(file: Path, prefix: str, data: dict[str, Any]) -> int:
     errcount = 0
     if prefix != "":
         prefix = f"{prefix}."
@@ -55,6 +57,6 @@ def _lint_dict(file: Path, prefix: str, data: Dict[str, Any]) -> int:
     return errcount
 
 
-def lint_deprecated_parameters(file: Path, filecontents: Dict[str, Any]) -> int:
+def lint_deprecated_parameters(file: Path, filecontents: dict[str, Any]) -> int:
     prefix = ""
     return _lint_dict(file, prefix, filecontents)

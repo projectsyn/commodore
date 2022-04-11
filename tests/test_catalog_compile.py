@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import copy
 import os
 import pytest
 import re
 import yaml
 
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
-from typing import Iterable
 
 import git
 

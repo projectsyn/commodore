@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
 from pathlib import Path as P
 import shutil
 import tempfile
 from textwrap import dedent
-from typing import Iterable, Optional
+from typing import Optional
 
 import click
 from kapitan.resources import inventory_reclass

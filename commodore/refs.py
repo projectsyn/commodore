@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import re
 import os
 from base64 import b64encode
 from pathlib import Path as P
-from typing import Dict
 
 import click
 
@@ -92,7 +93,7 @@ class RefBuilder:
     Helper class to wrap recursive search for Kapitan secret references
     """
 
-    _refs: Dict[str, SecretRef]
+    _refs: dict[str, SecretRef]
 
     def __init__(self, config: Config, inventory):
         self.debug = config.debug
@@ -165,7 +166,7 @@ class RefBuilder:
         return self._ref_params
 
 
-def update_refs(config: Config, aliases: Dict[str, str], inventory: Dict):
+def update_refs(config: Config, aliases: dict[str, str], inventory: dict):
     """
     Iterate over parameters for each target, and create Kapitan secret refs
     for all ?{...} found as values in the dicts

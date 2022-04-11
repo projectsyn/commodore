@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import abc
+
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, Protocol
+from typing import Any, Protocol
 
 import click
 import yaml
@@ -14,7 +18,7 @@ from .lint_deprecated_parameters import lint_deprecated_parameters
 
 
 class LintFunc(Protocol):
-    def __call__(self, file: Path, filecontents: Dict[str, Any]) -> int:
+    def __call__(self, file: Path, filecontents: dict[str, Any]) -> int:
         ...
 
 

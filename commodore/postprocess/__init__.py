@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path as P
-from typing import Any, Callable, ClassVar, Dict, List, Protocol, Set
+from typing import Any, Callable, ClassVar, Protocol
 
 import click
 
@@ -14,7 +16,7 @@ class FilterFunc(Protocol):
     def __call__(
         self,
         config: Config,
-        inv: Dict,
+        inv: dict,
         component: Component,
         instance: str,
         filterid: str,
@@ -24,31 +26,31 @@ class FilterFunc(Protocol):
         ...
 
 
-ValidateFunc = Callable[[Config, Component, str, Dict], Dict]
+ValidateFunc = Callable[[Config, Component, str, dict], dict]
 
 
 class Filter:
     type: str
     filter: str
     path: P
-    filterargs: Dict
+    filterargs: dict
     enabled: bool
 
     # PyLint complains about ClassVar not being subscriptable
     # pylint: disable=unsubscriptable-object
-    _run_handlers: ClassVar[Dict[str, FilterFunc]] = {
+    _run_handlers: ClassVar[dict[str, FilterFunc]] = {
         "builtin": run_builtin_filter,
         "jsonnet": run_jsonnet_filter,
     }
     # pylint: disable=unsubscriptable-object
-    _validate_handlers: ClassVar[Dict[str, ValidateFunc]] = {
+    _validate_handlers: ClassVar[dict[str, ValidateFunc]] = {
         "builtin": validate_builtin_filter,
         "jsonnet": validate_jsonnet_filter,
     }
     # pylint: disable=unsubscriptable-object
-    _required_keys: ClassVar[Set[str]] = {"type", "path", "filter"}
+    _required_keys: ClassVar[set[str]] = {"type", "path", "filter"}
 
-    def __init__(self, fd: Dict):
+    def __init__(self, fd: dict):
         """
         Assumes that `fd` has been validated with `_validate_filter`.
         """
@@ -59,7 +61,7 @@ class Filter:
         self.filterargs = fd.get("filterargs", {})
         self._runner: FilterFunc = self._run_handlers[self.type]
 
-    def run(self, config: Config, inventory: Dict, component: Component, instance: str):
+    def run(self, config: Config, inventory: dict, component: Component, instance: str):
         """
         Run the filter.
         """
@@ -80,7 +82,7 @@ class Filter:
         )
 
     @classmethod
-    def validate(cls, config: Config, c: Component, instance: str, f: Dict):
+    def validate(cls, config: Config, c: Component, instance: str, f: dict):
         """
         Validate filter definition in `f`.
         Raises exceptions as appropriate when the definition is invalid.
@@ -103,7 +105,7 @@ class Filter:
         return f
 
     @classmethod
-    def from_dict(cls, config: Config, c: Component, instance: str, f: Dict):
+    def from_dict(cls, config: Config, c: Component, instance: str, f: dict):
         """
         Create Filter object from filter definition dict `f`.
         Raises exceptions as appropriate when the definition is invalid.
@@ -112,7 +114,7 @@ class Filter:
         return Filter(Filter.validate(config, c, instance, f))
 
 
-def _get_inventory_filters(inv: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _get_inventory_filters(inv: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Return list of filters defined in inventory.
 
@@ -125,8 +127,8 @@ def _get_inventory_filters(inv: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def postprocess_components(
     config: Config,
-    kapitan_inventory: Dict[str, Dict[str, Any]],
-    components: Dict[str, Component],
+    kapitan_inventory: dict[str, dict[str, Any]],
+    components: dict[str, Component],
 ):
     click.secho("Postprocessing...", bold=True)
 
@@ -142,7 +144,7 @@ def postprocess_components(
         # inventory filters
         invfilters = _get_inventory_filters(inv)
 
-        filters: List[Filter] = []
+        filters: list[Filter] = []
         for fd in invfilters:
             try:
                 filters.append(Filter.from_dict(config, c, a, fd))

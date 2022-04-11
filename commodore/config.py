@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import time
 import textwrap
 
 from enum import Enum
 from pathlib import Path as P
-from typing import Dict, List, Optional
+from typing import Optional
 
 import jwt
 
@@ -22,10 +24,10 @@ class Migration(Enum):
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Config:
     _inventory: Inventory
-    _components: Dict[str, Component]
-    _config_repos: Dict[str, GitRepo]
-    _component_aliases: Dict[str, str]
-    _deprecation_notices: List[str]
+    _components: dict[str, Component]
+    _config_repos: dict[str, GitRepo]
+    _component_aliases: dict[str, str]
+    _deprecation_notices: list[str]
     _migration: Optional[Migration]
 
     oidc_client: Optional[str]
@@ -190,10 +192,10 @@ class Config:
     def get_component_aliases(self):
         return self._component_aliases
 
-    def register_component_aliases(self, aliases: Dict[str, str]):
+    def register_component_aliases(self, aliases: dict[str, str]):
         self._component_aliases = aliases
 
-    def verify_component_aliases(self, cluster_parameters: Dict):
+    def verify_component_aliases(self, cluster_parameters: dict):
         for alias, cn in self._component_aliases.items():
             if alias != cn and not _component_is_aliasable(cluster_parameters, cn):
                 raise click.ClickException(
@@ -232,7 +234,7 @@ class Config:
                 self.register_deprecation_notice(msg)
 
 
-def _component_is_aliasable(cluster_parameters: Dict, component_name: str):
+def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_instance", False)

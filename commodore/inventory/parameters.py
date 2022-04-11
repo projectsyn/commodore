@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import os
+from collections.abc import Iterable
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Optional
 
 from kapitan.reclass import reclass
 from kapitan.reclass.reclass import settings as reclass_settings
@@ -61,7 +64,7 @@ class InventoryFacts:
         return self._tenant_config
 
     @property
-    def extra_classes(self) -> List[str]:
+    def extra_classes(self) -> list[str]:
         return [cf.stem for cf in self._extra_class_files]
 
     @property
@@ -142,7 +145,7 @@ class InventoryFactory:
         self._inventory = Inventory(work_dir=work_dir)
         self._distributions = self._find_values(DefaultsFact.DISTRIBUTION)
         self._clouds = self._find_values(DefaultsFact.CLOUD)
-        self._cloud_regions: Dict[str, Iterable[str]] = {}
+        self._cloud_regions: dict[str, Iterable[str]] = {}
         for cloud in self._clouds:
             r = self._find_values(DefaultsFact.REGION, cloud=cloud)
             self._cloud_regions[cloud] = [it for it in r if it != "params"]
@@ -167,7 +170,7 @@ class InventoryFactory:
     def tenant_dir(self) -> Optional[Path]:
         return self._tenant_dir
 
-    def _reclass_config(self, allow_missing_classes: bool) -> Dict:
+    def _reclass_config(self, allow_missing_classes: bool) -> dict:
         return {
             "storage_type": "yaml_fs",
             "inventory_base_uri": str(self.directory.absolute()),
@@ -180,7 +183,7 @@ class InventoryFactory:
 
     def _render_inventory(
         self, target: Optional[str] = None, allow_missing_classes: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         rc = self._reclass_config(allow_missing_classes)
         storage = reclass.get_storage(
             rc["storage_type"],
@@ -207,7 +210,7 @@ class InventoryFactory:
             raise
 
     def reclass(self, invfacts: InventoryFacts) -> InventoryParameters:
-        cluster_response: Dict[str, Any] = {
+        cluster_response: dict[str, Any] = {
             "id": invfacts.cluster_id,
             "tenant": invfacts.tenant_id,
             "displayName": "Foo Inc. Bar cluster",
@@ -289,7 +292,7 @@ class InventoryFactory:
         return self._clouds
 
     @property
-    def cloud_regions(self) -> Dict[str, Iterable[str]]:
+    def cloud_regions(self) -> dict[str, Iterable[str]]:
         return self._cloud_regions
 
     @classmethod
