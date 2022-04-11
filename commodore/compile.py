@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Iterable
+
 import click
 
 from .catalog import fetch_catalog, clean_catalog, update_catalog
@@ -25,8 +28,47 @@ from .helpers import (
     kapitan_inventory,
     rm_tree_contents,
 )
+from .inventory.lint import DeprecatedParameterLinter
 from .postprocess import postprocess_components
 from .refs import update_refs
+
+
+def _check_removed_reclass_variables(
+    config: Config, location: str, paths: Iterable[Path]
+):
+    lint = DeprecatedParameterLinter()
+
+    errcount = 0
+    for path in paths:
+        errcount += lint(config, path)
+
+    # Raise error if any linting errors occurred
+    if errcount > 0:
+        raise click.ClickException(
+            f"Found {errcount} usages of removed reclass variables "
+            + f"in the {location}. See individual lint errors for details."
+        )
+
+
+def check_removed_reclass_variables_inventory(config: Config, tenant: str):
+    paths = [
+        # global defaults
+        config.inventory.global_config_dir,
+        # tenant repo
+        config.inventory.tenant_config_dir(tenant),
+    ]
+
+    _check_removed_reclass_variables(config, "hierarchy", paths)
+
+
+def check_removed_reclass_variables_components(config: Config):
+    paths: Iterable[Path] = sum(
+        # defaults.yml and <component-name>.yml for all enabled components
+        [[c.defaults_file, c.class_file] for c in config.get_components().values()],
+        [],
+    )
+
+    _check_removed_reclass_variables(config, "enabled components", paths)
 
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
@@ -64,6 +106,7 @@ def _regular_setup(config: Config, cluster_id):
     # Fetch components and config
     _fetch_global_config(config, cluster)
     _fetch_customer_config(config, cluster)
+    check_removed_reclass_variables_inventory(config, cluster.tenant_id)
     fetch_components(config)
 
     update_target(config, config.inventory.bootstrap_target)
@@ -103,6 +146,8 @@ def _local_setup(config: Config, cluster_id):
     config.register_config(
         "customer", GitRepo(None, config.inventory.tenant_config_dir(tenant))
     )
+
+    check_removed_reclass_variables_inventory(config, tenant)
 
     click.secho("Resetting targets...", bold=True)
     rm_tree_contents(config.inventory.targets_dir)
@@ -146,6 +191,9 @@ def compile(config, cluster_id):
     else:
         clean_working_tree(config)
         catalog_repo = _regular_setup(config, cluster_id)
+
+    # Raise error if any enabled components use removed reclass variables
+    check_removed_reclass_variables_components(config)
 
     inventory = kapitan_inventory(config)
     cluster_parameters = inventory[config.inventory.bootstrap_target]["parameters"]
