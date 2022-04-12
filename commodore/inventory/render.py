@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import shutil
 import tempfile
 
 from pathlib import Path
-from typing import Dict
 
 import click
 
@@ -19,7 +20,7 @@ def _cleanup_work_dir(cfg: Config, work_dir: Path):
 
 def extract_components(
     cfg: Config, invfacts: InventoryFacts
-) -> Dict[str, Dict[str, str]]:
+) -> dict[str, dict[str, str]]:
     if cfg.debug:
         click.echo(
             f"Called with: global_config={invfacts.global_config} "

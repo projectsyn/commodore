@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -101,7 +103,7 @@ def _check_lint_result(ec: int, expected_errcount: int, captured):
 
 @pytest.mark.parametrize("filecontents,expected_errcount", LINT_FILECONTENTS)
 def test_lint_component_versions(
-    tmp_path, capsys, filecontents: Dict, expected_errcount: int
+    tmp_path, capsys, filecontents: dict, expected_errcount: int
 ):
     p = tmp_path / "test.yml"
 
@@ -113,7 +115,7 @@ def test_lint_component_versions(
 
 @pytest.mark.parametrize("filecontents,expected_errcount", LINT_FILECONTENTS)
 def test_lint_valid_file(
-    tmp_path: Path, capsys, config: Config, filecontents: Dict, expected_errcount: int
+    tmp_path: Path, capsys, config: Config, filecontents: dict, expected_errcount: int
 ):
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
@@ -126,7 +128,7 @@ def test_lint_valid_file(
 
 @pytest.mark.parametrize("filecontents,expected_errcount", LINT_FILECONTENTS)
 def test_lint_valid_file_stream(
-    tmp_path: Path, capsys, config: Config, filecontents: Dict, expected_errcount: int
+    tmp_path: Path, capsys, config: Config, filecontents: dict, expected_errcount: int
 ):
     testf = tmp_path / "test.yml"
     yaml_dump_all([filecontents], testf)

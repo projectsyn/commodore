@@ -1,15 +1,18 @@
 """
 Unit-tests for dependency management
 """
+from __future__ import annotations
+
 
 import os
 import click
 import git
 import pytest
 import json
+from collections.abc import Iterable
 from unittest.mock import patch
 from pathlib import Path
-from typing import Dict, Iterable, Optional
+from typing import Optional
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -138,7 +141,7 @@ def test_create_component_library_aliases_single_component(
     capsys,
     tmp_path: Path,
     data: Config,
-    libaliases: Optional[Dict],
+    libaliases: Optional[dict],
     expected_paths: Iterable[str],
     stdout: str,
 ):
@@ -219,9 +222,9 @@ def test_create_component_library_aliases_single_component(
 def test_create_component_library_aliases_multiple_component(
     tmp_path: Path,
     data: Config,
-    tc1_libalias: Dict[str, str],
-    tc2_libalias: Dict[str, str],
-    tc3_libalias: Dict[str, str],
+    tc1_libalias: dict[str, str],
+    tc2_libalias: dict[str, str],
+    tc3_libalias: dict[str, str],
     err: Optional[str],
 ):
     c1 = setup_mock_component(tmp_path, name="tc1")
@@ -801,7 +804,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
         ),
     ],
 )
-def test_verify_component_version_overrides(cluster_params: Dict, expected: str):
+def test_verify_component_version_overrides(cluster_params: dict, expected: str):
     if expected == "":
         dependency_mgmt.verify_component_version_overrides(cluster_params)
     else:

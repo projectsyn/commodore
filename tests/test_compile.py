@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import click
 import pytest
 
 from pathlib import Path as P
-from typing import Dict
 from unittest.mock import patch
 
 from commodore import compile
@@ -150,7 +151,7 @@ def test_fetch_customer_config(tmp_path: P, config, revision, override_revision)
         ),
     ],
 )
-def test_check_parameters_component_versions(cluster_params: Dict, raises: bool):
+def test_check_parameters_component_versions(cluster_params: dict, raises: bool):
     if raises:
         with pytest.raises(click.ClickException) as e:
             compile.check_parameters_component_versions(cluster_params)

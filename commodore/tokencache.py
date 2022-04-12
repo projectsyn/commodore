@@ -1,7 +1,8 @@
-import os
-from typing import Optional
-from pathlib import Path
 import json
+import os
+
+from pathlib import Path
+from typing import Optional
 
 from xdg.BaseDirectory import xdg_cache_home
 

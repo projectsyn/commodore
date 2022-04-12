@@ -1,5 +1,8 @@
+from __future__ import annotations
+
+from collections.abc import Iterable
 from pathlib import Path as P
-from typing import Iterable, Optional
+from typing import Optional
 
 import _jsonnet
 import click

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 
 from pathlib import Path
-from typing import Any, Dict, List, Protocol
+from typing import Any, Protocol
 from unittest import mock
 
 import pytest
@@ -16,7 +18,7 @@ from test_catalog import cluster_resp
 
 
 class RunnerFunc(Protocol):
-    def __call__(self, args: List[str]) -> Result:
+    def __call__(self, args: list[str]) -> Result:
         ...
 
 
@@ -44,7 +46,7 @@ def cli_runner() -> RunnerFunc:
 @mock.patch.object(cli, "fetch_token")
 def test_commodore_fetch_token(
     fetch_token,
-    args: List[str],
+    args: list[str],
     exitcode: int,
     output: str,
     cli_runner: RunnerFunc,
@@ -119,9 +121,9 @@ def test_commodore_fetch_token(
 )
 def test_inventory_lint_cli(
     tmp_path: Path,
-    files: Dict[str, Dict[str, Any]],
+    files: dict[str, dict[str, Any]],
     exitcode: int,
-    stdout: List[str],
+    stdout: list[str],
     cli_runner: RunnerFunc,
 ):
     for f, data in files.items():
@@ -148,8 +150,8 @@ def test_inventory_lint_cli(
 def test_component_versions_cli(
     cli_runner: RunnerFunc,
     tmp_path: Path,
-    parameters: Dict[str, Any],
-    args: List[str],
+    parameters: dict[str, Any],
+    args: list[str],
 ):
     global_config = tmp_path / "global"
     global_config.mkdir()
@@ -213,7 +215,7 @@ def verify_config(expected: Config):
     return mock
 
 
-def make_config(tmp_path: Path, expected: Dict[str, Any]):
+def make_config(tmp_path: Path, expected: dict[str, Any]):
     config = Config(tmp_path)
     config.push = expected.get("push", False)
     config.local = expected.get("local", False)
@@ -277,8 +279,8 @@ def test_catalog_compile_cli(
     mock_compile,
     mock_login,
     cli_runner: RunnerFunc,
-    args: List[str],
-    expected: Dict[str, Any],
+    args: list[str],
+    expected: dict[str, Any],
     exitcode: int,
     tmp_path: Path,
 ):

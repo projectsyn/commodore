@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import difflib
 import shutil
 import time
 import textwrap
 
+from collections.abc import Iterable
 from pathlib import Path as P
-from typing import Iterable, Tuple
 
 import click
 import yaml
@@ -120,7 +122,7 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
         click.echo(" > Add flag --interactive to show the diff and decide on the push")
 
 
-def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
+def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
     """
     Returns True if a pair of lines of a diff which is already sorted
     by K8s object indicates that this diff contains a semantic change
@@ -169,7 +171,7 @@ def _is_semantic_diff_kapitan_029_030(win: Tuple[str, str]) -> bool:
 
 def _kapitan_029_030_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-) -> Tuple[Iterable[str], bool]:
+) -> tuple[Iterable[str], bool]:
 
     before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
     before_sorted_lines = yaml.dump_all(before_objs).split("\n")

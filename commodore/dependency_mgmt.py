@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import os
 import json
+from collections.abc import Iterable
 from pathlib import Path as P
 from subprocess import call  # nosec
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Set
+from typing import Any, Optional
 
 import click
 
@@ -21,7 +24,7 @@ def validate_component_library_name(cname: str, lib: P) -> P:
     return lib
 
 
-def _check_library_alias_prefixes(libalias: str, cn: str, component_prefixes: Set[str]):
+def _check_library_alias_prefixes(libalias: str, cn: str, component_prefixes: set[str]):
     for p in component_prefixes - {cn}:
         if libalias.startswith(p):
             raise click.ClickException(
@@ -30,9 +33,9 @@ def _check_library_alias_prefixes(libalias: str, cn: str, component_prefixes: Se
             )
 
 
-def _check_library_alias_collisions(cfg: Config, cluster_params: Dict[str, Any]):
+def _check_library_alias_collisions(cfg: Config, cluster_params: dict[str, Any]):
     # map of library alias to set(originating components)
-    collisions: Dict[str, Set[str]] = {}
+    collisions: dict[str, set[str]] = {}
 
     components = cfg.get_components()
     component_prefixes = set(cluster_params["components"].keys())
@@ -53,7 +56,7 @@ def _check_library_alias_collisions(cfg: Config, cluster_params: Dict[str, Any])
             )
 
 
-def create_component_library_aliases(cfg: Config, cluster_params: Dict[str, Any]):
+def create_component_library_aliases(cfg: Config, cluster_params: dict[str, Any]):
     _check_library_alias_collisions(cfg, cluster_params)
 
     for _, component in cfg.get_components().items():
@@ -122,7 +125,7 @@ def _format_component_list(components: Iterable[str]) -> str:
 
 def _extract_component_aliases(
     cfg: Config, kapitan_applications: Iterable[str]
-) -> Tuple[Set[str], Dict[str, Set[str]]]:
+) -> tuple[set[str], dict[str, set[str]]]:
     """
     Extract components and all aliases from Kapitan applications array.
 
@@ -131,7 +134,7 @@ def _extract_component_aliases(
     applications array.
     """
     components = set()
-    all_component_aliases: Dict[str, Set[str]] = {}
+    all_component_aliases: dict[str, set[str]] = {}
     for component in kapitan_applications:
         try:
             cn, alias = component.split(" as ")
@@ -149,7 +152,7 @@ def _extract_component_aliases(
     return components, all_component_aliases
 
 
-def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
+def _discover_components(cfg) -> tuple[list[str], dict[str, str]]:
     """
     Discover components used by the current cluster by extracting all entries from the
     reclass applications dictionary.
@@ -163,7 +166,7 @@ def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
         cfg, kapitan_applications.keys()
     )
 
-    component_aliases: Dict[str, str] = {}
+    component_aliases: dict[str, str] = {}
 
     for alias, cns in all_component_aliases.items():
         if len(cns) == 0:
@@ -209,7 +212,7 @@ def _discover_components(cfg) -> Tuple[List[str], Dict[str, str]]:
 
 def _read_components(
     cfg: Config, component_names
-) -> Tuple[Dict[str, str], Dict[str, Optional[str]]]:
+) -> tuple[dict[str, str], dict[str, Optional[str]]]:
     component_urls = {}
     component_versions = {}
 

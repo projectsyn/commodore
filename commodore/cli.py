@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import json
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Optional
 
 import click
 import yaml
@@ -489,7 +492,7 @@ def component_versions(
 @verbosity
 @pass_config
 def inventory_lint(
-    config: Config, verbose: int, target: Tuple[str], linter: Tuple[str]
+    config: Config, verbose: int, target: tuple[str], linter: tuple[str]
 ):
     """Lint YAML files in the provided paths.
 
