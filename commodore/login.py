@@ -1,11 +1,11 @@
-import sys
-from typing import Optional, Any
-import threading
-from queue import Queue
-import webbrowser
 import json
-from functools import partial
+import sys
+import threading
+import webbrowser
 
+from functools import partial
+from queue import Queue
+from typing import Optional, Any
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs

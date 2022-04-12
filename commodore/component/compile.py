@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
-from pathlib import Path as P
 import shutil
 import tempfile
+
+from collections.abc import Iterable
+from pathlib import Path as P
 from textwrap import dedent
 from typing import Optional
 
