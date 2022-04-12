@@ -16,6 +16,7 @@ from commodore.dependency_mgmt import (
 )
 from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
+from commodore.inventory.lint import check_removed_reclass_variables
 from commodore.postprocess import postprocess_components
 
 
@@ -60,6 +61,13 @@ def compile_component(
             config, component_name, instance_name, component_path
         )
         _prepare_kapitan_inventory(inv, component, value_files, instance_name)
+
+        # Raise error if component uses removed reclass parameters
+        check_removed_reclass_variables(
+            config,
+            "component",
+            [component.defaults_file, component.class_file] + value_files,
+        )
 
         # Verify component alias
         nodes = inventory_reclass(inv.inventory_dir)["nodes"]
