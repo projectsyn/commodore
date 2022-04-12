@@ -1,14 +1,21 @@
 # Project Syn: Commodore
 
+[![Docker](https://github.com/projectsyn/commodore/actions/workflows/push.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/push.yml)
+[![PyPI release](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/projectsyn/commodore.svg)](https://github.com/projectsyn/commodore/releases)
+[![PyPI Release](https://img.shields.io/pypi/v/syn-commodore?color=blue)](https://pypi.org/project/syn-commodore)
+[![Maintainability](https://api.codeclimate.com/v1/badges/abb63d489a6d6e01939d/maintainability)](https://codeclimate.com/github/projectsyn/commodore/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/abb63d489a6d6e01939d/test_coverage)](https://codeclimate.com/github/projectsyn/commodore/test_coverage)
+
 This repository is part of Project Syn.
 For documentation on Project Syn and this component, see https://syn.tools.
 
-**Please note that this project is in its early stages and under active development**.
 
 See [GitHub Releases](https://github.com/projectsyn/commodore/releases) for changelogs of each release version of Commodore.
 
-See [DockerHub](https://hub.docker.com/r/projectsyn/commodore) for pre-built
-Docker images of Commodore.
+See [DockerHub](https://hub.docker.com/r/projectsyn/commodore) for pre-built Docker images of Commodore.
+
+Commodore is [published on PyPI](https://pypi.org/project/syn-commodore/)
 
 ## Overview
 
