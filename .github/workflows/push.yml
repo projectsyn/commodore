@@ -44,11 +44,30 @@ jobs:
         ignorePreReleases: "${{ !contains(github.ref, '-rc') }}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Read release message from tag commit
+      id: tag_message
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        git fetch origin +refs/tags/*:refs/tags/*
+        # Extract tag message
+        TAG_MSG=$(git tag -n --format='%(contents:body)' ${GITHUB_REF##refs/tags/} | tr -d '\r')
+        # Escape literal % and newlines (\n, \r) for github actions output
+        TAG_MSG=${TAG_MSG//'%'/%25}
+        TAG_MSG=${TAG_MSG//$'\n'/%0A}
+        # Join multiple lines belonging to the same paragraph for GitHub
+        # markdown.
+        # Paragraph breaks should be %0A%0A. We replace single line breaks
+        # with a space with sed.
+        TAG_MSG=$(echo ${TAG_MSG} |sed 's/\([^A]\)%0A\([^%]\)/\1 \2/g')
+        # Set action output `messsage`
+        echo "::set-output name=message::${TAG_MSG}"
+      env:
+        GITHUB_REF: ${{ github.ref }}
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: ncipollo/release-action@v1
       with:
-        body: ${{steps.build_changelog.outputs.changelog}}
+        body: "# Summary\n\n${{steps.tag_message.outputs.message}}\n\n# Changes\n\n${{steps.build_changelog.outputs.changelog}}"
         prerelease: "${{ contains(github.ref, '-rc') }}"
         # Ensure target branch for release is "master"
         commit: master
