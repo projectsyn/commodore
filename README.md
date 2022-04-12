@@ -9,7 +9,6 @@
 This repository is part of Project Syn.
 For documentation on Project Syn and this component, see https://syn.tools.
 
-**Please note that this project is under active development**.
 
 See [GitHub Releases](https://github.com/projectsyn/commodore/releases) for changelogs of each release version of Commodore.
 
