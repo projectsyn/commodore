@@ -31,8 +31,8 @@ importlib-metadata = "^4.11.3"
 pyxdg = "^0.27"
 
 [tool.poetry.dev-dependencies]
-tox = "*"
-autopep8 = "*"
+tox = "^3.25.0"
+autopep8 = "^1.6.0"
 pytest = "^7.1.1"
 pytest-xdist = "^2.5.0"
 pytest-benchmark = "^3.4.1"
