@@ -211,9 +211,9 @@ def login(config: Config):
         try:
             r = requests.get(config.api_url)
             api_cfg = json.loads(r.text)
-        except (RequestException, json.JSONDecodeError):
+        except (RequestException, json.JSONDecodeError) as e:
             # We do this on a best effort basis
-            pass
+            click.echo(f" > Unable to auto-discover OIDC config: {e}")
         if "oidc" in api_cfg:
             config.oidc_client = api_cfg["oidc"]["clientId"]
             config.oidc_discovery_url = api_cfg["oidc"]["discoveryUrl"]
