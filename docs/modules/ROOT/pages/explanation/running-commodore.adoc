@@ -115,10 +115,12 @@ commodore() {
     --env COMMODORE_API_URL=$COMMODORE_API_URL \
     --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
     --env SSH_AUTH_SOCK=/tmp/ssh_agent.sock \
+    --publish 18000:18000 \
     --volume "${SSH_AUTH_SOCK}:/tmp/ssh_agent.sock" \
     --volume "${HOME}/.ssh/config:/app/.ssh/config:ro" \
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${HOME}/.cache:/app/.cache" \
     --volume "${PWD}:/app/data" \
     --workdir /app/data \
     projectsyn/commodore:${COMMODORE_VERSION:=latest} \
@@ -156,10 +158,12 @@ commodore() {
     --env COMMODORE_API_URL=$COMMODORE_API_URL \
     --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
     --env SSH_AUTH_SOCK=/tmp/ssh_agent.sock \
+    --publish 18000:18000 \
     --volume "/run/host-services/ssh-auth.sock:/tmp/ssh_agent.sock" \
     --volume "${HOME}/.ssh/config:/app/.ssh/config:ro" \
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${HOME}/.cache:/app/.cache" \
     --volume "${PWD}:/app/data" \
     --workdir /app/data \
     projectsyn/commodore:latest \
@@ -181,8 +185,10 @@ commodore() {
     --user="$(id -u)" \
     --env COMMODORE_API_URL=$COMMODORE_API_URL \
     --env COMMODORE_API_TOKEN=$COMMODORE_API_TOKEN \
+    --publish 18000:18000 \
     --volume "${HOME}/.ssh:/app/.ssh:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
+    --volume "${HOME}/.cache:/app/.cache" \
     --volume "${PWD}:/app/data" \
     --workdir /app/data \
     projectsyn/commodore:latest \
