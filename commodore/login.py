@@ -45,7 +45,7 @@ class OIDCCallbackServer:
             OIDCCallbackHandler, client, token_url, lieutenant_url, self.done_queue
         )
 
-        self.server = HTTPServer(("localhost", 18000), handler)
+        self.server = HTTPServer(("", 18000), handler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.daemon = True
 
