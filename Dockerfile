@@ -71,4 +71,7 @@ RUN chgrp 0 /app/ \
 
 USER 1001
 
+# OIDC token callback
+EXPOSE 18000
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh", "commodore"]
