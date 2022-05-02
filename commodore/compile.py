@@ -15,12 +15,14 @@ from .cluster import (
 )
 from .config import Config
 from .dependency_mgmt import (
-    create_component_library_aliases,
     fetch_components,
-    fetch_jsonnet_libraries,
     register_components,
-    jsonnet_dependencies,
     verify_component_version_overrides,
+)
+from .dependency_mgmt.component_library import create_component_library_aliases
+from .dependency_mgmt.jsonnet_bundler import (
+    fetch_jsonnet_libraries,
+    jsonnet_dependencies,
 )
 from .gitrepo import GitRepo
 from .helpers import (

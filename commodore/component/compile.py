@@ -13,11 +13,11 @@ from kapitan.resources import inventory_reclass
 
 from commodore.config import Config
 from commodore.component import Component
-from commodore.dependency_mgmt import (
-    fetch_jsonnet_libraries,
+from commodore.dependency_mgmt.component_library import (
     validate_component_library_name,
     create_component_library_aliases,
 )
+from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
