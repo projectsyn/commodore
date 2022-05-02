@@ -1,3 +1,10 @@
+"""
+Tests for dependency management inventory version parsing.
+
+We test most cases in `_read_versions()` through `_read_components()` tests, as the
+functionality of `_read_versions()` was originally implemented directly in
+`_read_components()`.
+"""
 from __future__ import annotations
 
 from unittest.mock import patch
@@ -92,3 +99,61 @@ def test_read_components_exc(
         _ = version_parsing._read_components(config, ckeys)
 
     assert exc_info.value.args[0] == exctext
+
+
+params_packages = {
+    "packages": {
+        "test": {
+            "url": "https://git.example.com/pkg.git",
+            "version": "v1.0.0",
+        },
+        "foo": {
+            "url": "https://git.example.com/foo.git",
+            "version": "feat/initial",
+        },
+    }
+}
+
+
+@patch.object(version_parsing, "kapitan_inventory")
+@pytest.mark.parametrize(
+    "params,pkg_names,expected_urls,expected_versions",
+    [
+        ({}, [], {}, {}),
+        (
+            params_packages,
+            ["test"],
+            {"test": "https://git.example.com/pkg.git"},
+            {"test": "v1.0.0"},
+        ),
+        (
+            params_packages,
+            ["test", "foo"],
+            {
+                "test": "https://git.example.com/pkg.git",
+                "foo": "https://git.example.com/foo.git",
+            },
+            {"test": "v1.0.0", "foo": "feat/initial"},
+        ),
+    ],
+)
+def test_read_packages(
+    patch_inventory,
+    config: Config,
+    params: dict,
+    pkg_names: list[str],
+    expected_urls: dict,
+    expected_versions: dict,
+):
+    patch_inventory.return_value = {
+        config.inventory.bootstrap_target: {
+            "parameters": params,
+        }
+    }
+
+    pkg_urls, pkg_versions = version_parsing._read_packages(
+        config,
+        pkg_names,
+    )
+    assert pkg_urls == expected_urls
+    assert pkg_versions == expected_versions

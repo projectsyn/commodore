@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+
+from enum import Enum
 from typing import Optional
 
 import click
@@ -8,43 +11,75 @@ from commodore.config import Config
 from commodore.helpers import kapitan_inventory
 
 
-def _read_components(
-    cfg: Config, component_names
+class DepType(Enum):
+    COMPONENT = "components"
+    PACKAGE = "packages"
+
+
+def _read_versions(
+    cfg: Config,
+    dependency_type: DepType,
+    dependency_names: Iterable[str],
+    require_key: bool = True,
+    ignore_class_notfound: bool = False,
 ) -> tuple[dict[str, str], dict[str, Optional[str]]]:
-    component_urls = {}
-    component_versions = {}
+    dep_urls = {}
+    dep_versions = {}
+    deps_key = dependency_type.value
+    deptype_str = dependency_type.name.lower()
+    deptype_cap = deptype_str.capitalize()
 
-    inv = kapitan_inventory(cfg)
+    inv = kapitan_inventory(cfg, ignore_class_notfound=ignore_class_notfound)
     cluster_inventory = inv[cfg.inventory.bootstrap_target]
-    components = cluster_inventory["parameters"].get("components", None)
-    if not components:
-        raise click.ClickException("Component list ('parameters.components') missing")
-
-    for component_name in component_names:
-        if component_name not in components:
+    deps = cluster_inventory["parameters"].get(deps_key, None)
+    if not deps:
+        if require_key:
             raise click.ClickException(
-                f"Unknown component '{component_name}'. Please add it to 'parameters.components'"
+                f"{deptype_cap} list ('parameters.{deps_key}') missing"
+            )
+        # If we don't require the key for the requested dependency type to be present,
+        # just set deps to the empty dict.
+        deps = {}
+
+    for depname in dependency_names:
+        if depname not in deps:
+            raise click.ClickException(
+                f"Unknown {deptype_str} '{depname}'. Please add it to 'parameters.components'"
             )
 
-        info = components[component_name]
+        info = deps[depname]
 
         if "url" not in info:
-            raise click.ClickException(
-                f"No url for component '{component_name}' configured"
-            )
+            raise click.ClickException(f"No url for component '{depname}' configured")
 
-        component_urls[component_name] = info["url"]
+        dep_urls[depname] = info["url"]
         if cfg.debug:
-            click.echo(f" > URL for {component_name}: {component_urls[component_name]}")
+            click.echo(f" > URL for {depname}: {dep_urls[depname]}")
         if "version" in info:
-            component_versions[component_name] = info["version"]
+            dep_versions[depname] = info["version"]
         else:
             raise click.ClickException(
-                f"Component '{component_name}' doesn't have a version specified."
+                f"{deptype_cap} '{depname}' doesn't have a version specified."
             )
         if cfg.debug:
-            click.echo(
-                f" > Version for {component_name}: {component_versions[component_name]}"
-            )
+            click.echo(f" > Version for {depname}: {dep_versions[depname]}")
 
-    return component_urls, component_versions
+    return dep_urls, dep_versions
+
+
+def _read_components(
+    cfg: Config, component_names: Iterable[str]
+) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+    return _read_versions(cfg, DepType.COMPONENT, component_names)
+
+
+def _read_packages(
+    cfg: Config, package_names: Iterable[str]
+) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+    return _read_versions(
+        cfg,
+        DepType.PACKAGE,
+        package_names,
+        require_key=False,
+        ignore_class_notfound=True,
+    )
