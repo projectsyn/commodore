@@ -191,13 +191,17 @@ def kapitan_compile(
     )
 
 
-def kapitan_inventory(config: Config, key="nodes") -> dict:
+def kapitan_inventory(
+    config: Config, key: str = "nodes", ignore_class_notfound: bool = False
+) -> dict:
     """
     Reset reclass cache and render inventory.
     Returns the top-level key according to the kwarg.
     """
     reset_reclass_cache()
-    inv = inventory_reclass(config.inventory.inventory_dir)
+    inv = inventory_reclass(
+        config.inventory.inventory_dir, ignore_class_notfound=ignore_class_notfound
+    )
     return inv[key]
 
 
