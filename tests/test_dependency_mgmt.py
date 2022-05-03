@@ -94,7 +94,7 @@ def test_create_component_symlinks(capsys, config: Config, tmp_path):
     assert capsys.readouterr().out == ""
 
 
-def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
+def _setup_mock_inventory(patch_inventory, aliases={}, packages=[], omit_version=False):
     components = {
         "test-component": {
             "url": "https://github.com/projectsyn/component-test-component.git",
@@ -116,6 +116,8 @@ def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
     applications = list(components.keys())
     for c, a in aliases.items():
         applications.append(f"{c} as {a}")
+    for p in packages:
+        applications.append(f"pkg.{p}")
     params = {"components": components}
     nodes = {
         a: {"applications": sorted(applications), "parameters": params}
@@ -127,7 +129,7 @@ def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
         "nodes": nodes,
     }
 
-    def inv(inventory_dir, key="nodes"):
+    def inv(inventory_dir, key="nodes", ignore_class_notfound=False):
         return mock_inventory[key]
 
     patch_inventory.side_effect = inv

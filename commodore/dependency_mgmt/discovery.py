@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 
 import click
@@ -8,6 +9,11 @@ from commodore.config import Config
 from commodore.helpers import kapitan_inventory
 
 from .tools import format_component_list
+
+PACKAGE_PREFIX: str = "pkg."
+
+RESERVED_PACKAGE_PATTERN = re.compile("^(components|defaults|global|params)$")
+TENANT_PREFIX_PATTERN = re.compile("^t-.*$")
 
 
 def _extract_component_aliases(
@@ -19,10 +25,14 @@ def _extract_component_aliases(
     This function doesn't validate the resulting data. Generally, callers will want to
     use `_discover_components()` to extract components and their aliases from the
     applications array.
+
+    This function drops any packages included through the applications array.
     """
     components = set()
     all_component_aliases: dict[str, set[str]] = {}
     for component in kapitan_applications:
+        if component.startswith(PACKAGE_PREFIX):
+            continue
         try:
             cn, alias = component.split(" as ")
         except ValueError:
@@ -95,3 +105,39 @@ def _discover_components(cfg) -> tuple[list[str], dict[str, str]]:
         component_aliases[alias] = list(cns)[0]
 
     return sorted(components), component_aliases
+
+
+def _discover_packages(cfg: Config) -> set[str]:
+    """
+    Discover configuration packages included through the applications array.
+
+    All config package inclusions must be prefixed with `pkg.`. This function drops any
+    component includes. To parse components from the applications array, use
+    `_discover_components()`.
+    """
+    kapitan_applications = kapitan_inventory(
+        cfg, key="applications", ignore_class_notfound=True
+    )
+
+    packages = set()
+
+    for app in kapitan_applications:
+        if not app.startswith(PACKAGE_PREFIX):
+            continue
+
+        pkgname = app.replace(PACKAGE_PREFIX, "", 1)
+
+        if RESERVED_PACKAGE_PATTERN.match(pkgname):
+            raise click.ClickException(
+                f"Can't use reserved name '{pkgname}' as package name."
+            )
+
+        if TENANT_PREFIX_PATTERN.match(pkgname):
+            raise click.ClickException(
+                "Package names can't be prefixed with 't-'."
+                + " This prefix is reserved for tenant configurations."
+            )
+
+        packages.add(pkgname)
+
+    return packages
