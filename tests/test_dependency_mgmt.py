@@ -4,17 +4,21 @@ Unit-tests for dependency management
 from __future__ import annotations
 
 import os
-import click
-import git
-import pytest
 from collections.abc import Iterable
 from unittest.mock import patch
 from pathlib import Path
+
+import click
+import git
+import pytest
+import yaml
 
 from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
 from commodore.inventory import Inventory
+
+from test_package import _setup_package_remote
 
 
 def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
@@ -385,3 +389,47 @@ def test_verify_component_version_overrides(cluster_params: dict, expected: str)
             dependency_mgmt.verify_component_version_overrides(cluster_params)
 
         assert expected in str(e)
+
+
+def _setup_packages(
+    upstream_path: Path, packages: list[str]
+) -> tuple[dict[str, str], dict[str, str]]:
+    urls = {}
+    versions = {}
+
+    for p in packages:
+        _setup_package_remote(p, upstream_path / f"{p}.git")
+        urls[p] = f"file://{upstream_path}/{p}.git"
+        versions[p] = "master"
+
+    return urls, versions
+
+
+@patch.object(dependency_mgmt, "_read_packages")
+@patch.object(dependency_mgmt, "_discover_packages")
+@pytest.mark.parametrize(
+    "packages",
+    [
+        ["test"],
+        ["foo", "bar"],
+    ],
+)
+def test_fetch_packages(
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, packages: list[str]
+):
+    discover_pkgs.return_value = packages
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
+
+    dependency_mgmt.fetch_packages(config)
+
+    for p in packages:
+        pkg_dir = config.inventory.package_dir(p)
+        pkg_file = pkg_dir / f"{p}.yml"
+        assert pkg_dir.is_dir()
+        assert pkg_file.is_file()
+        with open(pkg_file, "r") as f:
+            fcontents = yaml.safe_load(f)
+            assert "parameters" in fcontents
+            params = fcontents["parameters"]
+            assert p in params
+            assert params[p] == "testing"

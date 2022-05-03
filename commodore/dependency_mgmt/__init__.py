@@ -5,11 +5,12 @@ import click
 from commodore.config import Config
 from commodore.component import Component, component_dir
 from commodore.helpers import relsymlink
+from commodore.package import Package
 
 from .component_library import validate_component_library_name
-from .discovery import _discover_components
+from .discovery import _discover_components, _discover_packages
 from .tools import format_component_list
-from .version_parsing import _read_components
+from .version_parsing import _read_components, _read_packages
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -100,6 +101,27 @@ def register_components(cfg: Config):
             f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"
         )
     cfg.register_component_aliases(pruned_aliases)
+
+
+def fetch_packages(cfg: Config):
+    """
+    Download configuration packages used by the cluster.
+
+    This function discovers packages which are used by parsing key `applications` in the
+    hierarchy.
+    """
+
+    click.secho("Discovering config packages...", bold=True)
+    cfg.inventory.ensure_dirs()
+    pkgs = _discover_packages(cfg)
+    urls, versions = _read_packages(cfg, pkgs)
+
+    for p in pkgs:
+        pkg = Package(
+            p, target_dir=cfg.inventory.package_dir(p), url=urls[p], version=versions[p]
+        )
+        pkg.checkout()
+        cfg.register_package(p, pkg)
 
 
 def verify_component_version_overrides(cluster_parameters):

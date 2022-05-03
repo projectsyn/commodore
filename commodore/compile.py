@@ -16,6 +16,7 @@ from .cluster import (
 from .config import Config
 from .dependency_mgmt import (
     fetch_components,
+    fetch_packages,
     register_components,
     verify_component_version_overrides,
 )
@@ -94,6 +95,11 @@ def _regular_setup(config: Config, cluster_id):
     _fetch_global_config(config, cluster)
     _fetch_customer_config(config, cluster)
     check_removed_reclass_variables_inventory(config, cluster.tenant_id)
+
+    # Fetch component config packages. This needs to happen before component fetching
+    # because we want to be able to discover components included by config packages.
+    fetch_packages(config)
+
     fetch_components(config)
 
     update_target(config, config.inventory.bootstrap_target)
