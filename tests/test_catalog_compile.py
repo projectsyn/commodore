@@ -21,19 +21,6 @@ import commodore.compile as commodore_compile
 from test_catalog import cluster_resp, tenant_resp
 
 
-@pytest.fixture
-def config(tmp_path: Path):
-    """
-    Setup config object for tests
-    """
-
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
 def _mock_load_cluster_from_api(cfg: Config, cluster_id: str):
     assert cluster_id == "c-test"
     return Cluster(cluster_resp, tenant_resp)

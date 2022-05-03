@@ -50,17 +50,6 @@ def make_cluster_resp(id: str, displayName: str = "Test cluster") -> dict:
 
 
 @pytest.fixture
-def config(tmp_path: Path) -> Config:
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-        username="John Doe",
-        usermail="john.doe@example.com",
-    )
-
-
-@pytest.fixture
 def cluster() -> Cluster:
     return Cluster(
         cluster_resp,

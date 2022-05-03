@@ -7,11 +7,9 @@ import os
 import click
 import git
 import pytest
-import json
 from collections.abc import Iterable
 from unittest.mock import patch
 from pathlib import Path
-from typing import Optional
 
 from commodore import dependency_mgmt
 from commodore.config import Config
@@ -41,23 +39,10 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     return component_urls, component_versions
 
 
-@pytest.fixture
-def data(tmp_path):
-    """
-    Setup test data
-    """
-
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
-def test_create_component_symlinks_fails(data: Config, tmp_path: Path):
+def test_create_component_symlinks_fails(config: Config, tmp_path: Path):
     component = Component("my-component", work_dir=tmp_path)
     with pytest.raises(click.ClickException) as e:
-        dependency_mgmt.create_component_symlinks(data, component)
+        dependency_mgmt.create_component_symlinks(config, component)
 
     assert "Source does not exist" in str(e.value)
 
@@ -78,12 +63,12 @@ def setup_mock_component(tmp_path: Path, name="my-component") -> Component:
     return component
 
 
-def test_create_component_symlinks(capsys, data: Config, tmp_path):
+def test_create_component_symlinks(capsys, config: Config, tmp_path):
     component = setup_mock_component(tmp_path)
     inv = Inventory(work_dir=tmp_path)
     inv.ensure_dirs()
 
-    dependency_mgmt.create_component_symlinks(data, component)
+    dependency_mgmt.create_component_symlinks(config, component)
 
     expected_symlinks = [
         (
@@ -152,15 +137,15 @@ def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
 
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
-def test_fetch_components(patch_discover, patch_read, data: Config, tmp_path: Path):
+def test_fetch_components(patch_discover, patch_read, config: Config, tmp_path: Path):
     components = ["component-one", "component-two"]
     patch_discover.return_value = (components, {})
     patch_read.return_value = setup_components_upstream(tmp_path, components)
 
-    dependency_mgmt.fetch_components(data)
+    dependency_mgmt.fetch_components(config)
 
     for component in components:
-        assert component in data._components
+        assert component in config._components
         assert (
             tmp_path / "inventory" / "classes" / "components" / f"{component}.yml"
         ).is_symlink()
@@ -173,7 +158,7 @@ def test_fetch_components(patch_discover, patch_read, data: Config, tmp_path: Pa
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_is_minimal(
-    patch_discover, patch_urls, data: Config, tmp_path: Path
+    patch_discover, patch_urls, config: Config, tmp_path: Path
 ):
     components = ["component-one", "component-two"]
     other_components = ["component-three", "component-four"]
@@ -185,10 +170,10 @@ def test_fetch_components_is_minimal(
         patch_urls.return_value[0][cn] = extra_urls[cn]
         patch_urls.return_value[1][cn] = extra_versions[cn]
 
-    dependency_mgmt.fetch_components(data)
+    dependency_mgmt.fetch_components(config)
 
     for component in components:
-        assert component in data._components
+        assert component in config._components
         assert (
             tmp_path / "inventory" / "classes" / "components" / f"{component}.yml"
         ).is_symlink()
@@ -198,7 +183,7 @@ def test_fetch_components_is_minimal(
         assert (tmp_path / "dependencies" / component).is_dir()
 
     for component in other_components:
-        assert component not in data._components
+        assert component not in config._components
         assert not (tmp_path / "dependencies" / component).exists()
 
 
@@ -222,13 +207,13 @@ def _setup_register_components(tmp_path: Path):
 
 
 @patch("commodore.dependency_mgmt._discover_components")
-def test_register_components(patch_discover, data: Config, tmp_path: Path):
+def test_register_components(patch_discover, config: Config, tmp_path: Path):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
 
-    dependency_mgmt.register_components(data)
+    dependency_mgmt.register_components(config)
 
-    component_names = data.get_components().keys()
+    component_names = config.get_components().keys()
     for c in component_dirs:
         assert c in component_names
     for c in other_dirs:
@@ -236,20 +221,22 @@ def test_register_components(patch_discover, data: Config, tmp_path: Path):
 
 
 @patch("commodore.dependency_mgmt._discover_components")
-def test_register_components_and_aliases(patch_discover, data: Config, tmp_path: Path):
+def test_register_components_and_aliases(
+    patch_discover, config: Config, tmp_path: Path
+):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     alias_data = {"fooer": "foo"}
     patch_discover.return_value = (component_dirs, alias_data)
 
-    dependency_mgmt.register_components(data)
+    dependency_mgmt.register_components(config)
 
-    component_names = data.get_components().keys()
+    component_names = config.get_components().keys()
     for c in component_dirs:
         assert c in component_names
     for c in other_dirs:
         assert c not in component_names
 
-    aliases = data.get_component_aliases()
+    aliases = config.get_component_aliases()
     for alias, cn in alias_data.items():
         if cn in component_dirs:
             assert alias in aliases
@@ -260,14 +247,14 @@ def test_register_components_and_aliases(patch_discover, data: Config, tmp_path:
 
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_unknown_components(
-    patch_discover, data: Config, tmp_path: Path, capsys
+    patch_discover, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     unknown_components = ["qux", "quux"]
     component_dirs.extend(unknown_components)
     patch_discover.return_value = (component_dirs, {})
 
-    dependency_mgmt.register_components(data)
+    dependency_mgmt.register_components(config)
 
     captured = capsys.readouterr()
     for cn in unknown_components:
@@ -276,7 +263,7 @@ def test_register_unknown_components(
 
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_dangling_aliases(
-    patch_discover, data: Config, tmp_path: Path, capsys
+    patch_discover, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     # add some dangling aliases
@@ -288,7 +275,7 @@ def test_register_dangling_aliases(
 
     patch_discover.return_value = (component_dirs, alias_data)
 
-    dependency_mgmt.register_components(data)
+    dependency_mgmt.register_components(config)
 
     captured = capsys.readouterr()
     assert (

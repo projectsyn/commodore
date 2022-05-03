@@ -72,23 +72,14 @@ def inventory():
     }
 
 
-@pytest.fixture
-def config(tmp_path: Path):
-    """
-    Setup test config
-    """
-    c = Config(work_dir=tmp_path)
+def test_update_refs(tmp_path: Path, config: Config, inventory):
     aliases = {
         "other-component": "other-component",
         "test-a": "test",
         "test-b": "test",
     }
-    c.register_component_aliases(aliases)
-    return c
+    config.register_component_aliases(aliases)
 
-
-def test_update_refs(tmp_path: Path, config, inventory):
-    aliases = config.get_component_aliases()
     refs.update_refs(config, aliases, inventory)
     ref_prefix = config.refs_dir / "t-tenant" / "c-cluster"
     expected_refs = [

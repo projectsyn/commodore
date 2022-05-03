@@ -4,7 +4,7 @@ import pytest
 
 import click
 
-from test_dependency_mgmt import setup_mock_component, data
+from test_dependency_mgmt import setup_mock_component
 
 from collections.abc import Iterable
 from pathlib import Path
@@ -46,13 +46,13 @@ from commodore.dependency_mgmt import component_library
 def test_create_component_library_aliases_single_component(
     capsys,
     tmp_path: Path,
-    data: Config,
+    config: Config,
     libaliases: Optional[dict],
     expected_paths: Iterable[str],
     stdout: str,
 ):
     component = setup_mock_component(tmp_path)
-    data.register_component(component)
+    config.register_component(component)
     inv = Inventory(work_dir=tmp_path)
     inv.ensure_dirs()
 
@@ -72,7 +72,7 @@ def test_create_component_library_aliases_single_component(
             },
         }
 
-    component_library.create_component_library_aliases(data, cluster_params)
+    component_library.create_component_library_aliases(config, cluster_params)
 
     expected_aliases = [(tmp_path / path, "lib") for path in expected_paths]
     for path, marker in expected_aliases:
@@ -127,7 +127,7 @@ def test_create_component_library_aliases_single_component(
 )
 def test_create_component_library_aliases_multiple_component(
     tmp_path: Path,
-    data: Config,
+    config: Config,
     tc1_libalias: dict[str, str],
     tc2_libalias: dict[str, str],
     tc3_libalias: dict[str, str],
@@ -137,9 +137,9 @@ def test_create_component_library_aliases_multiple_component(
     c2 = setup_mock_component(tmp_path, name="tc2")
     c3 = setup_mock_component(tmp_path, name="tc3")
 
-    data.register_component(c1)
-    data.register_component(c2)
-    data.register_component(c3)
+    config.register_component(c1)
+    config.register_component(c2)
+    config.register_component(c3)
 
     cluster_params = {
         c1.parameters_key: {
@@ -169,6 +169,6 @@ def test_create_component_library_aliases_multiple_component(
 
     if err:
         with pytest.raises(click.ClickException) as e:
-            component_library.create_component_library_aliases(data, cluster_params)
+            component_library.create_component_library_aliases(config, cluster_params)
 
         assert err in str(e.value)

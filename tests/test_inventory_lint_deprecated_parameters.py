@@ -10,15 +10,6 @@ from commodore.config import Config
 from commodore.inventory import lint_deprecated_parameters, lint
 
 
-@pytest.fixture
-def config(tmp_path: Path):
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
 @pytest.mark.parametrize(
     "data,expected",
     [

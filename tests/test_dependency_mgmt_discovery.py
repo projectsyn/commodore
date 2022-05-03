@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from test_dependency_mgmt import _setup_mock_inventory, data
+from test_dependency_mgmt import _setup_mock_inventory
 
 from commodore.config import Config
 
@@ -34,32 +34,32 @@ from commodore.dependency_mgmt import discovery
 )
 @patch.object(discovery, "kapitan_inventory")
 def test_discover_components_duplicate_aliases(
-    patch_inventory, data: Config, expected_aliases, expected_exception_msg
+    patch_inventory, config: Config, expected_aliases, expected_exception_msg
 ):
     _setup_mock_inventory(patch_inventory, expected_aliases)
 
     with pytest.raises(KeyError) as e:
-        discovery._discover_components(data)
+        discovery._discover_components(config)
 
     assert e.value.args[0] == expected_exception_msg
 
 
 @patch.object(discovery, "kapitan_inventory")
-def test_discover_components(patch_inventory, data: Config):
+def test_discover_components(patch_inventory, config: Config):
     component_inv = _setup_mock_inventory(patch_inventory)
 
-    components, aliases = discovery._discover_components(data)
+    components, aliases = discovery._discover_components(config)
     assert components == sorted(component_inv.keys())
     assert sorted(aliases.keys()) == components
     assert all(k == v for k, v in aliases.items())
 
 
 @patch.object(discovery, "kapitan_inventory")
-def test_discover_components_aliases(patch_inventory, data: Config):
+def test_discover_components_aliases(patch_inventory, config: Config):
     expected_aliases = {"other-component": "aliased"}
     component_inv = _setup_mock_inventory(patch_inventory, expected_aliases)
 
-    components, aliases = discovery._discover_components(data)
+    components, aliases = discovery._discover_components(config)
     assert components == sorted(component_inv.keys())
     assert set(components + list(expected_aliases.values())) == set(aliases.keys())
     assert set(aliases.values()) == set(components)

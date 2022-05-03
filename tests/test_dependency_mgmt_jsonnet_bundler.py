@@ -1,17 +1,15 @@
 import json
 from pathlib import Path
 
-from test_dependency_mgmt import data
-
 from commodore.component import Component
 from commodore.config import Config
 
 from commodore.dependency_mgmt import jsonnet_bundler
 
 
-def test_write_jsonnetfile(data: Config, tmp_path: Path):
-    data.register_component(Component("test-component", work_dir=tmp_path))
-    data.register_component(Component("test-component-2", work_dir=tmp_path))
+def test_write_jsonnetfile(config: Config, tmp_path: Path):
+    config.register_component(Component("test-component", work_dir=tmp_path))
+    config.register_component(Component("test-component-2", work_dir=tmp_path))
     dirs = [
         "dependencies/test-component",
         "dependencies/test-component-2",
@@ -20,7 +18,9 @@ def test_write_jsonnetfile(data: Config, tmp_path: Path):
 
     file = tmp_path / "jsonnetfile.json"
 
-    jsonnet_bundler.write_jsonnetfile(file, jsonnet_bundler.jsonnet_dependencies(data))
+    jsonnet_bundler.write_jsonnetfile(
+        file, jsonnet_bundler.jsonnet_dependencies(config)
+    )
 
     with open(file) as jf:
         jf_string = jf.read()

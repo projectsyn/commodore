@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 import pytest
 
-from test_dependency_mgmt import _setup_mock_inventory, data
+from test_dependency_mgmt import _setup_mock_inventory
 
 from commodore.config import Config
 
@@ -14,10 +14,10 @@ from commodore.dependency_mgmt import version_parsing
 
 
 @patch.object(version_parsing, "kapitan_inventory")
-def test_read_components(patch_inventory, data: Config):
+def test_read_components(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
     component_urls, component_versions = version_parsing._read_components(
-        data, ["test-component"]
+        config, ["test-component"]
     )
 
     # check that exactly 'test-component' is discovered
@@ -29,10 +29,10 @@ def test_read_components(patch_inventory, data: Config):
 
 
 @patch.object(version_parsing, "kapitan_inventory")
-def test_read_components_multiple(patch_inventory, data: Config):
+def test_read_components_multiple(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
     component_urls, component_versions = version_parsing._read_components(
-        data, components.keys()
+        config, components.keys()
     )
     # check that exactly 'test-component' is discovered
     assert set(components.keys()) == set(component_urls.keys())
@@ -46,12 +46,12 @@ def test_read_components_multiple(patch_inventory, data: Config):
 
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components_exception(
-    patch_inventory, data: Config, tmp_path: Path, capsys
+    patch_inventory, config: Config, tmp_path: Path, capsys
 ):
     components = _setup_mock_inventory(patch_inventory, omit_version=True)
 
     with pytest.raises(click.ClickException) as e:
-        _ = version_parsing._read_components(data, components.keys())
+        _ = version_parsing._read_components(config, components.keys())
 
     assert "Component 'other-component' doesn't have a version specified" in str(
         e.value
@@ -77,7 +77,7 @@ def test_read_components_exception(
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components_exc(
     patch_inventory,
-    data: Config,
+    config: Config,
     tmp_path: Path,
     capsys,
     components,
@@ -85,10 +85,10 @@ def test_read_components_exc(
     exctext,
 ):
     patch_inventory.return_value = {
-        data.inventory.bootstrap_target: {"parameters": components},
+        config.inventory.bootstrap_target: {"parameters": components},
     }
 
     with pytest.raises(click.ClickException) as exc_info:
-        _ = version_parsing._read_components(data, ckeys)
+        _ = version_parsing._read_components(config, ckeys)
 
     assert exc_info.value.args[0] == exctext
