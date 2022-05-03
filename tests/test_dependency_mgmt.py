@@ -433,3 +433,44 @@ def test_fetch_packages(
             params = fcontents["parameters"]
             assert p in params
             assert params[p] == "testing"
+
+
+@patch.object(dependency_mgmt, "_discover_packages")
+@pytest.mark.parametrize("packages", [[], ["test"], ["foo", "bar"]])
+def test_register_packages(
+    discover_pkgs, tmp_path: Path, config: Config, packages: list[str]
+):
+    discover_pkgs.return_value = packages
+    _setup_packages(tmp_path / "upstream", packages)
+    for p in packages:
+        git.Repo.clone_from(
+            f"file://{tmp_path}/upstream/{p}.git", config.inventory.package_dir(p)
+        )
+
+    dependency_mgmt.register_packages(config)
+
+    pkgs = config.get_packages()
+    assert sorted(pkgs.keys()) == sorted(packages)
+
+
+@patch.object(dependency_mgmt, "_discover_packages")
+def test_register_packages_skip_nonexistent(
+    discover_pkgs, tmp_path: Path, config: Config, capsys
+):
+    packages = ["foo", "bar"]
+    discover_pkgs.return_value = packages
+    _setup_packages(tmp_path / "upstream", packages)
+    git.Repo.clone_from(
+        f"file://{tmp_path}/upstream/foo.git", config.inventory.package_dir("foo")
+    )
+
+    dependency_mgmt.register_packages(config)
+
+    pkgs = config.get_packages()
+    assert list(pkgs.keys()) == ["foo"]
+
+    captured = capsys.readouterr()
+
+    assert (
+        "Skipping registration of package 'bar': repo is not available" in captured.out
+    )

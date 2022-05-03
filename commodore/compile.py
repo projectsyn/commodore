@@ -18,6 +18,7 @@ from .dependency_mgmt import (
     fetch_components,
     fetch_packages,
     register_components,
+    register_packages,
     verify_component_version_overrides,
 )
 from .dependency_mgmt.component_library import create_component_library_aliases
@@ -152,6 +153,7 @@ def _local_setup(config: Config, cluster_id):
     click.secho("Creating bootstrap target...", bold=True)
     update_target(config, config.inventory.bootstrap_target)
 
+    register_packages(config)
     register_components(config)
 
     for alias, component in config.get_component_aliases().items():

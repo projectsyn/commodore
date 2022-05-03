@@ -124,6 +124,30 @@ def fetch_packages(cfg: Config):
         cfg.register_package(p, pkg)
 
 
+def register_packages(cfg: Config):
+    """
+    Discover configuration packages used by the cluster in the inventory and register
+    them if they're checked out in `inventory/classes`.
+
+    This function discovers packages which are used by parsing key `applications` in the
+    hierarchy.
+    """
+
+    click.secho("Discovering config packages...", bold=True)
+    cfg.inventory.ensure_dirs()
+    pkgs = _discover_packages(cfg)
+    for p in pkgs:
+        pkg_dir = cfg.inventory.package_dir(p)
+        if not pkg_dir.is_dir():
+            click.secho(
+                f" > Skipping registration of package '{p}': repo is not available",
+                fg="yellow",
+            )
+            continue
+        pkg = Package(p, target_dir=pkg_dir)
+        cfg.register_package(p, pkg)
+
+
 def verify_component_version_overrides(cluster_parameters):
     errors = []
     for cname, cspec in cluster_parameters["components"].items():
