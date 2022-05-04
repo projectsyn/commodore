@@ -13,7 +13,7 @@ from commodore.config import Config
 from commodore.helpers import yaml_load_all
 
 
-from .lint_components import lint_component_versions
+from .lint_dependency_specification import lint_components, lint_packages
 from .lint_deprecated_parameters import lint_deprecated_parameters
 
 
@@ -28,9 +28,9 @@ class Linter:
         ...
 
 
-class ComponentVersionLinter(Linter):
+class ComponentSpecLinter(Linter):
     def __call__(self, config: Config, path: Path) -> int:
-        return run_linter(config, path, lint_component_versions)
+        return run_linter(config, path, lint_components)
 
 
 class DeprecatedParameterLinter(Linter):
@@ -38,9 +38,15 @@ class DeprecatedParameterLinter(Linter):
         return run_linter(config, path, lint_deprecated_parameters)
 
 
+class PackageSpecLinter(Linter):
+    def __call__(self, config: Config, path: Path) -> int:
+        return run_linter(config, path, lint_packages)
+
+
 LINTERS = {
-    "component-versions": ComponentVersionLinter(),
+    "components": ComponentSpecLinter(),
     "deprecated-parameters": DeprecatedParameterLinter(),
+    "packages": PackageSpecLinter(),
 }
 
 
