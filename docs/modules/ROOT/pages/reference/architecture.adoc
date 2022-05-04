@@ -18,45 +18,63 @@ Commodore fetches the following dependencies:
 * Static and dynamic cluster facts from Lieutenant API
 * Global configuration
 * Tenant configuration
-* Components as discovered in global and tenant configuration
+* Configuration packages as discovered in global and tenant configuration
+* Components as discovered in global configuration, tenant configuration, and configuration packages
 * Jsonnet libraries as described in the
   xref:commodore:ROOT:reference/concepts.adoc#_configuration_hierarchy[configuration hierarchy]
 
-=== Component discovery and versions
+=== Dependency discovery and versions
 
-To discover all required components, Commodore reads the https://reclass.pantsfullofunix.net/operations.html#yaml-fs-storage[`applications` array] which is made available by reclass.
-If a component should be disabled in a subset of the hierarchy, it can be removed from the `applications` array by adding the component name prefixed with a `~`.
+To discover all required dependencies (configuration packages and components), Commodore reads the https://reclass.pantsfullofunix.net/operations.html#yaml-fs-storage[`applications` array] which is made available by reclass.
+If a dependency should be disabled in a subset of the hierarchy, it can be removed from the `applications` array by adding the dependency name prefixed with a `~`.
 
 [source,yaml]
 ----
 applications:
-  - ~component-to-remove
+  - ~dependency-to-remove
 ----
 
-Note that this only works to remove components which have been included previously, and won't remove components that are included further down in the hierarchy.
+Note that this only works to remove dependencies which have been included previously, and won't remove dependencies that are included further down in the hierarchy.
 
-Commodore currently has no mechanism to automatically discover components based on their names.
+Commodore uses the prefix `pkg.` to distinguish configuration package dependencies from component dependencies.
+
+Commodore currently has no mechanism to automatically discover depedencies based on their names.
 Instead all components which are referenced in the `applications` array must be listed in key `parameters.components` in the hierarchy.
-Using the xref:commodore:ROOT:reference/concepts.adoc#_configuration_hierarchy[configuration hierarchy] for specifying component locations and versions allows tight integration of component management with the rest of the configuration.
+Analogously, all configuration packages which are referenced in the `applications` array must be listed in key `parameters.packages` in the hierarchy.
 
-Commodore will read `parameters.components` from the hierarchy _before component defaults are included_.
-The key `parameters.components` holds a dictionary of dictionaries mapping component names to their remote repository location and version.
+Using the xref:commodore:ROOT:reference/concepts.adoc#_configuration_hierarchy[configuration hierarchy] for specifying component and configuration package locations and versions allows tight integration of dependency management with the rest of the configuration.
+
+The keys `parameters.components` and `parameters.packages` each hold a dictionary of dictionaries mapping dependency names to their remote repository location and version.
 The remote repository location is specified in key `url`.
 The version is specified in key `version`.
 The version can be any Git https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddeftree-ishatree-ishalsotreeish[tree-ish].
-Commodore will exit with an error, if no version is given for a component.
-Commodore fetches the remote repository and directly checks out the specified version.
+Commodore will exit with an error if no version is given for a dependency.
+For each included dependency, Commodore fetches the remote repository and directly checks out the specified version.
 
+Commodore will make all included packages available, before discovering and fetching components.
+This ensures that configuration packages can include additional components and can customize component versions.
+
+Commodore will read `parameters.components` from the hierarchy _before component defaults are included_.
+
+.Example dependency definitions
 [source,yaml]
---
+----
 parameters:
   components:
     argocd:
       url: https://github.com/projectsyn/component-argocd.git
+      version: v4.3.1
     metrics-server:
       url: https://github.com/projectsyn/component-metrics-server.git
       version: v1.0.2
---
+
+  packages:
+    dummy:
+      url: https://github.com/projectsyn/package-dummy.git
+      version: main <1>
+----
+<1> Versions can be any Git tree-ish.
+This example uses the repository's `main` branch as the version
 
 [NOTE]
 ====
@@ -68,7 +86,7 @@ The transformation assumes that SSH URLs follow the pattern `git@host:path/to/re
 This assumption holds for many popular Git hosting services, such as GitHub and GitLab.
 ====
 
-Component repositories and versions can be overridden by setting the keys `url` and `versions` respectively in `parameters.components.<component-name>` in the xref:commodore:ROOT:reference/concepts.adoc#_inventory[inventory repositories].
+Component and configuration package repositories and versions can be overridden by setting the keys `url` and `versions` respectively in `parameters.components.<component-name>` or `parameters.packages.<pacakge-name>` in the xref:commodore:ROOT:reference/concepts.adoc#_inventory[inventory repositories].
 This allows configuring a subset of managed clusters to use a fork or different version of a component.
 
 [source,yaml]
@@ -82,12 +100,12 @@ parameters:
 
 [NOTE]
 ====
-Since Commodore won't re-read `parameters.components` after including the discovered components' default classes, entries in `parameters.components` in a component's `defaults.yml` will be ignored.
+Since Commodore won't re-read `parameters.components` or `parameters.packages` after including the discovered components' default classes, entries in `parameters.components` or `parameters.packages` in a component's `defaults.yml` will be ignored.
 ====
 
 [TIP]
 ====
-Commodore will raise an error if it finds an entry in `parameters.components` which only has the `version` key.
+Commodore will raise an error if it finds entries in `parameters.components` or `parameters.packages` which only have the `version` key.
 This error is intended to protect users from typos in component names when configuring version overrides.
 ====
 

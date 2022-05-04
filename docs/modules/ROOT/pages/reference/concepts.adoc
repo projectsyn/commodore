@@ -28,6 +28,18 @@ Inventory repositories are cloned directly into the Kapitan `inventory` director
 
 Commodore also makes use of the inventory to manage xref:commodore:ROOT:reference/architecture.adoc#_component_discovery_and_versions[component repository locations and versions].
 
+== Configuration Packages
+
+Commodore provides support to fetch additional inventory classes based on configurations present in the global and tenant repositories
+These inventory classes are stored in Git repositories.
+Commodore calls these bundles of inventory classes _configuration packages_.
+
+Configuration packages can include components and provide arbitrary configuration parameters.
+Commodore clones the Git repositories containing configuration packages directly into `inventory/classes` to make the contents available as Kapitan inventory classes.
+To ensure components included through packages are processed correctly, Commodore ensures that configuration packages are present before discovering components.
+
+See https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[SDD 0028 - Reusable Commodore Component Configuration Packages] for more details on the design of configuration packages.
+
 == Components
 
 Each Commodore component is managed in an individual Git repository and
