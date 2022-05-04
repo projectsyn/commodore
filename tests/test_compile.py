@@ -13,18 +13,6 @@ from commodore.cluster import Cluster
 import mock_gitrepo
 
 
-@pytest.fixture
-def config(tmp_path):
-    """
-    Setup test config object
-    """
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
 def setup_cluster(globalrev=None, tenantrev=None):
     """
     Setup test cluster object
@@ -88,7 +76,7 @@ def assert_result(cluster, repo, repourl, revision, override_revision):
 @patch.object(compile, "GitRepo", new=mock_gitrepo.GitRepo)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
-def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
+def test_fetch_global_config(tmp_path: P, config: Config, revision, override_revision):
     # Set revision values
     cluster = setup_cluster(globalrev=revision)
     config.global_repo_revision_override = override_revision
@@ -105,7 +93,9 @@ def test_fetch_global_config(tmp_path: P, config, revision, override_revision):
 @patch.object(compile, "GitRepo", new=mock_gitrepo.GitRepo)
 @pytest.mark.parametrize("revision", [None, "ref"])
 @pytest.mark.parametrize("override_revision", [None, "oref"])
-def test_fetch_customer_config(tmp_path: P, config, revision, override_revision):
+def test_fetch_customer_config(
+    tmp_path: P, config: Config, revision, override_revision
+):
     # Set revision values
     cluster = setup_cluster(tenantrev=revision)
     config.tenant_repo_revision_override = override_revision

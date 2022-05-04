@@ -14,15 +14,6 @@ import click
 from commodore.config import Config
 
 
-@pytest.fixture
-def config(tmp_path: P):
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
 def test_verify_component_aliases_no_instance(config):
     alias_data = {"bar": "bar"}
     config.register_component_aliases(alias_data)

@@ -18,11 +18,6 @@ from commodore.config import Config
 from commodore import login
 
 
-@pytest.fixture
-def config(tmp_path) -> Config:
-    return Config(tmp_path, api_url="https://syn.example.com")
-
-
 def mock_open_browser(authorization_endpoint: str):
     def mock(request_uri: str):
         assert request_uri.startswith(authorization_endpoint)
@@ -78,7 +73,7 @@ def _setup_responses(api_url, auth_url, id_token):
 @patch("webbrowser.open")
 @patch("commodore.tokencache.save")
 @responses.activate
-def test_login(mock_tokencache, mock_browser, config, tmp_path):
+def test_login(mock_tokencache, mock_browser, config: Config, tmp_path):
     auth_url = "https://idp.example.com/auth"
     id_token = "id-123"
 
@@ -91,7 +86,7 @@ def test_login(mock_tokencache, mock_browser, config, tmp_path):
 
 
 def mocked_login(expected_token):
-    def mock(config):
+    def mock(config: Config):
         with open(f"{xdg_cache_home}/commodore/token", "w") as f:
             json.dump({config.api_url: expected_token}, f)
 
@@ -101,7 +96,10 @@ def mocked_login(expected_token):
 @responses.activate
 @pytest.mark.parametrize("cached", [True, False])
 @patch("commodore.login.login")
-def test_fetch_token(mock_login, config, tmp_path, fs, cached):
+def test_fetch_token(mock_login, config: Config, tmp_path, fs, cached):
+    # The `config` test fixture sets api_token='token'. We clear this configuration here
+    # to test the token fetching logic.
+    config.api_token = None
     auth_url = "https://idp.example.com/auth"
     expected_token_payload = {"marker": "id-123", "exp": time.time() + 600}
     cache_contents = {}

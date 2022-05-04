@@ -13,15 +13,6 @@ from commodore.inventory import lint_components
 from commodore.inventory import lint
 
 
-@pytest.fixture
-def config(tmp_path: Path):
-    return Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-
 LINT_FILECONTENTS = [
     ({}, 0),
     ({"a": "b"}, 0),

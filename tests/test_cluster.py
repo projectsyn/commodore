@@ -8,19 +8,6 @@ import pytest
 
 from commodore import compile
 from commodore.cluster import Cluster
-from commodore.config import Config
-
-
-@pytest.fixture
-def data():
-    return {
-        "cluster": {
-            "id": "c-bar",
-            "tenant": "t-foo",
-            "displayName": "Foo Inc. Bar cluster",
-        },
-        "tenant": {"id": "t-foo", "displayName": "Foo Inc."},
-    }
 
 
 def lieutenant_query(api_url, api_token, api_endpoint, api_id):
@@ -34,130 +21,131 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
 
 
 @patch("commodore.cluster.lieutenant_query")
-def test_no_tenant_reference(test_patch, tmp_path):
+def test_no_tenant_reference(query_patch, config, tmp_path):
     customer_id = "t-wild-fire-234"
-    config = Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-    test_patch.side_effect = lieutenant_query
+    query_patch.side_effect = lieutenant_query
     with pytest.raises(click.ClickException) as err:
         compile.load_cluster_from_api(config, customer_id)
     assert "cluster does not have a tenant reference" in str(err)
 
 
-def test_cluster_global_git_repo_url(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_cluster_global_git_repo_url(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     with pytest.raises(click.ClickException) as err:
         _ = cluster.global_git_repo_url
     assert "URL of the global git repository is missing on tenant 't-foo'" in str(err)
 
-    set_on_tenant = data.copy()
+    set_on_tenant = api_data.copy()
     set_on_tenant["tenant"]["globalGitRepoURL"] = "ssh://git@example.com/tenant.git"
     cluster = Cluster(set_on_tenant["cluster"], set_on_tenant["tenant"])
-    assert "ssh://git@example.com/tenant.git" == cluster.global_git_repo_url
+    assert cluster.global_git_repo_url == "ssh://git@example.com/tenant.git"
 
 
-def test_global_git_repo_revision(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_global_git_repo_revision(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     assert not cluster.global_git_repo_revision
 
-    set_on_tenant = data.copy()
+    set_on_tenant = api_data.copy()
     set_on_tenant["tenant"]["globalGitRepoRevision"] = "v1.2.3"
     cluster = Cluster(set_on_tenant["cluster"], set_on_tenant["tenant"])
-    assert "v1.2.3" == cluster.global_git_repo_revision
+    assert cluster.global_git_repo_revision == "v1.2.3"
 
-    set_on_cluster = data.copy()
+    set_on_cluster = api_data.copy()
     set_on_cluster["cluster"]["globalGitRepoRevision"] = "v3.2.1"
     cluster = Cluster(set_on_cluster["cluster"], set_on_cluster["tenant"])
-    assert "v3.2.1" == cluster.global_git_repo_revision
+    assert cluster.global_git_repo_revision == "v3.2.1"
 
-    set_on_both = data.copy()
+    set_on_both = api_data.copy()
     set_on_both["cluster"]["globalGitRepoRevision"] = "v2.3.1"
     set_on_both["tenant"]["globalGitRepoRevision"] = "v1.2.3"
     cluster = Cluster(set_on_both["cluster"], set_on_both["tenant"])
-    assert "v2.3.1" == cluster.global_git_repo_revision
+    assert cluster.global_git_repo_revision == "v2.3.1"
 
 
-def test_config_repo_url(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_config_repo_url(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     with pytest.raises(click.ClickException) as err:
-        cluster.config_repo_url
+        _ = cluster.config_repo_url
     assert " > API did not return a repository URL for tenant 't-foo'" in str(err)
 
-    data["tenant"]["gitRepo"] = {
+    api_data["tenant"]["gitRepo"] = {
         "url": "ssh://git@example.com/tenant.git",
     }
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "ssh://git@example.com/tenant.git" == cluster.config_repo_url
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.config_repo_url == "ssh://git@example.com/tenant.git"
 
 
-def test_config_git_repo_revision(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_config_git_repo_revision(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     assert not cluster.config_git_repo_revision
 
-    set_on_tenant = data.copy()
+    set_on_tenant = api_data.copy()
     set_on_tenant["tenant"]["tenantGitRepoRevision"] = "v1.2.3"
     cluster = Cluster(set_on_tenant["cluster"], set_on_tenant["tenant"])
-    assert "v1.2.3" == cluster.config_git_repo_revision
+    assert cluster.config_git_repo_revision == "v1.2.3"
 
-    set_on_cluster = data.copy()
+    set_on_cluster = api_data.copy()
     set_on_cluster["cluster"]["tenantGitRepoRevision"] = "v3.2.1"
     cluster = Cluster(set_on_cluster["cluster"], set_on_cluster["tenant"])
-    assert "v3.2.1" == cluster.config_git_repo_revision
+    assert cluster.config_git_repo_revision == "v3.2.1"
 
-    set_on_both = data.copy()
+    set_on_both = api_data.copy()
     set_on_both["cluster"]["tenantGitRepoRevision"] = "v2.3.1"
     set_on_both["tenant"]["tenantGitRepoRevision"] = "v1.2.3"
     cluster = Cluster(set_on_both["cluster"], set_on_both["tenant"])
-    assert "v2.3.1" == cluster.config_git_repo_revision
+    assert cluster.config_git_repo_revision == "v2.3.1"
 
 
-def test_catalog_repo_url(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_catalog_repo_url(api_data):
+    # The `api_data` test fixtures includes a catalog repo url. Clear it here to test
+    # the error case.
+    del api_data["cluster"]["gitRepo"]
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     with pytest.raises(click.ClickException) as err:
-        cluster.catalog_repo_url
+        _ = cluster.catalog_repo_url
     assert " > API did not return a repository URL for cluster 'c-bar'" in str(err)
 
-    data["cluster"]["gitRepo"] = {
+    api_data["cluster"]["gitRepo"] = {
         "url": "ssh://git@example.com/catalog.git",
     }
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "ssh://git@example.com/catalog.git" == cluster.catalog_repo_url
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.catalog_repo_url == "ssh://git@example.com/catalog.git"
 
 
-def test_tenant_id(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "t-foo" == cluster.tenant_id
+def test_tenant_id(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.tenant_id == "t-foo"
 
 
-def test_tenant_display_name(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "Foo Inc." == cluster.tenant_display_name
+def test_tenant_display_name(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.tenant_display_name == "Foo Inc."
 
 
-def test_id(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "c-bar" == cluster.id
+def test_id(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.id == "c-bar"
 
 
-def test_display_name(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert "Foo Inc. Bar cluster" == cluster.display_name
+def test_display_name(api_data):
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.display_name == "Foo Inc. Bar Cluster"
 
 
-def test_facts(data):
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert {} == cluster.facts
+def test_facts(api_data):
+    # The `api_data` test fixture sets some facts by default. We clear those here to
+    # have a clean base to test the facts logic.
+    del api_data["cluster"]["facts"]
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.facts == {}
 
     facts = {
         "fact_a": "value_a",
         "fact_b": "value_b",
     }
-    data["cluster"]["facts"] = facts.copy()
-    cluster = Cluster(data["cluster"], data["tenant"])
-    assert facts == cluster.facts
+    api_data["cluster"]["facts"] = facts.copy()
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert cluster.facts == facts
 
 
 @pytest.mark.parametrize(
@@ -195,10 +183,13 @@ def test_facts(data):
         },
     ],
 )
-def test_dynamic_facts(data, dynamic_facts):
-    cluster = Cluster(data["cluster"], data["tenant"])
+def test_dynamic_facts(api_data, dynamic_facts):
+    # The `api_data` test fixture contains some dynamic facts by default. We clear those
+    # to ensure a clean base for testing the dynamic facts logic.
+    del api_data["cluster"]["dynamicFacts"]
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     assert {} == cluster.dynamic_facts
 
-    data["cluster"]["dynamicFacts"] = dynamic_facts.copy()
-    cluster = Cluster(data["cluster"], data["tenant"])
+    api_data["cluster"]["dynamicFacts"] = dynamic_facts.copy()
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
     assert dynamic_facts == cluster.dynamic_facts

@@ -24,43 +24,8 @@ class MockComponent:
         return self._target_directory
 
 
-@pytest.fixture
-def data():
-    """
-    Setup test data
-    """
-
-    tenant = {
-        "id": "mytenant",
-        "displayName": "My Test Tenant",
-    }
-    cluster = {
-        "id": "mycluster",
-        "displayName": "My Test Cluster",
-        "tenant": tenant["id"],
-        "facts": {
-            "distribution": "rancher",
-            "cloud": "cloudscale",
-        },
-        "dynamicFacts": {
-            "kubernetes_version": {
-                "major": "1",
-                "minor": "21",
-                "gitVersion": "v1.21.3",
-            }
-        },
-        "gitRepo": {
-            "url": "ssh://git@git.example.com/cluster-catalogs/mycluster",
-        },
-    }
-    return {
-        "cluster": cluster,
-        "tenant": tenant,
-    }
-
-
-def cluster_from_data(data) -> cluster.Cluster:
-    return cluster.Cluster(data["cluster"], data["tenant"])
+def cluster_from_data(apidata) -> cluster.Cluster:
+    return cluster.Cluster(apidata["cluster"], apidata["tenant"])
 
 
 def _setup_working_dir(inv: Inventory, components):
@@ -201,10 +166,10 @@ def test_render_aliased_target_with_dash(tmp_path: P):
     assert target["parameters"]["_base_directory"] == str(tmp_path / "foo-comp")
 
 
-def test_render_params(data, tmp_path: P):
+def test_render_params(api_data, tmp_path: P):
     cfg = Config(work_dir=tmp_path)
     target = cfg.inventory.bootstrap_target
-    params = cluster.render_params(cfg.inventory, cluster_from_data(data))
+    params = cluster.render_params(cfg.inventory, cluster_from_data(api_data))
 
     assert "parameters" in params
 
@@ -212,27 +177,27 @@ def test_render_params(data, tmp_path: P):
     assert "cluster" in params
 
     assert "name" in params["cluster"]
-    assert params["cluster"]["name"] == "mycluster"
+    assert params["cluster"]["name"] == "c-bar"
 
     assert target in params
     target_params = params[target]
 
     assert "name" in target_params
-    assert target_params["name"] == "mycluster"
+    assert target_params["name"] == "c-bar"
     assert "display_name" in target_params
-    assert target_params["display_name"] == "My Test Cluster"
+    assert target_params["display_name"] == "Foo Inc. Bar Cluster"
     assert "catalog_url" in target_params
     assert (
         target_params["catalog_url"]
         == "ssh://git@git.example.com/cluster-catalogs/mycluster"
     )
     assert "tenant" in target_params
-    assert target_params["tenant"] == "mytenant"
+    assert target_params["tenant"] == "t-foo"
     assert "tenant_display_name" in target_params
-    assert target_params["tenant_display_name"] == "My Test Tenant"
+    assert target_params["tenant_display_name"] == "Foo Inc."
 
     assert "facts" in params
-    assert params["facts"] == data["cluster"]["facts"]
+    assert params["facts"] == api_data["cluster"]["facts"]
 
     assert "dynamic_facts" in params
     dyn_facts = params["dynamic_facts"]
@@ -246,18 +211,18 @@ def test_render_params(data, tmp_path: P):
     assert "v1.21.3" == k8s_ver["gitVersion"]
 
 
-def test_missing_facts(data, tmp_path: P):
-    data["cluster"]["facts"].pop("cloud")
+def test_missing_facts(api_data, tmp_path: P):
+    api_data["cluster"]["facts"].pop("cloud")
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cfg.inventory, cluster_from_data(data))
+        cluster.render_params(cfg.inventory, cluster_from_data(api_data))
 
 
-def test_empty_facts(data, tmp_path: P):
-    data["cluster"]["facts"]["cloud"] = ""
+def test_empty_facts(api_data, tmp_path: P):
+    api_data["cluster"]["facts"]["cloud"] = ""
     cfg = Config(work_dir=tmp_path)
     with pytest.raises(click.ClickException):
-        cluster.render_params(cfg.inventory, cluster_from_data(data))
+        cluster.render_params(cfg.inventory, cluster_from_data(api_data))
 
 
 def test_read_cluster_and_tenant(tmp_path):
