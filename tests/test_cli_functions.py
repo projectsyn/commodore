@@ -111,7 +111,7 @@ def test_commodore_fetch_token(
             },
             1,
             [
-                "> Component specification for tc1 is missing explict version in {0}/test.yaml",
+                "> Component specification for tc1 is missing key 'version' in {0}/test.yaml",
                 "> Field 'parameters.customer_name' in file '{0}/test.yaml' "
                 + "contains deprecated parameter '${{customer:name}}'",
                 "Found 2 errors",
@@ -133,6 +133,7 @@ def test_inventory_lint_cli(
     result = cli_runner(["inventory", "lint", str(tmp_path)])
 
     assert result.exit_code == exitcode
+    print(result.stdout)
     assert all(line.format(tmp_path) in result.stdout for line in stdout)
 
 

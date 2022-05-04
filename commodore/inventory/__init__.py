@@ -77,6 +77,9 @@ class Inventory:
     def tenant_config_dir(self, tenant: str) -> P:
         return self.classes_dir / tenant
 
+    def package_dir(self, pkgname: str) -> P:
+        return self.classes_dir / pkgname
+
     # pylint: disable=unsubscriptable-object
     def component_file(self, component: Union[Component, str]) -> P:
         return self.components_dir / f"{_component_name(component)}.yml"

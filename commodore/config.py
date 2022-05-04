@@ -14,6 +14,7 @@ import click
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
 from .inventory import Inventory
+from .package import Package
 from . import tokencache
 
 
@@ -27,6 +28,7 @@ class Config:
     _components: dict[str, Component]
     _config_repos: dict[str, GitRepo]
     _component_aliases: dict[str, str]
+    _packages: dict[str, Package]
     _deprecation_notices: list[str]
     _migration: Optional[Migration]
 
@@ -51,6 +53,7 @@ class Config:
         self._components = {}
         self._config_repos = {}
         self._component_aliases = {}
+        self._packages = {}
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
@@ -188,6 +191,12 @@ class Config:
 
     def register_config(self, level, repo: GitRepo):
         self._config_repos[level] = repo
+
+    def get_packages(self) -> dict[str, Package]:
+        return self._packages
+
+    def register_package(self, pkg_name: str, pkg: Package):
+        self._packages[pkg_name] = pkg
 
     def get_component_aliases(self):
         return self._component_aliases

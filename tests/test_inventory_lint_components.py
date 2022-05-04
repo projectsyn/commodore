@@ -9,7 +9,7 @@ import pytest
 
 from commodore.config import Config
 from commodore.helpers import yaml_dump, yaml_dump_all
-from commodore.inventory import lint_components
+from commodore.inventory import lint_dependency_specification
 from commodore.inventory import lint
 
 
@@ -75,6 +75,27 @@ LINT_FILECONTENTS = [
         },
         2,
     ),
+    (
+        {
+            "parameters": {
+                "components": {
+                    "c1": {
+                        "url": ["https://example.com/syn/component-c1.git"],
+                        "version": "v1.0.0",
+                        "vesrion": "v1.0.1",
+                    },
+                    "c2": {
+                        "url": "https://example.com/syn/component-c2.git",
+                        "version": 1.0,
+                    },
+                    "c3": {
+                        "version": "v1.0.0",
+                    },
+                },
+            }
+        },
+        3,
+    ),
 ]
 SKIP_FILECONTENTS = [
     ("", "> Skipping empty file"),
@@ -98,7 +119,7 @@ def test_lint_component_versions(
 ):
     p = tmp_path / "test.yml"
 
-    ec = lint_components.lint_component_versions(p, filecontents)
+    ec = lint_dependency_specification.lint_components(p, filecontents)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -111,7 +132,7 @@ def test_lint_valid_file(
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
 
-    ec = lint.ComponentVersionLinter()(config, testf)
+    ec = lint.ComponentSpecLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -124,7 +145,7 @@ def test_lint_valid_file_stream(
     testf = tmp_path / "test.yml"
     yaml_dump_all([filecontents], testf)
 
-    ec = lint.ComponentVersionLinter()(config, testf)
+    ec = lint.ComponentSpecLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -152,7 +173,7 @@ def test_lint_skip_file(
     testf = tmp_path / "test.yml"
     _dump_skip_file(filecontents, testf)
 
-    ec = lint.ComponentVersionLinter()(config, testf)
+    ec = lint.ComponentSpecLinter()(config, testf)
 
     captured = capsys.readouterr()
     stdout: str = captured.out
@@ -171,6 +192,7 @@ def _setup_directory(tmp_path: Path):
         tmp_path / "d1" / "test2.yml",
         tmp_path / "d2" / "test3.yml",
         tmp_path / "d2" / "subd" / "test4.yml",
+        tmp_path / "d3" / "test5.yml",
     ]
     assert len(lint_direntries) == len(LINT_FILECONTENTS)
     skip_direntries = [
@@ -200,7 +222,7 @@ def _setup_directory(tmp_path: Path):
 def test_lint_directory(tmp_path: Path, capsys, config: Config):
     expected_errcount = _setup_directory(tmp_path)
 
-    ec = lint.ComponentVersionLinter()(config, tmp_path)
+    ec = lint.ComponentSpecLinter()(config, tmp_path)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -226,7 +248,7 @@ def test_lint_components_file(tmp_path: Path, config: Config, capsys):
     testf = tmp_path / "test.yml"
     yaml_dump(filecontents, testf)
 
-    ec = lint.ComponentVersionLinter()(config, testf)
+    ec = lint.ComponentSpecLinter()(config, testf)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
@@ -235,7 +257,7 @@ def test_lint_components_file(tmp_path: Path, config: Config, capsys):
 def test_lint_components_directory(tmp_path: Path, config: Config, capsys):
     expected_errcount = _setup_directory(tmp_path)
 
-    ec = lint.ComponentVersionLinter()(config, tmp_path)
+    ec = lint.ComponentSpecLinter()(config, tmp_path)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)

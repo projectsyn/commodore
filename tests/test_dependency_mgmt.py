@@ -4,17 +4,21 @@ Unit-tests for dependency management
 from __future__ import annotations
 
 import os
-import click
-import git
-import pytest
 from collections.abc import Iterable
 from unittest.mock import patch
 from pathlib import Path
+
+import click
+import git
+import pytest
+import yaml
 
 from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
 from commodore.inventory import Inventory
+
+from test_package import _setup_package_remote
 
 
 def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
@@ -94,7 +98,7 @@ def test_create_component_symlinks(capsys, config: Config, tmp_path):
     assert capsys.readouterr().out == ""
 
 
-def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
+def _setup_mock_inventory(patch_inventory, aliases={}, packages=[], omit_version=False):
     components = {
         "test-component": {
             "url": "https://github.com/projectsyn/component-test-component.git",
@@ -116,6 +120,8 @@ def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
     applications = list(components.keys())
     for c, a in aliases.items():
         applications.append(f"{c} as {a}")
+    for p in packages:
+        applications.append(f"pkg.{p}")
     params = {"components": components}
     nodes = {
         a: {"applications": sorted(applications), "parameters": params}
@@ -127,7 +133,7 @@ def _setup_mock_inventory(patch_inventory, aliases={}, omit_version=False):
         "nodes": nodes,
     }
 
-    def inv(inventory_dir, key="nodes"):
+    def inv(inventory_dir, key="nodes", ignore_class_notfound=False):
         return mock_inventory[key]
 
     patch_inventory.side_effect = inv
@@ -371,15 +377,150 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     },
                 },
             },
-            "Version overrides specified for components 'component_1' and 'component_2' which have no URL",
+            "Version overrides specified for component 'component_1' and component 'component_2' which have no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "url": "https://example.com/component-1.git",
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version override specified for package 'package-1' which has no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version overrides specified for component 'component-1' and package 'package-1' which have no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "version": "v1.2.3",
+                    },
+                    "component-2": {
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version overrides specified for component 'component-1', "
+            + "component 'component-2', and package 'package-1' which have no URL",
         ),
     ],
 )
 def test_verify_component_version_overrides(cluster_params: dict, expected: str):
     if expected == "":
-        dependency_mgmt.verify_component_version_overrides(cluster_params)
+        dependency_mgmt.verify_version_overrides(cluster_params)
     else:
         with pytest.raises(click.ClickException) as e:
-            dependency_mgmt.verify_component_version_overrides(cluster_params)
+            dependency_mgmt.verify_version_overrides(cluster_params)
 
         assert expected in str(e)
+
+
+def _setup_packages(
+    upstream_path: Path, packages: list[str]
+) -> tuple[dict[str, str], dict[str, str]]:
+    urls = {}
+    versions = {}
+
+    for p in packages:
+        _setup_package_remote(p, upstream_path / f"{p}.git")
+        urls[p] = f"file://{upstream_path}/{p}.git"
+        versions[p] = "master"
+
+    return urls, versions
+
+
+@patch.object(dependency_mgmt, "_read_packages")
+@patch.object(dependency_mgmt, "_discover_packages")
+@pytest.mark.parametrize(
+    "packages",
+    [
+        ["test"],
+        ["foo", "bar"],
+    ],
+)
+def test_fetch_packages(
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, packages: list[str]
+):
+    discover_pkgs.return_value = packages
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
+
+    dependency_mgmt.fetch_packages(config)
+
+    for p in packages:
+        pkg_dir = config.inventory.package_dir(p)
+        pkg_file = pkg_dir / f"{p}.yml"
+        assert pkg_dir.is_dir()
+        assert pkg_file.is_file()
+        with open(pkg_file, "r") as f:
+            fcontents = yaml.safe_load(f)
+            assert "parameters" in fcontents
+            params = fcontents["parameters"]
+            assert p in params
+            assert params[p] == "testing"
+
+
+@patch.object(dependency_mgmt, "_discover_packages")
+@pytest.mark.parametrize("packages", [[], ["test"], ["foo", "bar"]])
+def test_register_packages(
+    discover_pkgs, tmp_path: Path, config: Config, packages: list[str]
+):
+    discover_pkgs.return_value = packages
+    _setup_packages(tmp_path / "upstream", packages)
+    for p in packages:
+        git.Repo.clone_from(
+            f"file://{tmp_path}/upstream/{p}.git", config.inventory.package_dir(p)
+        )
+
+    dependency_mgmt.register_packages(config)
+
+    pkgs = config.get_packages()
+    assert sorted(pkgs.keys()) == sorted(packages)
+
+
+@patch.object(dependency_mgmt, "_discover_packages")
+def test_register_packages_skip_nonexistent(
+    discover_pkgs, tmp_path: Path, config: Config, capsys
+):
+    packages = ["foo", "bar"]
+    discover_pkgs.return_value = packages
+    _setup_packages(tmp_path / "upstream", packages)
+    git.Repo.clone_from(
+        f"file://{tmp_path}/upstream/foo.git", config.inventory.package_dir("foo")
+    )
+
+    dependency_mgmt.register_packages(config)
+
+    pkgs = config.get_packages()
+    assert list(pkgs.keys()) == ["foo"]
+
+    captured = capsys.readouterr()
+
+    assert (
+        "Skipping registration of package 'bar': repo is not available" in captured.out
+    )

@@ -16,8 +16,10 @@ from .cluster import (
 from .config import Config
 from .dependency_mgmt import (
     fetch_components,
+    fetch_packages,
     register_components,
-    verify_component_version_overrides,
+    register_packages,
+    verify_version_overrides,
 )
 from .dependency_mgmt.component_library import create_component_library_aliases
 from .dependency_mgmt.jsonnet_bundler import (
@@ -94,6 +96,11 @@ def _regular_setup(config: Config, cluster_id):
     _fetch_global_config(config, cluster)
     _fetch_customer_config(config, cluster)
     check_removed_reclass_variables_inventory(config, cluster.tenant_id)
+
+    # Fetch component config packages. This needs to happen before component fetching
+    # because we want to be able to discover components included by config packages.
+    fetch_packages(config)
+
     fetch_components(config)
 
     update_target(config, config.inventory.bootstrap_target)
@@ -146,6 +153,7 @@ def _local_setup(config: Config, cluster_id):
     click.secho("Creating bootstrap target...", bold=True)
     update_target(config, config.inventory.bootstrap_target)
 
+    register_packages(config)
     register_components(config)
 
     for alias, component in config.get_component_aliases().items():
@@ -192,7 +200,7 @@ def compile(config, cluster_id):
     config.register_component_deprecations(cluster_parameters)
     # Raise exception if component version override without URL is present in the
     # hierarchy.
-    verify_component_version_overrides(cluster_parameters)
+    verify_version_overrides(cluster_parameters)
 
     for component in config.get_components().values():
         ckey = component.parameters_key

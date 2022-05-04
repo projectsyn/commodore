@@ -5,11 +5,12 @@ import click
 from commodore.config import Config
 from commodore.component import Component, component_dir
 from commodore.helpers import relsymlink
+from commodore.package import Package
 
 from .component_library import validate_component_library_name
-from .discovery import _discover_components
+from .discovery import _discover_components, _discover_packages
 from .tools import format_component_list
-from .version_parsing import _read_components
+from .version_parsing import _read_components, _read_packages
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -102,16 +103,67 @@ def register_components(cfg: Config):
     cfg.register_component_aliases(pruned_aliases)
 
 
-def verify_component_version_overrides(cluster_parameters):
+def fetch_packages(cfg: Config):
+    """
+    Download configuration packages used by the cluster.
+
+    This function discovers packages which are used by parsing key `applications` in the
+    hierarchy.
+    """
+
+    click.secho("Discovering config packages...", bold=True)
+    cfg.inventory.ensure_dirs()
+    pkgs = _discover_packages(cfg)
+    urls, versions = _read_packages(cfg, pkgs)
+
+    for p in pkgs:
+        pkg = Package(
+            p, target_dir=cfg.inventory.package_dir(p), url=urls[p], version=versions[p]
+        )
+        pkg.checkout()
+        cfg.register_package(p, pkg)
+
+
+def register_packages(cfg: Config):
+    """
+    Discover configuration packages used by the cluster in the inventory and register
+    them if they're checked out in `inventory/classes`.
+
+    This function discovers packages which are used by parsing key `applications` in the
+    hierarchy.
+    """
+
+    click.secho("Discovering config packages...", bold=True)
+    cfg.inventory.ensure_dirs()
+    pkgs = _discover_packages(cfg)
+    for p in pkgs:
+        pkg_dir = cfg.inventory.package_dir(p)
+        if not pkg_dir.is_dir():
+            click.secho(
+                f" > Skipping registration of package '{p}': repo is not available",
+                fg="yellow",
+            )
+            continue
+        pkg = Package(p, target_dir=pkg_dir)
+        cfg.register_package(p, pkg)
+
+
+def verify_version_overrides(cluster_parameters):
     errors = []
     for cname, cspec in cluster_parameters["components"].items():
         if "url" not in cspec:
-            errors.append(cname)
+            errors.append(f"component '{cname}'")
+
+    for pname, pspec in cluster_parameters.get("packages", {}).items():
+        if "url" not in pspec:
+            errors.append(f"package '{pname}'")
 
     if len(errors) > 0:
-        cnames = format_component_list(errors)
+        names = format_component_list(errors, format_func=lambda c: c)
+
         s = "s" if len(errors) > 1 else ""
         have = "have" if len(errors) > 1 else "has"
+
         raise click.ClickException(
-            f"Version override{s} specified for component{s} {cnames} which {have} no URL"
+            f"Version override{s} specified for {names} which {have} no URL"
         )
