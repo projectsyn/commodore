@@ -44,13 +44,16 @@ def _read_versions(
     for depname in dependency_names:
         if depname not in deps:
             raise click.ClickException(
-                f"Unknown {deptype_str} '{depname}'. Please add it to 'parameters.components'"
+                f"Unknown {deptype_str} '{depname}'."
+                + f" Please add it to 'parameters.{deps_key}'"
             )
 
         info = deps[depname]
 
         if "url" not in info:
-            raise click.ClickException(f"No url for component '{depname}' configured")
+            raise click.ClickException(
+                f"No url for {deptype_str} '{depname}' configured"
+            )
 
         dep_urls[depname] = info["url"]
         if cfg.debug:
