@@ -19,7 +19,7 @@ from .dependency_mgmt import (
     fetch_packages,
     register_components,
     register_packages,
-    verify_component_version_overrides,
+    verify_version_overrides,
 )
 from .dependency_mgmt.component_library import create_component_library_aliases
 from .dependency_mgmt.jsonnet_bundler import (
@@ -200,7 +200,7 @@ def compile(config, cluster_id):
     config.register_component_deprecations(cluster_parameters)
     # Raise exception if component version override without URL is present in the
     # hierarchy.
-    verify_component_version_overrides(cluster_parameters)
+    verify_version_overrides(cluster_parameters)
 
     for component in config.get_components().values():
         ckey = component.parameters_key

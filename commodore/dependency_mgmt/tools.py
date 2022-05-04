@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Callable
 
 
-def format_component_list(components: Iterable[str]) -> str:
-    formatted_list = list(map(lambda c: f"'{c}'", sorted(components)))
+def format_component_list(
+    components: Iterable[str], format_func: Callable[[str], str] = lambda c: f"'{c}'"
+) -> str:
+    formatted_list = list(map(format_func, sorted(components)))
 
     if len(formatted_list) == 0:
         return ""

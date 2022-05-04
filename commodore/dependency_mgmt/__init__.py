@@ -148,16 +148,22 @@ def register_packages(cfg: Config):
         cfg.register_package(p, pkg)
 
 
-def verify_component_version_overrides(cluster_parameters):
+def verify_version_overrides(cluster_parameters):
     errors = []
     for cname, cspec in cluster_parameters["components"].items():
         if "url" not in cspec:
-            errors.append(cname)
+            errors.append(f"component '{cname}'")
+
+    for pname, pspec in cluster_parameters.get("packages", {}).items():
+        if "url" not in pspec:
+            errors.append(f"package '{pname}'")
 
     if len(errors) > 0:
-        cnames = format_component_list(errors)
+        names = format_component_list(errors, format_func=lambda c: c)
+
         s = "s" if len(errors) > 1 else ""
         have = "have" if len(errors) > 1 else "has"
+
         raise click.ClickException(
-            f"Version override{s} specified for component{s} {cnames} which {have} no URL"
+            f"Version override{s} specified for {names} which {have} no URL"
         )

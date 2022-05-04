@@ -377,16 +377,66 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     },
                 },
             },
-            "Version overrides specified for components 'component_1' and 'component_2' which have no URL",
+            "Version overrides specified for component 'component_1' and component 'component_2' which have no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "url": "https://example.com/component-1.git",
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version override specified for package 'package-1' which has no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version overrides specified for component 'component-1' and package 'package-1' which have no URL",
+        ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "version": "v1.2.3",
+                    },
+                    "component-2": {
+                        "version": "v1.2.3",
+                    },
+                },
+                "packages": {
+                    "package-1": {
+                        "version": "v1.0.0",
+                    }
+                },
+            },
+            "Version overrides specified for component 'component-1', "
+            + "component 'component-2', and package 'package-1' which have no URL",
         ),
     ],
 )
 def test_verify_component_version_overrides(cluster_params: dict, expected: str):
     if expected == "":
-        dependency_mgmt.verify_component_version_overrides(cluster_params)
+        dependency_mgmt.verify_version_overrides(cluster_params)
     else:
         with pytest.raises(click.ClickException) as e:
-            dependency_mgmt.verify_component_version_overrides(cluster_params)
+            dependency_mgmt.verify_version_overrides(cluster_params)
 
         assert expected in str(e)
 
