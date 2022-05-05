@@ -19,20 +19,13 @@ Commodore is [published on PyPI](https://pypi.org/project/syn-commodore/)
 
 ## Overview
 
-Commodore provides opinionated tenant-aware management of
-[Kapitan](https://kapitan.dev/) inventories and templates. Commodore uses
-Kapitan for the heavy lifting of rendering templates and resolving a
-hierachical configuration structure.
+Commodore provides opinionated tenant-aware management of [Kapitan](https://kapitan.dev/) inventories and templates.
+Commodore uses Kapitan for the heavy lifting of rendering templates and resolving a hierachical configuration structure.
 
-Commodore introduces the concept of a component, which is a bundle of Kapitan
-templates and associated Kapitan classes which describe how to render the
-templates. Commodore fetches any components that are required for a given
-configuration before running Kapitan, and sets up symlinks so Kapitan can find
-the component classes.
+Commodore introduces the concept of a component, which is a bundle of Kapitan templates and associated Kapitan classes which describe how to render the templates.
+Commodore fetches any components that are required for a given configuration before running Kapitan, and sets up symlinks so Kapitan can find the component classes.
 
-Commodore also supports additional processing on the output of Kapitan, such
-as patching in the desired namespace for a Helm chart which has been rendered
-using `helm template`.
+Commodore also supports additional processing on the output of Kapitan, such as patching in the desired namespace for a Helm chart which has been rendered using `helm template`.
 
 ## System Requirements
 
@@ -115,8 +108,7 @@ using `helm template`.
    - Write a line of application code, make the test pass
    - Repeat
 
-   Note: Commodore uses the [Black](https://github.com/psf/black) code
-   formatter, and its formatting is encforced by CI.
+   Note: Commodore uses the [Black](https://github.com/psf/black) code formatter, and its formatting is encforced by CI.
 
 1. Run linting and tests
 
@@ -143,7 +135,8 @@ using `helm template`.
 
 ## Run Commodore in Docker
 
-**IMPORTANT:** After checking out this project, run `mkdir -p catalog inventory dependencies` in it before running any Docker commands. This will ensure the folders are writable by the current user in the context of the Docker container.
+**IMPORTANT:** After checking out this project, run `mkdir -p catalog inventory dependencies` in it before running any Docker commands.
+This will ensure the folders are writable by the current user in the context of the Docker container.
 
 A docker-compose setup enables running Commodore in a container.
 The environment variables are picked up from the local `.env` file.
