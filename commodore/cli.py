@@ -38,7 +38,10 @@ def _version():
     return __version__
 
 
-@click.group()
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+
+
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(_version(), prog_name="commodore")
 @verbosity
 @click.option(
