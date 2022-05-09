@@ -78,7 +78,10 @@ class Component:
     def lib_files(self) -> Iterable[P]:
         lib_dir = self.target_directory / "lib"
         if lib_dir.exists():
-            return lib_dir.iterdir()
+            for e in lib_dir.iterdir():
+                # Skip hidden files in lib directory
+                if not e.name.startswith("."):
+                    yield e
 
         return []
 

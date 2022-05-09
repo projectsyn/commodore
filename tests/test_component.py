@@ -329,13 +329,16 @@ def _setup_libfiles(c: Component, libfiles: Iterable[str]):
         [],
         ["foo.libsonnet"],
         ["foo.libsonnet", "bar.libsonnet"],
+        [".test.libsonnet", "test.libsonnet"],
     ],
 )
 def test_component_lib_files(tmp_path: P, libfiles: Iterable[str]):
     c = _setup_component(tmp_path, name="tc1")
     _setup_libfiles(c, libfiles)
 
-    assert sorted(c.lib_files) == sorted(tmp_path / "tc1" / "lib" / f for f in libfiles)
+    assert sorted(c.lib_files) == sorted(
+        tmp_path / "tc1" / "lib" / f for f in libfiles if not f.startswith(".")
+    )
 
 
 @pytest.mark.parametrize(
