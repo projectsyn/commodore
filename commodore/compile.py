@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -179,14 +180,7 @@ def check_parameters_component_versions(cluster_parameters):
         )
 
 
-# pylint: disable=redefined-builtin
-def compile(config, cluster_id):
-    if config.local:
-        catalog_repo = _local_setup(config, cluster_id)
-    else:
-        clean_working_tree(config)
-        catalog_repo = _regular_setup(config, cluster_id)
-
+def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[str]]:
     # Raise error if any enabled components use removed reclass variables
     check_removed_reclass_variables_components(config)
 
@@ -209,15 +203,26 @@ def compile(config, cluster_id):
     if config.fetch_dependencies:
         fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
-    clean_catalog(catalog_repo)
-
-    components = config.get_components()
     aliases = config.get_component_aliases()
-    targets = list(aliases.keys())
 
     # Generate Kapitan secret references from refs found in inventory
     # parameters
     update_refs(config, aliases, inventory)
+
+    return inventory, list(aliases.keys())
+
+
+# pylint: disable=redefined-builtin
+def compile(config, cluster_id):
+    if config.local:
+        catalog_repo = _local_setup(config, cluster_id)
+    else:
+        clean_working_tree(config)
+        catalog_repo = _regular_setup(config, cluster_id)
+
+    inventory, targets = setup_compile_environment(config)
+
+    clean_catalog(catalog_repo)
 
     kapitan_compile(
         config,
@@ -226,7 +231,7 @@ def compile(config, cluster_id):
         fetch_dependencies=config.fetch_dependencies,
     )
 
-    postprocess_components(config, inventory, components)
+    postprocess_components(config, inventory, config.get_components())
 
     update_catalog(config, targets, catalog_repo)
 

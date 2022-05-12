@@ -3,23 +3,17 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 from textwrap import dedent
-from typing import Any
 
 import click
 
 from commodore.compile import clean_working_tree
 from commodore.cluster import update_target
+from commodore.compile import setup_compile_environment
 from commodore.config import Config
-from commodore.dependency_mgmt import fetch_components, verify_version_overrides
-from commodore.dependency_mgmt.component_library import create_component_library_aliases
-from commodore.dependency_mgmt.jsonnet_bundler import (
-    fetch_jsonnet_libraries,
-    jsonnet_dependencies,
-)
-from commodore.helpers import kapitan_compile, kapitan_inventory, relsymlink, yaml_dump
+from commodore.dependency_mgmt import fetch_components
+from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
-from commodore.refs import update_refs
 
 
 def compile_package(
@@ -28,7 +22,9 @@ def compile_package(
     root_class: str,
     value_files_: Iterable[str],
 ):
-    # Clean working tree before compiling package
+    # Clean working tree before compiling package, some of our symlinking logic expects
+    # that `inventory/` is cleaned before symlinks are created.
+    # TODO(sg): Make this conditional on not running local mode for package compilation
     clean_working_tree(cfg)
 
     pkg_path = Path(pkg_path_).resolve()
@@ -55,7 +51,13 @@ def compile_package(
 
     fetch_components(cfg)
 
-    inventory, targets = _setup_compile_environment(cfg)
+    update_target(cfg, cfg.inventory.bootstrap_target)
+
+    aliases = cfg.get_component_aliases()
+    for alias, c in aliases.items():
+        update_target(cfg, alias, c)
+
+    inventory, targets = setup_compile_environment(cfg)
 
     kapitan_compile(
         cfg,
@@ -153,34 +155,3 @@ def _setup_inventory(
             }"""
             )
         )
-
-
-def _setup_compile_environment(cfg: Config) -> tuple[dict[str, Any], Iterable[str]]:
-    update_target(cfg, cfg.inventory.bootstrap_target)
-
-    aliases = cfg.get_component_aliases()
-    components = cfg.get_components()
-
-    for alias, c in aliases.items():
-        update_target(cfg, alias, c)
-
-    inventory = kapitan_inventory(cfg)
-    cluster_parameters = inventory[cfg.inventory.bootstrap_target]["parameters"]
-    create_component_library_aliases(cfg, cluster_parameters)
-    cfg.verify_component_aliases(cluster_parameters)
-    cfg.register_component_deprecations(cluster_parameters)
-    # Raise exception if component version override without URL is present in the
-    # hierarchy.
-    verify_version_overrides(cluster_parameters)
-
-    for component in components.values():
-        ckey = component.parameters_key
-        component.render_jsonnetfile_json(cluster_parameters[ckey])
-
-    fetch_jsonnet_libraries(cfg.work_dir, deps=jsonnet_dependencies(cfg))
-
-    # Generate Kapitan secret references from refs found in inventory
-    # parameters
-    update_refs(cfg, aliases, inventory)
-
-    return inventory, list(aliases.keys())
