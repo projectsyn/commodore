@@ -39,7 +39,7 @@ def compile_package(
     root_class_path = root_class.replace(".", "/")
     root_cls = pkg_path / f"{root_class_path}.yml"
     if not root_cls.is_file():
-        raise click.ClickException(f"Root class {root_cls} doesn't exist.")
+        raise click.ClickException(f"Root class '{root_cls.stem}' doesn't exist.")
 
     _setup_inventory(cfg.inventory, pkg_name, root_class, value_files)
 

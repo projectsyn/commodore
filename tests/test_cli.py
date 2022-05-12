@@ -70,3 +70,8 @@ def test_login_command():
 def test_fetch_token_command():
     exit_status = call("commodore fetch-token --help", shell=True)
     assert exit_status == 0
+
+
+def test_package_compile_command():
+    exit_status = call("commodore package compile --help", shell=True)
+    assert exit_status == 0
