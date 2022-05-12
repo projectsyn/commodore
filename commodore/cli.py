@@ -21,6 +21,7 @@ from .inventory.render import extract_components
 from .inventory.parameters import InventoryFacts
 from .inventory.lint import LINTERS
 from .login import login, fetch_token
+from .package.compile import compile_package
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -403,6 +404,36 @@ def component_compile(
 ):
     config.update_verbosity(verbose)
     compile_component(config, path, alias, values, search_paths, output)
+
+
+@commodore.group(short_help="Interact with a Commodore config package")
+@verbosity
+@pass_config
+def package(config: Config, verbose: int):
+    config.update_verbosity(verbose)
+
+
+@package.command(name="compile", short_help="Compile a config package standalone")
+@click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.argument("root_class")
+@click.option(
+    "-f",
+    "--values",
+    multiple=True,
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help="Specify inventory class in a YAML file (can specify multiple).",
+)
+@verbosity
+@pass_config
+def package_compile(
+    config: Config,
+    verbose: int,
+    path: str,
+    root_class: str,
+    values: Iterable[str],
+):
+    config.update_verbosity(verbose)
+    compile_package(config, path, root_class, values)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")
