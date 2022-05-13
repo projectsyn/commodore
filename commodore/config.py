@@ -57,7 +57,7 @@ class Config:
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
-        self.local = None
+        self.local = False
         self.push = None
         self.interactive = None
         self.force = False
