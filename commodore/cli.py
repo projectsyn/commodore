@@ -216,13 +216,6 @@ def compile_catalog(
             "Cannot push changes when local global or tenant repo override is specified"
         )
 
-    if not local:
-        if not fetch_dependencies:
-            click.echo(
-                "--no-fetch-dependencies doesn't take effect unless --local is specified"
-            )
-        # Ensure we always fetch dependencies in regular mode
-        fetch_dependencies = True
     config.fetch_dependencies = fetch_dependencies
 
     if config.api_token is None and not local:
