@@ -149,7 +149,6 @@ def kapitan_compile(
     output_dir: P = None,
     search_paths=None,
     fake_refs=False,
-    fetch_dependencies=True,
     reveal=False,
 ):
     if not output_dir:
@@ -183,7 +182,7 @@ def kapitan_compile(
         reveal=reveal,
         cache=False,
         cache_paths=None,
-        fetch_dependencies=fetch_dependencies,
+        fetch_dependencies=config.fetch_dependencies,
         force_fetch=True,
         validate=False,
         schemas_path=config.work_dir / "schemas",
