@@ -151,6 +151,6 @@ If necessary, the command will call `commodore login` internally to fetch a vali
 
   package compile PATH TARGET_CLASS
 
-This command allows user to configure 0https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[configuration packages] standalone.
+This command allows user to configure https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[configuration packages] standalone.
 
 The command takes two command line arguments, the path to the package and the target class in the package to compile.
