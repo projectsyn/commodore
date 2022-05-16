@@ -57,11 +57,11 @@ class Config:
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
-        self.local = None
+        self.local = False
         self.push = None
         self.interactive = None
         self.force = False
-        self.fetch_dependencies = True
+        self._fetch_dependencies = True
         self._inventory = Inventory(work_dir=self.work_dir)
         self._deprecation_notices = []
         self._global_repo_revision_override = None
@@ -108,6 +108,22 @@ class Config:
     @property
     def refs_dir(self) -> P:
         return self.catalog_dir / "refs"
+
+    @property
+    def fetch_dependencies(self) -> bool:
+        return self._fetch_dependencies
+
+    @fetch_dependencies.setter
+    def fetch_dependencies(self, value: bool):
+        if not self.local:
+            if not value:
+                click.secho(
+                    "[WARN] --no-fetch-dependencies doesn't take effect "
+                    + "unless --local is specified",
+                    fg="yellow",
+                )
+            value = True
+        self._fetch_dependencies = value
 
     @property
     def api_token(self):

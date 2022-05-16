@@ -216,13 +216,6 @@ def compile_catalog(
             "Cannot push changes when local global or tenant repo override is specified"
         )
 
-    if not local:
-        if not fetch_dependencies:
-            click.echo(
-                "--no-fetch-dependencies doesn't take effect unless --local is specified"
-            )
-        # Ensure we always fetch dependencies in regular mode
-        fetch_dependencies = True
     config.fetch_dependencies = fetch_dependencies
 
     if config.api_token is None and not local:
@@ -423,16 +416,36 @@ def package(config: Config, verbose: int):
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help="Specify inventory class in a YAML file (can specify multiple).",
 )
+@click.option(
+    "--local",
+    is_flag=True,
+    default=False,
+    help=(
+        "Run in local mode, local mode reuses the contents of the working directory. "
+        + "Local mode won't fetch missing components."
+    ),
+)
+@click.option(
+    " / -F",
+    "--fetch-dependencies/--no-fetch-dependencies",
+    default=True,
+    help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. By default dependencies are fetched.",
+)
 @verbosity
 @pass_config
+# pylint: disable=too-many-arguments
 def package_compile(
     config: Config,
     verbose: int,
     path: str,
     root_class: str,
     values: Iterable[str],
+    local: bool,
+    fetch_dependencies: bool,
 ):
     config.update_verbosity(verbose)
+    config.local = local
+    config.fetch_dependencies = fetch_dependencies
     compile_package(config, path, root_class, values)
 
 

@@ -78,6 +78,7 @@ def _setup_package(root: Path, package_ns: Optional[str]) -> Path:
 
 @pytest.mark.parametrize("pp_filter", [True, False])
 @pytest.mark.parametrize("package_ns", [None, "myns"])
+@pytest.mark.parametrize("local", [False, True])
 @mock.patch.object(compile, "fetch_components")
 def test_compile_package(
     mock_fetch: mock.MagicMock,
@@ -85,8 +86,11 @@ def test_compile_package(
     config: Config,
     pp_filter: bool,
     package_ns: Optional[str],
+    local: bool,
 ):
     mock_fetch.side_effect = _mock_fetch_components
+
+    config.local = local
 
     pkg_path = _setup_package(tmp_path, package_ns)
     _prepare_component(tmp_path)

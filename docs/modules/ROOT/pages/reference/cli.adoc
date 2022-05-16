@@ -209,3 +209,34 @@ This command doesn't have any command line options.
 +
 These classes are included before the package class which is getting compiled.
 This allows users to customize cluster facts or similar when compiling packages standalone.
+
+*--local*::
+  Run in local mode.
+  Intended to be used to test/verify local changes (for example during component development) of a package.
++
+Local mode doesn't try to fetch components included by the package.
+In local mode, uncommitted modifications to the inventory and dependencies are never discarded.
++
+However, local mode expects that the working directory contains:
++
+* a valid inventory in `inventory/`
+* all the dependencies required by the package available locally
+* component classes symlinked to `inventory/`
+* components and Jsonnet dependencies symlinked to `vendor/`
+
++
+The quickest way to get a working directory setup for local mode is to run a "regular" `package compile` for the package you want to work on.
++
+Overall, this flag has the same semantics as `--local` of `catalog compile`.
+
+*--fetch-dependencies/--no-fetch-dependencies*::
+  Whether to fetch Jsonnet and Kapitan dependencies in local mode.
++
+This flag doesn't have an effect in regular mode, but speeds up local mode by not fetching Jsonnet dependencies, and disabling Kapitan's dependency fetching.
+By default, Jsonnet and Kapitan dependencies are fetched in local mode, to make local testing of component and configuration changes easier.
+Additionally, having Jsonnet and Kapitan dependency fetching enabled in local mode is required to test some types of changes such as upgrading versions.
++
+When you want to test adding a new component in local mode, you *must* run local mode with dependency fetching enabled at least once.
+After that, all the symlinks and dependencies which are required to compile the component will be present and you can disable dependency fetching.
++
+Overall, this flag has the same semantics as `--fetch-dependencies` of `catalog compile`.

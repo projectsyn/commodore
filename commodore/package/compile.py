@@ -10,7 +10,7 @@ from commodore.compile import clean_working_tree
 from commodore.cluster import update_target
 from commodore.compile import setup_compile_environment
 from commodore.config import Config
-from commodore.dependency_mgmt import fetch_components
+from commodore.dependency_mgmt import fetch_components, register_components
 from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
@@ -25,7 +25,8 @@ def compile_package(
     # Clean working tree before compiling package, some of our symlinking logic expects
     # that `inventory/` is cleaned before symlinks are created.
     # TODO(sg): Make this conditional on not running local mode for package compilation
-    clean_working_tree(cfg)
+    if not cfg.local:
+        clean_working_tree(cfg)
 
     pkg_path = Path(pkg_path_).resolve()
     value_files = [Path(f).resolve() for f in value_files_]
@@ -49,7 +50,10 @@ def compile_package(
     # setup bootstrap target
     update_target(cfg, cfg.inventory.bootstrap_target)
 
-    fetch_components(cfg)
+    if not cfg.local:
+        fetch_components(cfg)
+    else:
+        register_components(cfg)
 
     update_target(cfg, cfg.inventory.bootstrap_target)
 
@@ -63,7 +67,7 @@ def compile_package(
         cfg,
         targets,
         search_paths=[cfg.vendor_dir],
-        fetch_dependencies=True,
+        fetch_dependencies=cfg.fetch_dependencies,
     )
     postprocess_components(cfg, inventory, cfg.get_components())
 
