@@ -224,12 +224,7 @@ def compile(config, cluster_id):
 
     clean_catalog(catalog_repo)
 
-    kapitan_compile(
-        config,
-        targets,
-        search_paths=[config.vendor_dir],
-        fetch_dependencies=config.fetch_dependencies,
-    )
+    kapitan_compile(config, targets, search_paths=[config.vendor_dir])
 
     postprocess_components(config, inventory, config.get_components())
 

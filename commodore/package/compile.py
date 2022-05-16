@@ -63,12 +63,7 @@ def compile_package(
 
     inventory, targets = setup_compile_environment(cfg)
 
-    kapitan_compile(
-        cfg,
-        targets,
-        search_paths=[cfg.vendor_dir],
-        fetch_dependencies=cfg.fetch_dependencies,
-    )
+    kapitan_compile(cfg, targets, search_paths=[cfg.vendor_dir])
     postprocess_components(cfg, inventory, cfg.get_components())
 
 
