@@ -34,12 +34,25 @@ class Templater(ABC):
     copyright_holder: str
     golden_tests: bool
     today: datetime.date
+    output_dir: Optional[Path] = None
 
-    def __init__(self, config: Config, slug: str, name: Optional[str] = None):
+    def __init__(
+        self,
+        config: Config,
+        slug: str,
+        name: Optional[str] = None,
+        output_dir: str = "",
+    ):
         self.config = config
         self.slug = slug
         self._name = name
         self.today = datetime.date.today()
+        if output_dir != "":
+            odir = Path(output_dir)
+            if not odir.is_dir():
+                raise click.ClickException(f"Output directory {odir} doesn't exist")
+
+            self.output_dir = odir
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):

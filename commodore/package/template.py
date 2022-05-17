@@ -12,12 +12,6 @@ from commodore.dependency_mgmt.discovery import (
 )
 from commodore.dependency_templater import Templater, Renderer
 
-# TODO
-# * configurable template URL / revision
-# * configurable output dir (maybe also for component template)
-# * verify that cruft generates the right config
-# * check that we can propagate updates with `cruft update`
-
 
 class PackageTemplater(Templater):
     template_url: str
@@ -71,6 +65,9 @@ class PackageTemplater(Templater):
 
     @property
     def target_dir(self) -> Path:
+        if self.output_dir:
+            return self.output_dir / self.slug
+
         return self.config.inventory.package_dir(self.slug)
 
     @property

@@ -441,6 +441,12 @@ def package(config: Config, verbose: int):
     default="main",
     show_default=True,
 )
+@click.option(
+    "--output-dir",
+    default="",
+    show_default=True,
+    type=click.Path(file_okay=False, dir_okay=True),
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -454,6 +460,7 @@ def package_new(
     golden_tests: bool,
     template_url: str,
     template_version: str,
+    output_dir: str,
 ):
     """Create new config package repo from template.
 
@@ -462,7 +469,7 @@ def package_new(
     to configure golden tests, and the licensing details.
     """
     config.update_verbosity(verbose)
-    t = PackageTemplater(config, slug, name=name)
+    t = PackageTemplater(config, slug, name=name, output_dir=output_dir)
     t.github_owner = owner
     t.copyright_holder = copyright_holder
     t.golden_tests = golden_tests
