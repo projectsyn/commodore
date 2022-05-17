@@ -3,8 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Sequence
 
+import click
 from cruft._commands import create as cruft_create
 
+from commodore.dependency_mgmt.discovery import (
+    RESERVED_PACKAGE_PATTERN,
+    TENANT_PREFIX_PATTERN,
+)
 from commodore.dependency_templater import Templater, Renderer
 
 # TODO
@@ -32,6 +37,18 @@ class PackageTemplater(Templater):
             no_input=no_input,
             output_dir=output_dir,
         )
+
+    def _validate_slug(self, value: str):
+        # First perform default slug checks
+        slug = super()._validate_slug(value)
+        # Then perform additional checks for package slug
+        if RESERVED_PACKAGE_PATTERN.match(slug):
+            raise click.ClickException(f"Package can't use reserved slug '{slug}'")
+        if TENANT_PREFIX_PATTERN.match(slug):
+            raise click.ClickException(
+                "Package slug can't use reserved tenant prefix 't-'"
+            )
+        return slug
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
