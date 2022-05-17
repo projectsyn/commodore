@@ -434,8 +434,13 @@ def package(config: Config, verbose: int):
 @click.option(
     "--template-url",
     default="https://github.com/projectsyn/commodore-config-package-template.git",
+    show_default=True,
 )
-@click.option("--template-version", default="main")
+@click.option(
+    "--template-version",
+    default="main",
+    show_default=True,
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
