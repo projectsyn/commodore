@@ -1,63 +1,26 @@
-import datetime
-import re
+from __future__ import annotations
 
+from pathlib import Path
 from shutil import rmtree
+from typing import Sequence
 
 import click
 
 from cookiecutter.main import cookiecutter
 
 from commodore import __install_dir__
-from commodore import config as CommodoreConfig
 from commodore.component import Component, component_dir
+from commodore.dependency_templater import Templater, Renderer
 
-slug_regex = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
-
-class ComponentTemplater:
+class ComponentTemplater(Templater):
     # pylint: disable=too-many-instance-attributes
-    config: CommodoreConfig.Config
-    _slug: str
     library: bool
     post_process: bool
-    github_owner: str
-    copyright_holder: str
-    today: datetime.date
-    golden_tests: bool
     matrix_tests: bool
 
-    def __init__(self, config, slug):
-        self.config = config
-        self.slug = slug
-        self.today = datetime.date.today()
-
     @property
-    def slug(self):
-        return self._slug
-
-    @slug.setter
-    def slug(self, slug):
-        if slug.startswith("component-"):
-            raise click.ClickException(
-                'The component slug may not start with "component-"'
-            )
-        if not slug_regex.match(slug):
-            raise click.ClickException(
-                f"The component slug must match '{slug_regex.pattern}'"
-            )
-        self._slug = slug
-
-    @property
-    def name(self):
-        if not self._name:
-            return self.slug
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
-
-    def cookiecutter_args(self):
+    def cookiecutter_args(self) -> dict[str, str]:
         return {
             "add_lib": "y" if self.library else "n",
             "add_pp": "y" if self.post_process else "n",
@@ -71,41 +34,35 @@ class ComponentTemplater:
             "release_date": self.today.strftime("%Y-%m-%d"),
         }
 
-    def create(self):
-        path = component_dir(self.config.work_dir, self.slug)
-        if path.exists():
-            raise click.ClickException(
-                f"Unable to add component {self.name}: {path} already exists."
-            )
+    @property
+    def target_dir(self) -> Path:
+        return component_dir(self.config.work_dir, self.slug)
 
-        click.secho(f"Adding component {self.name}...", bold=True)
+    @property
+    def template(self) -> str:
         component_template = __install_dir__ / "component-template"
-        cookiecutter(
-            str(component_template.resolve()),
-            no_input=True,
-            output_dir=self.config.work_dir / "dependencies",
-            extra_context=self.cookiecutter_args(),
-        )
+        return str(component_template.resolve())
 
-        component = Component(
-            self.slug,
-            work_dir=self.config.work_dir,
-            repo_url=f"git@github.com:{self.github_owner}/component-{self.slug}.git",
-            force_init=True,
-        )
+    @property
+    def deptype(self) -> str:
+        return "component"
 
-        component.repo.stage_all()
-        component.repo.stage_files(
-            [
-                ".github",
-                ".gitignore",
-                ".*.yml",
-                ".editorconfig",
-            ]
-        )
-        component.repo.commit("Initial commit")
+    @property
+    def template_renderer(self) -> Renderer:
+        return cookiecutter
 
-        click.secho(f"Component {self.name} successfully added 🎉", bold=True)
+    @property
+    def repo_url(self) -> str:
+        return f"git@github.com:{self.github_owner}/component-{self.slug}.git"
+
+    @property
+    def additional_files(self) -> Sequence[str]:
+        return [
+            ".github",
+            ".gitignore",
+            ".*.yml",
+            ".editorconfig",
+        ]
 
     def delete(self):
         if component_dir(self.config.work_dir, self.slug).exists():

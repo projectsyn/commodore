@@ -324,8 +324,7 @@ def component_new(
     verbose,
 ):
     config.update_verbosity(verbose)
-    f = ComponentTemplater(config, slug)
-    f.name = name
+    f = ComponentTemplater(config, slug, name)
     f.library = lib
     f.post_process = pp
     f.github_owner = owner
@@ -349,7 +348,7 @@ def component_new(
 def component_delete(config: Config, slug, force, verbose):
     config.update_verbosity(verbose)
     config.force = force
-    f = ComponentTemplater(config, slug)
+    f = ComponentTemplater(config, slug, None)
     f.delete()
 
 
