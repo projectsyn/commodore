@@ -325,7 +325,7 @@ def component_new(
     verbose,
 ):
     config.update_verbosity(verbose)
-    f = ComponentTemplater(config, slug, name)
+    f = ComponentTemplater(config, slug, name=name)
     f.library = lib
     f.post_process = pp
     f.github_owner = owner
@@ -349,7 +349,7 @@ def component_new(
 def component_delete(config: Config, slug, force, verbose):
     config.update_verbosity(verbose)
     config.force = force
-    f = ComponentTemplater(config, slug, None)
+    f = ComponentTemplater(config, slug)
     f.delete()
 
 
@@ -457,7 +457,7 @@ def package_new(
     to configure golden tests, and the licensing details.
     """
     config.update_verbosity(verbose)
-    t = PackageTemplater(config, slug, name)
+    t = PackageTemplater(config, slug, name=name)
     t.github_owner = owner
     t.copyright_holder = copyright_holder
     t.golden_tests = golden_tests

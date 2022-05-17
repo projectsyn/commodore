@@ -35,7 +35,7 @@ class Templater(ABC):
     golden_tests: bool
     today: datetime.date
 
-    def __init__(self, config: Config, slug: str, name: Optional[str]):
+    def __init__(self, config: Config, slug: str, name: Optional[str] = None):
         self.config = config
         self.slug = slug
         self._name = name
