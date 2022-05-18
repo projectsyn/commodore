@@ -435,17 +435,20 @@ def package(config: Config, verbose: int):
     "--template-url",
     default="https://github.com/projectsyn/commodore-config-package-template.git",
     show_default=True,
+    help="The URL of the package cookiecutter template.",
 )
 @click.option(
     "--template-version",
     default="main",
     show_default=True,
+    help="The package template version (Git tree-ish) to use.",
 )
 @click.option(
     "--output-dir",
     default="",
     show_default=True,
     type=click.Path(file_okay=False, dir_okay=True),
+    help="The directory in which to place the new package.",
 )
 @verbosity
 @pass_config
