@@ -86,32 +86,42 @@ class Templater(ABC):
     @property
     @abstractmethod
     def deptype(self) -> str:
-        ...
+        """Return dependency type of template as string.
+
+        The base implementation of `_validate_slug()` will reject slugs which are
+        prefixed with the value of this property.
+        """
 
     @property
     @abstractmethod
     def target_dir(self) -> Path:
-        ...
+        """Return Path indicating where to render the template to."""
 
     @property
     @abstractmethod
     def template(self) -> str:
-        ...
+        """Path or URL of the template to render"""
 
     @property
     @abstractmethod
     def template_renderer(self) -> Renderer:
-        ...
+        """Template rendering function to use for the template.
+
+        Allows child classes to select either plain cookiecutter or cruft.
+        """
 
     @property
     @abstractmethod
     def cookiecutter_args(self) -> dict[str, str]:
-        ...
+        """Cookiecutter template inputs.
+
+        Passed to the rendering function as `extra_context`
+        """
 
     @property
     @abstractmethod
     def additional_files(self) -> Sequence[str]:
-        ...
+        """Sequence of additional files to include in the initial Git commit."""
 
     def create(self) -> None:
         click.secho(f"Adding {self.deptype} {self.name}...", bold=True)
