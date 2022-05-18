@@ -75,3 +75,8 @@ def test_fetch_token_command():
 def test_package_compile_command():
     exit_status = call("commodore package compile --help", shell=True)
     assert exit_status == 0
+
+
+def test_package_new_command():
+    exit_status = call("commodore package new --help", shell=True)
+    assert exit_status == 0
