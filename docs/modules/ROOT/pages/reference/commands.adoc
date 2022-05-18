@@ -147,6 +147,19 @@ Commodore will use the returned token for future commands if no other token is e
 This command prints the OIDC token for the specified Lieutenant API to stdout.
 If necessary, the command will call `commodore login` internally to fetch a valid token for the provided API URL.
 
+== Package New
+
+  commodore package new SLUG
+
+This command creates a new config package repository.
+If not specified explicitly, the command will create the new package under `inventory/classes/` in Commodore's working directory.
+The package repository is created using a Cookiecutter template which provides a skeleton for writing a new package.
+The command requires the argument `SLUG` to match the regular expression `^[a-z][a-z0-9-]+[a-z0-9]$`.
+Additionally, the command prevents users from creating packages using reserved names or prefixes.
+
+The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
+
+
 == Package Compile
 
   package compile PATH TARGET_CLASS
