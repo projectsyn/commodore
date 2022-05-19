@@ -16,6 +16,7 @@ from commodore.dependency_templater import Templater, Renderer
 class PackageTemplater(Templater):
     template_url: str
     template_version: str
+    test_cases: list[str] = ["defaults"]
 
     def _cruft_renderer(
         self,
@@ -53,6 +54,9 @@ class PackageTemplater(Templater):
             "github_owner": self.github_owner,
             "name": self.name,
             "slug": self.slug,
+            # The template expects the test cases in a single string separated by
+            # spaces.
+            "test_cases": " ".join(self.test_cases),
         }
 
     @property
