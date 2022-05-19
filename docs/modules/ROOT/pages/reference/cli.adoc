@@ -230,6 +230,11 @@ This command doesn't have any command line options.
   The directory in which to place the new package.
   If this option isn't provided, the command will place the new package under `inventory/classes/` in the Commodore working directory.
 
+*--additional-test-case, -t* CASE::
+  Additional test cases to generate in the new package.
+  Can be repeated.
+  Test case `defaults` will always be generated.
+
 == Package Compile
 
 *-f, --values* FILE::
