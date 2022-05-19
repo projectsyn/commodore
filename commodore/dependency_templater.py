@@ -139,11 +139,13 @@ class Templater(ABC):
             extra_context=self.cookiecutter_args,
         )
 
-        repo = GitRepo(self.repo_url, targetdir=self.target_dir, force_init=True)
-        repo.stage_all()
-        repo.stage_files(self.additional_files)
-        repo.commit("Initial commit")
-
+        self.commit("Initial commit")
         click.secho(
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
+
+    def commit(self, msg: str) -> None:
+        repo = GitRepo(self.repo_url, targetdir=self.target_dir, force_init=True)
+        repo.stage_all()
+        repo.stage_files(self.additional_files)
+        repo.commit(msg)

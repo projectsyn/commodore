@@ -518,6 +518,77 @@ def package_new(
     t.create()
 
 
+@package.command(
+    name="update", short_help="Update an existing config package from a template"
+)
+@click.argument(
+    "package_path", type=click.Path(exists=True, dir_okay=True, file_okay=False)
+)
+@click.option(
+    "--copyright",
+    "copyright_holder",
+    show_default=True,
+    help="The copyright holder added to the license file.",
+)
+@click.option(
+    "--golden-tests/--no-golden-tests",
+    default=None,
+    show_default=True,
+    help="Add golden tests to the package.",
+)
+@click.option(
+    "--update-copyright-year/--no-update-copyright-year",
+    default=False,
+    show_default=True,
+    help="Update year in copyright notice.",
+)
+@click.option(
+    "--additional-test-case",
+    "-t",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Additional test cases to generate in the new package. Can be repeated. "
+    + "Already existing test cases will always be kept.",
+)
+@click.option(
+    "--remove-test-case",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Test cases to remove from the package. Can be repeated.",
+)
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def package_update(
+    config: Config,
+    verbose: int,
+    package_path: str,
+    copyright_holder: Optional[str],
+    golden_tests: Optional[bool],
+    update_copyright_year: bool,
+    additional_test_case: Iterable[str],
+    remove_test_case: Iterable[str],
+):
+    config.update_verbosity(verbose)
+    t = PackageTemplater.from_existing(config, Path(package_path))
+
+    # Add provided values
+    if copyright_holder:
+        t.copyright_holder = copyright_holder
+    if golden_tests is not None:
+        t.golden_tests = golden_tests
+    if update_copyright_year:
+        t.copyright_year = None
+    t.test_cases.extend(additional_test_case)
+    t.test_cases = [tc for tc in t.test_cases if tc not in remove_test_case]
+
+    t.update()
+
+
 @package.command(name="compile", short_help="Compile a config package standalone")
 @click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.argument(
