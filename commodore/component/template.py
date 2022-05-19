@@ -14,7 +14,6 @@ from commodore.dependency_templater import Templater, Renderer
 
 
 class ComponentTemplater(Templater):
-    # pylint: disable=too-many-instance-attributes
     library: bool
     post_process: bool
     matrix_tests: bool
