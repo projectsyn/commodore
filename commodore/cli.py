@@ -22,6 +22,7 @@ from .inventory.parameters import InventoryFacts
 from .inventory.lint import LINTERS
 from .login import login, fetch_token
 from .package.compile import compile_package
+from .package.template import PackageTemplater
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -324,8 +325,7 @@ def component_new(
     verbose,
 ):
     config.update_verbosity(verbose)
-    f = ComponentTemplater(config, slug)
-    f.name = name
+    f = ComponentTemplater(config, slug, name=name)
     f.library = lib
     f.post_process = pp
     f.github_owner = owner
@@ -404,6 +404,81 @@ def component_compile(
 @pass_config
 def package(config: Config, verbose: int):
     config.update_verbosity(verbose)
+
+
+@package.command(name="new", short_help="Create a new config package from a template")
+@click.argument("slug")
+@click.option(
+    "--name",
+    help="The package's name as it will be written in the documentation. Defaults to the slug.",
+)
+@click.option(
+    "--owner",
+    default="projectsyn",
+    show_default=True,
+    help="The GitHub user or project name where the package will be hosted.",
+)
+@click.option(
+    "--copyright",
+    "copyright_holder",
+    default="VSHN AG <info@vshn.ch>",
+    show_default=True,
+    help="The copyright holder added to the license file.",
+)
+@click.option(
+    "--golden-tests/--no-golden-tests",
+    default=True,
+    show_default=True,
+    help="Add golden tests to the package.",
+)
+@click.option(
+    "--template-url",
+    default="https://github.com/projectsyn/commodore-config-package-template.git",
+    show_default=True,
+    help="The URL of the package cookiecutter template.",
+)
+@click.option(
+    "--template-version",
+    default="main",
+    show_default=True,
+    help="The package template version (Git tree-ish) to use.",
+)
+@click.option(
+    "--output-dir",
+    default="",
+    show_default=True,
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="The directory in which to place the new package.",
+)
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def package_new(
+    config: Config,
+    verbose: int,
+    slug: str,
+    name: Optional[str],
+    owner: str,
+    copyright_holder: str,
+    golden_tests: bool,
+    template_url: str,
+    template_version: str,
+    output_dir: str,
+):
+    """Create new config package repo from template.
+
+    The command line options allow the caller to customize the remote repository
+    location (only supports GitHub at the moment), the package's display name, whether
+    to configure golden tests, and the licensing details.
+    """
+    config.update_verbosity(verbose)
+    t = PackageTemplater(config, slug, name=name, output_dir=output_dir)
+    t.github_owner = owner
+    t.copyright_holder = copyright_holder
+    t.golden_tests = golden_tests
+    t.template_url = template_url
+    t.template_version = template_version
+    t.create()
 
 
 @package.command(name="compile", short_help="Compile a config package standalone")

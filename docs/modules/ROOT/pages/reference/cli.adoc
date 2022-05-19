@@ -200,6 +200,36 @@ This command doesn't have any command line options.
   This parameter is required.
   If the OIDC discovery URL and OIDC client aren't provided, Commodore will try to fetch those informations from the given Lieutenant API.
 
+== Package New
+
+*--name* TEXT::
+  The package's name as it will be written in the documentation.
+  Defaults to the slug.
+
+*--owner* TEXT::
+  The GitHub user or project name where the package will be hosted.
+  Defaults to _projectsyn_.
+
+*--copyright* TEXT::
+  The copyright holder added to the license file.
+  Defaults to "VSHN AG <info@vshn.ch>."
+
+*--golden-tests / --no-golden-tests*::
+  Enable golden tests for the component.
+  Defaults to _yes_.
+
+*--template-url* TEXT::
+  The URL of the package cookiecutter template.
+  Defaults to https://github.com/projectsyn/commodore-config-package-template.git.
+
+*--template-version* TEXT::
+  The package template version (Git tree-ish) to use.
+  Defaults to _main_.
+
+*--output-dir* DIRECTORY::
+  The directory in which to place the new package.
+  If this option isn't provided, the command will place the new package under `inventory/classes/` in the Commodore working directory.
+
 == Package Compile
 
 *-f, --values* FILE::
