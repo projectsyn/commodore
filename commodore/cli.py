@@ -450,6 +450,16 @@ def package(config: Config, verbose: int):
     type=click.Path(file_okay=False, dir_okay=True),
     help="The directory in which to place the new package.",
 )
+@click.option(
+    "--additional-test-case",
+    "-t",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Additional test cases to generate in the new package. Can be repeated. "
+    + "Test case `defaults` will always be generated.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -464,6 +474,7 @@ def package_new(
     template_url: str,
     template_version: str,
     output_dir: str,
+    additional_test_case: Iterable[str],
 ):
     """Create new config package repo from template.
 
@@ -478,6 +489,7 @@ def package_new(
     t.golden_tests = golden_tests
     t.template_url = template_url
     t.template_version = template_version
+    t.test_cases = ["defaults"] + list(additional_test_case)
     t.create()
 
 
