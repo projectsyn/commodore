@@ -238,11 +238,11 @@ This command doesn't have any command line options.
 == Package Compile
 
 *-f, --values* FILE::
-  Specify inventory class in a YAML file.
+  Specify an additional inventory class in a YAML file.
   This option can be repeated to provide multiple files.
   Files specified later win when resolving inventory values.
 +
-These classes are included before the package class which is getting compiled.
+These classes are included before the target class which is getting compiled.
 This allows users to customize cluster facts or similar when compiling packages standalone.
 
 *--local*::

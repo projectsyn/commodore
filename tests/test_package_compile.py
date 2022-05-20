@@ -14,7 +14,6 @@ from commodore.dependency_mgmt import create_component_symlinks
 from commodore.helpers import yaml_dump, yaml_load
 
 from commodore.package import compile
-
 from test_component_compile import _prepare_component, _add_postprocessing_filter
 
 
@@ -72,6 +71,14 @@ def _setup_package(root: Path, package_ns: Optional[str]) -> Path:
         },
         target_cls,
     )
+    test_cls = pkg_path / "tests" / "defaults.yml"
+    test_cls.parent.mkdir(parents=True, exist_ok=True)
+    yaml_dump(
+        {
+            "classes": ["..target-class"],
+        },
+        pkg_path / "tests" / "defaults.yml",
+    )
 
     return pkg_path
 
@@ -97,7 +104,7 @@ def test_compile_package(
     if pp_filter:
         _add_postprocessing_filter(tmp_path)
 
-    compile.compile_package(config, pkg_path, "target-class", [])
+    compile.compile_package(config, pkg_path, "tests/defaults.yml", [])
 
     output = tmp_path / "compiled" / "test-component"
 
@@ -127,6 +134,6 @@ def test_compile_package_raises_exception(
     pkg_path = _setup_package(tmp_path, None)
 
     with pytest.raises(click.ClickException) as e:
-        compile.compile_package(config, pkg_path, "non-existent", [])
+        compile.compile_package(config, pkg_path, "non-existent.yml", [])
 
-    assert "Root class 'non-existent' doesn't exist" in str(e.value)
+    assert "Test class 'non-existent' doesn't exist" in str(e.value)

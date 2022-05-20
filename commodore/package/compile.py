@@ -24,7 +24,6 @@ def compile_package(
 ):
     # Clean working tree before compiling package, some of our symlinking logic expects
     # that `inventory/` is cleaned before symlinks are created.
-    # TODO(sg): Make this conditional on not running local mode for package compilation
     if not cfg.local:
         clean_working_tree(cfg)
 
@@ -36,13 +35,13 @@ def compile_package(
     # relative includes internally, the package name shouldn't matter for compilation.
     pkg_name = pkg_path.stem.replace("package-", "")
 
-    # Verify root class
-    root_class_path = root_class.replace(".", "/")
-    root_cls = pkg_path / f"{root_class_path}.yml"
-    if not root_cls.is_file():
-        raise click.ClickException(f"Root class '{root_cls.stem}' doesn't exist.")
+    root_class_name = root_class.replace(".yml", "").replace("/", ".")
+    # Convert root class file to class name
+    root_class_path = pkg_path / root_class
+    if not root_class_path.is_file():
+        raise click.ClickException(f"Test class '{root_class_name}' doesn't exist.")
 
-    _setup_inventory(cfg.inventory, pkg_name, root_class, value_files)
+    _setup_inventory(cfg.inventory, pkg_name, root_class_name, value_files)
 
     # Symlink package to inventory
     relsymlink(pkg_path, cfg.inventory.package_dir(pkg_name).parent, pkg_name)
@@ -68,7 +67,7 @@ def compile_package(
 
 
 def _setup_inventory(
-    inv: Inventory, pkg_name: str, root_class: str, value_files: Iterable[Path]
+    inv: Inventory, pkg_name: str, root_class_name: str, value_files: Iterable[Path]
 ):
     """Setup inventory files which would usually be provided in the cluster's global
     config.
@@ -90,7 +89,7 @@ def _setup_inventory(
 
     # Add the package after the additional test config, so that we can provide relevant
     # facts etc. before the package classes are rendered.
-    classes.append(f"{pkg_name}.{root_class}")
+    classes.append(f"{pkg_name}.{root_class_name}")
 
     # setup global.commodore class with class hierarchy containing package target class
     # to compile and any additional value classes provided on the command line.
