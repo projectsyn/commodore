@@ -495,13 +495,15 @@ def package_new(
 
 @package.command(name="compile", short_help="Compile a config package standalone")
 @click.argument("path", type=click.Path(exists=True, file_okay=False, dir_okay=True))
-@click.argument("root_class")
+@click.argument(
+    "test_class", type=click.Path(exists=False, file_okay=True, dir_okay=False)
+)
 @click.option(
     "-f",
     "--values",
     multiple=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
-    help="Specify inventory class in a YAML file (can specify multiple).",
+    help="Specify additional inventory class in a YAML file (can specify multiple).",
 )
 @click.option(
     "--local",
@@ -516,7 +518,8 @@ def package_new(
     " / -F",
     "--fetch-dependencies/--no-fetch-dependencies",
     default=True,
-    help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. By default dependencies are fetched.",
+    help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. "
+    + "By default dependencies are fetched.",
 )
 @verbosity
 @pass_config
@@ -525,7 +528,7 @@ def package_compile(
     config: Config,
     verbose: int,
     path: str,
-    root_class: str,
+    test_class: str,
     values: Iterable[str],
     local: bool,
     fetch_dependencies: bool,
@@ -533,7 +536,7 @@ def package_compile(
     config.update_verbosity(verbose)
     config.local = local
     config.fetch_dependencies = fetch_dependencies
-    compile_package(config, path, root_class, values)
+    compile_package(config, path, test_class, values)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")
