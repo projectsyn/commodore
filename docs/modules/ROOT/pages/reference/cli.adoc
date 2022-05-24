@@ -275,3 +275,18 @@ When you want to test adding a new component in local mode, you *must* run local
 After that, all the symlinks and dependencies which are required to compile the component will be present and you can disable dependency fetching.
 +
 Overall, this flag has the same semantics as `--fetch-dependencies` of `catalog compile`.
+
+*--keep-dir / --no-keep-dir*::
+  Whether to keep the compilation temp directory after the compilation is done.
++
+This flag allows users to keep the package compilation temp directory created by Commodore for subsequent package compilations in local mode.
+If this flag isn't provided, Commodore will delete the temp directory after compilation is done.
+
+*--tmp-dir* PATH::
+  Temp directory to use for compilation.
+  Implies `--keep-dir`.
++
+When this flag is provided, Commodore will use the provided path as the directory for the compilation.
+It's the users responsibility to clean up the temp directory when this flag is provided.
++
+If the specified path doesn't exist, Commodore will create it as a directory.

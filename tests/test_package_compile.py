@@ -43,6 +43,7 @@ def test_setup_package_inventory(tmp_path: Path, config: Config):
 
 
 def _mock_fetch_components(cfg: Config):
+    print(cfg.work_dir)
     c = Component("test-component", cfg.work_dir)
     create_component_symlinks(cfg, c)
     cfg.register_component(c)
@@ -86,27 +87,53 @@ def _setup_package(root: Path, package_ns: Optional[str]) -> Path:
 @pytest.mark.parametrize("pp_filter", [True, False])
 @pytest.mark.parametrize("package_ns", [None, "myns"])
 @pytest.mark.parametrize("local", [False, True])
+@pytest.mark.parametrize(
+    "keep_dir,tmp_dir", [(False, ""), (True, ""), (True, "build2")]
+)
 @mock.patch.object(compile, "fetch_components")
+@mock.patch.object(compile, "mkdtemp")
 def test_compile_package(
+    mock_mkdtemp: mock.MagicMock,
     mock_fetch: mock.MagicMock,
     tmp_path: Path,
     config: Config,
     pp_filter: bool,
     package_ns: Optional[str],
     local: bool,
+    keep_dir: bool,
+    tmp_dir: str,
 ):
     mock_fetch.side_effect = _mock_fetch_components
 
+    tmp_dir_arg = tmp_dir
+    if not tmp_dir:
+        tmp_dir = "build"
+        tmp_dir_arg = ""
+
+    compile_dir = tmp_path / tmp_dir
+
+    def _mock_mkdtemp(prefix="tmp-"):
+        compile_dir.mkdir(parents=True, exist_ok=True)
+        return compile_dir
+
+    mock_mkdtemp.side_effect = _mock_mkdtemp
+
     config.local = local
-
     pkg_path = _setup_package(tmp_path, package_ns)
-    _prepare_component(tmp_path)
+    _prepare_component(compile_dir)
     if pp_filter:
-        _add_postprocessing_filter(tmp_path)
+        _add_postprocessing_filter(compile_dir)
 
-    compile.compile_package(config, pkg_path, "tests/defaults.yml", [])
+    compile.compile_package(
+        config,
+        pkg_path,
+        "tests/defaults.yml",
+        [],
+        keep_dir=keep_dir,
+        tmp_dir=tmp_dir_arg,
+    )
 
-    output = tmp_path / "compiled" / "test-component"
+    output = pkg_path / "compiled" / "test-component"
 
     assert output.is_dir()
     assert (output / "test-component").is_dir()

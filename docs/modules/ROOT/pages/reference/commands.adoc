@@ -167,3 +167,8 @@ The template also provides many meta-files in the component repository, such as 
 This command allows user to configure https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[configuration packages] standalone.
 
 The command takes two command line arguments, the path to the package and the test class in the package to compile.
+
+By default, the command creates a temp directory in `/tmp` which is used as the working directory for compiling the package.
+To keep an automatically created temp directory for subsequent compilations, users can specify `--keep-dir` to skip deleting the temp directory created by the command.
+Users can specify a custom temp directory location with flag `--tmp-dir`.
+If the path provided with `--tmp-dir` doesn't exist, Commodore will create it as a directory.
