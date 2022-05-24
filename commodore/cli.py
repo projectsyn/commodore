@@ -521,6 +521,20 @@ def package_new(
     help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. "
     + "By default dependencies are fetched.",
 )
+@click.option(
+    "-k / ",
+    "--keep-dir/--no-keep-dir",
+    default=False,
+    show_default=True,
+    help="Whether to keep the compilation temp directory after the compilation is done.",
+)
+@click.option(
+    "--tmp-dir",
+    default="",
+    metavar="PATH",
+    type=click.Path(exists=False, file_okay=False, dir_okay=True),
+    help="Temp directory to use for compilation. Implies `--keep-dir`",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -532,11 +546,13 @@ def package_compile(
     values: Iterable[str],
     local: bool,
     fetch_dependencies: bool,
+    keep_dir: bool,
+    tmp_dir: str,
 ):
     config.update_verbosity(verbose)
     config.local = local
     config.fetch_dependencies = fetch_dependencies
-    compile_package(config, path, test_class, values)
+    compile_package(config, path, test_class, values, tmp_dir, keep_dir)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")

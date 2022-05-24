@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import shutil
+import tempfile
+
 from collections.abc import Iterable
 from pathlib import Path
 from textwrap import dedent
+from typing import Optional
 
 import click
 
@@ -16,12 +20,26 @@ from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
+# pylint: disable=too-many-arguments disable=too-many-locals
 def compile_package(
     cfg: Config,
     pkg_path_: str,
     root_class: str,
     value_files_: Iterable[str],
+    tmp_dir: Optional[str] = "",
+    keep_dir: bool = False,
 ):
+    if tmp_dir:
+        temp_dir = Path(tmp_dir).resolve()
+        if cfg.debug:
+            click.echo(
+                " > Always setting `--keep-dir` when temp dir provided explicitly"
+            )
+        keep_dir = True
+    else:
+        temp_dir = Path(tempfile.mkdtemp(prefix="package-")).resolve()
+    cfg.work_dir = temp_dir
+
     # Clean working tree before compiling package, some of our symlinking logic expects
     # that `inventory/` is cleaned before symlinks are created.
     if not cfg.local:
@@ -64,6 +82,18 @@ def compile_package(
 
     kapitan_compile(cfg, targets, search_paths=[cfg.vendor_dir])
     postprocess_components(cfg, inventory, cfg.get_components())
+
+    shutil.copytree(
+        cfg.work_dir / "compiled", pkg_path / "compiled", dirs_exist_ok=True
+    )
+
+    if not keep_dir:
+        shutil.rmtree(temp_dir)
+    elif not tmp_dir:
+        click.echo(
+            f"Compilation working directory: {temp_dir}. Specify `--tmp-dir={temp_dir}`"
+            + ", if you want to use local mode for subsequent compilations."
+        )
 
 
 def _setup_inventory(

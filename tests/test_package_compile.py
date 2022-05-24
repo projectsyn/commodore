@@ -43,6 +43,7 @@ def test_setup_package_inventory(tmp_path: Path, config: Config):
 
 
 def _mock_fetch_components(cfg: Config):
+    print(cfg.work_dir)
     c = Component("test-component", cfg.work_dir)
     create_component_symlinks(cfg, c)
     cfg.register_component(c)
@@ -100,13 +101,16 @@ def test_compile_package(
     config.local = local
 
     pkg_path = _setup_package(tmp_path, package_ns)
-    _prepare_component(tmp_path)
+    compile_dir = tmp_path / "build"
+    _prepare_component(compile_dir)
     if pp_filter:
-        _add_postprocessing_filter(tmp_path)
+        _add_postprocessing_filter(compile_dir)
 
-    compile.compile_package(config, pkg_path, "tests/defaults.yml", [])
+    compile.compile_package(
+        config, pkg_path, "tests/defaults.yml", [], tmp_dir=compile_dir
+    )
 
-    output = tmp_path / "compiled" / "test-component"
+    output = pkg_path / "compiled" / "test-component"
 
     assert output.is_dir()
     assert (output / "test-component").is_dir()
