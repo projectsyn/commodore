@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import shutil
-import tempfile
 
 from collections.abc import Iterable
 from pathlib import Path
+from tempfile import mkdtemp
 from textwrap import dedent
 from typing import Optional
 
@@ -30,14 +30,17 @@ def compile_package(
     keep_dir: bool = False,
 ):
     if tmp_dir:
-        temp_dir = Path(tmp_dir).resolve()
+        if not tmp_dir.startswith("/"):
+            temp_dir = Path(cfg.work_dir, tmp_dir).resolve()
+        else:
+            temp_dir = Path(tmp_dir).resolve()
         if cfg.debug:
             click.echo(
                 " > Always setting `--keep-dir` when temp dir provided explicitly"
             )
         keep_dir = True
     else:
-        temp_dir = Path(tempfile.mkdtemp(prefix="package-")).resolve()
+        temp_dir = Path(mkdtemp(prefix="package-")).resolve()
     cfg.work_dir = temp_dir
 
     # Clean working tree before compiling package, some of our symlinking logic expects
