@@ -30,6 +30,8 @@ python-dotenv = "^0.20.0"
 importlib-metadata = "^4.11.3"
 pyxdg = "^0.27"
 cruft = "^2.10.2"
+# Kapitan requires exactly 3.1.1
+oauthlib = "3.1.1"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.0"
