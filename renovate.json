@@ -16,6 +16,7 @@
   "ignoreDeps": [
     "gitpython",
     "oauthlib",
+    "pyjwt",
     "requests"
   ],
   "labels": [

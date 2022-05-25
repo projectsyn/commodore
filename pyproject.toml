@@ -32,6 +32,8 @@ pyxdg = "^0.27"
 cruft = "^2.10.2"
 # Kapitan requires exactly 3.1.1
 oauthlib = "3.1.1"
+# Kapitan requires exactly 2.1.0
+pyjwt = "2.1.0"
 
 [tool.poetry.dev-dependencies]
 tox = "^3.25.0"
