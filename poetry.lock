@@ -1170,7 +1170,7 @@ rsa = ["oauthlib[signedtoken] (>=3.0.0)"]
 
 [[package]]
 name = "responses"
-version = "0.20.0"
+version = "0.21.0"
 description = "A utility library for mocking out the `requests` Python library."
 category = "dev"
 optional = false
@@ -1404,7 +1404,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "fb4ebafffa4c92063252218bce2ff927409f822f702e67a818b29ea06067c70c"
+content-hash = "0e82956433dcdf729e5c282758bd87069cc26cb6a0bba766b61694e6bda950a7"
 
 [metadata.files]
 addict = [
@@ -2091,8 +2091,8 @@ requests-oauthlib = [
     {file = "requests_oauthlib-1.3.0-py3.7.egg", hash = "sha256:fa6c47b933f01060936d87ae9327fead68768b69c6c9ea2109c48be30f2d4dbc"},
 ]
 responses = [
-    {file = "responses-0.20.0-py3-none-any.whl", hash = "sha256:18831bc2d72443b67664d98038374a6fa1f27eaaff4dd9a7d7613723416fea3c"},
-    {file = "responses-0.20.0.tar.gz", hash = "sha256:644905bc4fb8a18fa37e3882b2ac05e610fe8c2f967d327eed669e314d94a541"},
+    {file = "responses-0.21.0-py3-none-any.whl", hash = "sha256:2dcc863ba63963c0c3d9ee3fa9507cbe36b7d7b0fccb4f0bdfd9e96c539b1487"},
+    {file = "responses-0.21.0.tar.gz", hash = "sha256:b82502eb5f09a0289d8e209e7bad71ef3978334f56d09b444253d5ad67bf5253"},
 ]
 rfc3987 = [
     {file = "rfc3987-1.3.8-py2.py3-none-any.whl", hash = "sha256:10702b1e51e5658843460b189b185c0366d2cf4cff716f13111b0ea9fd2dce53"},
