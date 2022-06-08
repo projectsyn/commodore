@@ -1,4 +1,4 @@
-FROM docker.io/python:3.10.4-slim-bullseye AS base
+FROM docker.io/python:3.10.5-slim-bullseye AS base
 
 ENV HOME=/app
 
