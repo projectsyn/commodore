@@ -19,6 +19,12 @@
     "pyjwt",
     "requests"
   ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["cookiecutter"],
+      "allowedVersions": "<2.0"
+    }
+  ],
   "labels": [
     "dependency"
   ]
