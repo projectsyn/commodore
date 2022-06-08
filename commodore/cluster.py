@@ -49,8 +49,9 @@ class Cluster:
 
     def _extract_field(self, field: str, default) -> str:
         """
-        Extract `field` from the tenant and cluster data, preferring the value present in the cluster data over the
-        value in the tenant data. If field is not present in both tenant and cluster data, return `default`.
+        Extract `field` from the tenant and cluster data, preferring the value present in the
+        cluster data over the value in the tenant data. If field is not present in both tenant and
+        cluster data, return `default`.
         """
         return self._cluster.get(field, self._tenant.get(field, default))
 

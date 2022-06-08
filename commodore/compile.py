@@ -119,8 +119,8 @@ def _local_setup(config: Config, cluster_id):
     if not config.fetch_dependencies:
         click.echo(" > Will use existing Jsonnet and Kapitan dependencies")
         click.echo(
-            "   > Use --fetch-dependencies at least once if you're trying to enable a new component in local mode,"
-            + " otherwise Kapitan will fail to find the component"
+            "   > Use --fetch-dependencies at least once if you're trying to enable "
+            + "a new component in local mode, otherwise Kapitan will fail to find the component"
         )
 
     file = config.inventory.target_file(config.inventory.bootstrap_target)

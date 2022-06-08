@@ -31,7 +31,8 @@ def jsonnet_dependencies(config: Config) -> Iterable:
             }
         )
 
-    # Defining the `lib` folder as a local dependency is just a cheap way to have a symlink to that folder.
+    # Defining the `lib` folder as a local dependency is just a cheap way to have a symlink to that
+    # folder.
     dependencies.append(
         {
             "source": {
