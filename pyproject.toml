@@ -45,7 +45,7 @@ responses = "0.20.0"
 black = "22.3.0"
 pyfakefs = "4.5.6"
 pytest-cov = "3.0.0"
-pylint = "2.13.9"
+pylint = "2.14.1"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'

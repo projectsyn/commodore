@@ -161,7 +161,10 @@ oidc_client_option = click.option(
     " / -F",
     "--fetch-dependencies/--no-fetch-dependencies",
     default=True,
-    help="Whether to fetch Jsonnet and Kapitan dependencies in local mode. By default dependencies are fetched.",
+    help=(
+        "Whether to fetch Jsonnet and Kapitan dependencies in local mode. "
+        + "By default dependencies are fetched."
+    ),
 )
 @click.option(
     "-m",

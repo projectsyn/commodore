@@ -112,8 +112,8 @@ class Component:
         if jsonnetfile_jsonnet.is_file():
             if jsonnetfile_json.name in self._repo.repo.tree():
                 click.secho(
-                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json and jsonnetfile.jsonnet, "
-                    + "continuing with jsonnetfile.jsonnet",
+                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
+                    + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",
                     fg="yellow",
                 )
             # pylint: disable=c-extension-no-member
