@@ -9,9 +9,6 @@
 
 {%- endif %}
 
-docs/antora.yml:
-  name: {{ cookiecutter.slug }}
-  title: {{ cookiecutter.name }}
 {%- if cookiecutter.add_matrix == "y" %}
 
 .github/workflows/test.yaml:
