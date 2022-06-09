@@ -183,6 +183,7 @@ def test_run_component_new_command_with_name(tmp_path: P):
     component_name = "Component with custom name"
     component_slug = "named-component"
     readme_path = tmp_path / "dependencies" / component_slug / "README.md"
+    syncyml_path = tmp_path / "dependencies" / component_slug / ".sync.yml"
 
     exit_status = call(
         f"commodore -d {tmp_path} -vvv component new --name '{component_name}' {component_slug}",
@@ -193,9 +194,13 @@ def test_run_component_new_command_with_name(tmp_path: P):
     assert os.path.exists(readme_path)
 
     with open(readme_path, "r") as file:
-        data = file.read()
-        assert component_name in data
-        assert component_slug not in data
+        lines = file.read().split("\n")
+        assert lines[0] == f"# Commodore Component: {component_name}"
+        assert any(f"https://hub.syn.tools/{component_slug}" in line for line in lines)
+
+    with open(syncyml_path, "r") as file:
+        syncyml = yaml.safe_load(file)
+        assert syncyml[":global"]["componentName"] == component_name
 
 
 @pytest.mark.parametrize(
