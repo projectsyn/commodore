@@ -17,7 +17,7 @@ jobs:
           - black
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
     - uses: Gr1N/setup-poetry@v7
@@ -50,7 +50,7 @@ jobs:
           - '3.10'
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - uses: Gr1N/setup-poetry@v7
@@ -84,7 +84,7 @@ jobs:
           - '3.10'
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - uses: Gr1N/setup-poetry@v7
@@ -112,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
     - uses: Gr1N/setup-poetry@v7
