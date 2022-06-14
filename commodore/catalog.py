@@ -75,8 +75,9 @@ def clean_catalog(repo: GitRepo):
     if catalogdir.is_dir():
         rm_tree_contents(catalogdir)
     else:
-        click.echo(" > Converting old-style catalog")
-        rm_tree_contents(repo.working_tree_dir)
+        click.echo(
+            f" > Skipping cleaning, catalog directory {catalogdir} doesn't exist"
+        )
 
 
 def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
