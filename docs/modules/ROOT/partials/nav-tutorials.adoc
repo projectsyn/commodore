@@ -1,1 +1,2 @@
 * xref:tuto:ROOT:index.adoc[Writing a Component]
+* xref:commodore:ROOT:tutorial/package.adoc[Writing a Package]
