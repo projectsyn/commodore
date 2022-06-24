@@ -1,0 +1,92 @@
+= Tutorial: Writing and using Commodore Packages
+
+This tutorial will guide you through the steps to create and use a Commodore Package.
+Commodore Packages allow you to distribute configuration for one or more components.
+
+We will write a simple package deploying https://github.com/projectsyn/component-cert-manager[Component cert-manager] and bundling some custom defaults.
+We then look at adding this package to a cluster.
+
+We assume that you understand the basics of Project Syn and how to use it, have a working Commodore installation, and that you have access to a Lieutenant instance and a Syn managed cluster.
+If this isn't the case, first work through the https://syn.tools/syn/tutorials/getting-started.html[Getting Started guide] and the tutorial on xref:tuto:ROOT:index.adoc[Writing a Component].
+
+
+== Creating a Commodore Package
+
+First let's bootstrap a package using Commodore.
+Switch to an exiting Commodore working directory or a new empty directory and run:
+
+[source,bash]
+----
+commodore package new cert-manager --owner ${GITHUB_USERNAME}
+----
+
+The new package is now located at `inventory/classes/cert-manager`.
+
+[source,bash]
+----
+cd inventory/classes/cert-manager
+tree
+----
+
+You'll see a new, mostly empty repository with some boilerplate.
+Let's add some functionality by adding a new class `common.yml` with the following content.
+
+.`common.yml`
+[source,yaml]
+----
+applications:
+  - cert-manager
+
+parameters:
+  components:
+    cert-manager:
+      url: https://github.com/projectsyn/component-cert-manager.git
+      version: v3.0.2
+
+  cert_manager:
+    letsencrypt_email: cert@example.com
+----
+
+This class enables the component cert-manager and configures a custom default for the letsencrypt email.
+A class can contain pretty much arbitrary configuration that will be added as-is to a cluster configuration that imports the class.
+
+Next you can push the catalog to GitHub.
+By default the origin will be `github.com/${GITHUB_USERNAME}/package-cert-manager`.
+Make sure to create a new project on GitHub with that name and push to it.
+
+[source,bash]
+----
+git add .
+git commit -m "Add component cert-manager"
+git push --set-upstream origin master
+----
+
+== Using a Commodore Package
+With the package published on GitHub we can deploy it on our cluster.
+
+Switch to the tenant repository of your Syn managed cluster and add the following to the cluster configuration:
+
+[source,yaml]
+----
+classes:
+  - cert-manager.common <3>
+applications:
+  - pkg.cert-manager <2>
+parameters:
+  packages:
+    cert-manager: <1>
+      url: https://github.com/${GITHUB_USERNAME}/package-cert-manager.git
+      version: master
+----
+<1> Package dependencies are specified similarly to Component dependencies.
+<2> We need to enable the package as part of the applications.
+This gives us access to the provided classes.
+<3> We can now import any of the classes in the package as if they're locally available or in the global defaults.
+
+This will add the component cert-manager to the cluster and configure the lestsencrypt mail to `cert@example.com`.
+
+== Conclusion
+
+This package is very much a toy example, but I hope it has shown you how we can use Commodore Packages to bundle common configuration for one or more Components and simplify configuration reuse.
+
+As a next step to writing your own package, consult our https://syn.tools/syn/explanations/commodore-packages.html[best practices] or look at existing packages such as https://github.com/projectsyn/package-monitoring[package-monitoring], the package for our vendor independent monitoring stack.
