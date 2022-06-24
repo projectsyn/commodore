@@ -3,8 +3,8 @@
 This tutorial will guide you through the steps to create and use a Commodore Package.
 Commodore Packages allow you to distribute configuration for one or more components.
 
-We will write a simple Package deploying https://github.com/projectsyn/component-cert-manager[Component cert-manager] and bundling some custom defaults.
-We then look at adding this Package to a cluster.
+We will write a simple package deploying https://github.com/projectsyn/component-cert-manager[Component cert-manager] and bundling some custom defaults.
+We then look at adding this package to a cluster.
 
 We assume that you understand the basics of Project Syn and how to use it, have a working Commodore installation, and that you have access to a Lieutenant instance and a Syn managed cluster.
 If this isn't the case, first work through the https://syn.tools/syn/tutorials/getting-started.html[Getting Started guide] and the tutorial on xref:tuto:ROOT:index.adoc[Writing a Component].
@@ -12,7 +12,7 @@ If this isn't the case, first work through the https://syn.tools/syn/tutorials/g
 
 == Creating a Commodore Package
 
-First let's bootstrap a Package using Commodore.
+First let's bootstrap a package using Commodore.
 Switch to an exiting Commodore working directory or a new empty directory and run:
 
 [source,bash]
@@ -20,7 +20,7 @@ Switch to an exiting Commodore working directory or a new empty directory and ru
 commodore package new cert-manager --owner ${GITHUB_USERNAME}
 ----
 
-The new Package is now located at `inventory/classes/cert-manager`.
+The new package is now located at `inventory/classes/cert-manager`.
 
 [source,bash]
 ----
@@ -62,7 +62,7 @@ git push --set-upstream origin master
 ----
 
 == Using a Commodore Package
-With the Package published on GitHub we can deploy it on our cluster.
+With the package published on GitHub we can deploy it on our cluster.
 
 Switch to the tenant repository of your Syn managed cluster and add the following to the cluster configuration:
 
@@ -79,14 +79,14 @@ parameters:
       version: master
 ----
 <1> Package dependencies are specified similarly to Component dependencies.
-<2> We need to enable the Package as part of the applications.
+<2> We need to enable the package as part of the applications.
 This gives us access to the provided classes.
-<3> We can now import any of the classes in the Package as if they're locally available or in the global defaults.
+<3> We can now import any of the classes in the package as if they're locally available or in the global defaults.
 
 This will add the component cert-manager to the cluster and configure the lestsencrypt mail to `cert@example.com`.
 
 == Conclusion
 
-This Package is very much a toy example, but I hope it has shown you how we can use Commodore Packages to bundle common configuration for one or more Components and simplify configuration reuse.
+This package is very much a toy example, but I hope it has shown you how we can use Commodore Packages to bundle common configuration for one or more Components and simplify configuration reuse.
 
-As a next step to writing your own Package, consult our https://syn.tools/syn/explanations/commodore-packages.html[best practices] or look at existing Packages such as https://github.com/projectsyn/package-monitoring[package-monitoring], the Package for our vendor independent monitoring stack.
+As a next step to writing your own package, consult our https://syn.tools/syn/explanations/commodore-packages.html[best practices] or look at existing packages such as https://github.com/projectsyn/package-monitoring[package-monitoring], the package for our vendor independent monitoring stack.
