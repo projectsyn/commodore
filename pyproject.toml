@@ -25,7 +25,9 @@ cookiecutter = "1.7.3"
 # Kapitan requires exactly 3.1.24
 gitpython = "3.1.24"
 # Kapitan requires exactly 2.26.0
-requests = "2.26.0"
+# We explicitly request to use chardet on python3, so Poetry doesn't update
+# chartdet to v5.
+requests = {version = "2.26.0", extras = ["use_chardet_on_py3"]}
 url-normalize = "1.4.3"
 python-dotenv = "0.20.0"
 importlib-metadata = "4.12.0"
