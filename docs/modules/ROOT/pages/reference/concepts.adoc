@@ -35,7 +35,7 @@ These inventory classes are stored in Git repositories.
 Commodore calls these bundles of inventory classes _configuration packages_.
 
 Configuration packages can include components and provide arbitrary configuration parameters.
-Commodore clones the Git repositories containing configuration packages directly into `inventory/classes` to make the contents available as Kapitan inventory classes.
+Commodore clones the Git repositories containing configuration packages into `dependencies/pkg.<package-name>` and symlinks them to `inventory/classes/<package-name>` to make the contents available as Kapitan inventory classes.
 To ensure components included through packages are processed correctly, Commodore ensures that configuration packages are present before discovering components.
 
 See https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[SDD 0028 - Reusable Commodore Component Configuration Packages] for more details on the design of configuration packages.

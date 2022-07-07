@@ -36,3 +36,7 @@ class Package:
 
     def checkout(self):
         self._gitrepo.checkout(self._version)
+
+
+def package_dependency_dir(work_dir: Path, pname: str) -> Path:
+    return work_dir / "dependencies" / f"pkg.{pname}"

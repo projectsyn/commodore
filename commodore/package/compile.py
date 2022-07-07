@@ -55,6 +55,10 @@ def compile_package(
     # package name (possibly with a prefix `package-`). As long as a package only uses
     # relative includes internally, the package name shouldn't matter for compilation.
     pkg_name = pkg_path.stem.replace("package-", "")
+    # Handle package directory naming scheme for packages which are part of a cluster
+    # catalog separately.
+    if pkg_path.name.startswith("pkg."):
+        pkg_name = pkg_path.name.replace("pkg.", "")
 
     root_class_name = root_class.replace(".yml", "").replace("/", ".")
     # Convert root class file to class name

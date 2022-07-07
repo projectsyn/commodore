@@ -17,6 +17,7 @@ from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
 from commodore.inventory import Inventory
+from commodore.package import package_dependency_dir
 
 from test_package import _setup_package_remote
 
@@ -494,7 +495,7 @@ def test_register_packages(
     _setup_packages(tmp_path / "upstream", packages)
     for p in packages:
         git.Repo.clone_from(
-            f"file://{tmp_path}/upstream/{p}.git", config.inventory.package_dir(p)
+            f"file://{tmp_path}/upstream/{p}.git", package_dependency_dir(tmp_path, p)
         )
 
     dependency_mgmt.register_packages(config)
@@ -511,7 +512,7 @@ def test_register_packages_skip_nonexistent(
     discover_pkgs.return_value = packages
     _setup_packages(tmp_path / "upstream", packages)
     git.Repo.clone_from(
-        f"file://{tmp_path}/upstream/foo.git", config.inventory.package_dir("foo")
+        f"file://{tmp_path}/upstream/foo.git", package_dependency_dir(tmp_path, "foo")
     )
 
     dependency_mgmt.register_packages(config)
