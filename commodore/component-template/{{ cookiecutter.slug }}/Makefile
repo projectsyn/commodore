@@ -15,7 +15,7 @@ help: ## Show this help
 all: lint
 
 .PHONY: lint
-lint: lint_jsonnet lint_yaml lint_adoc ## All-in-one linting
+lint: lint_jsonnet lint_yaml lint_adoc{%- if cookiecutter.add_golden == "y" %} lint_kubent{% endif %} ## All-in-one linting
 
 .PHONY: lint_jsonnet
 lint_jsonnet: $(JSONNET_FILES) ## Lint jsonnet files
@@ -28,6 +28,12 @@ lint_yaml: ## Lint yaml files
 .PHONY: lint_adoc
 lint_adoc: ## Lint documentation
 	$(VALE_CMD) $(VALE_ARGS)
+
+{%- if cookiecutter.add_golden == "y" %}
+.PHONY: lint_kubent
+lint_kubent: ## Lint deprecated Kubernetes API versions
+	$(KUBENT_DOCKER) $(KUBENT_ARGS) -f $(KUBENT_FILES)
+{%- endif %}
 
 .PHONY: format
 format: format_jsonnet ## All-in-one formatting
@@ -70,6 +76,10 @@ golden-diff-all: $(test_instances) ## Run golden-diff for all instances. Note: t
 .PHONY: gen-golden-all
 gen-golden-all: recursive_target=gen-golden
 gen-golden-all: $(test_instances) ## Run gen-golden for all instances. Note: this doesn't work when running make with multiple parallel jobs (-j != 1).
+
+.PHONY: lint_kubent_all
+lint_kubent_all: recursive_target=lint_kubent
+lint_kubent_all: $(test_instances) ## Lint deprecated Kubernetes API versions for all golden test instances. Will exit on first error. Note: this doesn't work when running make with multiple parallel jobs (-j != 1).
 
 .PHONY: $(test_instances)
 $(test_instances):
