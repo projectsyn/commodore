@@ -215,10 +215,16 @@ def _setup_register_components(tmp_path: Path):
     return component_dirs, other_dirs
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
-def test_register_components(patch_discover, config: Config, tmp_path: Path):
+def test_register_components(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -229,13 +235,17 @@ def test_register_components(patch_discover, config: Config, tmp_path: Path):
         assert c not in component_names
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_components_and_aliases(
-    patch_discover, config: Config, tmp_path: Path
+    patch_discover, patch_read, config: Config, tmp_path: Path
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     alias_data = {"fooer": "foo"}
     patch_discover.return_value = (component_dirs, alias_data)
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -254,14 +264,18 @@ def test_register_components_and_aliases(
             assert alias not in aliases
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_unknown_components(
-    patch_discover, config: Config, tmp_path: Path, capsys
+    patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     unknown_components = ["qux", "quux"]
     component_dirs.extend(unknown_components)
     patch_discover.return_value = (component_dirs, {})
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -270,9 +284,10 @@ def test_register_unknown_components(
         assert f"Skipping registration of component {cn}" in captured.out
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_dangling_aliases(
-    patch_discover, config: Config, tmp_path: Path, capsys
+    patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     # add some dangling aliases
@@ -283,6 +298,9 @@ def test_register_dangling_aliases(
     alias_data["bazzer"] = "baz"
 
     patch_discover.return_value = (component_dirs, alias_data)
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 

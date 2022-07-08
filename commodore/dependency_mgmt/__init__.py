@@ -73,7 +73,11 @@ def fetch_components(cfg: Config):
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
         c = Component(
-            cn, work_dir=cfg.work_dir, repo_url=cspec.url, version=cspec.version
+            cn,
+            work_dir=cfg.work_dir,
+            repo_url=cspec.url,
+            version=cspec.version,
+            sub_path=cspec.path,
         )
         c.checkout()
         cfg.register_component(c)
@@ -90,11 +94,13 @@ def register_components(cfg: Config):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
+        cspecs = _read_components(cfg, components)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
+        cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Registering component {cn}...")
         if not component_dir(cfg.work_dir, cn).is_dir():
@@ -103,7 +109,7 @@ def register_components(cfg: Config):
                 fg="yellow",
             )
             continue
-        component = Component(cn, work_dir=cfg.work_dir)
+        component = Component(cn, work_dir=cfg.work_dir, sub_path=cspec.path)
         cfg.register_component(component)
         create_component_symlinks(cfg, component)
 
