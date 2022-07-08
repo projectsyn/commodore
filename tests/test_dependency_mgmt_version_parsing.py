@@ -23,30 +23,23 @@ from commodore.dependency_mgmt import version_parsing
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    component_urls, component_versions = version_parsing._read_components(
-        config, ["test-component"]
-    )
+    cspecs = version_parsing._read_components(config, ["test-component"])
 
     # check that exactly 'test-component' is discovered
-    assert {"test-component"} == set(component_urls.keys())
-    assert components["test-component"]["url"] == component_urls["test-component"]
-    assert (
-        components["test-component"]["version"] == component_versions["test-component"]
-    )
+    assert {"test-component"} == set(cspecs.keys())
+    assert components["test-component"]["url"] == cspecs["test-component"].url
+    assert components["test-component"]["version"] == cspecs["test-component"].version
 
 
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components_multiple(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    component_urls, component_versions = version_parsing._read_components(
-        config, components.keys()
-    )
+    cspecs = version_parsing._read_components(config, components.keys())
     # check that exactly 'test-component' is discovered
-    assert set(components.keys()) == set(component_urls.keys())
-    assert set(components.keys()) == set(component_versions.keys())
-    assert all(components[cn]["url"] == component_urls[cn] for cn in components.keys())
+    assert set(components.keys()) == set(cspecs.keys())
+    assert all(components[cn]["url"] == cspecs[cn].url for cn in components.keys())
     assert all(
-        components[cn].get("version", None) == component_versions[cn]
+        components[cn].get("version", None) == cspecs[cn].version
         for cn in components.keys()
     )
 
@@ -151,9 +144,14 @@ def test_read_packages(
         }
     }
 
-    pkg_urls, pkg_versions = version_parsing._read_packages(
+    pspecs = version_parsing._read_packages(
         config,
         pkg_names,
     )
+    pkg_urls = {}
+    pkg_versions = {}
+    for p, pspec in pspecs.items():
+        pkg_urls[p] = pspec.url
+        pkg_versions[p] = pspec.version
     assert pkg_urls == expected_urls
     assert pkg_versions == expected_versions

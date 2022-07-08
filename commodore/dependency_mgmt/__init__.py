@@ -63,13 +63,14 @@ def fetch_components(cfg: Config):
     component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    urls, versions = _read_components(cfg, component_names)
+    cspecs = _read_components(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for cn in component_names:
+        cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
         c = Component(
-            cn, work_dir=cfg.work_dir, repo_url=urls[cn], version=versions[cn]
+            cn, work_dir=cfg.work_dir, repo_url=cspec.url, version=cspec.version
         )
         c.checkout()
         cfg.register_component(c)
@@ -126,14 +127,15 @@ def fetch_packages(cfg: Config):
     click.secho("Discovering config packages...", bold=True)
     cfg.inventory.ensure_dirs()
     pkgs = _discover_packages(cfg)
-    urls, versions = _read_packages(cfg, pkgs)
+    pspecs = _read_packages(cfg, pkgs)
 
     for p in pkgs:
+        pspec = pspecs[p]
         pkg = Package(
             p,
             target_dir=package_dependency_dir(cfg.work_dir, p),
-            url=urls[p],
-            version=versions[p],
+            url=pspec.url,
+            version=pspec.version,
         )
         pkg.checkout()
         cfg.register_package(p, pkg)

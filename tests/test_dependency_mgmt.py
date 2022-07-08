@@ -19,18 +19,19 @@ from commodore.component import Component
 from commodore.inventory import Inventory
 from commodore.package import package_dependency_dir
 
+
+from commodore.dependency_mgmt.version_parsing import DependencySpec
 from test_package import _setup_package_remote
 
 
 def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     # Prepare minimum component directories
     upstream = tmp_path / "upstream"
-    component_urls = {}
-    component_versions = {}
+    component_specs = {}
     for component in components:
         repo_path = upstream / component
-        component_urls[component] = f"file://#{repo_path.resolve()}"
-        component_versions[component] = None
+        url = f"file://#{repo_path.resolve()}"
+        version = None
         repo = git.Repo.init(repo_path)
 
         class_dir = repo_path / "class"
@@ -40,8 +41,9 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
 
         repo.index.add(["class/defaults.yml", f"class/{component}.yml"])
         repo.index.commit("component defaults")
+        component_specs[component] = DependencySpec(url, version)
 
-    return component_urls, component_versions
+    return component_specs
 
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path):
@@ -172,12 +174,12 @@ def test_fetch_components_is_minimal(
     patch_discover.return_value = (components, {})
     patch_urls.return_value = setup_components_upstream(tmp_path, components)
     # Setup upstreams for components which are not included
-    extra_urls, extra_versions = setup_components_upstream(tmp_path, other_components)
-    for cn in extra_urls.keys():
-        patch_urls.return_value[0][cn] = extra_urls[cn]
-        patch_urls.return_value[1][cn] = extra_versions[cn]
+    other_cspecs = setup_components_upstream(tmp_path, other_components)
+    for cn, cspec in other_cspecs.items():
+        patch_urls.return_value[cn] = cspec
 
     dependency_mgmt.fetch_components(config)
+    print(config._components)
 
     for component in components:
         assert component in config._components
@@ -444,16 +446,17 @@ def test_verify_component_version_overrides(cluster_params: dict, expected: str)
 
 def _setup_packages(
     upstream_path: Path, packages: list[str]
-) -> tuple[dict[str, str], dict[str, str]]:
-    urls = {}
-    versions = {}
+) -> dict[str, DependencySpec]:
+
+    package_specs = {}
 
     for p in packages:
         _setup_package_remote(p, upstream_path / f"{p}.git")
-        urls[p] = f"file://{upstream_path}/{p}.git"
-        versions[p] = "master"
+        url = f"file://{upstream_path}/{p}.git"
+        version = "master"
+        package_specs[p] = DependencySpec(url, version)
 
-    return urls, versions
+    return package_specs
 
 
 @patch.object(dependency_mgmt, "_read_packages")

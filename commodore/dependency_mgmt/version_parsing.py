@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 from enum import Enum
-from typing import Optional
 
 import click
 
@@ -16,18 +16,25 @@ class DepType(Enum):
     PACKAGE = "packages"
 
 
+@dataclass
+class DependencySpec:
+    """Class for parsed Dependency specification"""
+
+    url: str
+    version: str
+
+
 def _read_versions(
     cfg: Config,
     dependency_type: DepType,
     dependency_names: Iterable[str],
     require_key: bool = True,
     ignore_class_notfound: bool = False,
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
-    dep_urls = {}
-    dep_versions = {}
+) -> dict[str, DependencySpec]:
     deps_key = dependency_type.value
     deptype_str = dependency_type.name.lower()
     deptype_cap = deptype_str.capitalize()
+    dependencies = {}
 
     inv = kapitan_inventory(cfg, ignore_class_notfound=ignore_class_notfound)
     cluster_inventory = inv[cfg.inventory.bootstrap_target]
@@ -55,30 +62,30 @@ def _read_versions(
                 f"No url for {deptype_str} '{depname}' configured"
             )
 
-        dep_urls[depname] = info["url"]
-        if cfg.debug:
-            click.echo(f" > URL for {depname}: {dep_urls[depname]}")
-        if "version" in info:
-            dep_versions[depname] = info["version"]
-        else:
+        if "version" not in info:
             raise click.ClickException(
                 f"{deptype_cap} '{depname}' doesn't have a version specified."
             )
-        if cfg.debug:
-            click.echo(f" > Version for {depname}: {dep_versions[depname]}")
 
-    return dep_urls, dep_versions
+        dep = DependencySpec(info["url"], info["version"])
+        if cfg.debug:
+            click.echo(f" > URL for {depname}: {dep.url}")
+            click.echo(f" > Version for {depname}: {dep.version}")
+
+        dependencies[depname] = dep
+
+    return dependencies
 
 
 def _read_components(
     cfg: Config, component_names: Iterable[str]
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+) -> dict[str, DependencySpec]:
     return _read_versions(cfg, DepType.COMPONENT, component_names)
 
 
 def _read_packages(
     cfg: Config, package_names: Iterable[str]
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+) -> dict[str, DependencySpec]:
     return _read_versions(
         cfg,
         DepType.PACKAGE,
