@@ -5,7 +5,7 @@ import click
 from commodore.config import Config
 from commodore.component import Component, component_dir
 from commodore.helpers import relsymlink
-from commodore.package import Package
+from commodore.package import Package, package_dependency_dir
 
 from .component_library import validate_component_library_name
 from .discovery import _discover_components, _discover_packages
@@ -35,6 +35,18 @@ def create_component_symlinks(cfg, component: Component):
             validate_component_library_name(component.name, file),
             cfg.inventory.lib_dir,
         )
+
+
+def create_package_symlink(cfg, pname: str, package: Package):
+    """
+    Create package symlink in the inventory.
+
+    Packages are downloaded to `dependencies/pkg.{package-name}` and symlinked to
+    `inventory/classes/{package-name}`.
+    """
+    if not package.target_dir:
+        raise ValueError("Can't symlink package which doesn't have a working directory")
+    relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
 
 
 def fetch_components(cfg: Config):
@@ -118,10 +130,14 @@ def fetch_packages(cfg: Config):
 
     for p in pkgs:
         pkg = Package(
-            p, target_dir=cfg.inventory.package_dir(p), url=urls[p], version=versions[p]
+            p,
+            target_dir=package_dependency_dir(cfg.work_dir, p),
+            url=urls[p],
+            version=versions[p],
         )
         pkg.checkout()
         cfg.register_package(p, pkg)
+        create_package_symlink(cfg, p, pkg)
 
 
 def register_packages(cfg: Config):
@@ -137,7 +153,7 @@ def register_packages(cfg: Config):
     cfg.inventory.ensure_dirs()
     pkgs = _discover_packages(cfg)
     for p in pkgs:
-        pkg_dir = cfg.inventory.package_dir(p)
+        pkg_dir = package_dependency_dir(cfg.work_dir, p)
         if not pkg_dir.is_dir():
             click.secho(
                 f" > Skipping registration of package '{p}': repo is not available",
@@ -146,6 +162,7 @@ def register_packages(cfg: Config):
             continue
         pkg = Package(p, target_dir=pkg_dir)
         cfg.register_package(p, pkg)
+        create_package_symlink(cfg, p, pkg)
 
 
 def verify_version_overrides(cluster_parameters):

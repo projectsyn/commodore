@@ -20,15 +20,9 @@ from commodore.inventory import Inventory
 from commodore.postprocess import postprocess_components
 
 
-# pylint: disable=too-many-arguments disable=too-many-locals
-def compile_package(
-    cfg: Config,
-    pkg_path_: str,
-    root_class: str,
-    value_files_: Iterable[str],
-    tmp_dir: Optional[str] = "",
-    keep_dir: bool = False,
-):
+def resolve_and_create_work_dir(
+    cfg: Config, tmp_dir: Optional[str], keep_dir: bool
+) -> tuple[Path, bool]:
     if tmp_dir:
         if not tmp_dir.startswith("/"):
             temp_dir = Path(cfg.work_dir, tmp_dir).resolve()
@@ -41,6 +35,20 @@ def compile_package(
         keep_dir = True
     else:
         temp_dir = Path(mkdtemp(prefix="package-")).resolve()
+
+    return temp_dir, keep_dir
+
+
+# pylint: disable=too-many-arguments disable=too-many-locals
+def compile_package(
+    cfg: Config,
+    pkg_path_: str,
+    root_class: str,
+    value_files_: Iterable[str],
+    tmp_dir: Optional[str] = "",
+    keep_dir: bool = False,
+):
+    temp_dir, keep_dir = resolve_and_create_work_dir(cfg, tmp_dir, keep_dir)
     cfg.work_dir = temp_dir
 
     # Clean working tree before compiling package, some of our symlinking logic expects
@@ -55,6 +63,10 @@ def compile_package(
     # package name (possibly with a prefix `package-`). As long as a package only uses
     # relative includes internally, the package name shouldn't matter for compilation.
     pkg_name = pkg_path.stem.replace("package-", "")
+    # Handle package directory naming scheme for packages which are part of a cluster
+    # catalog separately.
+    if pkg_path.name.startswith("pkg."):
+        pkg_name = pkg_path.name.replace("pkg.", "")
 
     root_class_name = root_class.replace(".yml", "").replace("/", ".")
     # Convert root class file to class name
