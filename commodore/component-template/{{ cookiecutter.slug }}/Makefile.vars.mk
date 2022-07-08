@@ -35,6 +35,16 @@ COMMODORE_CMD  ?= $(DOCKER_CMD) $(DOCKER_ARGS) $(root_volume) docker.io/projects
 COMPILE_CMD    ?= $(COMMODORE_CMD) component compile . $(commodore_args)
 JB_CMD         ?= $(DOCKER_CMD) $(DOCKER_ARGS) --entrypoint /usr/local/bin/jb docker.io/projectsyn/commodore:latest install
 
+{%- if cookiecutter.add_golden == "y" %}
+GOLDEN_FILES    ?= $(shell find tests/golden/$(instance) -type f)
+
+KUBENT_FILES    ?= $(shell echo "$(GOLDEN_FILES)" | sed 's/ /,/g')
+KUBENT_ARGS     ?= -c=false --helm2=false --helm3=false -e
+# Use our own kubent image until the upstream image is available
+KUBENT_IMAGE    ?= docker.io/projectsyn/kubent:latest
+KUBENT_DOCKER   ?= $(DOCKER_CMD) $(DOCKER_ARGS) $(root_volume) --entrypoint=/app/kubent $(KUBENT_IMAGE)
+{%- endif %}
+
 instance ?= defaults
 {%- if cookiecutter.add_matrix == "y" and cookiecutter.add_golden == "y" %}
 test_instances = tests/defaults.yml
