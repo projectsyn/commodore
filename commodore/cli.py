@@ -386,6 +386,24 @@ def component_delete(config: Config, slug, force, verbose):
     type=click.Path(file_okay=False, dir_okay=True),
     help="Specify output path for compiled component.",
 )
+@click.option(
+    "-r",
+    "--repo-directory",
+    default="",
+    show_default=False,
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="Path to the root of the Git repo containing the component. "
+    + "The command assumes that the component is in the repo root, "
+    + "if this option is not provided.",
+)
+@click.option(
+    "-n",
+    "--name",
+    default="",
+    show_default=False,
+    help="Component name to use for Commodore. "
+    + "If not provided, the name is inferred from the Git repository name.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -396,10 +414,14 @@ def component_compile(
     alias: Optional[str],
     search_paths: Iterable[str],
     output: str,
+    repo_directory: str,
+    name: str,
     verbose: int,
 ):
     config.update_verbosity(verbose)
-    compile_component(config, path, alias, values, search_paths, output)
+    compile_component(
+        config, path, alias, values, search_paths, output, repo_directory, name
+    )
 
 
 @commodore.group(short_help="Interact with a Commodore config package")

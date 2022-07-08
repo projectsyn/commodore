@@ -222,5 +222,7 @@ def test_run_component_compile_command_instance(tmp_path, capsys, instance_aware
 
 def test_no_component_compile_command(tmp_path):
     with pytest.raises(ClickException) as excinfo:
-        compile_component(Config(tmp_path), tmp_path / "foo", None, [], [], "./")
+        compile_component(
+            Config(tmp_path), tmp_path / "foo", None, [], [], "./", "", ""
+        )
     assert "Could not find component class file" in str(excinfo)

@@ -32,6 +32,8 @@ def compile_component(
     value_files_: Iterable[str],
     search_paths_: Iterable[str],
     output_path_: str,
+    repo_directory_: str,
+    component_name: str,
 ):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path_).resolve()
@@ -39,9 +41,18 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths_]
     search_paths.append(component_path / "vendor")
     output_path = P(output_path_).resolve()
+    if repo_directory_:
+        repo_directory = P(repo_directory_).resolve()
+        sub_path = str(component_path.relative_to(repo_directory))
+    else:
+        # If no repo directory given, assume component path is repo root
+        repo_directory = component_path
+        sub_path = ""
 
-    # Ignore 'component-' prefix in dir name
-    component_name = component_path.stem.replace("component-", "")
+    if not component_name:
+        # Ignore 'component-' prefix in repo name, this assumes that the repo name
+        # indicates the component name for components in subpaths.
+        component_name = repo_directory.stem.replace("component-", "")
 
     # Fall back to `component as component` when instance_name is empty
     if instance_name_ is None or instance_name_ == "":
@@ -62,7 +73,11 @@ def compile_component(
         inv.ensure_dirs()
         search_paths.append(inv.dependencies_dir)
         component = _setup_component(
-            config, component_name, instance_name, component_path
+            config,
+            component_name,
+            instance_name,
+            repo_directory,
+            sub_path,
         )
         _prepare_kapitan_inventory(inv, component, value_files, instance_name)
 
@@ -115,9 +130,13 @@ def compile_component(
 
 
 def _setup_component(
-    config: Config, component_name: str, instance_name: str, component_path: P
+    config: Config,
+    component_name: str,
+    instance_name: str,
+    repo_directory: P,
+    sub_path: str,
 ) -> Component:
-    component = Component(component_name, directory=component_path)
+    component = Component(component_name, directory=repo_directory, sub_path=sub_path)
     config.register_component(component)
     config.register_component_aliases({instance_name: component_name})
 
