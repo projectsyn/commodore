@@ -31,7 +31,7 @@ lint_adoc: ## Lint documentation
 
 {%- if cookiecutter.add_golden == "y" %}
 .PHONY: lint_kubent
-lint_kubent: ## Lint deprecated Kubernetes API versions
+lint_kubent: ## Check for deprecated Kubernetes API versions
 	$(KUBENT_DOCKER) $(KUBENT_ARGS) -f $(KUBENT_FILES)
 {%- endif %}
 
