@@ -41,7 +41,7 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
 
         repo.index.add(["class/defaults.yml", f"class/{component}.yml"])
         repo.index.commit("component defaults")
-        component_specs[component] = DependencySpec(url, version)
+        component_specs[component] = DependencySpec(url, version, "")
 
     return component_specs
 
@@ -454,7 +454,7 @@ def _setup_packages(
         _setup_package_remote(p, upstream_path / f"{p}.git")
         url = f"file://{upstream_path}/{p}.git"
         version = "master"
-        package_specs[p] = DependencySpec(url, version)
+        package_specs[p] = DependencySpec(url, version, "")
 
     return package_specs
 
@@ -489,13 +489,14 @@ def test_fetch_packages(
             assert params[p] == "testing"
 
 
+@patch.object(dependency_mgmt, "_read_packages")
 @patch.object(dependency_mgmt, "_discover_packages")
 @pytest.mark.parametrize("packages", [[], ["test"], ["foo", "bar"]])
 def test_register_packages(
-    discover_pkgs, tmp_path: Path, config: Config, packages: list[str]
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, packages: list[str]
 ):
     discover_pkgs.return_value = packages
-    _setup_packages(tmp_path / "upstream", packages)
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
     for p in packages:
         git.Repo.clone_from(
             f"file://{tmp_path}/upstream/{p}.git", package_dependency_dir(tmp_path, p)
@@ -507,13 +508,14 @@ def test_register_packages(
     assert sorted(pkgs.keys()) == sorted(packages)
 
 
+@patch.object(dependency_mgmt, "_read_packages")
 @patch.object(dependency_mgmt, "_discover_packages")
 def test_register_packages_skip_nonexistent(
-    discover_pkgs, tmp_path: Path, config: Config, capsys
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, capsys
 ):
     packages = ["foo", "bar"]
     discover_pkgs.return_value = packages
-    _setup_packages(tmp_path / "upstream", packages)
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
     git.Repo.clone_from(
         f"file://{tmp_path}/upstream/foo.git", package_dependency_dir(tmp_path, "foo")
     )

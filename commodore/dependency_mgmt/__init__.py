@@ -37,16 +37,19 @@ def create_component_symlinks(cfg, component: Component):
         )
 
 
-def create_package_symlink(cfg, pname: str, package: Package):
+def create_package_symlink(cfg, pname: str, package: Package, path: str):
     """
     Create package symlink in the inventory.
 
-    Packages are downloaded to `dependencies/pkg.{package-name}` and symlinked to
+    Packages are downloaded to `dependencies/pkg.{package-name}/{path}` and symlinked to
     `inventory/classes/{package-name}`.
     """
     if not package.target_dir:
         raise ValueError("Can't symlink package which doesn't have a working directory")
-    relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
+    package_path = package.target_dir / path
+    if not package_path.is_dir():
+        raise ValueError(f"Can't symlink package subpath {path}, not a directory")
+    relsymlink(package_path, cfg.inventory.classes_dir, dest_name=pname)
 
 
 def fetch_components(cfg: Config):
@@ -139,7 +142,7 @@ def fetch_packages(cfg: Config):
         )
         pkg.checkout()
         cfg.register_package(p, pkg)
-        create_package_symlink(cfg, p, pkg)
+        create_package_symlink(cfg, p, pkg, pspec.path)
 
 
 def register_packages(cfg: Config):
@@ -154,6 +157,7 @@ def register_packages(cfg: Config):
     click.secho("Discovering config packages...", bold=True)
     cfg.inventory.ensure_dirs()
     pkgs = _discover_packages(cfg)
+    pspecs = _read_packages(cfg, pkgs)
     for p in pkgs:
         pkg_dir = package_dependency_dir(cfg.work_dir, p)
         if not pkg_dir.is_dir():
@@ -164,7 +168,7 @@ def register_packages(cfg: Config):
             continue
         pkg = Package(p, target_dir=pkg_dir)
         cfg.register_package(p, pkg)
-        create_package_symlink(cfg, p, pkg)
+        create_package_symlink(cfg, p, pkg, pspecs[p].path)
 
 
 def verify_version_overrides(cluster_parameters):

@@ -22,6 +22,7 @@ class DependencySpec:
 
     url: str
     version: str
+    path: str
 
 
 def _read_versions(
@@ -67,10 +68,11 @@ def _read_versions(
                 f"{deptype_cap} '{depname}' doesn't have a version specified."
             )
 
-        dep = DependencySpec(info["url"], info["version"])
+        dep = DependencySpec(info["url"], info["version"], info.get("path", ""))
         if cfg.debug:
             click.echo(f" > URL for {depname}: {dep.url}")
             click.echo(f" > Version for {depname}: {dep.version}")
+            click.echo(f" > Subpath for {depname}: {dep.path}")
 
         dependencies[depname] = dep
 
