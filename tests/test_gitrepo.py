@@ -180,3 +180,13 @@ def test_gitrepo_push_empty_remote(tmp_path: Path):
     r.stage_all()
     r.commit("Initial commit")
     r.push()
+
+
+def test_gitrepo_checkout_bare(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    r = gitrepo.GitRepo(repo_url, targetdir=tmp_path / "bare.git", bare=True)
+
+    assert (tmp_path / "bare.git" / "config").is_file()
+    assert (tmp_path / "bare.git" / "HEAD").is_file()
+
+    assert r.repo.bare
