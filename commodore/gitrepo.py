@@ -60,6 +60,15 @@ def _normalize_git_ssh(url: str) -> str:
     return reconstruct_url(urlparts)
 
 
+def normalize_git_url(url: str) -> str:
+    """Normalize HTTP(s) and SSH Git URLs"""
+    if "@" in url and ("://" not in url or url.startswith("ssh://")):
+        url = _normalize_git_ssh(url)
+    elif url.startswith("http://") or url.startswith("https://"):
+        url = url_normalize(url)
+    return url
+
+
 def _colorize_diff(line: str) -> str:
     if line.startswith("--- ") or line.startswith("+++ ") or line.startswith("@@ "):
         return click.style(line, fg="yellow")
@@ -199,10 +208,7 @@ class GitRepo:
 
     @remote.setter
     def remote(self, remote: str):
-        if "@" in remote and ("://" not in remote or remote.startswith("ssh://")):
-            remote = _normalize_git_ssh(remote)
-        elif remote.startswith("http://") or remote.startswith("https://"):
-            remote = url_normalize(remote)
+        remote = normalize_git_url(remote)
         try:
             self._repo.remote().set_url(remote)
         except ValueError:
