@@ -167,11 +167,12 @@ class GitRepo:
         author_name: Optional[str] = None,
         author_email: Optional[str] = None,
         config=None,
+        bare=False,
     ):
         if not force_init and targetdir.exists():
             self._repo = Repo(targetdir)
         else:
-            self._repo = Repo.init(targetdir)
+            self._repo = Repo.init(targetdir, bare=bare)
 
         if remote:
             self.remote = remote
