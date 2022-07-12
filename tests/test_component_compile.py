@@ -1,13 +1,15 @@
 """
 Tests for component compile command
 """
-import yaml
-import pytest
+import shutil
 
 from pathlib import Path as P
 from subprocess import call, run
 from textwrap import dedent
+from typing import Optional
 
+import yaml
+import pytest
 
 from click import ClickException
 from git import Repo
@@ -18,12 +20,20 @@ from commodore.component.compile import compile_component
 from test_component_template import call_component_new
 
 
-def _prepare_component(tmp_path, component_name="test-component"):
-    call_component_new(tmp_path, lib="--lib")
+def _prepare_component(tmp_path, component_name="test-component", subpath=""):
+    if not subpath:
+        call_component_new(tmp_path, lib="--lib")
+        component_root = tmp_path / "dependencies" / component_name
+    else:
+        call_component_new(tmp_path / "tmp", lib="--lib")
+        Repo.init(tmp_path / component_name)
+        component_root = tmp_path / component_name / subpath
+        shutil.copytree(
+            tmp_path / "tmp" / "dependencies" / "test-component", component_root
+        )
+        shutil.rmtree(component_root / ".git")
 
-    with open(
-        tmp_path / "dependencies" / component_name / "component/main.jsonnet", "a"
-    ) as file:
+    with open(component_root / "component/main.jsonnet", "a") as file:
         file.write(
             dedent(
                 """
@@ -79,8 +89,14 @@ def _make_instance_aware(tmp_path, component_name="test-component"):
         yaml.dump(file_contents, file)
 
 
-def _cli_command_string(p: P, component: str, instance: str = None) -> str:
-    cmd = f"commodore -d '{p}' component compile -o '{p}/testdir' '{p}/dependencies/{component}'"
+def _cli_command_string(
+    p: P, component: str, instance: Optional[str] = None, subpath: Optional[str] = None
+) -> str:
+    if subpath:
+        cpath = f"'{p}/{component}/{subpath}' -r '{p}/{component}'"
+    else:
+        cpath = f"'{p}/dependencies/{component}'"
+    cmd = f"commodore -d '{p}' component compile -o '{p}/testdir' {cpath}"
     if instance is not None:
         cmd = f"{cmd} -a {instance}"
     return cmd
@@ -218,6 +234,39 @@ def test_run_component_compile_command_instance(tmp_path, capsys, instance_aware
             target = yaml.safe_load(file)
             assert target["kind"] == "ServiceAccount"
             assert target["metadata"]["namespace"] == f"syn-{component_name}"
+
+
+def test_component_compile_subpath(tmp_path):
+    component_name = "test-component"
+    _prepare_component(tmp_path, component_name, subpath="component")
+
+    exit_status = call(
+        _cli_command_string(tmp_path, component_name, subpath="component"),
+        shell=True,
+    )
+
+    assert exit_status == 0
+    assert (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / "apps"
+        / f"{component_name}.yaml"
+    ).exists()
+    rendered_yaml = (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / component_name
+        / "test_service_account.yaml"
+    )
+    assert rendered_yaml.exists()
+    with open(rendered_yaml) as file:
+        target = yaml.safe_load(file)
+        assert target["kind"] == "ServiceAccount"
+        assert target["metadata"]["namespace"] == "syn-test-component"
 
 
 def test_no_component_compile_command(tmp_path):
