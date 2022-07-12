@@ -190,3 +190,148 @@ def test_gitrepo_checkout_bare(tmp_path: Path):
     assert (tmp_path / "bare.git" / "HEAD").is_file()
 
     assert r.repo.bare
+
+
+def test_gitrepo_checkout_worktree(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    r = gitrepo.GitRepo(repo_url, targetdir=tmp_path / "bare.git", bare=True)
+
+    r.checkout_worktree(tmp_path / "repo", "master")
+
+    wtr = git.Repo.init(tmp_path / "repo")
+    assert not wtr.bare
+    assert not wtr.head.is_detached
+    assert wtr.head.ref.name == "master"
+    assert wtr.head.commit.hexsha == ri.commit_shas["master"]
+
+
+def test_gitrepo_checkout_worktree_update_version(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    r = gitrepo.GitRepo(repo_url, targetdir=tmp_path / "bare.git", bare=True)
+
+    worktree = tmp_path / "repo"
+    r.checkout_worktree(worktree, "master")
+
+    wtr = git.Repo.init(worktree)
+    assert not wtr.bare
+    assert not wtr.head.is_detached
+    assert wtr.head.ref.name == "master"
+    assert wtr.head.commit.hexsha == ri.commit_shas["master"]
+
+    r.checkout_worktree(worktree, "test-branch")
+    assert not wtr.bare
+    assert not wtr.head.is_detached
+    assert wtr.head.ref.name == "test-branch"
+    assert wtr.head.commit.hexsha == ri.commit_shas["test-branch"]
+
+
+def test_gitrepo_checkout_worktree_update_remote(tmp_path: Path):
+    repo_url_1, ri1 = setup_remote(tmp_path / "remote1")
+    repo_url_2, ri2 = setup_remote(tmp_path / "remote2")
+
+    r1 = gitrepo.GitRepo(repo_url_1, targetdir=tmp_path / "bare.git", bare=True)
+
+    worktree = tmp_path / "repo"
+    r1.checkout_worktree(worktree, "master")
+
+    wtr1 = git.Repo.init(worktree)
+    assert not wtr1.bare
+    assert not wtr1.head.is_detached
+    assert wtr1.head.ref.name == "master"
+    assert wtr1.head.commit.hexsha == ri1.commit_shas["master"]
+
+    r2 = gitrepo.GitRepo(repo_url_2, targetdir=tmp_path / "bare-2.git", bare=True)
+
+    r2.checkout_worktree(worktree, "master")
+
+    wtr2 = git.Repo.init(worktree)
+    assert not wtr2.bare
+    assert not wtr2.head.is_detached
+    assert wtr2.head.ref.name == "master"
+    assert wtr2.head.commit.hexsha == ri2.commit_shas["master"]
+
+
+def test_gitrepo_checkout_worktree_update_remote_abort(tmp_path: Path):
+    repo_url_1, ri1 = setup_remote(tmp_path / "remote1")
+    repo_url_2, ri2 = setup_remote(tmp_path / "remote2")
+
+    r1 = gitrepo.GitRepo(repo_url_1, targetdir=tmp_path / "bare.git", bare=True)
+    r2 = gitrepo.GitRepo(repo_url_2, targetdir=tmp_path / "bare-2.git", bare=True)
+
+    worktree = tmp_path / "repo"
+    r1.checkout_worktree(worktree, "master")
+
+    wtr = git.Repo.init(worktree)
+    assert not wtr.bare
+    assert not wtr.head.is_detached
+    assert wtr.head.ref.name == "master"
+    assert wtr.head.commit.hexsha == ri1.commit_shas["master"]
+
+    (worktree / "u.txt").touch()
+
+    with pytest.raises(click.ClickException) as e:
+        r2.checkout_worktree(worktree, "master")
+
+    assert f"Switching remote for worktree '{worktree.resolve()}'" in str(e.value)
+
+
+def test_gitrepo_checkout_worktree_migrate(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    bare_repo = gitrepo.GitRepo(repo_url, targetdir=tmp_path / "bare.git", bare=True)
+
+    repo_dir = tmp_path / "repo"
+    old_repo = gitrepo.GitRepo(repo_url, targetdir=repo_dir)
+    old_repo.checkout("master")
+    assert (repo_dir / ".git").is_dir()
+
+    bare_repo.checkout_worktree(repo_dir, "test-branch")
+
+    wtr = git.Repo.init(repo_dir)
+    assert (repo_dir / ".git").is_file()
+    assert Path(wtr.common_dir).resolve() == tmp_path / "bare.git"
+
+
+@pytest.mark.parametrize(
+    "change",
+    ["untracked file", "dirty file", "local branch"],
+)
+def test_gitrepo_checkout_worktree_migrate_abort(tmp_path, change):
+    repo_url, ri = setup_remote(tmp_path)
+    r = gitrepo.GitRepo(repo_url, targetdir=tmp_path / "bare.git", bare=True)
+
+    repo_dir = tmp_path / "repo"
+    old_repo = gitrepo.GitRepo(repo_url, targetdir=repo_dir)
+    old_repo.checkout("master")
+    assert (repo_dir / ".git").is_dir()
+
+    if change == "untracked file":
+        (repo_dir / "u.txt").touch()
+    elif change == "dirty file":
+        with open(repo_dir / "test.txt", "a") as f:
+            f.write("testing\n")
+    elif change == "local branch":
+        old_repo.repo.create_head("local-branch")
+    else:
+        raise ValueError(f"Test case '{change}' NYI")
+
+    with pytest.raises(click.ClickException) as e:
+        r.checkout_worktree(repo_dir, "master")
+
+    assert f"Migrating dependency {repo_dir.resolve()}" in str(e.value)
+
+
+def test_gitrepo_checkout_worktree_no_remote(tmp_path):
+    repo_path = tmp_path / "repo.git"
+    u = git.Repo.init(repo_path)
+    (repo_path / "test.txt").touch()
+    u.index.add(["test.txt"])
+    c = u.index.commit("initial commit")
+
+    r = gitrepo.GitRepo(None, repo_path)
+    r.checkout_worktree(tmp_path / "worktree", "master")
+
+    w = git.Repo.init(tmp_path / "worktree")
+    assert not w.head.is_detached
+    assert w.head.commit.hexsha == c.hexsha
+    assert w.head.ref.name == "master"
+    assert (tmp_path / "worktree" / "test.txt").is_file()
