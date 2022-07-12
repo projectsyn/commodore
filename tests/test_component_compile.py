@@ -26,12 +26,11 @@ def _prepare_component(tmp_path, component_name="test-component", subpath=""):
         component_root = tmp_path / "dependencies" / component_name
     else:
         call_component_new(tmp_path / "tmp", lib="--lib")
-        Repo.init(tmp_path / component_name)
         component_root = tmp_path / component_name / subpath
         shutil.copytree(
             tmp_path / "tmp" / "dependencies" / "test-component", component_root
         )
-        shutil.rmtree(component_root / ".git")
+        shutil.move(str(component_root / ".git"), str(tmp_path / component_name))
 
     with open(component_root / "component/main.jsonnet", "a") as file:
         file.write(
