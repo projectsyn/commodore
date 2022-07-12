@@ -5,12 +5,14 @@ from shutil import rmtree
 from typing import Sequence
 
 import click
+import git
 
 from cookiecutter.main import cookiecutter
 
 from commodore import __install_dir__
 from commodore.component import Component, component_dir
 from commodore.dependency_templater import Templater, Renderer
+from commodore.multi_dependency import MultiDependency
 
 
 class ComponentTemplater(Templater):
@@ -64,8 +66,15 @@ class ComponentTemplater(Templater):
         ]
 
     def delete(self):
-        if component_dir(self.config.work_dir, self.slug).exists():
-            component = Component(self.slug, work_dir=self.config.work_dir)
+        cdir = component_dir(self.config.work_dir, self.slug)
+        if cdir.exists():
+            cr = git.Repo(cdir)
+            cdep = MultiDependency(
+                cr.remote().url, self.config.inventory.dependencies_dir
+            )
+            component = Component(
+                self.slug, dependency=cdep, work_dir=self.config.work_dir
+            )
 
             if not self.config.force:
                 click.confirm(

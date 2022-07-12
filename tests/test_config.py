@@ -224,11 +224,11 @@ def test_expired_token_cache(test_patch):
     assert conf.api_token is None
 
 
-def test_register_get_package(config: Config, tmp_path: P):
+def test_register_get_package(config: Config, tmp_path: P, mockdep):
     # No preregistered packages
     assert config.get_packages() == {}
 
-    p = Package("test", target_dir=tmp_path / "pkg")
+    p = Package("test", mockdep, tmp_path / "pkg")
     config.register_package("test", p)
 
     assert config.get_packages() == {"test": p}

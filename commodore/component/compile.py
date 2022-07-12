@@ -9,6 +9,7 @@ from textwrap import dedent
 from typing import Optional
 
 import click
+import git
 from kapitan.resources import inventory_reclass
 
 from commodore.config import Config
@@ -21,6 +22,7 @@ from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
+from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
 
 
@@ -136,7 +138,15 @@ def _setup_component(
     repo_directory: P,
     sub_path: str,
 ) -> Component:
-    component = Component(component_name, directory=repo_directory, sub_path=sub_path)
+    if not repo_directory.is_dir():
+        raise click.ClickException(
+            f"Can't compile component, repository {repo_directory} doesn't exist"
+        )
+    cr = git.Repo(repo_directory)
+    cdep = MultiDependency(cr.remote().url, config.inventory.dependencies_dir)
+    component = Component(
+        component_name, dependency=cdep, directory=repo_directory, sub_path=sub_path
+    )
     config.register_component(component)
     config.register_component_aliases({instance_name: component_name})
 
