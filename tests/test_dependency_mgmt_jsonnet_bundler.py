@@ -7,9 +7,13 @@ from commodore.config import Config
 from commodore.dependency_mgmt import jsonnet_bundler
 
 
-def test_write_jsonnetfile(config: Config, tmp_path: Path):
-    config.register_component(Component("test-component", work_dir=tmp_path))
-    config.register_component(Component("test-component-2", work_dir=tmp_path))
+def test_write_jsonnetfile(config: Config, tmp_path: Path, mockdep):
+    config.register_component(
+        Component("test-component", dependency=mockdep, work_dir=tmp_path)
+    )
+    config.register_component(
+        Component("test-component-2", dependency=mockdep, work_dir=tmp_path)
+    )
     dirs = [
         "dependencies/test-component",
         "dependencies/test-component-2",

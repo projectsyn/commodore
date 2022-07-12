@@ -10,6 +10,7 @@ from textwrap import dedent
 
 from commodore.config import Config
 from commodore.component import Component
+from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import (
     postprocess_components,
     builtin_filters,
@@ -152,9 +153,8 @@ def _setup(tmp_path, f, alias="test-component"):
     os.makedirs(pp_file.parent, exist_ok=True)
 
     config = Config(work_dir=tmp_path)
-    component = Component(
-        "test-component", work_dir=tmp_path, repo_url="https://fake.repo.url"
-    )
+    cdep = MultiDependency("https://fake.repo.url/", tmp_path / "dependencies")
+    component = Component("test-component", dependency=cdep, work_dir=tmp_path)
     config.register_component(component)
     aliases = {alias: "test-component"}
     config.register_component_aliases(aliases)

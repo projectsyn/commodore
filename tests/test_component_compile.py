@@ -273,4 +273,7 @@ def test_no_component_compile_command(tmp_path):
         compile_component(
             Config(tmp_path), tmp_path / "foo", None, [], [], "./", "", ""
         )
-    assert "Could not find component class file" in str(excinfo)
+    assert (
+        f"Can't compile component, repository {tmp_path / 'foo'} doesn't exist"
+        in str(excinfo)
+    )

@@ -2,11 +2,15 @@ import os
 
 from pathlib import Path
 
+import git
+
 from commodore.cluster import update_target
 from commodore.component import Component
 from commodore.config import Config
 from commodore.dependency_mgmt import create_component_symlinks
 from commodore.helpers import kapitan_inventory, yaml_dump, yaml_load
+
+from conftest import MockMultiDependency
 
 
 def _setup(tmp_path: Path):
@@ -22,7 +26,8 @@ def _setup(tmp_path: Path):
     os.makedirs(cfg.inventory.params_dir)
 
     os.makedirs(tmp_path / "dependencies" / "test")
-    c = Component("test", work_dir=tmp_path, force_init=True)
+    cdep = MockMultiDependency(git.Repo.init(tmp_path / "repo.git"))
+    c = Component("test", cdep, work_dir=tmp_path)
     os.makedirs(c.class_file.parent)
 
     yaml_dump(

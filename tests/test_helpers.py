@@ -16,7 +16,7 @@ from url_normalize import url_normalize
 
 import commodore.helpers as helpers
 from commodore.config import Config
-from commodore.component import Component, component_dir
+from commodore.multi_dependency import MultiDependency, dependency_dir
 
 
 def test_apierror():
@@ -32,9 +32,10 @@ def test_apierror():
 def test_clean_working_tree(tmp_path: Path):
     cfg = Config(work_dir=tmp_path)
     cfg.inventory.ensure_dirs()
-    d = component_dir(tmp_path, "test")
+    repo_url = "https://fake.repo.url"
+    d = dependency_dir(cfg.inventory.dependencies_dir, repo_url)
     assert not d.is_dir()
-    Component("test", work_dir=tmp_path)
+    MultiDependency("https://fake.repo.url", cfg.inventory.dependencies_dir)
     assert d.is_dir()
     helpers.clean_working_tree(cfg)
     assert d.is_dir()

@@ -3,19 +3,24 @@ from pathlib import Path
 import git
 import yaml
 
+from commodore.multi_dependency import MultiDependency
+
 from commodore import package
 
 
 def test_package_init(tmp_path: Path):
+    pkg_url = "https://git.example.com/pkg.git"
+    pdep = MultiDependency(pkg_url, tmp_path / "repo.git")
     p = package.Package(
         "test",
+        dependency=pdep,
         target_dir=tmp_path / "pkg",
-        url="https://git.example.com/pkg.git",
         version="master",
     )
     assert p.url == "https://git.example.com/pkg.git"
     assert p.version == "master"
     assert p.target_dir == tmp_path / "pkg"
+    assert p.repository_dir == tmp_path / "pkg"
 
 
 def _setup_package_remote(pkg_name: str, rpath: Path):
@@ -31,10 +36,11 @@ def _setup_package_remote(pkg_name: str, rpath: Path):
 def test_package_checkout(tmp_path: Path):
     _setup_package_remote("test", tmp_path / "pkg.git")
 
+    pdep = MultiDependency(f"file://{tmp_path}/pkg.git", tmp_path / ".pkg")
     p = package.Package(
         "test",
+        dependency=pdep,
         target_dir=tmp_path / "pkg",
-        url=f"file://{tmp_path}/pkg.git",
         version="master",
     )
     p.checkout()

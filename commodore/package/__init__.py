@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from commodore.gitrepo import GitRepo
+from commodore.multi_dependency import MultiDependency
 
 
 class Package:
@@ -15,19 +15,20 @@ class Package:
     def __init__(
         self,
         name: str,
+        dependency: MultiDependency,
         target_dir: Path,
-        url: Optional[str] = None,
         version: Optional[str] = None,
         sub_path: str = "",
     ):
         self._name = name
         self._version = version
-        self._gitrepo = GitRepo(remote=url, targetdir=target_dir)
         self._sub_path = sub_path
+        self._dependency = dependency
+        self._dependency.register_package(name, target_dir)
 
     @property
     def url(self) -> Optional[str]:
-        return self._gitrepo.remote
+        return self._dependency.url
 
     @property
     def version(self) -> Optional[str]:
@@ -39,17 +40,18 @@ class Package:
 
     @property
     def repository_dir(self) -> Optional[Path]:
-        return self._gitrepo.working_tree_dir
+        return self._dependency.get_package(self._name)
 
     @property
     def target_dir(self) -> Optional[Path]:
-        if not self._gitrepo.working_tree_dir:
+        worktree = self._dependency.get_package(self._name)
+        if not worktree:
             return None
 
-        return self._gitrepo.working_tree_dir / self._sub_path
+        return worktree / self._sub_path
 
     def checkout(self):
-        self._gitrepo.checkout(self._version)
+        self._dependency.checkout_package(self._name, self._version)
 
 
 def package_dependency_dir(work_dir: Path, pname: str) -> Path:

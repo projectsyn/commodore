@@ -5,6 +5,7 @@ from unittest import mock
 from typing import Optional
 
 import click
+import git
 import pytest
 import yaml
 
@@ -15,6 +16,8 @@ from commodore.helpers import yaml_dump, yaml_load
 
 from commodore.package import compile
 from test_component_compile import _prepare_component, _add_postprocessing_filter
+
+from conftest import MockMultiDependency
 
 
 def test_setup_package_inventory(tmp_path: Path, config: Config):
@@ -43,8 +46,10 @@ def test_setup_package_inventory(tmp_path: Path, config: Config):
 
 
 def _mock_fetch_components(cfg: Config):
-    print(cfg.work_dir)
-    c = Component("test-component", cfg.work_dir)
+    cdep = MockMultiDependency(
+        git.Repo.init(cfg.inventory.dependencies_dir / ".repos" / "test-component.git")
+    )
+    c = Component("test-component", cdep, cfg.work_dir)
     create_component_symlinks(cfg, c)
     cfg.register_component(c)
     cfg.register_component_aliases({"test-component": "test-component"})
