@@ -24,7 +24,9 @@ def jsonnet_dependencies(config: Config) -> Iterable:
                 "source": {
                     "local": {
                         "directory": os.path.relpath(
-                            component.target_directory, start=config.work_dir
+                            # TODO: Update again when we have proper monorepo handling
+                            component.repo_directory,
+                            start=config.work_dir,
                         ),
                     }
                 }

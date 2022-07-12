@@ -19,18 +19,19 @@ from commodore.component import Component
 from commodore.inventory import Inventory
 from commodore.package import package_dependency_dir
 
+
+from commodore.dependency_mgmt.version_parsing import DependencySpec
 from test_package import _setup_package_remote
 
 
 def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     # Prepare minimum component directories
     upstream = tmp_path / "upstream"
-    component_urls = {}
-    component_versions = {}
+    component_specs = {}
     for component in components:
         repo_path = upstream / component
-        component_urls[component] = f"file://#{repo_path.resolve()}"
-        component_versions[component] = None
+        url = f"file://#{repo_path.resolve()}"
+        version = None
         repo = git.Repo.init(repo_path)
 
         class_dir = repo_path / "class"
@@ -40,8 +41,9 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
 
         repo.index.add(["class/defaults.yml", f"class/{component}.yml"])
         repo.index.commit("component defaults")
+        component_specs[component] = DependencySpec(url, version, "")
 
-    return component_urls, component_versions
+    return component_specs
 
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path):
@@ -172,12 +174,12 @@ def test_fetch_components_is_minimal(
     patch_discover.return_value = (components, {})
     patch_urls.return_value = setup_components_upstream(tmp_path, components)
     # Setup upstreams for components which are not included
-    extra_urls, extra_versions = setup_components_upstream(tmp_path, other_components)
-    for cn in extra_urls.keys():
-        patch_urls.return_value[0][cn] = extra_urls[cn]
-        patch_urls.return_value[1][cn] = extra_versions[cn]
+    other_cspecs = setup_components_upstream(tmp_path, other_components)
+    for cn, cspec in other_cspecs.items():
+        patch_urls.return_value[cn] = cspec
 
     dependency_mgmt.fetch_components(config)
+    print(config._components)
 
     for component in components:
         assert component in config._components
@@ -213,10 +215,16 @@ def _setup_register_components(tmp_path: Path):
     return component_dirs, other_dirs
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
-def test_register_components(patch_discover, config: Config, tmp_path: Path):
+def test_register_components(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -227,13 +235,17 @@ def test_register_components(patch_discover, config: Config, tmp_path: Path):
         assert c not in component_names
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_components_and_aliases(
-    patch_discover, config: Config, tmp_path: Path
+    patch_discover, patch_read, config: Config, tmp_path: Path
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     alias_data = {"fooer": "foo"}
     patch_discover.return_value = (component_dirs, alias_data)
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -252,14 +264,18 @@ def test_register_components_and_aliases(
             assert alias not in aliases
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_unknown_components(
-    patch_discover, config: Config, tmp_path: Path, capsys
+    patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     unknown_components = ["qux", "quux"]
     component_dirs.extend(unknown_components)
     patch_discover.return_value = (component_dirs, {})
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -268,9 +284,10 @@ def test_register_unknown_components(
         assert f"Skipping registration of component {cn}" in captured.out
 
 
+@patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_register_dangling_aliases(
-    patch_discover, config: Config, tmp_path: Path, capsys
+    patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     # add some dangling aliases
@@ -281,6 +298,9 @@ def test_register_dangling_aliases(
     alias_data["bazzer"] = "baz"
 
     patch_discover.return_value = (component_dirs, alias_data)
+    patch_read.return_value = {
+        cn: DependencySpec("", "master", "") for cn in component_dirs
+    }
 
     dependency_mgmt.register_components(config)
 
@@ -444,16 +464,17 @@ def test_verify_component_version_overrides(cluster_params: dict, expected: str)
 
 def _setup_packages(
     upstream_path: Path, packages: list[str]
-) -> tuple[dict[str, str], dict[str, str]]:
-    urls = {}
-    versions = {}
+) -> dict[str, DependencySpec]:
+
+    package_specs = {}
 
     for p in packages:
         _setup_package_remote(p, upstream_path / f"{p}.git")
-        urls[p] = f"file://{upstream_path}/{p}.git"
-        versions[p] = "master"
+        url = f"file://{upstream_path}/{p}.git"
+        version = "master"
+        package_specs[p] = DependencySpec(url, version, "")
 
-    return urls, versions
+    return package_specs
 
 
 @patch.object(dependency_mgmt, "_read_packages")
@@ -486,13 +507,14 @@ def test_fetch_packages(
             assert params[p] == "testing"
 
 
+@patch.object(dependency_mgmt, "_read_packages")
 @patch.object(dependency_mgmt, "_discover_packages")
 @pytest.mark.parametrize("packages", [[], ["test"], ["foo", "bar"]])
 def test_register_packages(
-    discover_pkgs, tmp_path: Path, config: Config, packages: list[str]
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, packages: list[str]
 ):
     discover_pkgs.return_value = packages
-    _setup_packages(tmp_path / "upstream", packages)
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
     for p in packages:
         git.Repo.clone_from(
             f"file://{tmp_path}/upstream/{p}.git", package_dependency_dir(tmp_path, p)
@@ -504,13 +526,14 @@ def test_register_packages(
     assert sorted(pkgs.keys()) == sorted(packages)
 
 
+@patch.object(dependency_mgmt, "_read_packages")
 @patch.object(dependency_mgmt, "_discover_packages")
 def test_register_packages_skip_nonexistent(
-    discover_pkgs, tmp_path: Path, config: Config, capsys
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config, capsys
 ):
     packages = ["foo", "bar"]
     discover_pkgs.return_value = packages
-    _setup_packages(tmp_path / "upstream", packages)
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
     git.Repo.clone_from(
         f"file://{tmp_path}/upstream/foo.git", package_dependency_dir(tmp_path, "foo")
     )

@@ -11,16 +11,19 @@ class Package:
     version
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         name: str,
         target_dir: Path,
         url: Optional[str] = None,
         version: Optional[str] = None,
+        sub_path: str = "",
     ):
         self._name = name
         self._version = version
         self._gitrepo = GitRepo(remote=url, targetdir=target_dir)
+        self._sub_path = sub_path
 
     @property
     def url(self) -> Optional[str]:
@@ -31,8 +34,19 @@ class Package:
         return self._version
 
     @property
-    def target_dir(self) -> Optional[Path]:
+    def sub_path(self) -> str:
+        return self._sub_path
+
+    @property
+    def repository_dir(self) -> Optional[Path]:
         return self._gitrepo.working_tree_dir
+
+    @property
+    def target_dir(self) -> Optional[Path]:
+        if not self._gitrepo.working_tree_dir:
+            return None
+
+        return self._gitrepo.working_tree_dir / self._sub_path
 
     def checkout(self):
         self._gitrepo.checkout(self._version)

@@ -41,11 +41,15 @@ def create_package_symlink(cfg, pname: str, package: Package):
     """
     Create package symlink in the inventory.
 
-    Packages are downloaded to `dependencies/pkg.{package-name}` and symlinked to
+    Packages are downloaded to `dependencies/pkg.{package-name}/{path}` and symlinked to
     `inventory/classes/{package-name}`.
     """
     if not package.target_dir:
         raise ValueError("Can't symlink package which doesn't have a working directory")
+    if not package.target_dir.is_dir():
+        raise ValueError(
+            f"Can't symlink package subpath {package.sub_path}, not a directory"
+        )
     relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
 
 
@@ -63,13 +67,18 @@ def fetch_components(cfg: Config):
     component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    urls, versions = _read_components(cfg, component_names)
+    cspecs = _read_components(cfg, component_names)
     click.secho("Fetching components...", bold=True)
     for cn in component_names:
+        cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
         c = Component(
-            cn, work_dir=cfg.work_dir, repo_url=urls[cn], version=versions[cn]
+            cn,
+            work_dir=cfg.work_dir,
+            repo_url=cspec.url,
+            version=cspec.version,
+            sub_path=cspec.path,
         )
         c.checkout()
         cfg.register_component(c)
@@ -86,11 +95,13 @@ def register_components(cfg: Config):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
+        cspecs = _read_components(cfg, components)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
 
     for cn in components:
+        cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Registering component {cn}...")
         if not component_dir(cfg.work_dir, cn).is_dir():
@@ -99,7 +110,7 @@ def register_components(cfg: Config):
                 fg="yellow",
             )
             continue
-        component = Component(cn, work_dir=cfg.work_dir)
+        component = Component(cn, work_dir=cfg.work_dir, sub_path=cspec.path)
         cfg.register_component(component)
         create_component_symlinks(cfg, component)
 
@@ -126,14 +137,16 @@ def fetch_packages(cfg: Config):
     click.secho("Discovering config packages...", bold=True)
     cfg.inventory.ensure_dirs()
     pkgs = _discover_packages(cfg)
-    urls, versions = _read_packages(cfg, pkgs)
+    pspecs = _read_packages(cfg, pkgs)
 
     for p in pkgs:
+        pspec = pspecs[p]
         pkg = Package(
             p,
             target_dir=package_dependency_dir(cfg.work_dir, p),
-            url=urls[p],
-            version=versions[p],
+            url=pspec.url,
+            version=pspec.version,
+            sub_path=pspec.path,
         )
         pkg.checkout()
         cfg.register_package(p, pkg)
@@ -152,6 +165,7 @@ def register_packages(cfg: Config):
     click.secho("Discovering config packages...", bold=True)
     cfg.inventory.ensure_dirs()
     pkgs = _discover_packages(cfg)
+    pspecs = _read_packages(cfg, pkgs)
     for p in pkgs:
         pkg_dir = package_dependency_dir(cfg.work_dir, p)
         if not pkg_dir.is_dir():
@@ -160,7 +174,7 @@ def register_packages(cfg: Config):
                 fg="yellow",
             )
             continue
-        pkg = Package(p, target_dir=pkg_dir)
+        pkg = Package(p, target_dir=pkg_dir, sub_path=pspecs[p].path)
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)
 

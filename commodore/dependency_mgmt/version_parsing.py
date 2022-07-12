@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 
 from enum import Enum
-from typing import Optional
 
 import click
 
@@ -16,18 +16,48 @@ class DepType(Enum):
     PACKAGE = "packages"
 
 
+class DependencyParseError(ValueError):
+    field: str
+
+    def __init__(self, field: str):
+        super().__init__("Error parsing dependency specification")
+        self.field = field
+
+
+@dataclass
+class DependencySpec:
+    """Class for parsed Dependency specification"""
+
+    url: str
+    version: str
+    path: str
+
+    @classmethod
+    def parse(cls, info: dict[str, str]) -> DependencySpec:
+        if "url" not in info:
+            raise DependencyParseError("url")
+
+        if "version" not in info:
+            raise DependencyParseError("version")
+
+        path = info.get("path", "")
+        if path.startswith("/"):
+            path = path[1:]
+
+        return DependencySpec(info["url"], info["version"], path)
+
+
 def _read_versions(
     cfg: Config,
     dependency_type: DepType,
     dependency_names: Iterable[str],
     require_key: bool = True,
     ignore_class_notfound: bool = False,
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
-    dep_urls = {}
-    dep_versions = {}
+) -> dict[str, DependencySpec]:
     deps_key = dependency_type.value
     deptype_str = dependency_type.name.lower()
     deptype_cap = deptype_str.capitalize()
+    dependencies = {}
 
     inv = kapitan_inventory(cfg, ignore_class_notfound=ignore_class_notfound)
     cluster_inventory = inv[cfg.inventory.bootstrap_target]
@@ -48,37 +78,32 @@ def _read_versions(
                 + f" Please add it to 'parameters.{deps_key}'"
             )
 
-        info = deps[depname]
-
-        if "url" not in info:
+        try:
+            dep = DependencySpec.parse(deps[depname])
+        except DependencyParseError as e:
             raise click.ClickException(
-                f"No url for {deptype_str} '{depname}' configured"
+                f"{deptype_cap} '{depname}' is missing field '{e.field}'"
             )
 
-        dep_urls[depname] = info["url"]
         if cfg.debug:
-            click.echo(f" > URL for {depname}: {dep_urls[depname]}")
-        if "version" in info:
-            dep_versions[depname] = info["version"]
-        else:
-            raise click.ClickException(
-                f"{deptype_cap} '{depname}' doesn't have a version specified."
-            )
-        if cfg.debug:
-            click.echo(f" > Version for {depname}: {dep_versions[depname]}")
+            click.echo(f" > URL for {depname}: {dep.url}")
+            click.echo(f" > Version for {depname}: {dep.version}")
+            click.echo(f" > Subpath for {depname}: {dep.path}")
 
-    return dep_urls, dep_versions
+        dependencies[depname] = dep
+
+    return dependencies
 
 
 def _read_components(
     cfg: Config, component_names: Iterable[str]
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+) -> dict[str, DependencySpec]:
     return _read_versions(cfg, DepType.COMPONENT, component_names)
 
 
 def _read_packages(
     cfg: Config, package_names: Iterable[str]
-) -> tuple[dict[str, str], dict[str, Optional[str]]]:
+) -> dict[str, DependencySpec]:
     return _read_versions(
         cfg,
         DepType.PACKAGE,

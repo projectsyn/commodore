@@ -23,45 +23,24 @@ from commodore.dependency_mgmt import version_parsing
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    component_urls, component_versions = version_parsing._read_components(
-        config, ["test-component"]
-    )
+    cspecs = version_parsing._read_components(config, ["test-component"])
 
     # check that exactly 'test-component' is discovered
-    assert {"test-component"} == set(component_urls.keys())
-    assert components["test-component"]["url"] == component_urls["test-component"]
-    assert (
-        components["test-component"]["version"] == component_versions["test-component"]
-    )
+    assert {"test-component"} == set(cspecs.keys())
+    assert components["test-component"]["url"] == cspecs["test-component"].url
+    assert components["test-component"]["version"] == cspecs["test-component"].version
 
 
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components_multiple(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    component_urls, component_versions = version_parsing._read_components(
-        config, components.keys()
-    )
+    cspecs = version_parsing._read_components(config, components.keys())
     # check that exactly 'test-component' is discovered
-    assert set(components.keys()) == set(component_urls.keys())
-    assert set(components.keys()) == set(component_versions.keys())
-    assert all(components[cn]["url"] == component_urls[cn] for cn in components.keys())
+    assert set(components.keys()) == set(cspecs.keys())
+    assert all(components[cn]["url"] == cspecs[cn].url for cn in components.keys())
     assert all(
-        components[cn].get("version", None) == component_versions[cn]
+        components[cn].get("version", None) == cspecs[cn].version
         for cn in components.keys()
-    )
-
-
-@patch.object(version_parsing, "kapitan_inventory")
-def test_read_components_exception(
-    patch_inventory, config: Config, tmp_path: Path, capsys
-):
-    components = _setup_mock_inventory(patch_inventory, omit_version=True)
-
-    with pytest.raises(click.ClickException) as e:
-        _ = version_parsing._read_components(config, components.keys())
-
-    assert "Component 'other-component' doesn't have a version specified" in str(
-        e.value
     )
 
 
@@ -77,7 +56,12 @@ def test_read_components_exception(
         (
             {"components": {"a": {"version": "a_version"}}},
             ["a"],
-            "No url for component 'a' configured",
+            "Component 'a' is missing field 'url'",
+        ),
+        (
+            {"components": {"a": {"url": "a_url"}}},
+            ["a"],
+            "Component 'a' is missing field 'version'",
         ),
     ],
 )
@@ -111,29 +95,63 @@ params_packages = {
             "url": "https://git.example.com/foo.git",
             "version": "feat/initial",
         },
+        "bar": {
+            "url": "https://git.example.com/barbaz.git",
+            "version": "master",
+            "path": "bar",
+        },
+        "baz": {
+            "url": "https://git.example.com/barbaz.git",
+            "version": "master",
+            "path": "/baz",
+        },
     }
 }
 
 
 @patch.object(version_parsing, "kapitan_inventory")
 @pytest.mark.parametrize(
-    "params,pkg_names,expected_urls,expected_versions",
+    "params,pkg_names,expected",
     [
-        ({}, [], {}, {}),
+        ({}, [], {}),
         (
             params_packages,
             ["test"],
-            {"test": "https://git.example.com/pkg.git"},
-            {"test": "v1.0.0"},
+            {
+                "test": version_parsing.DependencySpec(
+                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                ),
+            },
         ),
         (
             params_packages,
             ["test", "foo"],
             {
-                "test": "https://git.example.com/pkg.git",
-                "foo": "https://git.example.com/foo.git",
+                "test": version_parsing.DependencySpec(
+                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                ),
+                "foo": version_parsing.DependencySpec(
+                    "https://git.example.com/foo.git", "feat/initial", ""
+                ),
             },
-            {"test": "v1.0.0", "foo": "feat/initial"},
+        ),
+        (
+            params_packages,
+            ["test", "foo", "bar", "baz"],
+            {
+                "test": version_parsing.DependencySpec(
+                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                ),
+                "foo": version_parsing.DependencySpec(
+                    "https://git.example.com/foo.git", "feat/initial", ""
+                ),
+                "bar": version_parsing.DependencySpec(
+                    "https://git.example.com/barbaz.git", "master", "bar"
+                ),
+                "baz": version_parsing.DependencySpec(
+                    "https://git.example.com/barbaz.git", "master", "baz"
+                ),
+            },
         ),
     ],
 )
@@ -142,8 +160,7 @@ def test_read_packages(
     config: Config,
     params: dict,
     pkg_names: list[str],
-    expected_urls: dict,
-    expected_versions: dict,
+    expected: dict[str, version_parsing.DependencySpec],
 ):
     patch_inventory.return_value = {
         config.inventory.bootstrap_target: {
@@ -151,9 +168,8 @@ def test_read_packages(
         }
     }
 
-    pkg_urls, pkg_versions = version_parsing._read_packages(
+    pspecs = version_parsing._read_packages(
         config,
         pkg_names,
     )
-    assert pkg_urls == expected_urls
-    assert pkg_versions == expected_versions
+    assert pspecs == expected

@@ -15,6 +15,7 @@ class Component:
     _repo: GitRepo
     _version: Optional[str] = None
     _dir: P
+    _sub_path: str
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -25,6 +26,7 @@ class Component:
         version: str = None,
         force_init: bool = False,
         directory: P = None,
+        sub_path: str = "",
     ):
         self._name = name
         if directory:
@@ -37,6 +39,7 @@ class Component:
             )
         self._repo = GitRepo(repo_url, self._dir, force_init=force_init)
         self.version = version
+        self._sub_path = sub_path
 
     @property
     def name(self) -> str:
@@ -63,8 +66,12 @@ class Component:
         self._version = version
 
     @property
-    def target_directory(self) -> P:
+    def repo_directory(self) -> P:
         return self._dir
+
+    @property
+    def target_directory(self) -> P:
+        return self._dir / self._sub_path
 
     @property
     def class_file(self) -> P:

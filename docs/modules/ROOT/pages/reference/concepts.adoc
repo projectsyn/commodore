@@ -33,6 +33,7 @@ Commodore also makes use of the inventory to manage xref:commodore:ROOT:referenc
 Commodore provides support to fetch additional inventory classes based on configurations present in the global and tenant repositories
 These inventory classes are stored in Git repositories.
 Commodore calls these bundles of inventory classes _configuration packages_.
+Commodore allows configuration packages to be stored in an arbitrary directory in the repository.
 
 Configuration packages can include components and provide arbitrary configuration parameters.
 Commodore clones the Git repositories containing configuration packages into `dependencies/pkg.<package-name>` and symlinks them to `inventory/classes/<package-name>` to make the contents available as Kapitan inventory classes.
@@ -42,9 +43,9 @@ See https://syn.tools/syn/SDDs/0028-reusable-config-packages.html[SDD 0028 - Reu
 
 == Components
 
-Each Commodore component is managed in an individual Git repository and
-provides all the code which necessary to install some software or tool.
+Each Commodore component is managed in an individual Git repository and provides all the code which necessary to install some software or tool.
 The repository name must be named the same as the component.
+Commodore allows components to be stored in an arbitrary directory in the repository.
 
 Each component includes the
 https://kapitan.dev/compile/#supported-input-types[Kapitan templates] (for
