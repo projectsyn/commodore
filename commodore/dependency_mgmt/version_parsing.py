@@ -16,6 +16,14 @@ class DepType(Enum):
     PACKAGE = "packages"
 
 
+class DependencyParseError(ValueError):
+    field: str
+
+    def __init__(self, field: str):
+        super().__init__("Error parsing dependency specification")
+        self.field = field
+
+
 @dataclass
 class DependencySpec:
     """Class for parsed Dependency specification"""
@@ -23,6 +31,20 @@ class DependencySpec:
     url: str
     version: str
     path: str
+
+    @classmethod
+    def parse(cls, info: dict[str, str]) -> DependencySpec:
+        if "url" not in info:
+            raise DependencyParseError("url")
+
+        if "version" not in info:
+            raise DependencyParseError("version")
+
+        path = info.get("path", "")
+        if path.startswith("/"):
+            path = path[1:]
+
+        return DependencySpec(info["url"], info["version"], path)
 
 
 def _read_versions(
@@ -56,23 +78,13 @@ def _read_versions(
                 + f" Please add it to 'parameters.{deps_key}'"
             )
 
-        info = deps[depname]
-
-        if "url" not in info:
+        try:
+            dep = DependencySpec.parse(deps[depname])
+        except DependencyParseError as e:
             raise click.ClickException(
-                f"No url for {deptype_str} '{depname}' configured"
+                f"{deptype_cap} '{depname}' is missing field '{e.field}'"
             )
 
-        if "version" not in info:
-            raise click.ClickException(
-                f"{deptype_cap} '{depname}' doesn't have a version specified."
-            )
-
-        path = info.get("path", "")
-        if path.startswith("/"):
-            path = path[1:]
-
-        dep = DependencySpec(info["url"], info["version"], path)
         if cfg.debug:
             click.echo(f" > URL for {depname}: {dep.url}")
             click.echo(f" > Version for {depname}: {dep.version}")
