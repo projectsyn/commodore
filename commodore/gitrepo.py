@@ -404,6 +404,12 @@ class GitRepo:
 
     def checkout(self, version: Optional[str] = None):
         remote_heads = self._repo.remote().fetch(prune=True, tags=True)
+        if not remote_heads:
+            # Somehow, we don't get the new fetch infos on the first fetch after
+            # changing the remote, so we retry once if we didn't get any fetch infos
+            # from the first call.
+            remote_heads = self._repo.remote().fetch(prune=True, tags=True)
+
         if version is None:
             # Handle case where we want the default branch of the remote
             version = self._default_version()

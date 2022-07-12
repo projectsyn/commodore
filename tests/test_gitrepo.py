@@ -1,6 +1,11 @@
 """
 Unit-tests for git
 """
+from __future__ import annotations
+
+from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import Optional
 
 import click
 import git
@@ -8,6 +13,12 @@ import pytest
 
 from commodore import gitrepo
 from pathlib import Path
+
+
+@dataclass
+class RepoInfo:
+    branches: Iterable[str]
+    commit_shas: dict[str, str]
 
 
 def setup_remote(tmp_path: Path):
@@ -20,14 +31,30 @@ def setup_remote(tmp_path: Path):
     repo.index.add(["test.txt"])
     commit = repo.index.commit("initial commit")
 
-    return f"file://{remote.absolute()}", commit.hexsha
+    (remote / "branch.txt").touch(exist_ok=True)
+    repo.index.add(["branch.txt"])
+    b = repo.create_head("test-branch")
+    b.checkout()
+    bc = repo.index.commit("branch")
+    repo.create_tag("v1.0.0", ref="master")
+    repo.head.set_reference("master")
+    repo.index.checkout()
+
+    ri = RepoInfo(
+        ["master", "test-branch"],
+        {"master": commit.hexsha, "test-branch": bc.hexsha},
+    )
+
+    return f"file://{remote.absolute()}", ri
 
 
-def setup_repo(tmp_path: Path):
-    repo_url, commit_sha = setup_remote(tmp_path)
+def setup_repo(tmp_path: Path, repo_url: Optional[str] = None):
+    ri = None
+    if not repo_url:
+        repo_url, ri = setup_remote(tmp_path)
     r = gitrepo.GitRepo(repo_url, tmp_path / "local", force_init=True)
     r.checkout()
-    return r, commit_sha
+    return r, ri
 
 
 def test_gitrepo_clone_error(tmp_path: Path):
@@ -149,10 +176,10 @@ def test_gitrepo_working_tree_dir(tmp_path: Path):
 
 
 def test_gitrepo_head_short_sha(tmp_path: Path):
-    r, head_sha = setup_repo(tmp_path)
+    r, ri = setup_repo(tmp_path)
 
     short_len = len(r.head_short_sha)
-    assert r.head_short_sha == head_sha[:short_len]
+    assert r.head_short_sha == ri.commit_shas["master"][:short_len]
 
 
 def test_gitrepo_reset(tmp_path: Path):
@@ -180,6 +207,149 @@ def test_gitrepo_push_empty_remote(tmp_path: Path):
     r.stage_all()
     r.commit("Initial commit")
     r.push()
+
+
+def test_gitrepo_checkout_branch(tmp_path: Path):
+    branch = "test-branch"
+    r, ri = setup_repo(tmp_path)
+    assert branch in ri.branches
+
+    r.checkout(branch)
+
+    repo = r.repo
+    assert repo.head.ref.name == branch
+    for rb in repo.remote().refs:
+        if rb.name.endswith(branch):
+            remote_branch_commit = rb.commit
+            break
+    else:
+        raise ValueError(f"No remote branch for {branch}")
+
+    assert not repo.head.is_detached
+    assert repo.head.ref.name == branch
+    assert repo.head.commit.hexsha == ri.commit_shas[branch]
+    assert repo.head.commit == remote_branch_commit
+
+
+def test_gitrepo_checkout_sha1version(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+    commit = ri.commit_shas["master"]
+
+    r.checkout(commit)
+
+    assert r.repo.head.is_detached
+    assert r.repo.head.commit.hexsha == commit
+
+
+def test_gitrepo_checkout_tag(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+
+    r.checkout("v1.0.0")
+
+    assert r.repo.head.is_detached
+    assert r.repo.head.commit.hexsha == r.repo.tags["v1.0.0"].commit.hexsha
+
+
+def test_gitrepo_checkout_nonexisting_version(tmp_path: Path):
+    r, _ = setup_repo(tmp_path)
+
+    with pytest.raises(gitrepo.RefError):
+        r.checkout("does-not-exist")
+
+
+def test_gitrepo_checkout_existing_repo_update_version_branch(tmp_path: Path):
+    r, _ = setup_repo(tmp_path)
+    r.checkout()
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "master"
+
+    # checkout branch
+    branch = "test-branch"
+    r.checkout(branch)
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == branch
+
+
+def test_gitrepo_checkout_existing_repo_update_version_sha1version(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+    r.checkout()
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "master"
+
+    # update version
+    r.checkout(ri.commit_shas["test-branch"])
+
+    assert r.repo.head.is_detached
+    assert r.repo.head.commit.hexsha == ri.commit_shas["test-branch"]
+
+
+def test_gitrepo_checkout_existing_repo_update_latest_upstream(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+    r.checkout("test-branch")
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "test-branch"
+    head_commit = r.repo.head.commit.hexsha
+    assert head_commit == ri.commit_shas["test-branch"]
+
+    r.repo.git.reset("HEAD^", hard=True)
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "test-branch"
+    assert r.repo.head.commit.hexsha != head_commit
+    assert r.repo.head.commit.hexsha == ri.commit_shas["master"]
+
+    r.checkout("test-branch")
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "test-branch"
+    assert r.repo.head.commit.hexsha == head_commit
+    assert not r.repo.is_dirty()
+
+
+@pytest.mark.parametrize(
+    "mode",
+    ["reinit", "update"],
+)
+def test_gitrepo_checkout_existing_repo_update_remote(tmp_path: Path, mode: str):
+    r, _ = setup_repo(tmp_path)
+    r.checkout()
+
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "master"
+
+    # remember original url of remote origin
+    orig_url = next(r.repo.remote().urls)
+    # create local upstream repo
+    local = tmp_path / "upstream" / "argocd.git"
+    git.Repo.init(local, bare=True)
+    local_url = f"file://{local}"
+    local_ver = "local-branch"
+
+    # push repo to local upstream with a custom branch
+    r.repo.create_remote("local", local_url)
+    r.repo.create_head(local_ver)
+    r.repo.remote("local").push(local_ver)
+    r.repo.delete_remote("local")
+    r.repo.delete_head(local_ver)
+
+    if mode == "reinit":
+        # reinitialize component object on existing repo with different url/version info
+        r, _ = setup_repo(tmp_path, repo_url=local_url)
+        r.checkout(local_ver)
+    elif mode == "update":
+        r.remote = local_url
+        r.checkout(local_ver)
+    else:
+        raise ValueError(f"Unknown mode {mode} for test")
+
+    assert local_url in r.repo.remote().urls
+    assert orig_url not in r.repo.remote().urls
+    assert not r.repo.head.is_detached
+    assert r.repo.head.ref.name == "local-branch"
 
 
 def test_gitrepo_checkout_bare(tmp_path: Path):
