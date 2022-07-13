@@ -23,6 +23,10 @@ class MultiDependency:
     def url(self) -> str:
         return self._repo.remote
 
+    @url.setter
+    def url(self, repo_url: str):
+        self._repo.remote = repo_url
+
     def get_component(self, name: str) -> Optional[Path]:
         return self._components.get(name)
 
@@ -71,8 +75,16 @@ class MultiDependency:
 
 
 def dependency_dir(base_dir: Path, repo_url: str) -> Path:
-    # Normalize URL here, as we don't require that we always are passed a normalized
-    # URL.
+    return base_dir / ".repos" / dependency_key(repo_url)
+
+
+def dependency_key(repo_url: str) -> str:
+    """Create normalized and scheme-agnostic key for the given repo URL.
+
+    This is also used to determine the subpath where the bare checkout is created."""
     repo_url = normalize_git_url(repo_url)
     url_parts = deconstruct_url(repo_url)
-    return base_dir / ".repos" / url_parts.host / url_parts.path[1:]
+    depkey = ""
+    if url_parts.host:
+        depkey = f"{url_parts.host}/"
+    return depkey + url_parts.path[1:]

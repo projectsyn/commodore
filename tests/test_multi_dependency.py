@@ -5,38 +5,44 @@ from pathlib import Path
 import pytest
 
 from git import Repo
-from url_normalize.url_normalize import deconstruct_url
+from url_normalize.tools import deconstruct_url
 
 from commodore import multi_dependency
 
 from test_gitrepo import setup_remote
 
 
-@pytest.mark.parametrize(
-    "repo_url,expected",
-    [
-        (
-            "https://github.com/projectsyn/component-argocd.git",
-            "github.com/projectsyn/component-argocd.git",
-        ),
-        (
-            "git@github.com:projectsyn/component-argocd.git",
-            "github.com/projectsyn/component-argocd.git",
-        ),
-        (
-            "ssh://git@github.com/projectsyn/component-argocd.git",
-            "github.com/projectsyn/component-argocd.git",
-        ),
-        (
-            "file:///tmp/path/to/repo.git",
-            "tmp/path/to/repo.git",
-        ),
-    ],
-)
+CASES = [
+    (
+        "https://github.com/projectsyn/component-argocd.git",
+        "github.com/projectsyn/component-argocd.git",
+    ),
+    (
+        "git@github.com:projectsyn/component-argocd.git",
+        "github.com/projectsyn/component-argocd.git",
+    ),
+    (
+        "ssh://git@github.com/projectsyn/component-argocd.git",
+        "github.com/projectsyn/component-argocd.git",
+    ),
+    (
+        "file:///tmp/path/to/repo.git",
+        "tmp/path/to/repo.git",
+    ),
+]
+
+
+@pytest.mark.parametrize("repo_url,expected", CASES)
 def test_dependency_dir(tmp_path: Path, repo_url: str, expected: str):
     path = multi_dependency.dependency_dir(tmp_path, repo_url)
     repos_dir = tmp_path / ".repos"
     assert path == repos_dir / expected
+
+
+@pytest.mark.parametrize("repo_url,expected", CASES)
+def test_dependency_key(tmp_path: Path, repo_url: str, expected: str):
+    depkey = multi_dependency.dependency_key(repo_url)
+    assert depkey == expected
 
 
 def test_multi_dependency_init(tmp_path: Path):

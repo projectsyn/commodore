@@ -12,9 +12,9 @@ import jwt
 import click
 
 from commodore.component import Component, component_parameters_key
-from .gitrepo import GitRepo, normalize_git_url
+from .gitrepo import GitRepo
 from .inventory import Inventory
-from .multi_dependency import MultiDependency
+from .multi_dependency import MultiDependency, dependency_key
 from .package import Package
 from . import tokencache
 
@@ -221,13 +221,17 @@ class Config:
         """Register dependency repository, if it isn't registered yet.
 
         Returns the `MultiDependency` object for the repo."""
-        repo_url = normalize_git_url(repo_url)
-        if repo_url not in self._dependency_repos:
-            self._dependency_repos[repo_url] = MultiDependency(
+        depkey = dependency_key(repo_url)
+        if depkey not in self._dependency_repos:
+            self._dependency_repos[depkey] = MultiDependency(
                 repo_url, self.inventory.dependencies_dir
             )
 
-        return self._dependency_repos[repo_url]
+        dep = self._dependency_repos[depkey]
+        # Prefer ssh fetch URLs for existing dependencies
+        if repo_url.startswith("ssh://"):
+            dep.url = repo_url
+        return dep
 
     def get_component_aliases(self):
         return self._component_aliases
