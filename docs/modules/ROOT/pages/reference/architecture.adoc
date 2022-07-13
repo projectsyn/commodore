@@ -38,7 +38,7 @@ Note that this only works to remove dependencies which have been included previo
 
 Commodore uses the prefix `pkg.` to distinguish configuration package dependencies from component dependencies.
 
-Commodore currently has no mechanism to automatically discover depedencies based on their names.
+Commodore currently has no mechanism to automatically discover dependencies based on their names.
 Instead all components which are referenced in the `applications` array must be listed in key `parameters.components` in the hierarchy.
 Analogously, all configuration packages which are referenced in the `applications` array must be listed in key `parameters.packages` in the hierarchy.
 
