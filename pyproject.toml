@@ -46,7 +46,7 @@ pytest-xdist = "2.5.0"
 pytest-benchmark = "3.4.1"
 responses = "0.21.0"
 black = "22.6.0"
-pyfakefs = "4.6.0"
+pyfakefs = "4.6.1"
 pytest-cov = "3.0.0"
 pylint = "2.14.4"
 
