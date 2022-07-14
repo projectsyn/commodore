@@ -407,9 +407,11 @@ class GitRepo:
     def checkout(self, version: Optional[str] = None):
         remote_heads = self.fetch()
         if not remote_heads:
-            # Somehow, we don't get the new fetch infos on the first fetch after
-            # changing the remote, so we retry once if we didn't get any fetch infos
-            # from the first call.
+            # GitPython's fetch-info parsing chokes on lines like
+            # "   (refs/remotes/origin/HEAD has become dangling)"
+            # see also https://github.com/gitpython-developers/GitPython/issues/962.
+            # We handle this case by simply performing a second fetch which should
+            # return fetch-infos with flags = 4 (HEAD_UPTODATE).
             remote_heads = self.fetch()
 
         if version is None:
