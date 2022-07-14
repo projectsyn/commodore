@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import shutil
+import tempfile
+
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -11,6 +14,7 @@ from commodore.dependency_mgmt.discovery import (
     TENANT_PREFIX_PATTERN,
 )
 from commodore.dependency_templater import Templater, Renderer
+from commodore.package import package_dependency_dir
 
 
 class PackageTemplater(Templater):
@@ -25,13 +29,28 @@ class PackageTemplater(Templater):
         no_input: bool,
         output_dir: Path,
     ):
+        """Render package cookiecutter template in tempdir and move the results to
+        `output_dir/pkg.<slug>`, because as far as I can see we can't configure
+        cruft/cookiecutter to create a directory named `pkg.<slug>` except if we
+        change the slug itself, which would need a bunch of template changes.
+        """
+
+        # Because we render the template in a temp directory and move it to the desired
+        # target directory, we don't need argument `output_dir` which is set to
+        # `self.target_dir.parent` when the renderer function is called by the base
+        # class, and instead move the final rendered package to `self.target_dir`
+        # ourselves.
+        _ = output_dir
+        tmpdir = Path(tempfile.mkdtemp())
         cruft_create(
             template_location,
             checkout=self.template_version,
             extra_context=extra_context,
             no_input=no_input,
-            output_dir=output_dir,
+            output_dir=tmpdir,
         )
+        shutil.move(str(tmpdir / self.slug), self.target_dir)
+        shutil.rmtree(tmpdir)
 
     def _validate_slug(self, value: str):
         # First perform default slug checks
@@ -72,7 +91,7 @@ class PackageTemplater(Templater):
         if self.output_dir:
             return self.output_dir / self.slug
 
-        return self.config.inventory.package_dir(self.slug)
+        return package_dependency_dir(self.config.work_dir, self.slug)
 
     @property
     def template(self) -> str:

@@ -47,7 +47,7 @@ def test_run_package_new_command(
 
     pkg_dir = tmp_path / "test-package"
     if output_dir == "":
-        pkg_dir = tmp_path / "inventory" / "classes" / "test-package"
+        pkg_dir = tmp_path / "dependencies" / "pkg.test-package"
 
     expected_files = [
         Path(".editorconfig"),
