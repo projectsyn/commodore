@@ -294,13 +294,15 @@ class GitRepo:
 
         return CommitInfo(commit=commit, branch=branch, tag=tag)
 
+    def fetch(
+        self, remote: str = "origin", tags: bool = True, prune: bool = True
+    ) -> Iterable[FetchInfo]:
+        return self._repo.remote(remote).fetch(tags=tags, prune=prune)
+
     def has_local_branches(self) -> bool:
         local_heads = set(h.name for h in self.repo.heads)
         remote_prefix = self._remote_prefix()
-        remote_heads = set(
-            h.name.replace(remote_prefix, "", 1)
-            for h in self._repo.remote().fetch(prune=True, tags=True)
-        )
+        remote_heads = set(h.name.replace(remote_prefix, "", 1) for h in self.fetch())
         return len(local_heads - remote_heads) > 0
 
     def has_local_changes(self) -> bool:
@@ -387,7 +389,7 @@ class GitRepo:
         """
         # Try to fetch remote heads, so we can actually check them out
         try:
-            _ = self._repo.remote().fetch(prune=True, tags=True)
+            _ = self.fetch()
         except ValueError:
             pass
 
@@ -403,12 +405,12 @@ class GitRepo:
         self._create_worktree(worktree, version)
 
     def checkout(self, version: Optional[str] = None):
-        remote_heads = self._repo.remote().fetch(prune=True, tags=True)
+        remote_heads = self.fetch()
         if not remote_heads:
             # Somehow, we don't get the new fetch infos on the first fetch after
             # changing the remote, so we retry once if we didn't get any fetch infos
             # from the first call.
-            remote_heads = self._repo.remote().fetch(prune=True, tags=True)
+            remote_heads = self.fetch()
 
         if version is None:
             # Handle case where we want the default branch of the remote
