@@ -36,12 +36,11 @@ class MultiDependency:
 
         self._components[name] = target_dir
 
-    def deregister_component(self, name: str) -> bool:
+    def deregister_component(self, name: str):
         try:
             del self._components[name]
-            return True
-        except KeyError:
-            return False
+        except KeyError as e:
+            raise ValueError(f"can't deregister unknown component {name}") from e
 
     def checkout_component(self, name: str, version: str):
         """Create or update worktree for component `name`."""
@@ -59,12 +58,11 @@ class MultiDependency:
 
         self._packages[name] = target_dir
 
-    def deregister_package(self, name: str) -> bool:
+    def deregister_package(self, name: str):
         try:
             del self._packages[name]
-            return True
-        except KeyError:
-            return False
+        except KeyError as e:
+            raise ValueError(f"can't deregister unknown package {name}") from e
 
     def checkout_package(self, name: str, version: str):
         """Create or update worktree for package `name`."""

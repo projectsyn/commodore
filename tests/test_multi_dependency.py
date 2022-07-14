@@ -118,26 +118,29 @@ def test_multi_dependency_deregister(tmp_path: Path):
     assert md.get_component("test") == tmp_path / "tc"
     assert md.get_package("test") == tmp_path / "tp"
 
-    dc_nonexist = md.deregister_component("foo")
+    with pytest.raises(ValueError) as e:
+        md.deregister_component("foo")
 
-    assert not dc_nonexist
+    assert str(e.value) == "can't deregister unknown component foo"
+
     assert md.get_component("test") == tmp_path / "tc"
     assert md.get_package("test") == tmp_path / "tp"
 
-    dp_nonexist = md.deregister_package("pkg.test")
+    with pytest.raises(ValueError) as e:
+        md.deregister_package("pkg.test")
 
-    assert not dp_nonexist
+    assert str(e.value) == "can't deregister unknown package pkg.test"
+
     assert md.get_component("test") == tmp_path / "tc"
     assert md.get_package("test") == tmp_path / "tp"
 
-    dc = md.deregister_component("test")
+    md.deregister_component("test")
 
-    assert dc
     assert md.get_component("test") is None
     assert md.get_package("test") == tmp_path / "tp"
 
-    dp = md.deregister_package("test")
-    assert dp
+    md.deregister_package("test")
+
     assert md.get_component("test") is None
     assert md.get_package("test") is None
 
