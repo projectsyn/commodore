@@ -40,9 +40,11 @@ checks:
 
 exclude_patterns:
   - 'catalog/'
+  - 'commodore/cruft/'
   - 'compiled/'
   - 'dependencies/'
   - 'inventory/'
   - 'vendor/'
   - '.tox/'
   - 'tests/'
+  - 'tests_cruft/'

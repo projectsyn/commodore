@@ -32,7 +32,11 @@ url-normalize = "1.4.3"
 python-dotenv = "0.20.0"
 importlib-metadata = "4.12.0"
 pyxdg = "0.28"
-cruft = "2.10.2"
+# Reenable dependency cruft once our patches are merged.
+# In the meantime we add typer as a top-level dependency since Cruft depends
+# on it.
+# cruft = {branch="patched-update", git="https://github.com/projectsyn/cruft.git"}
+typer = "0.6.1"
 # Kapitan requires exactly 3.1.1
 oauthlib = "3.1.1"
 # Kapitan requires exactly 2.1.0
@@ -49,6 +53,9 @@ black = "22.6.0"
 pyfakefs = "4.6.2"
 pytest-cov = "3.0.0"
 pylint = "2.14.4"
+types-toml = "0.10.8"
+examples = "1.0.2"
+pytest-mock = "^3.8.2"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
