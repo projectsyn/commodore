@@ -235,6 +235,24 @@ This command doesn't have any command line options.
   Can be repeated.
   Test case `defaults` will always be generated.
 
+== Package Update
+
+*--copyright* TEXT::
+  The copyright holder added to the license file.
+  If not provided, the existing copyright holder of the package is kept.
+
+*--golden-tests / --no-golden-tests*::
+  Enable golden tests for the package.
+  If neither option is provided, the package's existing config is used.
+
+*--additional-test-case, -t* CASE::
+  Additional test cases to add to the package.
+  Can be repeated.
+
+*--remove-test-case* CASE::
+  Test cases to remove from the package.
+  Can be repeated.
+
 == Package Compile
 
 *-f, --values* FILE::

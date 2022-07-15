@@ -159,6 +159,13 @@ Additionally, the command prevents users from creating packages using reserved n
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 
+== Package Update
+
+  commodore package update PATH
+
+This command updates an existing config package repository stored in `PATH`.
+The command will always update the package to the latest version of the template which was originally used to create the package.
+The command has a number of command line options to modify the package's test cases and selected meta-information.
 
 == Package Compile
 
