@@ -215,7 +215,7 @@ This command doesn't have any command line options.
   Defaults to "VSHN AG <info@vshn.ch>."
 
 *--golden-tests / --no-golden-tests*::
-  Enable golden tests for the component.
+  Enable golden tests for the package.
   Defaults to _yes_.
 
 *--template-url* TEXT::
