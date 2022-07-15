@@ -3,29 +3,18 @@ from __future__ import annotations
 import json
 
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 from unittest import mock
 
 import pytest
 import responses
 import yaml
 
-from click.testing import CliRunner, Result
-
 from commodore import cli
 from commodore.config import Config
 from test_catalog import cluster_resp
 
-
-class RunnerFunc(Protocol):
-    def __call__(self, args: list[str]) -> Result:
-        ...
-
-
-@pytest.fixture
-def cli_runner() -> RunnerFunc:
-    r = CliRunner()
-    return lambda args: r.invoke(cli.commodore, args)
+from conftest import RunnerFunc
 
 
 @pytest.mark.parametrize(

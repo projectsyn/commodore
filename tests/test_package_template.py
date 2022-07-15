@@ -9,22 +9,41 @@ import yaml
 from commodore.config import Config
 from commodore.package.template import PackageTemplater
 
+from conftest import RunnerFunc
+
 
 def call_package_new(
     tmp_path: Path,
+    cli_runner: RunnerFunc,
     package_name="test-package",
     golden="--no-golden-tests",
     output_dir: str = "",
     template_version: str = "",
     additional_test_cases: list[str] = [],
-):
-    atc_args = " ".join(f"-t {case}" for case in additional_test_cases)
-    exit_status = call(
-        f"commodore -d {tmp_path} -vvv package new {package_name}"
-        + f" {golden} {output_dir} {template_version} {atc_args}",
-        shell=True,
+) -> str:
+    atc_args = []
+    for case in additional_test_cases:
+        atc_args.extend(["-t", case])
+    opt_args = []
+    if output_dir:
+        opt_args.append(output_dir)
+    if template_version:
+        opt_args.append(template_version)
+    result = cli_runner(
+        [
+            "-d",
+            tmp_path,
+            "-vvv",
+            "package",
+            "new",
+            package_name,
+            golden,
+        ]
+        + opt_args
+        + atc_args
     )
-    assert exit_status == 0
+    assert result.exit_code == 0
+    return result.stdout
 
 
 @pytest.mark.parametrize("output_dir", ["", "--output-dir={0}"])
@@ -37,12 +56,18 @@ def call_package_new(
     ],
 )
 def test_run_package_new_command(
-    tmp_path: Path, output_dir: str, additional_test_cases: list[str]
+    tmp_path: Path,
+    cli_runner: RunnerFunc,
+    output_dir: str,
+    additional_test_cases: list[str],
 ):
     output_dir = output_dir.format(tmp_path)
 
     call_package_new(
-        tmp_path, output_dir=output_dir, additional_test_cases=additional_test_cases
+        tmp_path,
+        cli_runner,
+        output_dir=output_dir,
+        additional_test_cases=additional_test_cases,
     )
 
     pkg_dir = tmp_path / "test-package"
@@ -108,10 +133,14 @@ def test_package_new_invalid_slug(config: Config, slug: str, expected: str):
 @pytest.mark.parametrize("golden", ["--golden-tests", "--no-golden-tests"])
 @pytest.mark.parametrize("additional_test_cases", [[], ["foo"]])
 def test_lint_package_template(
-    tmp_path: Path, golden: str, additional_test_cases: list[str]
+    tmp_path: Path,
+    cli_runner: RunnerFunc,
+    golden: str,
+    additional_test_cases: list[str],
 ):
     call_package_new(
         tmp_path,
+        cli_runner,
         golden=golden,
         output_dir=f"--output-dir={tmp_path}",
         additional_test_cases=additional_test_cases,
