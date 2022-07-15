@@ -13,6 +13,7 @@ import click
 
 from commodore.config import Config
 from commodore.package import Package
+from commodore.multi_dependency import dependency_key
 
 
 def test_verify_component_aliases_no_instance(config):
@@ -224,11 +225,68 @@ def test_expired_token_cache(test_patch):
     assert conf.api_token is None
 
 
-def test_register_get_package(config: Config, tmp_path: P):
+def test_register_get_package(config: Config, tmp_path: P, mockdep):
     # No preregistered packages
     assert config.get_packages() == {}
 
-    p = Package("test", target_dir=tmp_path / "pkg")
+    p = Package("test", mockdep, tmp_path / "pkg")
     config.register_package("test", p)
 
     assert config.get_packages() == {"test": p}
+
+
+def test_register_get_dependency(config: Config, tmp_path: P):
+    repo_url = "https://git.example.com/repo.git"
+
+    # No dependencies registered initially
+    assert len(config._dependency_repos) == 0
+
+    md = config.register_dependency_repo(repo_url)
+
+    depkey = dependency_key(repo_url)
+
+    assert len(config._dependency_repos) == 1
+    assert config._dependency_repos.get(depkey) == md
+
+
+def test_register_get_dependency_deduplicates(config: Config, tmp_path: P):
+    repo_url_1 = "https://git.example.com/repo1.git"
+    repo_url_2 = "https://git.example.com/repo2.git"
+
+    assert len(config._dependency_repos) == 0
+
+    md = config.register_dependency_repo(repo_url_1)
+
+    depkey = dependency_key(repo_url_1)
+
+    assert len(config._dependency_repos) == 1
+    assert config._dependency_repos.get(depkey) == md
+
+    md1_dup = config.register_dependency_repo(repo_url_1)
+
+    assert len(config._dependency_repos) == 1
+    assert md1_dup == md
+
+    md2 = config.register_dependency_repo(repo_url_2)
+
+    depkey2 = dependency_key(repo_url_2)
+
+    assert len(config._dependency_repos) == 2
+    assert config._dependency_repos.get(depkey2) == md2
+    assert set(config._dependency_repos.keys()) == {depkey, depkey2}
+
+
+def test_register_dependency_prefer_ssh(config: Config, tmp_path: P):
+    repo_url_https = "https://git.example.com/repo.git"
+    repo_url_ssh = "ssh://git@git.example.com/repo.git"
+
+    md = config.register_dependency_repo(repo_url_https)
+    assert md.url == repo_url_https
+
+    md2 = config.register_dependency_repo(repo_url_ssh)
+    assert md2 == md
+    assert md.url == repo_url_ssh
+
+    md3 = config.register_dependency_repo(repo_url_https)
+    assert md3 == md
+    assert md.url == repo_url_ssh

@@ -17,6 +17,9 @@ from commodore.component import (
 )
 from commodore.gitrepo import RefError
 from commodore.inventory import Inventory
+from commodore.multi_dependency import MultiDependency
+
+from conftest import MockMultiDependency
 
 
 def setup_directory(tmp_path: P):
@@ -43,12 +46,42 @@ def _setup_component(
     repo_url=REPO_URL,
     name="argocd",
 ):
+    dep = MultiDependency(repo_url, tmp_path)
     return Component(
         name,
-        repo_url=repo_url,
+        dependency=dep,
         directory=tmp_path / name,
         version=version,
     )
+
+
+def _setup_existing_component(tmp_path: P):
+    cr = Repo.init(tmp_path / ".repo", bare=True)
+    upstream = tmp_path / "upstream"
+    u = cr.clone(upstream)
+    with open(upstream / "README.md", "w") as f:
+        f.write("# Dummy component\n")
+
+    u.index.add(["README.md"])
+    u.index.commit("Initial commit")
+    u.remote().push()
+
+    # Setup w
+    cr.git.execute(
+        ["git", "worktree", "add", "-f", str(tmp_path / "component"), "master"]
+    )
+
+    return cr
+
+
+def test_component_init(tmp_path):
+    c = _setup_component(tmp_path)
+
+    assert c.repo_url == REPO_URL
+
+    dep = c.dependency
+    assert dep.url == REPO_URL
+    assert dep.get_component("argocd") == c.repo_directory
 
 
 def test_component_checkout(tmp_path):
@@ -203,7 +236,7 @@ def test_component_checkout_existing_repo_update_remote(tmp_path: P, mode: str):
         c = _setup_component(tmp_path, version=local_ver, repo_url=local_url)
         c.checkout()
     elif mode == "update":
-        c.repo_url = local_url
+        c.dependency = MultiDependency(local_url, tmp_path)
         c.version = local_ver
         c.checkout()
     else:
@@ -218,20 +251,21 @@ def test_component_checkout_existing_repo_update_remote(tmp_path: P, mode: str):
 def test_init_existing_component(tmp_path: P):
     cn = "test-component"
     orig_url = "git@github.com:projectsyn/commodore.git"
-    setup_directory(tmp_path)
-    cr = Repo.init(tmp_path)
+    cr = _setup_existing_component(tmp_path)
     cr.create_remote("origin", orig_url)
+    dep = MockMultiDependency(cr)
 
-    c = Component(cn, directory=tmp_path)
+    c = Component(cn, dependency=dep, directory=tmp_path / "component")
 
     for url in c.repo.repo.remote().urls:
         assert url == orig_url
 
 
 def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
-    Repo.init(tmp_path)
-    c = Component("kube-monitoring", directory=tmp_path)
-    jsonnetfile = tmp_path / "jsonnetfile.jsonnet"
+    cr = Repo.init(tmp_path / "repo.git", bare=True)
+    upath = tmp_path / "upstream"
+    ur = cr.clone(upath)
+    jsonnetfile = upath / "jsonnetfile.jsonnet"
     with open(jsonnetfile, "w") as jf:
         jf.write(
             dedent(
@@ -253,8 +287,18 @@ def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
             }"""
             )
         )
-    c.repo.repo.index.add("*")
-    c.repo.repo.index.commit("Initial commit")
+    ur.index.add("*")
+    ur.index.commit("initial commit")
+    ur.remote().push()
+
+    cdep = MockMultiDependency(cr)
+    c = Component(
+        "kube-monitoring",
+        dependency=cdep,
+        directory=tmp_path / "component",
+        version="master",
+    )
+    c.checkout()
     return c
 
 
@@ -273,9 +317,11 @@ def test_render_jsonnetfile_json(tmp_path: P, capsys):
     )
 
     stdout, _ = capsys.readouterr()
-    assert (tmp_path / "jsonnetfile.json").is_file()
+    print(c.target_directory, c.repo_directory)
+    cpath = c.target_directory
+    assert (cpath / "jsonnetfile.json").is_file()
     assert _render_jsonnetfile_json_error_string(c) not in stdout
-    with open(tmp_path / "jsonnetfile.json") as jf:
+    with open(cpath / "jsonnetfile.json") as jf:
         jsonnetfile_contents = json.load(jf)
         assert isinstance(jsonnetfile_contents, dict)
         # check expected keys are there using set comparison
@@ -289,7 +335,7 @@ def test_render_jsonnetfile_json(tmp_path: P, capsys):
 
 def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
     c = _setup_render_jsonnetfile_json(tmp_path)
-    with open(tmp_path / "jsonnetfile.json", "w") as jf:
+    with open(c.target_directory / "jsonnetfile.json", "w") as jf:
         jf.write("{}")
     c.repo.repo.index.add("*")
     c.repo.repo.index.commit("Add jsonnetfile.json")

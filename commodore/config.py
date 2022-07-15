@@ -14,6 +14,7 @@ import click
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
 from .inventory import Inventory
+from .multi_dependency import MultiDependency, dependency_key
 from .package import Package
 from . import tokencache
 
@@ -29,6 +30,7 @@ class Config:
     _config_repos: dict[str, GitRepo]
     _component_aliases: dict[str, str]
     _packages: dict[str, Package]
+    _dependency_repos: dict[str, MultiDependency]
     _deprecation_notices: list[str]
     _migration: Optional[Migration]
 
@@ -54,6 +56,7 @@ class Config:
         self._config_repos = {}
         self._component_aliases = {}
         self._packages = {}
+        self._dependency_repos = {}
         self._verbose = verbose
         self.username = username
         self.usermail = usermail
@@ -213,6 +216,22 @@ class Config:
 
     def register_package(self, pkg_name: str, pkg: Package):
         self._packages[pkg_name] = pkg
+
+    def register_dependency_repo(self, repo_url: str) -> MultiDependency:
+        """Register dependency repository, if it isn't registered yet.
+
+        Returns the `MultiDependency` object for the repo."""
+        depkey = dependency_key(repo_url)
+        if depkey not in self._dependency_repos:
+            self._dependency_repos[depkey] = MultiDependency(
+                repo_url, self.inventory.dependencies_dir
+            )
+
+        dep = self._dependency_repos[depkey]
+        # Prefer ssh fetch URLs for existing dependencies
+        if repo_url.startswith("ssh://"):
+            dep.url = repo_url
+        return dep
 
     def get_component_aliases(self):
         return self._component_aliases

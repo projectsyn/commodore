@@ -23,6 +23,8 @@ from commodore.package import package_dependency_dir
 from commodore.dependency_mgmt.version_parsing import DependencySpec
 from test_package import _setup_package_remote
 
+from conftest import MockMultiDependency
+
 
 def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     # Prepare minimum component directories
@@ -30,7 +32,7 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     component_specs = {}
     for component in components:
         repo_path = upstream / component
-        url = f"file://#{repo_path.resolve()}"
+        url = f"file://{repo_path.resolve()}"
         version = None
         repo = git.Repo.init(repo_path)
 
@@ -46,8 +48,8 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
     return component_specs
 
 
-def test_create_component_symlinks_fails(config: Config, tmp_path: Path):
-    component = Component("my-component", work_dir=tmp_path)
+def test_create_component_symlinks_fails(config: Config, tmp_path: Path, mockdep):
+    component = Component("my-component", mockdep, work_dir=tmp_path)
     with pytest.raises(click.ClickException) as e:
         dependency_mgmt.create_component_symlinks(config, component)
 
@@ -55,7 +57,8 @@ def test_create_component_symlinks_fails(config: Config, tmp_path: Path):
 
 
 def setup_mock_component(tmp_path: Path, name="my-component") -> Component:
-    component = Component(name, work_dir=tmp_path)
+    cdep = MockMultiDependency(git.Repo.init(tmp_path / "repo.git"))
+    component = Component(name, cdep, work_dir=tmp_path)
     component.class_file.parent.mkdir(parents=True, exist_ok=True)
     with open(component.class_file, "w") as f:
         f.writelines(["class"])
@@ -223,7 +226,8 @@ def test_register_components(
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
     patch_read.return_value = {
-        cn: DependencySpec("", "master", "") for cn in component_dirs
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        for cn in component_dirs
     }
 
     dependency_mgmt.register_components(config)
@@ -244,7 +248,8 @@ def test_register_components_and_aliases(
     alias_data = {"fooer": "foo"}
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
-        cn: DependencySpec("", "master", "") for cn in component_dirs
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        for cn in component_dirs
     }
 
     dependency_mgmt.register_components(config)
@@ -274,7 +279,8 @@ def test_register_unknown_components(
     component_dirs.extend(unknown_components)
     patch_discover.return_value = (component_dirs, {})
     patch_read.return_value = {
-        cn: DependencySpec("", "master", "") for cn in component_dirs
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        for cn in component_dirs
     }
 
     dependency_mgmt.register_components(config)
@@ -299,7 +305,8 @@ def test_register_dangling_aliases(
 
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
-        cn: DependencySpec("", "master", "") for cn in component_dirs
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        for cn in component_dirs
     }
 
     dependency_mgmt.register_components(config)

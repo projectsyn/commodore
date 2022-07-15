@@ -73,10 +73,11 @@ def fetch_components(cfg: Config):
         cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
+        cdep = cfg.register_dependency_repo(cspec.url)
         c = Component(
             cn,
             work_dir=cfg.work_dir,
-            repo_url=cspec.url,
+            dependency=cdep,
             version=cspec.version,
             sub_path=cspec.path,
         )
@@ -110,7 +111,14 @@ def register_components(cfg: Config):
                 fg="yellow",
             )
             continue
-        component = Component(cn, work_dir=cfg.work_dir, sub_path=cspec.path)
+        cdep = cfg.register_dependency_repo(cspec.url)
+        component = Component(
+            cn,
+            work_dir=cfg.work_dir,
+            dependency=cdep,
+            sub_path=cspec.path,
+            version=cspec.version,
+        )
         cfg.register_component(component)
         create_component_symlinks(cfg, component)
 
@@ -141,10 +149,11 @@ def fetch_packages(cfg: Config):
 
     for p in pkgs:
         pspec = pspecs[p]
+        pdep = cfg.register_dependency_repo(pspec.url)
         pkg = Package(
             p,
+            dependency=pdep,
             target_dir=package_dependency_dir(cfg.work_dir, p),
-            url=pspec.url,
             version=pspec.version,
             sub_path=pspec.path,
         )
@@ -174,7 +183,9 @@ def register_packages(cfg: Config):
                 fg="yellow",
             )
             continue
-        pkg = Package(p, target_dir=pkg_dir, sub_path=pspecs[p].path)
+        pspec = pspecs[p]
+        pdep = cfg.register_dependency_repo(pspec.url)
+        pkg = Package(p, dependency=pdep, target_dir=pkg_dir, sub_path=pspec.path)
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)
 

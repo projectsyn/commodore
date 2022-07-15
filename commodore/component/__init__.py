@@ -8,11 +8,13 @@ import _jsonnet
 import click
 
 from commodore.gitrepo import GitRepo
+from commodore.multi_dependency import MultiDependency
 
 
 class Component:
     _name: str
-    _repo: GitRepo
+    _repo: Optional[GitRepo]
+    _dependency: MultiDependency
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
@@ -21,11 +23,10 @@ class Component:
     def __init__(
         self,
         name: str,
-        work_dir: P = None,
-        repo_url: str = None,
-        version: str = None,
-        force_init: bool = False,
-        directory: P = None,
+        dependency: MultiDependency,
+        work_dir: Optional[P] = None,
+        version: Optional[str] = None,
+        directory: Optional[P] = None,
         sub_path: str = "",
     ):
         self._name = name
@@ -37,9 +38,11 @@ class Component:
             raise click.ClickException(
                 "Either `work_dir` or `directory` must be provided."
             )
-        self._repo = GitRepo(repo_url, self._dir, force_init=force_init)
+        self._dependency = dependency
+        self._dependency.register_component(self.name, self._dir)
         self.version = version
         self._sub_path = sub_path
+        self._repo = None
 
     @property
     def name(self) -> str:
@@ -47,15 +50,28 @@ class Component:
 
     @property
     def repo(self) -> GitRepo:
+        if not self._repo:
+            self._repo = GitRepo(None, self._dir)
         return self._repo
 
     @property
-    def repo_url(self) -> str:
-        return self._repo.remote
+    def dependency(self):
+        return self._dependency
 
-    @repo_url.setter
-    def repo_url(self, repo_url: str):
-        self._repo.remote = repo_url
+    @dependency.setter
+    def dependency(self, dependency: MultiDependency):
+        """Update the GitRepo backing the component"""
+        self._dependency.deregister_component(self.name)
+        dependency.register_component(self.name, self._dir)
+        self._dependency = dependency
+        # Clear worktree GitRepo wrapper when we update the component's backing
+        # dependency. The new GitRepo wrapper will be created on the nex access of
+        # `repo`.
+        self._repo = None
+
+    @property
+    def repo_url(self) -> str:
+        return self._dependency.url
 
     @property
     def version(self) -> Optional[str]:
@@ -108,7 +124,7 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
-        self._repo.checkout(self.version)
+        self._dependency.checkout_component(self.name, self.version)
 
     def render_jsonnetfile_json(self, component_params):
         """
@@ -117,7 +133,7 @@ class Component:
         jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
         jsonnetfile_json = self._dir / "jsonnetfile.json"
         if jsonnetfile_jsonnet.is_file():
-            if jsonnetfile_json.name in self._repo.repo.tree():
+            if jsonnetfile_json.name in self.repo.repo.tree():
                 click.secho(
                     f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
                     + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",

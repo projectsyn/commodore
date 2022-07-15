@@ -3,8 +3,11 @@ Shared test fixtures for all tests
 See the pytest docs for more details:
 https://docs.pytest.org/en/latest/how-to/fixtures.html#scope-sharing-fixtures-across-classes-modules-packages-or-session
 """
+from pathlib import Path
 
 import pytest
+
+from git import Repo
 
 from commodore.config import Config
 
@@ -57,3 +60,35 @@ def api_data():
         "cluster": cluster,
         "tenant": tenant,
     }
+
+
+class MockMultiDependency:
+    _repo: Repo
+    _target_dir: Path
+    _name: str
+
+    def __init__(self, repo: Repo):
+        self._repo = repo
+
+    def register_component(self, name: str, target_dir: Path):
+        self._target_dir = target_dir
+        self._name = name
+
+    def checkout_component(self, name, version):
+        assert name == self._name
+        assert version == "master"
+        self._repo.clone(self._target_dir)
+
+    def register_package(self, name: str, target_dir: Path):
+        self._target_dir = target_dir
+        self._name = f"pkg.{name}"
+
+    def checkout_package(self, name, version):
+        assert name == self._name
+        assert version == "master"
+        self._repo.clone(self._target_dir)
+
+
+@pytest.fixture
+def mockdep(tmp_path):
+    return MockMultiDependency(Repo.init(tmp_path / "repo.git"))

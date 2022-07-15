@@ -38,7 +38,7 @@ Note that this only works to remove dependencies which have been included previo
 
 Commodore uses the prefix `pkg.` to distinguish configuration package dependencies from component dependencies.
 
-Commodore currently has no mechanism to automatically discover depedencies based on their names.
+Commodore currently has no mechanism to automatically discover dependencies based on their names.
 Instead all components which are referenced in the `applications` array must be listed in key `parameters.components` in the hierarchy.
 Analogously, all configuration packages which are referenced in the `applications` array must be listed in key `parameters.packages` in the hierarchy.
 
@@ -53,11 +53,14 @@ Commodore will exit with an error if no version is given for a dependency.
 The path in the repository is specified in key `path`.
 If key `path` isn't provided, Commodore assumes that the dependency is stored in the repository root.
 
-For each included dependency, Commodore fetches the remote repository and directly checks out the specified version.
-Regardless of the value of key `path`, Commodore fetches the complete repository.
-However, Commodore will create a symlink to the indicated path, when making the dependency available in the hierarchy.
+Commodore uses https://git-scm.com/docs/git-worktree[Git worktrees] to make dependencies available in `dependencies/<dependency-name>`.
+This allows Commodore to ensure that each remote repository is cloned exactly once.
+The initial clone of repository `https://git.example.com/path/to/repo.git` is created in `dependencies/.repos/git.example.com/path/to/repo.git` as a bare checkout.
+For each dependency which is stored in this repository, Commodore ensures that the Git worktree in `dependencies/<dependency-name>` exists and is checked out with the specified `version`.
+Regardless of the value of key `path`, Commodore creates a checkout of the  complete repository in `dependencies/<dependency-name>`.
+However, Commodore will create a symlink to the specified path when making the dependency available in the hierarchy.
 
-Commodore will make all included packages available, before discovering and fetching components.
+Commodore will make all included packages available before discovering and fetching components.
 This ensures that configuration packages can include additional components and can customize component versions.
 
 Commodore will read `parameters.components` from the hierarchy _before component defaults are included_.
