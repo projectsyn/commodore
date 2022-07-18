@@ -37,6 +37,27 @@ def create_component_symlinks(cfg, component: Component):
         )
 
 
+def create_alias_symlinks(cfg, component: Component, alias: str):
+    if not component.has_alias(alias):
+        raise ValueError(
+            f"component {component.name} doesn't have alias {alias} registered"
+        )
+    relsymlink(
+        component.alias_class_file(alias),
+        cfg.inventory.components_dir,
+        dest_name=f"{alias}.yml",
+    )
+    inventory_default = cfg.inventory.defaults_file(alias)
+    relsymlink(
+        component.alias_defaults_file(alias),
+        inventory_default.parent,
+        dest_name=inventory_default.name,
+    )
+    # TODO: How do we handle lib files when symlinking aliases? Code in the component
+    #  alias itself should be able to find the right library. We need to define what
+    #  version of the library is visible for other components.
+
+
 def create_package_symlink(cfg, pname: str, package: Package):
     """
     Create package symlink in the inventory.
@@ -85,6 +106,20 @@ def fetch_components(cfg: Config):
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
 
+    components = cfg.get_components()
+
+    for alias, component in component_aliases.items():
+        if alias == component:
+            # Nothing to setup for identity alias
+            continue
+
+        c = components[component]
+        # TODO: Set alias version instead of component version
+        c.register_alias(alias, c.version or "")
+        c.checkout_alias(alias)
+
+        create_alias_symlinks(cfg, c, alias)
+
 
 def register_components(cfg: Config):
     """
@@ -122,9 +157,9 @@ def register_components(cfg: Config):
         cfg.register_component(component)
         create_component_symlinks(cfg, component)
 
-    registered_components = cfg.get_components().keys()
+    registered_components = cfg.get_components()
     pruned_aliases = {
-        a: c for a, c in component_aliases.items() if c in registered_components
+        a: c for a, c in component_aliases.items() if c in registered_components.keys()
     }
     pruned = sorted(set(component_aliases.keys()) - set(pruned_aliases.keys()))
     if len(pruned) > 0:
@@ -132,6 +167,19 @@ def register_components(cfg: Config):
             f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"
         )
     cfg.register_component_aliases(pruned_aliases)
+
+    for alias, cn in pruned_aliases.items():
+        if alias == cn:
+            # Nothing to setup for identity alias
+            continue
+
+        c = registered_components[cn]
+        # TODO: Set alias version
+        c.register_alias(alias, c.version)
+        if not component_dir(cfg.work_dir, alias).is_dir():
+            raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
+
+        create_alias_symlinks(cfg, c, alias)
 
 
 def fetch_packages(cfg: Config):

@@ -143,22 +143,29 @@ def render_target(
         "_instance": target,
     }
     if not bootstrap:
-        parameters["_base_directory"] = str(components[component].target_directory)
+        parameters["_base_directory"] = str(
+            components[component].alias_directory(target)
+        )
 
     for c in components:
-        if inv.defaults_file(c).is_file():
-            classes.append(f"defaults.{c}")
+        defaults_file = inv.defaults_file(c)
+        if c == component and target != component:
+            # Special case alias defaults symlink
+            defaults_file = inv.defaults_file(target)
+
+        if defaults_file.is_file():
+            classes.append(f"defaults.{defaults_file.stem}")
         else:
             click.secho(f" > Default file for class {c} missing", fg="yellow")
 
     classes.append("global.commodore")
 
     if not bootstrap:
-        if not inv.component_file(component).is_file():
+        if not inv.component_file(target).is_file():
             raise click.ClickException(
                 f"Target rendering failed for {target}: component class is missing"
             )
-        classes.append(f"components.{component}")
+        classes.append(f"components.{target}")
         parameters["kapitan"] = {
             "vars": {
                 "target": target,
