@@ -546,3 +546,16 @@ def test_gitrepo_init_worktree(tmp_path):
 
     assert r.repo.head.commit.author.name == "John Doe"
     assert r.repo.head.commit.author.email == "john.doe@example.com"
+
+
+def test_gitrepo_commit_amend(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+    r._author = git.Actor("John Doe", "john.doe@example.com")
+
+    r.commit("Amended", amend=True)
+
+    assert r.repo.head.commit.message == "Amended\n"
+    assert r.repo.head.commit.author.name == "John Doe"
+    assert r.repo.head.commit.author.email == "john.doe@example.com"
+    assert r.repo.head.commit.committer.name == "John Doe"
+    assert r.repo.head.commit.committer.email == "john.doe@example.com"

@@ -546,13 +546,28 @@ class GitRepo:
         """Add provided list of files to index."""
         self._repo.index.add(files)
 
-    def commit(self, commit_message: str):
+    def commit(self, commit_message: str, amend=False):
         author = self._author
 
         if self._trace:
             click.echo(f' > Using "{author.name} <{author.email}>" as commit author')
 
-        self._repo.index.commit(commit_message, author=author, committer=author)
+        if amend:
+            # We need to call out to `git commit` for amending
+            self._repo.git.execute(  # type: ignore[call-overload]
+                [
+                    "git",
+                    "commit",
+                    "--amend",
+                    "--no-edit",
+                    "--reset-author",
+                    "-m",
+                    commit_message,
+                ],
+                env=self._author_env,
+            )
+        else:
+            self._repo.index.commit(commit_message, author=author, committer=author)
 
     def push(
         self, remote: Optional[str] = None, version: Optional[str] = None
