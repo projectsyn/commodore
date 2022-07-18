@@ -75,6 +75,9 @@ class MultiDependency:
             raise ValueError(f"can't checkout unknown package {name}")
         self._repo.checkout_worktree(target_dir, version=version)
 
+    def has_checkouts(self) -> bool:
+        return len(self._repo.worktrees) > 1
+
 
 def dependency_dir(base_dir: Path, repo_url: str) -> Path:
     return base_dir / ".repos" / dependency_key(repo_url)

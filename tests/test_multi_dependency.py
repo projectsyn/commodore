@@ -150,6 +150,7 @@ def test_multi_dependency_deregister(tmp_path: Path):
 def test_multi_dependency_checkout_component_exc(tmp_path: Path):
     repo_url, ri = setup_remote(tmp_path)
     md = multi_dependency.MultiDependency(repo_url, tmp_path)
+    assert not md.has_checkouts()
 
     with pytest.raises(ValueError) as e:
         md.checkout_component("test", "master")
@@ -163,10 +164,12 @@ def test_multi_dependency_checkout_component(tmp_path: Path):
 
     target_dir = tmp_path / "test"
     assert not target_dir.is_dir()
+    assert not md.has_checkouts()
 
     md.register_component("test", target_dir)
     md.checkout_component("test", "master")
 
+    assert md.has_checkouts()
     assert target_dir.is_dir()
     assert (target_dir / ".git").is_file()
     assert (target_dir / "test.txt").is_file()
@@ -179,6 +182,7 @@ def test_multi_dependency_checkout_component(tmp_path: Path):
 def test_multi_dependency_checkout_package_exc(tmp_path: Path):
     repo_url, ri = setup_remote(tmp_path)
     md = multi_dependency.MultiDependency(repo_url, tmp_path)
+    assert not md.has_checkouts()
 
     with pytest.raises(ValueError) as e:
         md.checkout_package("test", "master")
@@ -189,6 +193,7 @@ def test_multi_dependency_checkout_package_exc(tmp_path: Path):
 def test_multi_dependency_checkout_package(tmp_path: Path):
     repo_url, ri = setup_remote(tmp_path)
     md = multi_dependency.MultiDependency(repo_url, tmp_path)
+    assert not md.has_checkouts()
 
     target_dir = tmp_path / "test"
     assert not target_dir.is_dir()
@@ -196,6 +201,7 @@ def test_multi_dependency_checkout_package(tmp_path: Path):
     md.register_package("test", target_dir)
     md.checkout_package("test", "master")
 
+    assert md.has_checkouts()
     assert target_dir.is_dir()
     assert (target_dir / ".git").is_file()
     assert (target_dir / "test.txt").is_file()
