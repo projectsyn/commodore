@@ -236,6 +236,15 @@ class GitRepo:
         return self._repo.git.rev_parse(sha, short=6)
 
     @property
+    def _author_env(self) -> dict[str, str]:
+        return {
+            Actor.env_author_name: self._author.name or "",
+            Actor.env_author_email: self._author.email or "",
+            Actor.env_committer_name: self._author.name or "",
+            Actor.env_committer_email: self._author.email or "",
+        }
+
+    @property
     def _null_tree(self) -> Tree:
         """Generate empty Tree for the repo.
         An empty Git tree is represented by the C string "tree 0".
@@ -403,6 +412,30 @@ class GitRepo:
 
         # If the worktree directory doesn't exist yet, create the worktree
         self._create_worktree(worktree, version)
+
+    def initialize_worktree(
+        self, worktree: Path, initial_branch: Optional[str] = None
+    ) -> None:
+        if not initial_branch:
+            initial_branch = self._default_version()
+
+        # We need an initial commit to be able to create a worktree. Create initial
+        # commit from empty tree.
+        initsha = self._repo.git.execute(  # type: ignore[call-overload]
+            command=[
+                "git",
+                "commit-tree",
+                "-m",
+                "Initial commit",
+                self._null_tree.hexsha,
+            ],
+            env=self._author_env,
+        )
+
+        # Create worktree using the provided branch name
+        self._repo.git.execute(
+            ["git", "worktree", "add", str(worktree), initsha, "-b", initial_branch]
+        )
 
     @property
     def worktrees(self) -> list[GitRepo]:

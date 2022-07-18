@@ -531,3 +531,18 @@ def test_gitrepo_list_worktrees(tmp_path: Path):
     assert len(worktrees_after_delete) == 1
     assert worktrees_after_delete[0].working_tree_dir == r.working_tree_dir
     assert worktrees_after_delete[0].repo.head.commit.hexsha == ri.commit_shas["master"]
+
+
+def test_gitrepo_init_worktree(tmp_path):
+    repo_path = tmp_path / "repo.git"
+    r = gitrepo.GitRepo(
+        "ssh://git@git.example.com/repo.git",
+        repo_path,
+        author_name="John Doe",
+        author_email="john.doe@example.com",
+        bare=True,
+    )
+    r.initialize_worktree(tmp_path / "repo")
+
+    assert r.repo.head.commit.author.name == "John Doe"
+    assert r.repo.head.commit.author.email == "john.doe@example.com"
