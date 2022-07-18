@@ -404,6 +404,27 @@ class GitRepo:
         # If the worktree directory doesn't exist yet, create the worktree
         self._create_worktree(worktree, version)
 
+    @property
+    def worktrees(self) -> list[GitRepo]:
+        """List all worktrees for the repo"""
+        # First prune worktrees, to ensure repo worktree state is clean
+        self._repo.git.execute(["git", "worktree", "prune"])
+        worktrees: list[GitRepo] = []
+        wt_list = self._repo.git.execute(
+            ["git", "worktree", "list", "--porcelain"],
+            as_process=False,
+            with_extended_output=False,
+            stdout_as_string=True,
+        ).splitlines()
+        for line in wt_list:
+            if " " not in line:
+                continue
+            k, v = line.split(" ")
+            if k == "worktree":
+                worktrees.append(GitRepo(None, Path(v)))
+
+        return worktrees
+
     def checkout(self, version: Optional[str] = None):
         remote_heads = self.fetch()
         if not remote_heads:
