@@ -9,6 +9,7 @@ from pathlib import Path as P
 from subprocess import call
 from git import Repo
 
+from conftest import RunnerFunc
 from test_component import setup_directory
 
 
@@ -92,7 +93,16 @@ def test_run_component_new_command(
         )
     for file in expected_files:
         assert (tmp_path / "dependencies" / component_name / file).exists()
-    # Check that there are no uncommited files in the component repo
+    # Check that we created a worktree
+    assert (tmp_path / "dependencies" / component_name / ".git").is_file()
+    # Verify that worktree and bare copy configs are correct
+    repo = Repo(tmp_path / "dependencies" / component_name)
+    assert not repo.bare
+    assert P(repo.working_tree_dir) == tmp_path / "dependencies" / component_name
+    md_repo = Repo(P(repo.common_dir).resolve())
+    assert md_repo.bare
+    assert md_repo.working_tree_dir is None
+    # Check that there are no uncommitted files in the component repo
     repo = Repo(tmp_path / "dependencies" / component_name)
     assert not repo.is_dirty()
     assert not repo.untracked_files
@@ -225,24 +235,22 @@ def test_run_component_new_command_with_illegal_slug(tmp_path: P, test_input):
     assert exit_status != 0
 
 
-def test_run_component_new_then_delete(tmp_path: P):
+def test_run_component_new_then_delete(tmp_path: P, cli_runner: RunnerFunc):
     """
     Create a new component, then immediately delete it.
     """
     setup_directory(tmp_path)
 
     component_name = "test-component"
-    exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new {component_name} --lib --pp",
-        shell=True,
+    result = cli_runner(
+        ["-d", tmp_path, "-vvv", "component", "new", component_name, "--lib", "--pp"]
     )
-    assert exit_status == 0
+    assert result.exit_code == 0
 
-    exit_status = call(
-        f"commodore -d {tmp_path} -vvv component delete --force {component_name}",
-        shell=True,
+    result = cli_runner(
+        ["-d", tmp_path, "-vvv", "component", "delete", "--force", component_name]
     )
-    assert exit_status == 0
+    assert result.exit_code == 0
 
     # Ensure the dependencies folder is gone.
     assert not (tmp_path / "dependencies" / component_name).exists()

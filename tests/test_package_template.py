@@ -6,6 +6,7 @@ from datetime import date
 import json
 
 import click
+import git
 import pytest
 import yaml
 
@@ -98,6 +99,7 @@ def test_run_package_new_command(
     ] + [Path("tests", f"{case}.yml") for case in additional_test_cases]
 
     assert pkg_dir.is_dir()
+    assert (pkg_dir / ".git").is_file() == (output_dir == "")
     for f in expected_files:
         assert (pkg_dir / f).is_file()
 
@@ -191,20 +193,28 @@ def _verify_copyright_holder(pkg_dir: Path, holder="VSHN AG <info@vshn.ch>"):
         assert line == f"Copyright {year}, {holder}\n"
 
 
+@pytest.mark.parametrize("output_dir", ["", "--output-dir={0}"])
 def test_package_update_copyright_holder(
     tmp_path: Path,
     cli_runner: RunnerFunc,
+    output_dir: str,
 ):
+    if output_dir == "":
+        pkg_dir = tmp_path / "dependencies" / "pkg.test-package"
+    else:
+        pkg_dir = tmp_path / "test-package"
+
+    output_dir = output_dir.format(tmp_path)
     call_package_new(
         tmp_path,
         cli_runner,
-        output_dir=f"--output-dir={tmp_path}",
+        output_dir=output_dir,
     )
-    pkg_dir = tmp_path / "test-package"
+
     _verify_copyright_holder(pkg_dir)
 
     new_copyright = "Test Corp. <test@example.com>"
-    cli_runner(
+    result = cli_runner(
         [
             "-d",
             tmp_path,
@@ -215,8 +225,18 @@ def test_package_update_copyright_holder(
             str(pkg_dir),
         ]
     )
+    assert result.exit_code == 0
 
     _verify_copyright_holder(pkg_dir, new_copyright)
+
+    if output_dir == "":
+        # Verify that we don't mess up the bare copy config with `package update`. This
+        # check only makes sense when upadting a component which is a worktree checkout
+        # (i.e. for output_dir=="" in this test).
+        p_repo = git.Repo(pkg_dir)
+        assert not p_repo.bare
+        md_repo = git.Repo(Path(p_repo.common_dir).resolve())
+        assert md_repo.bare
 
 
 @pytest.mark.parametrize(
