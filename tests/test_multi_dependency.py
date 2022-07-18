@@ -47,7 +47,7 @@ def test_dependency_key(tmp_path: Path, repo_url: str, expected: str):
 
 def test_multi_dependency_init(tmp_path: Path):
     repo_url, ri = setup_remote(tmp_path)
-    _ = multi_dependency.MultiDependency(repo_url, tmp_path)
+    md = multi_dependency.MultiDependency(repo_url, tmp_path)
 
     repo_url_parts = deconstruct_url(repo_url)
     print(repo_url, repo_url_parts)
@@ -59,6 +59,8 @@ def test_multi_dependency_init(tmp_path: Path):
     # Smoke test that the directory is actually a bare clone
     assert (bare_clone_path / "config").exists()
     assert (bare_clone_path / "HEAD").exists()
+
+    assert md.repo_directory == bare_clone_path
 
     b = Repo.init(bare_clone_path)
     assert b.bare
