@@ -135,17 +135,9 @@ class Templater(ABC):
                 + f"{self.target_dir} already exists."
             )
 
-        want_worktree = True
-        try:
-            # Use target_dir.relative_to(work_dir / "dependencies") to determine whether
-            # the new dependency is created in a commodore working tree (i.e. as a
-            # subdirectory of `work_dir / "dependencies"`).
-            _ = self.target_dir.absolute().relative_to(
-                self.config.inventory.dependencies_dir.absolute()
-            )
-        except ValueError:
-            want_worktree = False
-
+        want_worktree = (
+            self.config.inventory.dependencies_dir in self.target_dir.parents
+        )
         if want_worktree:
             md = MultiDependency(self.repo_url, self.config.inventory.dependencies_dir)
             md.initialize_worktree(self.target_dir)
