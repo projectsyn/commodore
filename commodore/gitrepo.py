@@ -236,6 +236,15 @@ class GitRepo:
         return self._repo.git.rev_parse(sha, short=6)
 
     @property
+    def _author_env(self) -> dict[str, str]:
+        return {
+            Actor.env_author_name: self._author.name or "",
+            Actor.env_author_email: self._author.email or "",
+            Actor.env_committer_name: self._author.name or "",
+            Actor.env_committer_email: self._author.email or "",
+        }
+
+    @property
     def _null_tree(self) -> Tree:
         """Generate empty Tree for the repo.
         An empty Git tree is represented by the C string "tree 0".
@@ -404,6 +413,51 @@ class GitRepo:
         # If the worktree directory doesn't exist yet, create the worktree
         self._create_worktree(worktree, version)
 
+    def initialize_worktree(
+        self, worktree: Path, initial_branch: Optional[str] = None
+    ) -> None:
+        if not initial_branch:
+            initial_branch = self._default_version()
+
+        # We need an initial commit to be able to create a worktree. Create initial
+        # commit from empty tree.
+        initsha = self._repo.git.execute(  # type: ignore[call-overload]
+            command=[
+                "git",
+                "commit-tree",
+                "-m",
+                "Initial commit",
+                self._null_tree.hexsha,
+            ],
+            env=self._author_env,
+        )
+
+        # Create worktree using the provided branch name
+        self._repo.git.execute(
+            ["git", "worktree", "add", str(worktree), initsha, "-b", initial_branch]
+        )
+
+    @property
+    def worktrees(self) -> list[GitRepo]:
+        """List all worktrees for the repo"""
+        # First prune worktrees, to ensure repo worktree state is clean
+        self._repo.git.execute(["git", "worktree", "prune"])
+        worktrees: list[GitRepo] = []
+        wt_list = self._repo.git.execute(
+            ["git", "worktree", "list", "--porcelain"],
+            as_process=False,
+            with_extended_output=False,
+            stdout_as_string=True,
+        ).splitlines()
+        for line in wt_list:
+            if " " not in line:
+                continue
+            k, v = line.split(" ")
+            if k == "worktree":
+                worktrees.append(GitRepo(None, Path(v)))
+
+        return worktrees
+
     def checkout(self, version: Optional[str] = None):
         remote_heads = self.fetch()
         if not remote_heads:
@@ -492,13 +546,28 @@ class GitRepo:
         """Add provided list of files to index."""
         self._repo.index.add(files)
 
-    def commit(self, commit_message: str):
+    def commit(self, commit_message: str, amend=False):
         author = self._author
 
         if self._trace:
             click.echo(f' > Using "{author.name} <{author.email}>" as commit author')
 
-        self._repo.index.commit(commit_message, author=author, committer=author)
+        if amend:
+            # We need to call out to `git commit` for amending
+            self._repo.git.execute(  # type: ignore[call-overload]
+                [
+                    "git",
+                    "commit",
+                    "--amend",
+                    "--no-edit",
+                    "--reset-author",
+                    "-m",
+                    commit_message,
+                ],
+                env=self._author_env,
+            )
+        else:
+            self._repo.index.commit(commit_message, author=author, committer=author)
 
     def push(
         self, remote: Optional[str] = None, version: Optional[str] = None

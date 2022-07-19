@@ -7,6 +7,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Optional
 
+import shutil
+
 import click
 import git
 import pytest
@@ -505,3 +507,55 @@ def test_gitrepo_checkout_worktree_no_remote(tmp_path):
     assert w.head.commit.hexsha == c.hexsha
     assert w.head.ref.name == "master"
     assert (tmp_path / "worktree" / "test.txt").is_file()
+
+
+def test_gitrepo_list_worktrees(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+
+    initial_wts = r.worktrees
+    assert len(initial_wts) == 1
+    assert initial_wts[0].working_tree_dir == r.working_tree_dir
+    assert initial_wts[0].repo.head.commit.hexsha == ri.commit_shas["master"]
+
+    r.checkout_worktree(tmp_path / "worktree", version="test-branch")
+
+    worktrees = r.worktrees
+    assert len(worktrees) == 2
+    assert worktrees[0].working_tree_dir == initial_wts[0].working_tree_dir
+    assert worktrees[1].working_tree_dir == tmp_path / "worktree"
+    assert worktrees[1].repo.head.commit.hexsha == ri.commit_shas["test-branch"]
+
+    shutil.rmtree(worktrees[1].working_tree_dir)
+
+    worktrees_after_delete = r.worktrees
+    assert len(worktrees_after_delete) == 1
+    assert worktrees_after_delete[0].working_tree_dir == r.working_tree_dir
+    assert worktrees_after_delete[0].repo.head.commit.hexsha == ri.commit_shas["master"]
+
+
+def test_gitrepo_init_worktree(tmp_path):
+    repo_path = tmp_path / "repo.git"
+    r = gitrepo.GitRepo(
+        "ssh://git@git.example.com/repo.git",
+        repo_path,
+        author_name="John Doe",
+        author_email="john.doe@example.com",
+        bare=True,
+    )
+    r.initialize_worktree(tmp_path / "repo")
+
+    assert r.repo.head.commit.author.name == "John Doe"
+    assert r.repo.head.commit.author.email == "john.doe@example.com"
+
+
+def test_gitrepo_commit_amend(tmp_path: Path):
+    r, ri = setup_repo(tmp_path)
+    r._author = git.Actor("John Doe", "john.doe@example.com")
+
+    r.commit("Amended", amend=True)
+
+    assert r.repo.head.commit.message == "Amended\n"
+    assert r.repo.head.commit.author.name == "John Doe"
+    assert r.repo.head.commit.author.email == "john.doe@example.com"
+    assert r.repo.head.commit.committer.name == "John Doe"
+    assert r.repo.head.commit.committer.email == "john.doe@example.com"

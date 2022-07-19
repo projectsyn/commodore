@@ -83,6 +83,17 @@ class ComponentTemplater(Templater):
                     abort=True,
                 )
             rmtree(component.target_directory)
+            # We check for other checkouts here, because our MultiDependency doesn't
+            # know if there's other dependencies which would be registered on it.
+            if not cdep.has_checkouts():
+                # Also delete bare copy of component repo, if there's no other
+                # worktree checkouts for the same dependency repo.
+                rmtree(cdep.repo_directory)
+            else:
+                click.echo(
+                    f" > Not deleting bare copy of repository {cdep.url}. "
+                    + "Other worktrees refer to the same reposiotry."
+                )
 
             click.secho(f"Component {self.slug} successfully deleted 🎉", bold=True)
         else:

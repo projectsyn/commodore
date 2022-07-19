@@ -40,6 +40,7 @@ check with the user whether they really want to remove the items listed above.
   commodore component new SLUG
 
 This command creates a new component repository under `dependencies/` in Commodore's working directory.
+Commodore creates a Git worktree checkout for the new component.
 The component repository is created using a Cookiecutter template which provides a skeleton for writing a new component.
 The command requires the argument `SLUG` to match the regular expression `^[a-z][a-z0-9-]+[a-z0-9]$`.
 Optionally, the template can be used to add a component library and postprocessing filter configuration.
@@ -152,7 +153,8 @@ If necessary, the command will call `commodore login` internally to fetch a vali
   commodore package new SLUG
 
 This command creates a new config package repository.
-If not specified explicitly, the command will create the new package under `inventory/classes/` in Commodore's working directory.
+If not specified explicitly, the command will create the new package under `dependencies/` in Commodore's working directory.
+If the new package is created in `dependencies`, Commodore will create a Git worktree checkout.
 The package repository is created using a Cookiecutter template which provides a skeleton for writing a new package.
 The command requires the argument `SLUG` to match the regular expression `^[a-z][a-z0-9-]+[a-z0-9]$`.
 Additionally, the command prevents users from creating packages using reserved names or prefixes.

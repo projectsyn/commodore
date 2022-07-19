@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
 
 from pathlib import Path
 from typing import Any, Optional, Sequence
@@ -27,6 +25,7 @@ class PackageTemplater(Templater):
     template_commit: str
     test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
+    _target_dir: Optional[Path] = None
 
     @classmethod
     def from_existing(cls, config: Config, package_path: Path):
@@ -39,6 +38,7 @@ class PackageTemplater(Templater):
         t = PackageTemplater(
             config, cookiecutter_args["slug"], name=cookiecutter_args["name"]
         )
+        t._target_dir = package_path
         t.output_dir = package_path.absolute().parent
         t.template_url = cruft_json["template"]
         if cruft_json["checkout"]:
@@ -61,28 +61,13 @@ class PackageTemplater(Templater):
         no_input: bool,
         output_dir: Path,
     ):
-        """Render package cookiecutter template in tempdir and move the results to
-        `output_dir/pkg.<slug>`, because as far as I can see we can't configure
-        cruft/cookiecutter to create a directory named `pkg.<slug>` except if we
-        change the slug itself, which would need a bunch of template changes.
-        """
-
-        # Because we render the template in a temp directory and move it to the desired
-        # target directory, we don't need argument `output_dir` which is set to
-        # `self.target_dir.parent` when the renderer function is called by the base
-        # class, and instead move the final rendered package to `self.target_dir`
-        # ourselves.
-        _ = output_dir
-        tmpdir = Path(tempfile.mkdtemp())
         cruft_create(
             template_location,
             checkout=self.template_version,
             extra_context=extra_context,
             no_input=no_input,
-            output_dir=tmpdir,
+            output_dir=output_dir,
         )
-        shutil.move(str(tmpdir / self.slug), self.target_dir)
-        shutil.rmtree(tmpdir)
 
     def _validate_slug(self, value: str):
         # First perform default slug checks
@@ -124,6 +109,9 @@ class PackageTemplater(Templater):
 
     @property
     def target_dir(self) -> Path:
+        if self._target_dir:
+            return self._target_dir
+
         if self.output_dir:
             return self.output_dir / self.slug
 
@@ -153,7 +141,8 @@ class PackageTemplater(Templater):
 
         self.commit(
             "Update from template\n\n"
-            + f"Template version: {self.template_version} ({self.template_commit[:7]})"
+            + f"Template version: {self.template_version} ({self.template_commit[:7]})",
+            init=False,
         )
 
         click.secho(

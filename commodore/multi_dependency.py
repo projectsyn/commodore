@@ -27,6 +27,10 @@ class MultiDependency:
     def url(self, repo_url: str):
         self._repo.remote = repo_url
 
+    @property
+    def repo_directory(self) -> Path:
+        return Path(self._repo.repo.common_dir).resolve().absolute()
+
     def get_component(self, name: str) -> Optional[Path]:
         return self._components.get(name)
 
@@ -70,6 +74,13 @@ class MultiDependency:
         if not target_dir:
             raise ValueError(f"can't checkout unknown package {name}")
         self._repo.checkout_worktree(target_dir, version=version)
+
+    def initialize_worktree(self, target_dir: Path) -> None:
+        """Initialize a worktree in `target_dir`."""
+        self._repo.initialize_worktree(target_dir)
+
+    def has_checkouts(self) -> bool:
+        return len(self._repo.worktrees) > 1
 
 
 def dependency_dir(base_dir: Path, repo_url: str) -> Path:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import datetime
 import re
+import tempfile
+import shutil
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -11,6 +13,7 @@ import click
 
 from commodore.config import Config
 from commodore.gitrepo import GitRepo
+from commodore.multi_dependency import MultiDependency
 
 SLUG_REGEX = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
@@ -132,20 +135,34 @@ class Templater(ABC):
                 + f"{self.target_dir} already exists."
             )
 
-        self.template_renderer(
-            self.template,
-            no_input=True,
-            output_dir=self.target_dir.parent,
-            extra_context=self.cookiecutter_args,
+        want_worktree = (
+            self.config.inventory.dependencies_dir in self.target_dir.parents
         )
+        if want_worktree:
+            md = MultiDependency(self.repo_url, self.config.inventory.dependencies_dir)
+            md.initialize_worktree(self.target_dir)
 
-        self.commit("Initial commit")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.template_renderer(
+                self.template,
+                no_input=True,
+                output_dir=Path(tmpdir),
+                extra_context=self.cookiecutter_args,
+            )
+            shutil.copytree(
+                Path(tmpdir) / self.slug, self.target_dir, dirs_exist_ok=True
+            )
+
+        self.commit("Initial commit", amend=want_worktree)
         click.secho(
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
 
-    def commit(self, msg: str) -> None:
-        repo = GitRepo(self.repo_url, targetdir=self.target_dir, force_init=True)
+    def commit(self, msg: str, amend=False, init=True) -> None:
+        # If we're amending an existing commit, we don't want to force initialize the
+        # repo.
+        repo = GitRepo(self.repo_url, self.target_dir, force_init=not amend and init)
+
         repo.stage_all()
         repo.stage_files(self.additional_files)
-        repo.commit(msg)
+        repo.commit(msg, amend=amend)
