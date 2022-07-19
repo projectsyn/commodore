@@ -88,7 +88,7 @@ def fetch_components(cfg: Config):
     component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    cspecs = _read_components(cfg, component_names)
+    cspecs = _read_components(cfg, component_aliases)
     click.secho("Fetching components...", bold=True)
     for cn in component_names:
         cspec = cspecs[cn]
@@ -114,8 +114,14 @@ def fetch_components(cfg: Config):
             continue
 
         c = components[component]
-        # TODO: Set alias version instead of component version
-        c.register_alias(alias, c.version or "")
+        aspec = cspecs[alias]
+        if aspec.url != c.repo_url or aspec.path != c._sub_path:
+            # TODO: Figure out how we'll handle URL/subpath overrides
+            raise NotImplementedError(
+                "URL/path override for component alias not supported"
+            )
+        print(alias, aspec)
+        c.register_alias(alias, aspec.version)
         c.checkout_alias(alias)
 
         create_alias_symlinks(cfg, c, alias)
@@ -131,7 +137,7 @@ def register_components(cfg: Config):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
-        cspecs = _read_components(cfg, components)
+        cspecs = _read_components(cfg, component_aliases)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
@@ -174,8 +180,10 @@ def register_components(cfg: Config):
             continue
 
         c = registered_components[cn]
-        # TODO: Set alias version
-        c.register_alias(alias, c.version)
+        aspec = cspecs[alias]
+        if aspec.url != c.repo_url or aspec.path != c.sub_path:
+            raise NotImplementedError("Changing alias sub path / URL NYI")
+        c.register_alias(alias, aspec.version)
         if not component_dir(cfg.work_dir, alias).is_dir():
             raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
 
@@ -238,9 +246,13 @@ def register_packages(cfg: Config):
         create_package_symlink(cfg, p, pkg)
 
 
-def verify_version_overrides(cluster_parameters):
+def verify_version_overrides(cluster_parameters, component_aliases: dict[str, str]):
     errors = []
+    aliases = set(component_aliases.keys()) - set(component_aliases.values())
     for cname, cspec in cluster_parameters["components"].items():
+        if cname in aliases:
+            # We don't require an url in component alias version configs
+            continue
         if "url" not in cspec:
             errors.append(f"component '{cname}'")
 

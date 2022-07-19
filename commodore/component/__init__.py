@@ -90,6 +90,10 @@ class Component:
         return self._dir
 
     @property
+    def sub_path(self) -> str:
+        return self._sub_path
+
+    @property
     def target_directory(self) -> P:
         return self.alias_directory(self.name)
 

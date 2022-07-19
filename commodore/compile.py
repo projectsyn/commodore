@@ -194,7 +194,7 @@ def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[
     config.register_component_deprecations(cluster_parameters)
     # Raise exception if component version override without URL is present in the
     # hierarchy.
-    verify_version_overrides(cluster_parameters)
+    verify_version_overrides(cluster_parameters, config.get_component_aliases())
 
     for component in config.get_components().values():
         ckey = component.parameters_key
