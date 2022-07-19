@@ -80,29 +80,34 @@ def api_data():
 
 class MockMultiDependency:
     _repo: Repo
-    _target_dir: Path
-    _name: str
+    _components: dict[str, Path]
+    _packages: dict[str, Path]
 
     def __init__(self, repo: Repo):
         self._repo = repo
+        self._components = {}
+        self._packages = {}
 
     def register_component(self, name: str, target_dir: Path):
-        self._target_dir = target_dir
-        self._name = name
+        assert name not in self._components
+        self._components[name] = target_dir
 
     def checkout_component(self, name, version):
-        assert name == self._name
+        assert name in self._components
         assert version == "master"
-        self._repo.clone(self._target_dir)
+        self._repo.clone(self._components[name])
 
     def register_package(self, name: str, target_dir: Path):
-        self._target_dir = target_dir
-        self._name = f"pkg.{name}"
+        assert name not in self._packages
+        self._packages[name] = target_dir
 
     def checkout_package(self, name, version):
-        assert name == self._name
+        assert name in self._packages
         assert version == "master"
-        self._repo.clone(self._target_dir)
+        self._repo.clone(self._packages[name])
+
+    def get_component(self, name) -> Path:
+        return self._components[name]
 
 
 @pytest.fixture

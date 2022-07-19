@@ -199,7 +199,7 @@ def test_fetch_components_is_minimal(
         assert not (tmp_path / "dependencies" / component).exists()
 
 
-def _setup_register_components(tmp_path: Path):
+def _setup_register_components(tmp_path: Path, aliases: dict[str, str] = {}):
     inv = Inventory(tmp_path)
     inv.ensure_dirs()
     component_dirs = ["foo", "bar", "baz"]
@@ -214,6 +214,14 @@ def _setup_register_components(tmp_path: Path):
             f.write("")
         with open(cpath / "class" / f"{directory}.yml", "w") as f:
             f.write("")
+
+    for alias, cn in aliases.items():
+        cpath = tmp_path / "dependencies" / cn
+        if not cpath.is_dir():
+            continue
+        apath = tmp_path / "dependencies" / alias
+        assert not apath.is_dir()
+        os.symlink(cpath, apath)
 
     return component_dirs, other_dirs
 
@@ -244,8 +252,10 @@ def test_register_components(
 def test_register_components_and_aliases(
     patch_discover, patch_read, config: Config, tmp_path: Path
 ):
-    component_dirs, other_dirs = _setup_register_components(tmp_path)
     alias_data = {"fooer": "foo"}
+    component_dirs, other_dirs = _setup_register_components(
+        tmp_path, aliases=alias_data
+    )
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
         cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
@@ -295,13 +305,15 @@ def test_register_unknown_components(
 def test_register_dangling_aliases(
     patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
-    component_dirs, other_dirs = _setup_register_components(tmp_path)
     # add some dangling aliases
     alias_data = {"quxer": "qux", "quuxer": "quux"}
     # generate expected output
     should_miss = sorted(set(alias_data.keys()))
     # add an alias that should work
     alias_data["bazzer"] = "baz"
+    component_dirs, other_dirs = _setup_register_components(
+        tmp_path, aliases=alias_data
+    )
 
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {

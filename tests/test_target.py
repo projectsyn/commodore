@@ -1,6 +1,7 @@
 """
 Unit-tests for target generation
 """
+from __future__ import annotations
 
 import os
 import click
@@ -17,23 +18,40 @@ from commodore.config import Config
 class MockComponent:
     def __init__(self, base_dir: P, name: str):
         self.name = name
-        self._target_directory = base_dir / name
+        self._base_dir = base_dir
+        self.aliases = {self.name: "master"}
 
     @property
     def target_directory(self):
-        return self._target_directory
+        return self._base_dir / self.name
+
+    def alias_directory(self, alias: str):
+        assert alias in self.aliases
+        return self._base_dir / alias
+
+    def register_alias(self, alias: str, version: str):
+        assert alias not in self.aliases
+        self.aliases[alias] = version
 
 
 def cluster_from_data(apidata) -> cluster.Cluster:
     return cluster.Cluster(apidata["cluster"], apidata["tenant"])
 
 
-def _setup_working_dir(inv: Inventory, components):
+def _setup_working_dir(inv: Inventory, components, aliases: dict[str, str] = {}):
     for cls in components:
         defaults = inv.defaults_file(cls)
         os.makedirs(defaults.parent, exist_ok=True)
         defaults.touch()
         component = inv.component_file(cls)
+        os.makedirs(component.parent, exist_ok=True)
+        component.touch()
+
+    for alias in aliases:
+        defaults = inv.defaults_file(alias)
+        os.makedirs(defaults.parent, exist_ok=True)
+        defaults.touch()
+        component = inv.component_file(alias)
         os.makedirs(component.parent, exist_ok=True)
         component.touch()
 
@@ -103,22 +121,23 @@ def test_render_target(tmp_path: P):
 def test_render_aliased_target(tmp_path: P):
     components = ["foo", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(inv, components)
+    _setup_working_dir(inv, components, aliases={"fooer": "foo"})
 
     components = {
         "foo": MockComponent(tmp_path, "foo"),
         "bar": MockComponent(tmp_path, "bar"),
         "baz": MockComponent(tmp_path, "baz"),
     }
+    components["foo"].register_alias("fooer", "master")
 
     target = cluster.render_target(inv, "fooer", components, component="foo")
 
     classes = [
         "params.cluster",
-        "defaults.foo",
+        "defaults.fooer",
         "defaults.bar",
         "global.commodore",
-        "components.foo",
+        "components.fooer",
     ]
     assert target != ""
     print(target)
@@ -130,13 +149,13 @@ def test_render_aliased_target(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "fooer"
     assert target["parameters"]["foo"] == "${fooer}"
     assert target["parameters"]["_instance"] == "fooer"
-    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo")
+    assert target["parameters"]["_base_directory"] == str(tmp_path / "fooer")
 
 
 def test_render_aliased_target_with_dash(tmp_path: P):
     components = ["foo-comp", "bar"]
     inv = Inventory(work_dir=tmp_path)
-    _setup_working_dir(inv, components)
+    _setup_working_dir(inv, components, aliases={"foo-1": "foo-comp"})
 
     components = {
         "foo-comp": MockComponent(tmp_path, "foo-comp"),
@@ -144,14 +163,16 @@ def test_render_aliased_target_with_dash(tmp_path: P):
         "baz": MockComponent(tmp_path, "baz"),
     }
 
+    components["foo-comp"].register_alias("foo-1", "master")
+
     target = cluster.render_target(inv, "foo-1", components, component="foo-comp")
 
     classes = [
         "params.cluster",
-        "defaults.foo-comp",
+        "defaults.foo-1",
         "defaults.bar",
         "global.commodore",
-        "components.foo-comp",
+        "components.foo-1",
     ]
     assert target != ""
     print(target)
@@ -163,7 +184,7 @@ def test_render_aliased_target_with_dash(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo-1"
     assert target["parameters"]["foo_comp"] == "${foo_1}"
     assert target["parameters"]["_instance"] == "foo-1"
-    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo-comp")
+    assert target["parameters"]["_base_directory"] == str(tmp_path / "foo-1")
 
 
 def test_render_params(api_data, tmp_path: P):
