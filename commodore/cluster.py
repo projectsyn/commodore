@@ -130,7 +130,6 @@ def render_target(
     inv: Inventory,
     target: str,
     components: dict[str, Component],
-    # pylint: disable=unsubscriptable-object
     component: Optional[str] = None,
 ):
     if not component:
@@ -180,7 +179,6 @@ def render_target(
     }
 
 
-# pylint: disable=unsubscriptable-object
 def update_target(cfg: Config, target: str, component: Optional[str] = None):
     click.secho(f"Updating Kapitan target for {target}...", bold=True)
     file = cfg.inventory.target_file(target)
