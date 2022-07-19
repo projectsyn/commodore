@@ -261,6 +261,7 @@ def test_register_components_and_aliases(
         cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
         for cn in component_dirs
     }
+    patch_read.return_value["fooer"] = patch_read.return_value["foo"]
 
     dependency_mgmt.register_components(config)
 
@@ -320,6 +321,7 @@ def test_register_dangling_aliases(
         cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
         for cn in component_dirs
     }
+    patch_read.return_value["bazzer"] = patch_read.return_value["baz"]
 
     dependency_mgmt.register_components(config)
 
@@ -473,10 +475,10 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
 )
 def test_verify_component_version_overrides(cluster_params: dict, expected: str):
     if expected == "":
-        dependency_mgmt.verify_version_overrides(cluster_params)
+        dependency_mgmt.verify_version_overrides(cluster_params, {})
     else:
         with pytest.raises(click.ClickException) as e:
-            dependency_mgmt.verify_version_overrides(cluster_params)
+            dependency_mgmt.verify_version_overrides(cluster_params, {})
 
         assert expected in str(e)
 
