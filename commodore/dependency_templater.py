@@ -178,6 +178,6 @@ class Templater(ABC):
         click.echo(message)
 
         if changed:
-            # Only create a new commmit if there are any changes.
+            # Only create a new commit if there are any changes.
             repo.commit(msg, amend=amend)
         return changed
