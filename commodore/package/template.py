@@ -22,7 +22,6 @@ from commodore.package import package_dependency_dir
 class PackageTemplater(Templater):
     template_url: str
     template_version: str
-    template_commit: str
     _test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
     _target_dir: Optional[Path] = None
@@ -43,8 +42,6 @@ class PackageTemplater(Templater):
         t.template_url = cruft_json["template"]
         if cruft_json["checkout"]:
             t.template_version = cruft_json["checkout"]
-        if cruft_json["commit"]:
-            t.template_commit = cruft_json["commit"]
 
         if "test_cases" in cookiecutter_args:
             t.test_cases = cookiecutter_args["test_cases"].split(" ")
@@ -53,6 +50,12 @@ class PackageTemplater(Templater):
         t.copyright_holder = cookiecutter_args["copyright_holder"]
         t.copyright_year = cookiecutter_args["copyright_year"]
         return t
+
+    @property
+    def template_commit(self) -> str:
+        with open(self.target_dir / ".cruft.json", "r", encoding="utf-8") as f:
+            cruft_json = json.load(f)
+            return cruft_json["commit"]
 
     @property
     def test_cases(self) -> list[str]:

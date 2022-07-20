@@ -298,6 +298,55 @@ def test_package_update_test_cases(
         assert r.repo.head.commit.message.startswith("Update from template\n\n")
 
 
+def test_package_update_commit_message(
+    tmp_path: Path, config: Config, cli_runner: RunnerFunc
+):
+    pkg_dir = tmp_path / "test-package"
+
+    # Intentionally create package from old version
+    result = cli_runner(
+        [
+            "-d",
+            str(tmp_path),
+            "package",
+            "new",
+            "test-package",
+            "--output-dir",
+            str(tmp_path),
+            "--template-version",
+            "main^",
+        ]
+    )
+    assert result.exit_code == 0
+
+    # Adjust cruft config to use "main" branch of template
+    with open(pkg_dir / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+        cruft_json["checkout"] = "main"
+    with open(pkg_dir / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f)
+
+    r = GitRepo(None, pkg_dir)
+    r.stage_files([".cruft.json"])
+    r.commit("Initial commit", amend=True)
+
+    # Update package
+    result = cli_runner(["-d", str(tmp_path), "package", "update", str(pkg_dir)])
+    print(result.stdout)
+    assert result.exit_code == 0
+
+    with open(pkg_dir / ".cruft.json", "r") as f:
+        cruft_json = json.load(f)
+        template_version = cruft_json["checkout"]
+        template_sha = cruft_json["commit"]
+
+    assert (
+        r.repo.head.commit.message
+        == "Update from template\n\n"
+        + f"Template version: {template_version} ({template_sha[:7]})"
+    )
+
+
 def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Config):
     with pytest.raises(click.ClickException) as e:
         _ = PackageTemplater.from_existing(config, tmp_path / "test-package")
