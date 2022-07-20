@@ -157,12 +157,19 @@ class PackageTemplater(Templater):
             extra_context=self.cookiecutter_args,
         )
 
-        self.commit(
+        updated = self.commit(
             "Update from template\n\n"
             + f"Template version: {self.template_version} ({self.template_commit[:7]})",
             init=False,
         )
 
-        click.secho(
-            f"{self.deptype.capitalize()} {self.name} successfully updated 🎉", bold=True
-        )
+        if updated:
+            click.secho(
+                f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                bold=True,
+            )
+        else:
+            click.secho(
+                f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                bold=True,
+            )

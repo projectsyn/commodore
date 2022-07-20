@@ -4,6 +4,7 @@ import datetime
 import re
 import tempfile
 import shutil
+import textwrap
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -158,11 +159,25 @@ class Templater(ABC):
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
 
-    def commit(self, msg: str, amend=False, init=True) -> None:
+    def commit(self, msg: str, amend=False, init=True) -> bool:
         # If we're amending an existing commit, we don't want to force initialize the
         # repo.
         repo = GitRepo(self.repo_url, self.target_dir, force_init=not amend and init)
 
-        repo.stage_all()
+        # stage_all() returns the full diff compared to the last commit. Therefore, we
+        # do stage_files() first and then stage_all(), to ensure we get the complete
+        # diff.
         repo.stage_files(self.additional_files)
-        repo.commit(msg, amend=amend)
+        diff_text, changed = repo.stage_all()
+
+        if changed:
+            indented = textwrap.indent(diff_text, "     ")
+            message = f" > Changes:\n{indented}"
+        else:
+            message = " > No changes."
+        click.echo(message)
+
+        if changed:
+            # Only create a new commmit if there are any changes.
+            repo.commit(msg, amend=amend)
+        return changed

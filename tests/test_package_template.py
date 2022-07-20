@@ -248,6 +248,7 @@ def test_package_update_copyright_holder(
 @pytest.mark.parametrize(
     "initial_test_cases,additional_test_cases,remove_test_cases",
     (
+        ([], [], []),
         ([], ["foo"], []),
         (["foo"], ["bar"], ["foo"]),
         (["foo", "bar"], ["baz"], ["foo", "bar"]),
@@ -291,7 +292,10 @@ def test_package_update_test_cases(
     r = GitRepo(None, pkg_dir)
     assert not r.repo.is_dirty()
     assert len(r.repo.untracked_files) == 0
-    assert r.repo.head.commit.message.startswith("Update from template\n\n")
+    if additional_test_cases == [] and remove_test_cases == []:
+        assert r.repo.head.commit.message.startswith("Initial commit")
+    else:
+        assert r.repo.head.commit.message.startswith("Update from template\n\n")
 
 
 def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Config):
