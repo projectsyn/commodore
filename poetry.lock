@@ -913,7 +913,7 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyfakefs"
-version = "4.6.2"
+version = "4.6.3"
 description = "pyfakefs implements a fake file system that mocks the Python file system modules."
 category = "dev"
 optional = false
@@ -1426,7 +1426,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "8367bacc4c485194f64cfee0f5c74f8bfea5541205838e4dfbef62cd5c458036"
+content-hash = "85351a59950f65940cdf257902d9dbf30b676da603d7fa8327098a6a677476e8"
 
 [metadata.files]
 addict = [
@@ -2008,8 +2008,8 @@ pydantic = [
     {file = "pydantic-1.9.1.tar.gz", hash = "sha256:1ed987c3ff29fff7fd8c3ea3a3ea877ad310aae2ef9889a119e22d3f2db0691a"},
 ]
 pyfakefs = [
-    {file = "pyfakefs-4.6.2-py3-none-any.whl", hash = "sha256:07761d750765cc2047dadb9906a1caaf5f56985327ac1c0690bc2a9b514261f4"},
-    {file = "pyfakefs-4.6.2.tar.gz", hash = "sha256:8dd9c8020bcd081f259657a869d5eaf9cca7bb3673c7f03bfae8b28bbe7599b6"},
+    {file = "pyfakefs-4.6.3-py3-none-any.whl", hash = "sha256:8959fe7058ba7efa65694b7979e123e27921a58f557a88628be93f0a936e6757"},
+    {file = "pyfakefs-4.6.3.tar.gz", hash = "sha256:6df12a7cf657637a1b036bc20059727c642f92990e90fee2fb003daa3cda6ca1"},
 ]
 pyjwt = [
     {file = "PyJWT-2.1.0-py3-none-any.whl", hash = "sha256:934d73fbba91b0483d3857d1aff50e96b2a892384ee2c17417ed3203f173fca1"},
