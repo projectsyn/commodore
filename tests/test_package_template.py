@@ -57,6 +57,7 @@ def call_package_new(
     [
         [],
         ["foo"],
+        ["foo", "foo"],
         ["foo", "bar"],
     ],
 )
@@ -103,10 +104,15 @@ def test_run_package_new_command(
     for f in expected_files:
         assert (pkg_dir / f).is_file()
 
+    expected_cases = ["defaults"]
+    for t in additional_test_cases:
+        if t not in expected_cases:
+            expected_cases.append(t)
+
     with open(pkg_dir / ".github" / "workflows" / "test.yaml") as gh_test:
         workflows = yaml.safe_load(gh_test)
         instances = workflows["jobs"]["test"]["strategy"]["matrix"]["instance"]
-        assert instances == list(["defaults"] + additional_test_cases)
+        assert instances == expected_cases
 
 
 @pytest.mark.parametrize(
@@ -293,3 +299,23 @@ def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Con
         _ = PackageTemplater.from_existing(config, tmp_path / "test-package")
 
     assert str(e.value) == "Provided package path isn't a directory"
+
+
+@pytest.mark.parametrize(
+    "test_cases,expected",
+    [
+        ([], []),
+        (["defaults"], ["defaults"]),
+        (["defaults", "foo"], ["defaults", "foo"]),
+        (["defaults", "foo", "foo"], ["defaults", "foo"]),
+        (["foo", "bar"], ["foo", "bar"]),
+        (["foo", "bar", "foo"], ["foo", "bar"]),
+    ],
+)
+def test_package_templater_test_cases(
+    tmp_path: Path, config: Config, test_cases: list[str], expected: list[str]
+):
+    p = PackageTemplater(config, "test-package")
+    p.test_cases = test_cases
+
+    assert p.test_cases == expected
