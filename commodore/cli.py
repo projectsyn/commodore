@@ -483,7 +483,8 @@ def package(config: Config, verbose: int):
     show_default=True,
     multiple=True,
     help="Additional test cases to generate in the new package. Can be repeated. "
-    + "Test case `defaults` will always be generated.",
+    + "Test case `defaults` will always be generated."
+    + "Commodore will deduplicate test cases by name.",
 )
 @verbosity
 @pass_config
@@ -550,7 +551,8 @@ def package_new(
     show_default=True,
     multiple=True,
     help="Additional test cases to generate in the new package. Can be repeated. "
-    + "Already existing test cases will always be kept.",
+    + "Already existing test cases will always be kept. "
+    + "Commodore will deduplicate test cases by name.",
 )
 @click.option(
     "--remove-test-case",
@@ -583,8 +585,9 @@ def package_update(
         t.golden_tests = golden_tests
     if update_copyright_year:
         t.copyright_year = None
-    t.test_cases.extend(additional_test_case)
-    t.test_cases = [tc for tc in t.test_cases if tc not in remove_test_case]
+    test_cases = t.test_cases
+    test_cases.extend(additional_test_case)
+    t.test_cases = [tc for tc in test_cases if tc not in remove_test_case]
 
     t.update()
 

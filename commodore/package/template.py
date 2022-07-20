@@ -23,7 +23,7 @@ class PackageTemplater(Templater):
     template_url: str
     template_version: str
     template_commit: str
-    test_cases: list[str] = ["defaults"]
+    _test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
     _target_dir: Optional[Path] = None
 
@@ -53,6 +53,24 @@ class PackageTemplater(Templater):
         t.copyright_holder = cookiecutter_args["copyright_holder"]
         t.copyright_year = cookiecutter_args["copyright_year"]
         return t
+
+    @property
+    def test_cases(self) -> list[str]:
+        """Return list of test cases.
+
+        The getter deduplicates the stored list before returning it.
+
+        Don't use `append()` on the returned list to add test cases to the package, as
+        the getter returns a copy of the list stored in the object."""
+        cases = []
+        for t in self._test_cases:
+            if t not in cases:
+                cases.append(t)
+        return cases
+
+    @test_cases.setter
+    def test_cases(self, test_cases: list[str]):
+        self._test_cases = test_cases
 
     def _cruft_renderer(
         self,
