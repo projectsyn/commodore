@@ -848,4 +848,6 @@ def commodore_fetch_token(
 
 def main():
     load_dotenv(dotenv_path=find_dotenv(usecwd=True))
-    commodore.main(prog_name="commodore", auto_envvar_prefix="COMMODORE")
+    commodore.main(
+        prog_name="commodore", auto_envvar_prefix="COMMODORE", max_content_width=100
+    )
