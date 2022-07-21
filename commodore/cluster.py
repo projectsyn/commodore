@@ -20,10 +20,18 @@ from .inventory import Inventory
 class Cluster:
     _cluster_response: dict
     _tenant_response: dict
+    _fallback_dynamic_facts: dict[str, Any]
 
-    def __init__(self, cluster_response: dict, tenant_response: dict):
+    def __init__(
+        self,
+        cluster_response: dict,
+        tenant_response: dict,
+        fallback_dynamic_facts: dict[str, Any] = {},
+    ):
         self._cluster = cluster_response
         self._tenant = tenant_response
+        self._fallback_dynamic_facts = fallback_dynamic_facts
+
         if (
             "tenant" not in self._cluster
             or self._cluster["tenant"] != self._tenant["id"]
@@ -95,7 +103,7 @@ class Cluster:
 
     @property
     def dynamic_facts(self) -> dict[str, Any]:
-        return self._cluster.get("dynamicFacts", {})
+        return self._cluster.get("dynamicFacts", self._fallback_dynamic_facts)
 
 
 def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
@@ -107,7 +115,7 @@ def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     tenant_response = lieutenant_query(
         cfg.api_url, cfg.api_token, "tenants", cluster_response["tenant"]
     )
-    return Cluster(cluster_response, tenant_response)
+    return Cluster(cluster_response, tenant_response, cfg.dynamic_facts)
 
 
 def read_cluster_and_tenant(inv: Inventory) -> tuple[str, str]:

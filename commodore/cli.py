@@ -12,7 +12,7 @@ import yaml
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
 from .catalog import catalog_list
-from .config import Config, Migration
+from .config import Config, Migration, parse_dynamic_facts_from_cli
 from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
@@ -178,6 +178,26 @@ oidc_client_option = click.option(
     ),
     type=click.Choice([m.value for m in Migration], case_sensitive=False),
 )
+@click.option(
+    "-d",
+    "--dynamic-fact",
+    type=str,
+    metavar="KEY=VALUE",
+    multiple=True,
+    help=(
+        "Fallback dynamic facts to use when compiling a cluster which hasn't "
+        + "reported its dynamic facts yet. Commodore will never use values provided "
+        + "through this parameter if the cluster response from the API has a dynamic "
+        + "facts field. Can be repeated. Commodore expects each fact to be specified "
+        + "as key=value. Nested keys can be provided as `path.to.key`. Commodore will "
+        + "parse values as JSON if they're prefixed by `json:`. If the same key is "
+        + "provided multiple times, the last occurrence overrides the previous values. "
+        + "When providing a value for a key as JSON, previously specified subkeys of "
+        + "that key will be overwritten. Nested keys are ignored if any non-leaf level "
+        + "of the requested key already contains a non-dictionary value. If a value "
+        + "prefixed with `json:` isn't valid JSON, it will be skipped."
+    ),
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -199,6 +219,7 @@ def compile_catalog(
     tenant_repo_revision_override,
     fetch_dependencies,
     migration,
+    dynamic_fact: str,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -213,14 +234,15 @@ def compile_catalog(
     config.migration = migration
     config.oidc_client = oidc_client
     config.oidc_discovery_url = oidc_discovery_url
+    config.fetch_dependencies = fetch_dependencies
+    config.dynamic_facts = parse_dynamic_facts_from_cli(dynamic_fact)
+
     if config.push and (
         config.global_repo_revision_override or config.tenant_repo_revision_override
     ):
         raise click.ClickException(
             "Cannot push changes when local global or tenant repo override is specified"
         )
-
-    config.fetch_dependencies = fetch_dependencies
 
     if config.api_token is None and not local:
         try:
