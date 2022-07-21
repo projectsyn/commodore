@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 
 import pytest
@@ -5,13 +7,18 @@ import textwrap
 from pathlib import Path as P
 
 from unittest.mock import patch
-from typing import Optional
+from typing import Any, Iterable, Optional
 
 import jwt
 
 import click
 
-from commodore.config import Config
+from commodore.config import (
+    Config,
+    parse_sub_key,
+    parse_dynamic_fact_value,
+    parse_dynamic_facts_from_cli,
+)
 from commodore.package import Package
 from commodore.multi_dependency import dependency_key
 
@@ -290,3 +297,73 @@ def test_register_dependency_prefer_ssh(config: Config, tmp_path: P):
     md3 = config.register_dependency_repo(repo_url_https)
     assert md3 == md
     assert md.url == repo_url_ssh
+
+
+@pytest.mark.parametrize(
+    "key,base_dict,expected_key,expected_dict",
+    [
+        ("toplevel", {}, "toplevel", {}),
+        ("path.to.key", {}, "key", {"path": {"to": {}}}),
+        ("path.to.key", {"path": {"to": "value"}}, None, {"path": {"to": "value"}}),
+        (
+            "path.to.key",
+            {"path": {"to": {"other": "value"}}},
+            "key",
+            {"path": {"to": {"other": "value"}}},
+        ),
+        ("path.", {}, None, {}),
+        ("path..foo", {}, None, {}),
+        (".foo", {}, None, {}),
+    ],
+)
+def test_parse_sub_key(
+    key: str,
+    base_dict: dict[str, Any],
+    expected_key: str,
+    expected_dict: dict[str, Any],
+):
+    leaf_key, leaf_dict = parse_sub_key(base_dict, key)
+    assert leaf_key == expected_key
+    assert base_dict == expected_dict
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("foo", "foo"),
+        ("test:foo", "test:foo"),
+        ("json:foo", None),
+        ('json:{"foo":"bar"', None),
+        ('json:"foo"', "foo"),
+        ("json:1", 1),
+        ('json:["a"]', ["a"]),
+        ('json:{"test":{"key":"value"}}', {"test": {"key": "value"}}),
+    ],
+)
+def test_parse_dynamic_fact_value(value: str, expected: Any):
+    parsed = parse_dynamic_fact_value(value)
+    assert parsed == expected
+
+
+@pytest.mark.parametrize(
+    "args,expected",
+    [
+        ([], {}),
+        (["key"], {}),
+        (["key="], {}),
+        (['key=json:""'], {"key": ""}),
+        (["key=value"], {"key": "value"}),
+        (["key=value", "foo=bar"], {"key": "value", "foo": "bar"}),
+        (["key=value=x"], {"key": "value=x"}),
+        (["key=value", "key=another"], {"key": "another"}),
+        (["key=value", "key.foo=bar"], {"key": "value"}),
+        (["key.foo=bar", "key=value"], {"key": "value"}),
+        (["key.foo=bar", "key.baz=qux"], {"key": {"foo": "bar", "baz": "qux"}}),
+        (["key=json:[1,2,3]"], {"key": [1, 2, 3]}),
+        (["key=json:[1,2,3"], {}),
+        (["path.to.key=json:foo"], {}),
+    ],
+)
+def test_parse_dynamic_facts_from_cli(args: Iterable[str], expected: dict[str, Any]):
+    dynamic_facts = parse_dynamic_facts_from_cli(args)
+    assert dynamic_facts == expected
