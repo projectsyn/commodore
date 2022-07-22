@@ -349,7 +349,7 @@ def parse_dynamic_fact_value(raw_value: str) -> Any:
             v = json.loads(json_val)
         except json.JSONDecodeError as e:
             click.secho(
-                f" > Expected value '{json_val}' to be parsable JSON, "
+                f"Expected value '{json_val}' to be parsable JSON, "
                 + f"but parsing failed with '{e}', skipping",
                 fg="yellow",
             )
@@ -379,14 +379,14 @@ def parse_dynamic_facts_from_cli(raw_facts: Iterable[str]) -> dict[str, Any]:
     for f in raw_facts:
         if "=" not in f:
             click.secho(
-                f" > Ignoring dynamic fact {f} which is not in format key=value",
+                f"Ignoring dynamic fact {f} which is not in format key=value",
                 fg="yellow",
             )
             continue
         raw_key, raw_value = f.split("=", maxsplit=1)
         if not raw_value:
             click.secho(
-                f"Ignoring malformed dynamic fact {f} with no value. "
+                f"Ignoring malformed dynamic fact '{f}' with no value. "
                 + "Please specify empty string value as 'json:\"\"'",
                 fg="yellow",
             )
