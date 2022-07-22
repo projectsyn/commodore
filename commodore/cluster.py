@@ -103,6 +103,13 @@ class Cluster:
 
     @property
     def dynamic_facts(self) -> dict[str, Any]:
+        if "dynamicFacts" in self._cluster and self._fallback_dynamic_facts:
+            empty = "" if self._cluster["dynamicFacts"] else "empty "
+            click.secho(
+                f" > Cluster API response contains {empty}dynamic facts, ignoring "
+                + " dynamic facts provided on the command line."
+            )
+
         return self._cluster.get("dynamicFacts", self._fallback_dynamic_facts)
 
 
