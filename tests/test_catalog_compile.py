@@ -9,9 +9,9 @@ import yaml
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch
 
 import git
+import responses
 
 from commodore.cluster import Cluster, update_target, update_params
 from commodore.config import Config
@@ -131,12 +131,8 @@ def _verify_commit_message(
 
 
 @pytest.mark.integration
-@patch.object(
-    commodore_compile,
-    "load_cluster_from_api",
-    side_effect=_mock_load_cluster_from_api,
-)
-def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
+@responses.activate
+def test_catalog_compile(config: Config, tmp_path: Path, capsys):
     os.chdir(tmp_path)
     cluster_id = "c-test"
     expected_components = ["argocd", "metrics-server", "resource-locker"]
@@ -169,11 +165,31 @@ def test_catalog_compile(load_cluster, config: Config, tmp_path: Path, capsys):
         expected_classes.append(f"defaults.{c}")
     expected_classes.append("global.commodore")
 
+    responses.add(
+        responses.GET,
+        config.api_url + f"/clusters/{cluster_id}",
+        json=cluster_resp,
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        config.api_url + f"/tenants/{tenant_resp['id']}",
+        json=tenant_resp,
+        status=200,
+    )
+    # Don't intercept any requests calls except for ones containing `config.api_url`
+    responses.add_passthru(re.compile(f"(?!{config.api_url})"))
+
     config.push = True
     commodore_compile.compile(config, cluster_id)
 
-    # Verify our mocked load cluster was called
-    assert load_cluster.called
+    # Verify that responses replied for the API URL calls
+    assert len(responses.calls) == 2
+    assert responses.calls[0].request.url == config.api_url + f"/clusters/{cluster_id}"
+    assert (
+        responses.calls[1].request.url
+        == config.api_url + f"/tenants/{tenant_resp['id']}"
+    )
 
     # Stdout success msg
     captured = capsys.readouterr()

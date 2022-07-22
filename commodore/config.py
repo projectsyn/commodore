@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import json
 import time
 import textwrap
 
 from enum import Enum
 from pathlib import Path as P
-from typing import Optional
+from typing import Any, Iterable, Optional
 
 import jwt
 
@@ -33,6 +34,7 @@ class Config:
     _dependency_repos: dict[str, MultiDependency]
     _deprecation_notices: list[str]
     _migration: Optional[Migration]
+    _dynamic_facts: dict[str, Any]
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -70,6 +72,7 @@ class Config:
         self._global_repo_revision_override = None
         self._tenant_repo_revision_override = None
         self._migration = None
+        self._dynamic_facts = {}
 
     @property
     def verbose(self):
@@ -190,6 +193,15 @@ class Config:
             self._migration = Migration(migration)
 
     @property
+    def dynamic_facts(self) -> dict[str, Any]:
+        """Returns fallback dynamic facts provided on the command line."""
+        return self._dynamic_facts
+
+    @dynamic_facts.setter
+    def dynamic_facts(self, facts: dict[str, Any]):
+        self._dynamic_facts = facts
+
+    @property
     def inventory(self):
         return self._inventory
 
@@ -282,3 +294,116 @@ def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_instance", False)
+
+
+def set_fact_value(facts: dict[str, Any], raw_key: str, value: Any) -> None:
+    """Set value for nested fact at `raw_key` (expected form `path.to.key`) to `value`.
+
+    If a segment of the nested key is present in `facts` and not a dictionary or when
+    the raw key contains an empty segment, the function won't set a value and will
+    instead print a diagnostic message.
+    """
+    key_parts = raw_key.split(".")
+
+    if any(kp == "" for kp in key_parts):
+        # Bail out early if the raw key is malformed (any empty segment)
+        click.secho(f"Malformed nested key '{raw_key}' skipping...", fg="yellow")
+        return
+
+    prefix_key = ""
+    target_dict = facts
+    for k in key_parts[:-1]:
+        prefix_key = f"{prefix_key}{k}."
+        if k in target_dict and not isinstance(target_dict[k], dict):
+            click.secho(
+                "Trying to insert subkey into non-dictionary "
+                + f"dynamic fact '{prefix_key[:-1]}', skipping...",
+                fg="yellow",
+            )
+            return
+
+        target_dict = target_dict.setdefault(k, {})
+
+    key = key_parts[-1]
+
+    if key in target_dict:
+        click.secho(
+            f"Overwriting dynamic fact '{raw_key}={target_dict[key]}' with '{value}'",
+            fg="yellow",
+        )
+    target_dict[key] = value
+
+
+def parse_dynamic_fact_value(raw_value: str) -> Any:
+    """Parse raw dynamic fact value.
+
+    Tries to parse the value as JSON if it starts with the literal `json:`.
+
+    Returns the parsed value or `None` if trying to parse a JSON value results in a
+    decode error."""
+    if raw_value.startswith("json:"):
+        json_val = raw_value.replace("json:", "", 1)
+        # Parse value as JSON if it starts with `json:`, skip value completely
+        # on parse errors.
+        try:
+            v = json.loads(json_val)
+        except json.JSONDecodeError as e:
+            click.secho(
+                f"Expected value '{json_val}' to be parsable JSON, "
+                + f"but parsing failed with '{e}', skipping",
+                fg="yellow",
+            )
+            return None
+    else:
+        v = raw_value
+    return v
+
+
+def parse_dynamic_facts_from_cli(raw_facts: Iterable[str]) -> dict[str, Any]:
+    """Parse dynamic facts dictionary from strings provided on command line.
+
+    The function expects each raw fact (string) to be of the form `key=value`, where key
+    can contain dots to specify nested keys (e.g. `path.to.key`), and value is parsed as
+    JSON when it starts with the literal `json:`.
+
+    Inputs are processed in order, and subsequent inputs setting the same key will
+    overwrite any existing values. Facts for nested keys will be skipped, if a parent
+    key already exists *and* isn't a dictionary.
+
+    Facts with values marked as JSON which result in a decode error will be skipped.
+
+    Returns a dict with the parsed dynamic facts structure.
+    """
+    facts: dict[str, Any] = {}
+
+    for f in raw_facts:
+        if "=" not in f:
+            click.secho(
+                f"Ignoring dynamic fact {f} which is not in format key=value",
+                fg="yellow",
+            )
+            continue
+        raw_key, raw_value = f.split("=", maxsplit=1)
+        if not raw_key:
+            click.secho(
+                f"Ignoring malformed dynamic fact '{f}' with no key.", fg="yellow"
+            )
+            continue
+        if not raw_value:
+            click.secho(
+                f"Ignoring malformed dynamic fact '{f}' with no value. "
+                + "Please specify empty string value as 'json:\"\"'",
+                fg="yellow",
+            )
+            continue
+
+        # Parse value first, so we never add empty dicts for a nested key whose JSON
+        # value turns out to be malformed.
+        value = parse_dynamic_fact_value(raw_value)
+        if value is None:
+            # skip when we failed to parse a value that identified itself as JSON
+            continue
+
+        set_fact_value(facts, raw_key, value)
+
+    return facts

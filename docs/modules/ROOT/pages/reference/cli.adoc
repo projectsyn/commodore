@@ -100,6 +100,18 @@ After that, all the symlinks and dependencies which are required to compile the 
   This command line parameter overrides the tenant git repository revision configured on the cluster object in Lieutenant.
   When this option is provided, Commodore will abort without compiling the catalog if `--push` is also provided.
 
+*-d, --dynamic-fact* KEY=VALUE::
+  Fallback dynamic facts to use when compiling a cluster which hasn't reported its dynamic facts yet.
+  Commodore will never use values provided through this parameter if the cluster response from the API has a dynamic facts field.
+  Can be repeated.
+  Commodore expects each fact to be specified as `key=value`.
+  Nested keys can be provided as `path.to.key`.
+  Commodore will parse values as JSON if they're prefixed by `json:`.
+  If the same key is provided multiple times, the last occurrence overrides the previous values.
+  When providing a value for a key as JSON, previously specified subkeys of that key will be overwritten.
+  Nested keys are ignored if any non-leaf level of the requested key already contains a non-dictionary value.
+  If a value prefixed with `json:` isn't valid JSON, it will be skipped.
+
 *--help*::
   Show catalog clean usage and options then exit.
 
