@@ -348,6 +348,8 @@ def test_parse_dynamic_fact_value(value: str, expected: Any):
         ([], {}),
         (["key"], {}),
         (["key="], {}),
+        (["="], {}),
+        (["=value"], {}),
         (['key=json:""'], {"key": ""}),
         (["key=value"], {"key": "value"}),
         (["key=value", "foo=bar"], {"key": "value", "foo": "bar"}),

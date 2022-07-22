@@ -384,6 +384,11 @@ def parse_dynamic_facts_from_cli(raw_facts: Iterable[str]) -> dict[str, Any]:
             )
             continue
         raw_key, raw_value = f.split("=", maxsplit=1)
+        if not raw_key:
+            click.secho(
+                f"Ignoring malformed dynamic fact '{f}' with no key.", fg="yellow"
+            )
+            continue
         if not raw_value:
             click.secho(
                 f"Ignoring malformed dynamic fact '{f}' with no value. "
