@@ -296,38 +296,42 @@ def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     return cmeta.get("multi_instance", False)
 
 
-def parse_sub_key(
-    base_dict: dict[str, Any], raw_key: str
-) -> tuple[Optional[str], dict[str, Any]]:
-    """Parse nested key with form `path.to.key`.
+def set_fact_value(facts: dict[str, Any], raw_key: str, value: Any) -> None:
+    """Set value for nested fact at `raw_key` (expected form `path.to.key`) to `value`.
 
-    Returns leaf key `"key"` and sub-dictionary of `base_dict` for nested key `path.to`.
-    Returns leaf key `None` and prints a diagnostic message when a segment of the nested
-    key is present in `base_dict` and not a dictionary or when the raw key ends with a
-    dot.
+    If a segment of the nested key is present in `facts` and not a dictionary or when
+    the raw key contains an empty segment, the function won't set a value and will
+    instead print a diagnostic message.
     """
     key_parts = raw_key.split(".")
 
     if any(kp == "" for kp in key_parts):
         # Bail out early if the raw key is malformed (any empty segment)
-        click.secho(f" > Malformed nested key '{raw_key}' skipping...", fg="yellow")
-        return None, {}
+        click.secho(f"Malformed nested key '{raw_key}' skipping...", fg="yellow")
+        return
 
     prefix_key = ""
-    target_dict = base_dict
+    target_dict = facts
     for k in key_parts[:-1]:
         prefix_key = f"{prefix_key}{k}."
         if k in target_dict and not isinstance(target_dict[k], dict):
             click.secho(
-                " > Trying to insert subkey into non-dictionary "
+                "Trying to insert subkey into non-dictionary "
                 + f"dynamic fact '{prefix_key[:-1]}', skipping...",
                 fg="yellow",
             )
-            return None, {}
+            return
 
         target_dict = target_dict.setdefault(k, {})
 
-    return key_parts[-1], target_dict
+    key = key_parts[-1]
+
+    if key in target_dict:
+        click.secho(
+            f"Overwriting dynamic fact '{raw_key}={target_dict[key]}' with '{value}'",
+            fg="yellow",
+        )
+    target_dict[key] = value
 
 
 def parse_dynamic_fact_value(raw_value: str) -> Any:
@@ -395,18 +399,6 @@ def parse_dynamic_facts_from_cli(raw_facts: Iterable[str]) -> dict[str, Any]:
             # skip when we failed to parse a value that identified itself as JSON
             continue
 
-        key, target_fact = parse_sub_key(facts, raw_key)
-        if key is None:
-            # Skip if we found a non-dict entry for a parent of the leaf key or if the
-            # nested key was malformed.
-            continue
-
-        if key in target_fact:
-            click.secho(
-                " > Overwriting dynamic fact "
-                + f"{raw_key}={target_fact[key]} with '{value}'",
-                fg="yellow",
-            )
-        target_fact[key] = value
+        set_fact_value(facts, raw_key, value)
 
     return facts

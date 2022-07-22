@@ -15,7 +15,7 @@ import click
 
 from commodore.config import (
     Config,
-    parse_sub_key,
+    set_fact_value,
     parse_dynamic_fact_value,
     parse_dynamic_facts_from_cli,
 )
@@ -300,30 +300,27 @@ def test_register_dependency_prefer_ssh(config: Config, tmp_path: P):
 
 
 @pytest.mark.parametrize(
-    "key,base_dict,expected_key,expected_dict",
+    "key,base_dict,expected_dict",
     [
-        ("toplevel", {}, "toplevel", {}),
-        ("path.to.key", {}, "key", {"path": {"to": {}}}),
-        ("path.to.key", {"path": {"to": "value"}}, None, {"path": {"to": "value"}}),
+        ("toplevel", {}, {"toplevel": "sentinel"}),
+        ("path.to.key", {}, {"path": {"to": {"key": "sentinel"}}}),
+        ("path.to.key", {"path": {"to": "value"}}, {"path": {"to": "value"}}),
         (
             "path.to.key",
             {"path": {"to": {"other": "value"}}},
-            "key",
-            {"path": {"to": {"other": "value"}}},
+            {"path": {"to": {"other": "value", "key": "sentinel"}}},
         ),
-        ("path.", {}, None, {}),
-        ("path..foo", {}, None, {}),
-        (".foo", {}, None, {}),
+        ("path.", {}, {}),
+        ("path..foo", {}, {}),
+        (".foo", {}, {}),
     ],
 )
-def test_parse_sub_key(
+def test_set_fact_value(
     key: str,
     base_dict: dict[str, Any],
-    expected_key: str,
     expected_dict: dict[str, Any],
 ):
-    leaf_key, leaf_dict = parse_sub_key(base_dict, key)
-    assert leaf_key == expected_key
+    set_fact_value(base_dict, key, "sentinel")
     assert base_dict == expected_dict
 
 
