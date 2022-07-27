@@ -12,6 +12,7 @@ from typing import Any, Iterable, Optional
 import jwt
 
 import click
+import responses
 
 from commodore.config import (
     Config,
@@ -374,3 +375,61 @@ def test_parse_dynamic_fact_value(value: str, expected: Any):
 def test_parse_dynamic_facts_from_cli(args: Iterable[str], expected: dict[str, Any]):
     dynamic_facts = parse_dynamic_facts_from_cli(args)
     assert dynamic_facts == expected
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "api_url,discovery_resp,expected_client,expected_url",
+    [
+        ("https://syn.example.com", {}, None, None),
+        # Non-JSON is ignored
+        ("https://syn.example.com", "oidc", None, None),
+        # Broken JSON is ignored
+        ("https://syn.example.com", '"oidc":{"tes: 1}', None, None),
+        # Unexpected data format is ignored
+        ("https://syn.example.com", {"oidc": {"client_id": "test"}}, None, None),
+        # Partial responses are propagated into the config object
+        (
+            "https://syn.example.com",
+            {"oidc": {"clientId": "test-client"}},
+            "test-client",
+            None,
+        ),
+        (
+            "https://syn.example.com",
+            {
+                "oidc": {
+                    "clientId": "test-client",
+                    "discoveryUrl": "https://oidc.example.com",
+                },
+            },
+            "test-client",
+            "https://oidc.example.com",
+        ),
+    ],
+)
+def test_config_discover_oidc_config(
+    tmp_path: P,
+    api_url: str,
+    discovery_resp: Any,
+    expected_client: str,
+    expected_url: str,
+):
+    if isinstance(discovery_resp, dict):
+        ct = "application/json"
+        resp_body = json.dumps(discovery_resp)
+    else:
+        resp_body = f"{discovery_resp}"
+        ct = "text/plain"
+
+    responses.add(
+        responses.GET, url=api_url, content_type=ct, body=resp_body, status=200
+    )
+
+    c = Config(tmp_path, api_url=api_url)
+    c.discover_oidc_config()
+
+    assert len(responses.calls) == 1
+
+    assert c.oidc_client == expected_client
+    assert c.oidc_discovery_url == expected_url
