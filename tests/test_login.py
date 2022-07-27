@@ -172,7 +172,8 @@ def test_fetch_token(mock_login, config: Config, tmp_path, fs, cached):
 
 
 @responses.activate
-def test_refresh_tokens(config: Config, tmp_path, fs):
+@pytest.mark.parametrize("idp_status_code", [200, 500])
+def test_refresh_tokens(config: Config, tmp_path, fs, idp_status_code):
     config.api_token = None
     config.oidc_client = "test-client"
 
@@ -211,7 +212,7 @@ def test_refresh_tokens(config: Config, tmp_path, fs):
         responses.POST,
         token_url,
         json=new_tokens,
-        status=200,
+        status=idp_status_code,
         match=[
             responses.matchers.urlencoded_params_matcher(
                 {
@@ -227,16 +228,23 @@ def test_refresh_tokens(config: Config, tmp_path, fs):
     )
 
     c = WebApplicationClient(config.oidc_client)
+
     refreshed = login.refresh_tokens(config, c, token_url)
 
     assert len(responses.calls) == 1
-    assert refreshed
-    assert tokencache.get(config.api_url).get("id_token") == new_tokens["id_token"]
+    assert refreshed == (idp_status_code == 200)
+    if idp_status_code == 500:
+        expected_tokens = current_tokens
+        api_token = None
+    else:
+        expected_tokens = new_tokens
+        api_token = new_tokens["id_token"]
+    assert tokencache.get(config.api_url).get("id_token") == expected_tokens["id_token"]
     assert (
         tokencache.get(config.api_url).get("refresh_token")
-        == new_tokens["refresh_token"]
+        == expected_tokens["refresh_token"]
     )
-    assert config.api_token == new_tokens["id_token"]
+    assert config.api_token == api_token
 
 
 @pytest.mark.parametrize(
