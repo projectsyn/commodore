@@ -307,8 +307,8 @@ class Config:
                 r = requests.get(url_normalize(self.api_url))
                 api_cfg = json.loads(r.text)
                 if "oidc" in api_cfg:
-                    self.oidc_client = api_cfg["oidc"]["clientId"]
-                    self.oidc_discovery_url = api_cfg["oidc"]["discoveryUrl"]
+                    self.oidc_client = api_cfg["oidc"].get("clientId")
+                    self.oidc_discovery_url = api_cfg["oidc"].get("discoveryUrl")
             except (requests.RequestException, json.JSONDecodeError) as e:
                 # We do this on a best effort basis
                 click.echo(f" > Unable to auto-discover OIDC config: {e}")
