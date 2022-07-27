@@ -9,7 +9,12 @@ import click
 
 from commodore.config import Config
 
-from .parameters import ClassNotFound, InventoryFactory, InventoryFacts
+from .parameters import (
+    ClassNotFound,
+    InventoryFactory,
+    InventoryFacts,
+    InventoryParameters,
+)
 
 
 def _cleanup_work_dir(cfg: Config, work_dir: Path):
@@ -18,9 +23,25 @@ def _cleanup_work_dir(cfg: Config, work_dir: Path):
         shutil.rmtree(work_dir)
 
 
+def extract_packages(
+    cfg: Config, invfacts: InventoryFacts
+) -> dict[str, dict[str, str]]:
+    return _get_inventory(cfg, invfacts).parameters("packages")
+
+
 def extract_components(
     cfg: Config, invfacts: InventoryFacts
 ) -> dict[str, dict[str, str]]:
+    return _get_inventory(cfg, invfacts).parameters("components")
+
+
+def extract_parameters(
+    cfg: Config, invfacts: InventoryFacts
+) -> dict[str, dict[str, str]]:
+    return _get_inventory(cfg, invfacts).parameters()
+
+
+def _get_inventory(cfg: Config, invfacts: InventoryFacts) -> InventoryParameters:
     if cfg.debug:
         click.echo(
             f"Called with: global_config={invfacts.global_config} "
@@ -46,7 +67,6 @@ def extract_components(
 
     try:
         inv = invfactory.reclass(invfacts)
-        components = inv.parameters("components")
     except ClassNotFound as e:
         _cleanup_work_dir(cfg, work_dir)
         raise ValueError(
@@ -57,4 +77,4 @@ def extract_components(
 
     _cleanup_work_dir(cfg, work_dir)
 
-    return components
+    return inv
