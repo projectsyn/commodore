@@ -6,6 +6,11 @@ from unittest.mock import patch
 
 import json
 import time
+import threading
+
+from functools import partial
+from http.server import HTTPServer
+from queue import Queue
 
 import jwt
 import pytest
@@ -20,11 +25,15 @@ from commodore import login
 from commodore import tokencache
 
 
-def mock_open_browser(authorization_endpoint: str):
+def mock_open_browser(authorization_endpoint: str, code="foobar"):
     def mock(request_uri: str):
         assert request_uri.startswith(authorization_endpoint)
 
-        r = requests.get("http://localhost:18000/?code=foobar")
+        params = ""
+        if code is not None:
+            params = f"?code={code}"
+
+        r = requests.get(f"http://localhost:18000/{params}")
 
         print(r.text)
         r.raise_for_status()
@@ -37,7 +46,7 @@ def mock_tokencache_save(url: str, token: str):
         if key != url:
             raise IOError(f"wrong url, expected https://syn.example.com, got {key}")
         if val != token:
-            raise IOError(f"wrong token, expected blub, got {val}")
+            raise IOError(f"wrong token, expected {token}, got {val}")
 
     return mock
 
@@ -225,3 +234,92 @@ def test_refresh_tokens_not_needed(
     refreshed = login.refresh_tokens(config, c, token_url)
 
     assert not refreshed
+
+
+@pytest.mark.parametrize(
+    "api_url,path,expected_status,expected_text",
+    [
+        ("https://syn.example.com", "/healthz", 200, "ok"),
+        (
+            "https://syn.example.com",
+            "/?foo=bar",
+            422,
+            "invalid callback: no code provided",
+        ),
+        (
+            "https://syn.example.com",
+            "/?code=foobar",
+            500,
+            "failed to connect to IdP: 500 Server Error: "
+            + "Internal Server Error for url: https://idp.example.com/token",
+        ),
+        ("https://syn.example.com", "/?code=foobar", 500, "no id_token provided"),
+        ("https://syn.example.com", "/?code=foobar", 500, "failed to save token"),
+        (None, "/?code=foobar", 200, "\n<!DOCTYPE html>"),
+        ("https://syn.example.com", "/?code=foobar", 200, "\n<!DOCTYPE html>"),
+    ],
+)
+@responses.activate
+@patch("commodore.tokencache.save")
+def test_callback_get(
+    mock_tokencache,
+    capsys,
+    config: Config,
+    api_url,
+    path,
+    expected_status,
+    expected_text,
+):
+    config.oidc_client = "test-client"
+    config.api_url = api_url
+    token_url = "https://idp.example.com/token"
+    done_queue = Queue()
+    expected_token = {"access_token": "access-123", "id_token": "id-123"}
+    if expected_text == "failed to save token":
+        expected_token = {"id_token": "foo", "access_token": "bar"}
+    mock_tokencache.side_effect = mock_tokencache_save(config.api_url, expected_token)
+
+    h = partial(
+        login.OIDCCallbackHandler,
+        WebApplicationClient(config.oidc_client),
+        token_url,
+        config.api_url,
+        done_queue,
+    )
+    # Let Python pick a port
+    server = HTTPServer(("", 0), h)
+    port = server.server_port
+    t = threading.Thread(target=server.serve_forever)
+    t.daemon = True
+    t.start()
+
+    responses.add_passthru(f"http://localhost:{port}")
+    resp_data = {"access_token": "access-123", "id_token": "id-123"}
+    resp_status = 200
+
+    if expected_text == "no id_token provided":
+        del resp_data["id_token"]
+
+    if expected_text.startswith("failed to connect to IdP"):
+        resp_status = 500
+
+    responses.add(
+        responses.POST,
+        token_url,
+        json=resp_data,
+        status=resp_status,
+    )
+
+    resp = requests.get(f"http://localhost:{port}{path}")
+    if resp.status_code != expected_status:
+        print(resp.text)
+
+    assert resp.status_code == expected_status
+    assert resp.text.startswith(expected_text)
+
+    if api_url is None:
+        captured = capsys.readouterr()
+        assert captured.out == "id-123\n"
+
+    server.shutdown()
+    t.join()
