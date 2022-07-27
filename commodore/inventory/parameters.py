@@ -49,11 +49,13 @@ class InventoryFacts:
         tenant_config: Optional[str],
         extra_class_files: Iterable[Path],
         allow_missing_classes: bool,
+        ignore_class_notfound_warning: bool = True,
     ):
         self._global_config = global_config
         self._tenant_config = tenant_config
         self._extra_class_files = extra_class_files
         self._allow_missing_classes = allow_missing_classes
+        self._ignore_class_notfound_warning = ignore_class_notfound_warning
 
     @property
     def global_config(self) -> str:
@@ -74,6 +76,10 @@ class InventoryFacts:
     @property
     def allow_missing_classes(self) -> bool:
         return self._allow_missing_classes
+
+    @property
+    def ignore_class_notfound_warning(self) -> bool:
+        return self._ignore_class_notfound_warning
 
     @property
     def tenant_id(self) -> str:
@@ -170,7 +176,9 @@ class InventoryFactory:
     def tenant_dir(self) -> Optional[Path]:
         return self._tenant_dir
 
-    def _reclass_config(self, allow_missing_classes: bool) -> dict:
+    def _reclass_config(
+        self, allow_missing_classes: bool, ignore_class_notfound_warning: bool = True
+    ) -> dict:
         return {
             "storage_type": "yaml_fs",
             "inventory_base_uri": str(self.directory.absolute()),
@@ -179,12 +187,19 @@ class InventoryFactory:
             "compose_node_name": False,
             "allow_none_override": True,
             "ignore_class_notfound": allow_missing_classes,
+            "ignore_class_notfound_warning": ignore_class_notfound_warning,
         }
 
     def _render_inventory(
-        self, target: Optional[str] = None, allow_missing_classes: bool = True
+        self,
+        target: Optional[str] = None,
+        allow_missing_classes: bool = True,
+        ignore_class_notfound_warning: bool = True,
     ) -> dict[str, Any]:
-        rc = self._reclass_config(allow_missing_classes)
+        rc = self._reclass_config(
+            allow_missing_classes,
+            ignore_class_notfound_warning=ignore_class_notfound_warning,
+        )
         storage = reclass.get_storage(
             rc["storage_type"],
             rc["nodes_uri"],
@@ -266,7 +281,9 @@ class InventoryFactory:
 
         return InventoryParameters(
             self._render_inventory(
-                "global", allow_missing_classes=invfacts.allow_missing_classes
+                "global",
+                allow_missing_classes=invfacts.allow_missing_classes,
+                ignore_class_notfound_warning=invfacts.ignore_class_notfound_warning,
             )
         )
 
