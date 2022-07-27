@@ -12,10 +12,12 @@ import pytest
 import requests
 import responses
 
+from oauthlib.oauth2 import WebApplicationClient
 from xdg.BaseDirectory import xdg_cache_home
 
 from commodore.config import Config
 from commodore import login
+from commodore import tokencache
 
 
 def mock_open_browser(authorization_endpoint: str):
@@ -120,3 +122,106 @@ def test_fetch_token(mock_login, config: Config, tmp_path, fs, cached):
     token = login.fetch_token(config)
 
     assert token == expected_token
+
+
+@responses.activate
+def test_refresh_tokens(config: Config, tmp_path, fs):
+    config.api_token = None
+    config.oidc_client = "test-client"
+
+    token_url = "https://idp.example.com/token"
+    current_id_token = {
+        "marker": "id-123",
+        # Make id token expired, even though `refresh_tokens()` doesn't check
+        "exp": time.time() - 10,
+    }
+    current_refresh_token = {
+        "marker": "r-123",
+        "exp": time.time() + 600,
+    }
+
+    new_id_token = {
+        "marker": "id-456",
+        "exp": time.time() + 600,
+    }
+    new_refresh_token = {
+        "marker": "r-456",
+        "exp": time.time() + 1800,
+    }
+
+    current_tokens = {
+        "id_token": jwt.encode(current_id_token, "aaaaaa"),
+        "refresh_token": jwt.encode(current_refresh_token, "aaaaaa"),
+    }
+    new_tokens = {
+        "access_token": "dummy-access-token-456",
+        "id_token": jwt.encode(new_id_token, "aaaaaa"),
+        "refresh_token": jwt.encode(new_refresh_token, "aaaaaa"),
+    }
+    cache_contents = {config.api_url: current_tokens}
+
+    responses.add(
+        responses.POST,
+        token_url,
+        json=new_tokens,
+        status=200,
+        match=[
+            responses.matchers.urlencoded_params_matcher(
+                {
+                    "grant_type": "refresh_token",
+                    "client_id": config.oidc_client,
+                    "refresh_token": current_tokens["refresh_token"],
+                }
+            )
+        ],
+    )
+    fs.create_file(
+        f"{xdg_cache_home}/commodore/token", contents=json.dumps(cache_contents)
+    )
+
+    c = WebApplicationClient(config.oidc_client)
+    refreshed = login.refresh_tokens(config, c, token_url)
+
+    assert len(responses.calls) == 1
+    assert refreshed
+    assert tokencache.get(config.api_url).get("id_token") == new_tokens["id_token"]
+    assert (
+        tokencache.get(config.api_url).get("refresh_token")
+        == new_tokens["refresh_token"]
+    )
+    assert config.api_token == new_tokens["id_token"]
+
+
+@pytest.mark.parametrize(
+    "expired_refresh_token,broken_refresh_token",
+    [(False, False), (False, True), (True, False)],
+)
+@pytest.mark.parametrize("api_url", [None, "https://syn.example.com"])
+def test_refresh_tokens_not_needed(
+    config: Config, tmp_path, fs, expired_refresh_token, broken_refresh_token, api_url
+):
+    config.api_url = api_url
+    config.api_token = None
+    config.oidc_client = "test-client"
+    token_url = "https://idp.example.com/token"
+
+    id_token = {"marker": "id", "exp": time.time() - 10}
+    tokens = {
+        "id_token": jwt.encode(id_token, "aaaaaa"),
+    }
+    if expired_refresh_token:
+        tokens["refresh_token"] = jwt.encode(
+            {"marker": "R", "exp": time.time() - 10}, "aaaaaa"
+        )
+    if broken_refresh_token:
+        rt = jwt.encode({"marker": "R", "exp": time.time() + 600}, "aaaaaa")
+        tokens["refresh_token"] = f"X{rt[1:]}"
+    cache_contents = {config.api_url: tokens}
+    fs.create_file(
+        f"{xdg_cache_home}/commodore/token", contents=json.dumps(cache_contents)
+    )
+
+    c = WebApplicationClient(config.oidc_client)
+    refreshed = login.refresh_tokens(config, c, token_url)
+
+    assert not refreshed
