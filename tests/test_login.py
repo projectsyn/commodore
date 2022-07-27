@@ -86,21 +86,32 @@ def _setup_responses(api_url, auth_url, id_token) -> dict[str, str]:
 
 @patch("webbrowser.open")
 @patch("commodore.tokencache.save")
+@patch("commodore.login.refresh_tokens")
 @responses.activate
-def test_login(mock_tokencache, mock_browser, config: Config, tmp_path):
+@pytest.mark.parametrize("refresh_success", [False, True])
+def test_login(
+    mock_refresh_tokens,
+    mock_tokencache,
+    mock_browser,
+    config: Config,
+    tmp_path,
+    refresh_success,
+):
     auth_url = "https://idp.example.com/auth"
     id_token = "id-123"
     config.api_token = None
 
     tokens = _setup_responses(config.api_url, auth_url, id_token)
 
+    mock_refresh_tokens.return_value = refresh_success
     mock_tokencache.side_effect = mock_tokencache_save(config.api_url, tokens)
     mock_browser.side_effect = mock_open_browser(auth_url)
 
     login.login(config)
 
-    assert mock_tokencache.call_count == 1
-    assert mock_browser.call_count == 1
+    assert mock_refresh_tokens.call_count == 1
+    assert mock_tokencache.call_count == 0 if refresh_success else 1
+    assert mock_browser.call_count == 0 if refresh_success else 1
 
 
 def mocked_login(expected_token):
