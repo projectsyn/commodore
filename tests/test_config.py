@@ -1,17 +1,17 @@
 from __future__ import annotations
 
+import json
 import time
-
-import pytest
 import textwrap
+
 from pathlib import Path as P
 
 from unittest.mock import patch
 from typing import Any, Iterable, Optional
 
-import jwt
-
 import click
+import jwt
+import pytest
 import responses
 
 from commodore.config import (
