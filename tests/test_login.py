@@ -1,6 +1,7 @@
 """
 Unit-tests for login
 """
+from __future__ import annotations
 
 from unittest.mock import patch
 
@@ -51,7 +52,7 @@ def mock_tokencache_save(url: str, token: str):
     return mock
 
 
-def _setup_responses(api_url, auth_url, id_token):
+def _setup_responses(api_url, auth_url, id_token) -> dict[str, str]:
     discovery_url = "https://idp.example.com/discovery"
     token_url = "https://idp.example.com/token"
     client = "syn-test"
@@ -73,12 +74,14 @@ def _setup_responses(api_url, auth_url, id_token):
         },
         status=200,
     )
+    tokens = {"id_token": id_token, "access_token": access_token}
     responses.add(
         responses.POST,
         token_url,
-        json={"id_token": id_token, "access_token": access_token},
+        json=tokens,
         status=200,
     )
+    return tokens
 
 
 @patch("webbrowser.open")
@@ -87,13 +90,17 @@ def _setup_responses(api_url, auth_url, id_token):
 def test_login(mock_tokencache, mock_browser, config: Config, tmp_path):
     auth_url = "https://idp.example.com/auth"
     id_token = "id-123"
+    config.api_token = None
 
-    _setup_responses(config.api_url, auth_url, id_token)
+    tokens = _setup_responses(config.api_url, auth_url, id_token)
 
-    mock_tokencache.side_effect = mock_tokencache_save(config.api_url, id_token)
+    mock_tokencache.side_effect = mock_tokencache_save(config.api_url, tokens)
     mock_browser.side_effect = mock_open_browser(auth_url)
 
     login.login(config)
+
+    assert mock_tokencache.call_count == 1
+    assert mock_browser.call_count == 1
 
 
 def mocked_login(expected_token):
