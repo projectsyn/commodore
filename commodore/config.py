@@ -136,7 +136,8 @@ class Config:
     @property
     def api_token(self):
         if self._api_token is None and self.api_url:
-            token = tokencache.get(self.api_url)
+            tokens = tokencache.get(self.api_url)
+            token = tokens.get("id_token")
             if token is not None:
                 # We don't verify the signature, we just want to know if the token is expired
                 # lieutenant will decide if it's valid

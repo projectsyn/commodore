@@ -88,7 +88,7 @@ def test_login(mock_tokencache, mock_browser, config: Config, tmp_path):
 def mocked_login(expected_token):
     def mock(config: Config):
         with open(f"{xdg_cache_home}/commodore/token", "w") as f:
-            json.dump({config.api_url: expected_token}, f)
+            json.dump({config.api_url: {"id_token": expected_token}}, f)
 
     return mock
 
@@ -108,7 +108,7 @@ def test_fetch_token(mock_login, config: Config, tmp_path, fs, cached):
 
     expected_token = jwt.encode(expected_token_payload, "aaaaaa")
     if cached:
-        cache_contents = {config.api_url: expected_token}
+        cache_contents = {config.api_url: {"id_token": expected_token}}
 
     _setup_responses(config.api_url, auth_url, expected_token)
     fs.create_file(

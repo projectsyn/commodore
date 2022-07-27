@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import sys
 import threading
@@ -102,10 +104,12 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
 
         code = query_components["code"][0]
         try:
-            id_token = self.get_oidc_token(code)
+            tokens = self.get_oidc_tokens(code)
         except (ConnectionError, HTTPError) as e:
             self.close(500, f"failed to connect to IdP: {e}")
             return
+
+        id_token = tokens.get("id_token")
 
         if id_token is None:
             self.close(500, "no id_token provided")
@@ -115,7 +119,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
             print(id_token)
         else:
             try:
-                tokencache.save(self.lieutenant_url, id_token)
+                tokencache.save(self.lieutenant_url, tokens)
             except IOError as e:
                 self.close(500, f"failed to save token {e}")
                 return
@@ -123,7 +127,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         self.close(200, success_page)
         return
 
-    def get_oidc_token(self, code) -> Optional[str]:
+    def get_oidc_tokens(self, code) -> dict[str, Any]:
         token_url, headers, body = self.client.prepare_token_request(
             self.token_url,
             redirect_url=self.redirect_url,
@@ -137,10 +141,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         )
         token_response.raise_for_status()
 
-        token = self.client.parse_request_body_response(token_response.text)
-        if "id_token" in token:
-            return token["id_token"]
-        return None
+        return self.client.parse_request_body_response(token_response.text)
 
     def close(self, code: int, msg: str):
         self.send_response(code)

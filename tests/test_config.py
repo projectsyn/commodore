@@ -203,13 +203,21 @@ def test_print_deprecation_notices(config, capsys):
 
 def mock_get_token(url: str) -> Optional[str]:
     if url == "https://syn.example.com":
-        return jwt.encode(
-            {"exp": time.time() + 100, "from_cache": True}, "secret", algorithm="HS256"
-        )
+        return {
+            "id_token": jwt.encode(
+                {"exp": time.time() + 100, "from_cache": True},
+                "secret",
+                algorithm="HS256",
+            )
+        }
     elif url == "https://expired.example.com":
-        return jwt.encode(
-            {"exp": time.time() - 100, "from_cache": True}, "secret", algorithm="HS256"
-        )
+        return {
+            "id_token": jwt.encode(
+                {"exp": time.time() - 100, "from_cache": True},
+                "secret",
+                algorithm="HS256",
+            )
+        }
 
     else:
         return None
