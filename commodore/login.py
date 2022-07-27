@@ -9,13 +9,12 @@ from typing import Optional, Any
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
-from url_normalize import url_normalize
 
 import click
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError, HTTPError, RequestException
+from requests.exceptions import ConnectionError, HTTPError
 
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -203,21 +202,7 @@ def get_idp_cfg(discovery_url: str) -> Any:
 
 
 def login(config: Config):
-    if (
-        config.oidc_client is None
-        and config.oidc_discovery_url is None
-        and config.api_url is not None
-    ):
-        api_cfg: Any = {}
-        try:
-            r = requests.get(url_normalize(config.api_url))
-            api_cfg = json.loads(r.text)
-        except (RequestException, json.JSONDecodeError) as e:
-            # We do this on a best effort basis
-            click.echo(f" > Unable to auto-discover OIDC config: {e}")
-        if "oidc" in api_cfg:
-            config.oidc_client = api_cfg["oidc"]["clientId"]
-            config.oidc_discovery_url = api_cfg["oidc"]["discoveryUrl"]
+    config.discover_oidc_config()
 
     if config.oidc_client is None:
         raise click.ClickException("Required OIDC client not set")
