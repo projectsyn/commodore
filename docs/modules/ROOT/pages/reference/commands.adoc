@@ -138,7 +138,10 @@ If any errors are found the command exits with return value 1.
 
 This command allows you to authenticate yourself to Lieutenant using OIDC, if OIDC integrations is enabled for your Lieutenant instance.
 
-The command will open a web-browser where you can authenticate yourself to the configured IdP.
+The command will try to refresh expired access tokens if a still valid refresh token is found locally.
+
+If no valid tokens are found locally, the command will open a web-browser where you can authenticate yourself to the configured IdP.
+
 Commodore will use the returned token for future commands if no other token is explicitly provided.
 
 == Fetch Token

@@ -8,9 +8,11 @@ from enum import Enum
 from pathlib import Path as P
 from typing import Any, Iterable, Optional
 
-import jwt
-
 import click
+import jwt
+import requests
+
+from url_normalize import url_normalize
 
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
@@ -134,7 +136,8 @@ class Config:
     @property
     def api_token(self):
         if self._api_token is None and self.api_url:
-            token = tokencache.get(self.api_url)
+            tokens = tokencache.get(self.api_url)
+            token = tokens.get("id_token")
             if token is not None:
                 # We don't verify the signature, we just want to know if the token is expired
                 # lieutenant will decide if it's valid
@@ -288,6 +291,27 @@ class Config:
                 if "deprecation_notice" in cmeta:
                     msg += f" {cmeta['deprecation_notice']}"
                 self.register_deprecation_notice(msg)
+
+    def discover_oidc_config(self) -> None:
+        """Check the configured Lieutenant API URL for OIDC client details, if no OIDC
+        client details are given on the command line.
+
+        Update the provided config object in place if the API provides OIDC client
+        details."""
+        if (
+            self.oidc_client is None
+            and self.oidc_discovery_url is None
+            and self.api_url is not None
+        ):
+            try:
+                r = requests.get(url_normalize(self.api_url))
+                api_cfg = json.loads(r.text)
+                if "oidc" in api_cfg:
+                    self.oidc_client = api_cfg["oidc"].get("clientId")
+                    self.oidc_discovery_url = api_cfg["oidc"].get("discoveryUrl")
+            except (requests.RequestException, json.JSONDecodeError) as e:
+                # We do this on a best effort basis
+                click.echo(f" > Unable to auto-discover OIDC config: {e}")
 
 
 def _component_is_aliasable(cluster_parameters: dict, component_name: str):

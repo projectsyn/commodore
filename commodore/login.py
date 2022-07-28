@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import sys
 import threading
+import time
 import webbrowser
 
 from functools import partial
@@ -9,13 +12,13 @@ from typing import Optional, Any
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
-from url_normalize import url_normalize
 
 import click
+import jwt
 import requests
 
 # pylint: disable=redefined-builtin
-from requests.exceptions import ConnectionError, HTTPError, RequestException
+from requests.exceptions import ConnectionError, HTTPError
 
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -103,10 +106,12 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
 
         code = query_components["code"][0]
         try:
-            id_token = self.get_oidc_token(code)
+            tokens = self.get_oidc_tokens(code)
         except (ConnectionError, HTTPError) as e:
             self.close(500, f"failed to connect to IdP: {e}")
             return
+
+        id_token = tokens.get("id_token")
 
         if id_token is None:
             self.close(500, "no id_token provided")
@@ -116,7 +121,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
             print(id_token)
         else:
             try:
-                tokencache.save(self.lieutenant_url, id_token)
+                tokencache.save(self.lieutenant_url, tokens)
             except IOError as e:
                 self.close(500, f"failed to save token {e}")
                 return
@@ -124,7 +129,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         self.close(200, success_page)
         return
 
-    def get_oidc_token(self, code) -> Optional[str]:
+    def get_oidc_tokens(self, code) -> dict[str, Any]:
         token_url, headers, body = self.client.prepare_token_request(
             self.token_url,
             redirect_url=self.redirect_url,
@@ -138,10 +143,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         )
         token_response.raise_for_status()
 
-        token = self.client.parse_request_body_response(token_response.text)
-        if "id_token" in token:
-            return token["id_token"]
-        return None
+        return self.client.parse_request_body_response(token_response.text)
 
     def close(self, code: int, msg: str):
         self.send_response(code)
@@ -202,31 +204,78 @@ def get_idp_cfg(discovery_url: str) -> Any:
         return resp
 
 
-def login(config: Config):
-    if (
-        config.oidc_client is None
-        and config.oidc_discovery_url is None
-        and config.api_url is not None
-    ):
-        api_cfg: Any = {}
+def refresh_tokens(
+    config: Config, client: WebApplicationClient, token_endpoint: str
+) -> bool:
+    """Try refreshing the access and id tokens using the current refresh token.
+
+    Tokens are fetched from the token cache based on the data in `config`. The new
+    tokens are written to the token cache.
+
+    Returns `True` if refreshing the token was successful."""
+    if config.api_url is None:
+        # We can't refresh tokens if we don't know the API URL to fetch the old tokens
+        # from the cache.
+        return False
+
+    tokens = tokencache.get(config.api_url)
+    refresh_token = tokens.get("refresh_token")
+    if refresh_token is None:
+        return False
+    # We don't verify the signature, we just want to know if the refresh token is
+    # expired.
+    try:
+        t = jwt.decode(
+            refresh_token, algorithms=["RS256"], options={"verify_signature": False}
+        )
+    except jwt.exceptions.InvalidTokenError:
+        # We can't parse the refresh token, notify caller that they need to request a
+        # fresh set of tokens.
+        return False
+
+    if "exp" in t and t["exp"] > time.time():
+        # Only try to refresh the tokens if the refresh token isn't expired yet.
+        token_url, headers, body = client.prepare_refresh_token_request(
+            token_url=token_endpoint,
+            refresh_token=refresh_token,
+            client_id=config.oidc_client,
+        )
         try:
-            r = requests.get(url_normalize(config.api_url))
-            api_cfg = json.loads(r.text)
-        except (RequestException, json.JSONDecodeError) as e:
-            # We do this on a best effort basis
-            click.echo(f" > Unable to auto-discover OIDC config: {e}")
-        if "oidc" in api_cfg:
-            config.oidc_client = api_cfg["oidc"]["clientId"]
-            config.oidc_discovery_url = api_cfg["oidc"]["discoveryUrl"]
+            token_response = requests.post(token_url, headers=headers, data=body)
+            token_response.raise_for_status()
+        except (ConnectionError, HTTPError) as e:
+            click.echo(f" > Failed to refresh OIDC token with {e}")
+            return False
+
+        # If refresh request was successful, parse response and store new
+        # tokens in tokencache
+        new_tokens = client.parse_request_body_response(token_response.text)
+        tokencache.save(config.api_url, new_tokens)
+        return True
+
+    return False
+
+
+def login(config: Config):
+    config.discover_oidc_config()
 
     if config.oidc_client is None:
         raise click.ClickException("Required OIDC client not set")
     if config.oidc_discovery_url is None:
         raise click.ClickException("Required OIDC discovery URL not set")
 
+    if config.api_token:
+        # Short-circuit if we already have a valid API token
+        return
+
     client = WebApplicationClient(config.oidc_client)
     idp_cfg = get_idp_cfg(config.oidc_discovery_url)
+    if refresh_tokens(config, client, idp_cfg["token_endpoint"]):
+        # Short-circuit if refreshing the token was successful.
+        return
 
+    # Request new token through login flow if we weren't able to refresh the existing
+    # token.
     server = OIDCCallbackServer(client, idp_cfg["token_endpoint"], config.api_url)
     server.start()
 
