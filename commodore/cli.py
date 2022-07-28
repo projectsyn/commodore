@@ -737,7 +737,11 @@ def inventory_show(
         inv = extract_parameters(
             config,
             InventoryFacts(
-                global_config, tenant_config, extra_values, allow_missing_classes
+                global_config,
+                tenant_config,
+                extra_values,
+                allow_missing_classes,
+                ignore_class_notfound_warning=False,
             ),
         )
     except ValueError as e:
@@ -776,7 +780,11 @@ def component_versions(
         components = extract_components(
             config,
             InventoryFacts(
-                global_config, tenant_config, extra_values, allow_missing_classes
+                global_config,
+                tenant_config,
+                extra_values,
+                allow_missing_classes,
+                ignore_class_notfound_warning=False,
             ),
         )
     except ValueError as e:
@@ -815,7 +823,11 @@ def package_versions(
         pkgs = extract_packages(
             config,
             InventoryFacts(
-                global_config, tenant_config, extra_values, allow_missing_classes
+                global_config,
+                tenant_config,
+                extra_values,
+                allow_missing_classes,
+                ignore_class_notfound_warning=False,
             ),
         )
     except ValueError as e:

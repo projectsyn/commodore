@@ -149,7 +149,7 @@ def test_component_versions_cli(
         yaml.safe_dump({"classes": ["global.test"]}, f)
 
     with open(global_config / "test.yml", "w") as f:
-        yaml.safe_dump({"parameters": parameters}, f)
+        yaml.safe_dump({"classes": ["foo.bar"], "parameters": parameters}, f)
 
     result = cli_runner(["inventory", "components", str(global_config)] + args)
 
@@ -185,7 +185,7 @@ def test_package_versions_cli(
         yaml.safe_dump({"classes": ["global.test"]}, f)
 
     with open(global_config / "test.yml", "w") as f:
-        yaml.safe_dump({"parameters": parameters}, f)
+        yaml.safe_dump({"classes": ["foo.bar"], "parameters": parameters}, f)
 
     result = cli_runner(["inventory", "packages", str(global_config)] + args)
 
@@ -230,7 +230,7 @@ def test_show_inventory_cli(
         yaml.safe_dump({"classes": ["global.test"]}, f)
 
     with open(global_config / "test.yml", "w") as f:
-        yaml.safe_dump({"parameters": parameters}, f)
+        yaml.safe_dump({"classes": ["foo.bar"], "parameters": parameters}, f)
 
     result = cli_runner(["inventory", "show", str(global_config)] + args)
 
