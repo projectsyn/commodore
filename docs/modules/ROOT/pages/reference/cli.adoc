@@ -165,13 +165,13 @@ This command doesn't have any command line options.
 *--help*::
   Show component new usage and options then exit.
 
-== Inventory Components
+== Inventory Components / Packages / Show
 
 *-f, --values*::
   Specify an additional inventory class in a YAML file.
   This option can be repeated to provide multiple files.
   Files specified later win when resolving inventory values.
-  Use this mechanism to specify any facts (such as the cluster's distribution) that should be taken into account when extracting component versions.
+  Use this mechanism to specify any facts (such as the cluster's distribution) that should be taken into account when rendering the inventory.
 
 *-o, --output-format*::
   The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.

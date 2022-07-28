@@ -17,7 +17,7 @@ from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
 from .component.compile import compile_component
-from .inventory.render import extract_components
+from .inventory.render import extract_components, extract_packages, extract_parameters
 from .inventory.parameters import InventoryFacts
 from .inventory.lint import LINTERS
 from .login import login, fetch_token
@@ -683,18 +683,14 @@ def inventory(config: Config, verbose):
     config.update_verbosity(verbose)
 
 
-@inventory.command(
-    name="components",
-    short_help="Extract component URLs and versions from the inventory",
-)
-@click.option(
+inventory_output_format = click.option(
     "-o",
     "--output-format",
     help="Output format",
     type=click.Choice(["json", "yaml"]),
     default="yaml",
 )
-@click.option(
+inventory_values = click.option(
     "-f",
     "--values",
     help=(
@@ -706,12 +702,60 @@ def inventory(config: Config, verbose):
     multiple=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
 )
-@click.option(
+inventory_allow_missing_classes = click.option(
     " / -A",
     "--allow-missing-classes/--no-allow-missing-classes",
     default=True,
     help="Whether to allow missing classes when rendering the inventory. Defaults to true.",
 )
+
+
+@inventory.command(
+    name="show",
+    short_help="Returns the rendered inventory",
+)
+@inventory_output_format
+@inventory_values
+@inventory_allow_missing_classes
+@click.argument("global-config")
+@click.argument("tenant-config", required=False)
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def inventory_show(
+    config: Config,
+    verbose,
+    global_config: str,
+    tenant_config: Optional[str],
+    output_format: str,
+    values: Iterable[str],
+    allow_missing_classes: bool,
+):
+    config.update_verbosity(verbose)
+    extra_values = [Path(v) for v in values]
+    try:
+        inv = extract_parameters(
+            config,
+            InventoryFacts(
+                global_config, tenant_config, extra_values, allow_missing_classes
+            ),
+        )
+    except ValueError as e:
+        raise click.ClickException(f"While rendering inventory: {e}") from e
+
+    if output_format == "json":
+        click.echo(json.dumps(inv))
+    else:
+        click.echo(yaml.safe_dump(inv))
+
+
+@inventory.command(
+    name="components",
+    short_help="Extract component URLs and versions from the inventory",
+)
+@inventory_output_format
+@inventory_values
+@inventory_allow_missing_classes
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
 @verbosity
@@ -742,6 +786,45 @@ def component_versions(
         click.echo(json.dumps(components))
     else:
         click.echo(yaml.safe_dump(components))
+
+
+@inventory.command(
+    name="packages",
+    short_help="Extract package URLs and versions from the inventory",
+)
+@inventory_output_format
+@inventory_values
+@inventory_allow_missing_classes
+@click.argument("global-config")
+@click.argument("tenant-config", required=False)
+@verbosity
+@pass_config
+# pylint: disable=too-many-arguments
+def package_versions(
+    config: Config,
+    verbose,
+    global_config: str,
+    tenant_config: Optional[str],
+    output_format: str,
+    values: Iterable[str],
+    allow_missing_classes: bool,
+):
+    config.update_verbosity(verbose)
+    extra_values = [Path(v) for v in values]
+    try:
+        pkgs = extract_packages(
+            config,
+            InventoryFacts(
+                global_config, tenant_config, extra_values, allow_missing_classes
+            ),
+        )
+    except ValueError as e:
+        raise click.ClickException(f"While extracting packages: {e}") from e
+
+    if output_format == "json":
+        click.echo(json.dumps(pkgs))
+    else:
+        click.echo(yaml.safe_dump(pkgs))
 
 
 @inventory.command(

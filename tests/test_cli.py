@@ -52,8 +52,18 @@ def test_component_compile_command():
     assert exit_status == 0
 
 
+def test_inventory_show_command():
+    exit_status = call("commodore inventory show --help", shell=True)
+    assert exit_status == 0
+
+
 def test_inventory_components_command():
     exit_status = call("commodore inventory components --help", shell=True)
+    assert exit_status == 0
+
+
+def test_inventory_packages_command():
+    exit_status = call("commodore inventory packages --help", shell=True)
     assert exit_status == 0
 
 

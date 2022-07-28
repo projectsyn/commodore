@@ -162,6 +162,89 @@ def test_component_versions_cli(
     assert components == expected_components
 
 
+@pytest.mark.parametrize(
+    "parameters,args",
+    [
+        ({}, []),
+        ({"packages": {"tp1": {"url": "https://example.com", "version": "v1"}}}, []),
+        (
+            {"packages": {"tp1": {"url": "https://example.com", "version": "v1"}}},
+            ["-o", "json"],
+        ),
+    ],
+)
+def test_package_versions_cli(
+    cli_runner: RunnerFunc,
+    tmp_path: Path,
+    parameters: dict[str, Any],
+    args: list[str],
+):
+    global_config = tmp_path / "global"
+    global_config.mkdir()
+    with open(global_config / "commodore.yml", "w") as f:
+        yaml.safe_dump({"classes": ["global.test"]}, f)
+
+    with open(global_config / "test.yml", "w") as f:
+        yaml.safe_dump({"parameters": parameters}, f)
+
+    result = cli_runner(["inventory", "packages", str(global_config)] + args)
+
+    assert result.exit_code == 0
+    if "json" in args:
+        pkgs = json.loads(result.stdout)
+    else:
+        pkgs = yaml.safe_load(result.stdout)
+    expected_pkgs = parameters.get("packages", {})
+    assert pkgs == expected_pkgs
+
+
+@pytest.mark.parametrize(
+    "parameters,args",
+    [
+        ({}, []),
+        (
+            {
+                "components": {"tc1": {"url": "https://example.com", "version": "v1"}},
+                "packages": {"tp1": {"url": "https://example.com", "version": "v1"}},
+            },
+            [],
+        ),
+        (
+            {
+                "components": {"tc1": {"url": "https://example.com", "version": "v1"}},
+                "packages": {"tp1": {"url": "https://example.com", "version": "v1"}},
+            },
+            ["-o", "json"],
+        ),
+    ],
+)
+def test_show_inventory_cli(
+    cli_runner: RunnerFunc,
+    tmp_path: Path,
+    parameters: dict[str, Any],
+    args: list[str],
+):
+    global_config = tmp_path / "global"
+    global_config.mkdir()
+    with open(global_config / "commodore.yml", "w") as f:
+        yaml.safe_dump({"classes": ["global.test"]}, f)
+
+    with open(global_config / "test.yml", "w") as f:
+        yaml.safe_dump({"parameters": parameters}, f)
+
+    result = cli_runner(["inventory", "show", str(global_config)] + args)
+
+    assert result.exit_code == 0
+    if "json" in args:
+        inv = json.loads(result.stdout)
+    else:
+        inv = yaml.safe_load(result.stdout)
+    expected_pkgs = parameters.get("packages", {})
+    expected_components = parameters.get("components", {})
+    assert inv.get("packages", {}) == expected_pkgs
+    assert inv.get("components", {}) == expected_components
+
+
 @responses.activate
 def test_catalog_list_cli(cli_runner: RunnerFunc):
     responses.add(
