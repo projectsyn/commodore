@@ -88,7 +88,7 @@ The option `--alias` (or `-a`) can be used to compile an instance-aware componen
 The command `commodore inventory show` prints the `parameters` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
 If provided, the command also takes into account the tenant repo in directory `TENANT_CONFIG`.
 
-The commands `commodore inventory components` and `commodore inventory packages` also render the inventory, but only print a list of all components or packages.
+The commands `commodore inventory components` and `commodore inventory packages` also render the inventory, but only print the list of all components and packages respectively.
 
 NOTE: The commands don't currently support cloning either the global or tenant repository from a Git repo URL.
 
