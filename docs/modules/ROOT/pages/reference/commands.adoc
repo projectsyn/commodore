@@ -81,16 +81,18 @@ configuration repositories.
 
 The option `--alias` (or `-a`) can be used to compile an instance-aware component with a specific instance.
 
-== Inventory Components
+== Inventory Show
 
-  commodore inventory components GLOBAL_CONFIG [TENANT_CONFIG]
+  commodore inventory show|components|packages GLOBAL_CONFIG [TENANT_CONFIG]
 
-This command lists all the components defined in `parameters.components` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
+The command `commodore inventory show` prints the `parameters` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
 If provided, the command also takes into account the tenant repo in directory `TENANT_CONFIG`.
 
-NOTE: The command doesn't currently support cloning either the global or tenant repository from a Git repo URL.
+The commands `commodore inventory components` and `commodore inventory packages` also render the inventory, but only print a list of all components or packages.
 
-The component takes a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the contents of `parameters.components`.
+NOTE: The commands don't currently support cloning either the global or tenant repository from a Git repo URL.
+
+The commands take a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the inventory.
 
 When providing a tenant repo, users must specify the tenant ID and cluster ID for which the inventory should be rendered in a value class to obtain accurate results.
 See a sample `cluster-info.yaml` which can be used for this purpose below.
@@ -107,7 +109,7 @@ parameters:
 <2> Specify the tenant ID.
 This must match the tenant ID associated with the provided tenant repo for accurate results.
 
-The command supports both YAML and JSON output.
+The commands support both YAML and JSON output.
 
 == Inventory Lint
 
