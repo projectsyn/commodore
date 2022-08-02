@@ -882,11 +882,11 @@ pyasn1 = ">=0.4.6,<0.5.0"
 
 [[package]]
 name = "pycodestyle"
-version = "2.8.0"
+version = "2.9.0"
 description = "Python style guide checker"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.6"
 
 [[package]]
 name = "pycparser"
@@ -1367,21 +1367,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.15.1"
+version = "20.16.2"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+python-versions = ">=3.6"
 
 [package.dependencies]
 distlib = ">=0.3.1,<1"
 filelock = ">=3.2,<4"
 platformdirs = ">=2,<3"
-six = ">=1.9.0,<2"
 
 [package.extras]
 docs = ["proselint (>=0.10.2)", "sphinx (>=3)", "sphinx-argparse (>=0.2.5)", "sphinx-rtd-theme (>=0.4.3)", "towncrier (>=21.3)"]
-testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", "pytest (>=4)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.1)", "pytest-mock (>=2)", "pytest-randomly (>=1)", "pytest-timeout (>=1)", "packaging (>=20.0)"]
+testing = ["coverage (>=4)", "coverage-enable-subprocess (>=1)", "flaky (>=3)", "packaging (>=20.0)", "pytest (>=4)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.1)", "pytest-mock (>=2)", "pytest-randomly (>=1)", "pytest-timeout (>=1)"]
 
 [[package]]
 name = "websocket-client"
@@ -1963,8 +1962,8 @@ pyasn1-modules = [
     {file = "pyasn1_modules-0.2.8-py3.7.egg", hash = "sha256:c29a5e5cc7a3f05926aff34e097e84f8589cd790ce0ed41b67aed6857b26aafd"},
 ]
 pycodestyle = [
-    {file = "pycodestyle-2.8.0-py2.py3-none-any.whl", hash = "sha256:720f8b39dde8b293825e7ff02c475f3077124006db4f440dcbc9a20b76548a20"},
-    {file = "pycodestyle-2.8.0.tar.gz", hash = "sha256:eddd5847ef438ea1c7870ca7eb78a9d47ce0cdb4851a5523949f2601d0cbbe7f"},
+    {file = "pycodestyle-2.9.0-py2.py3-none-any.whl", hash = "sha256:289cdc0969d589d90752582bef6dff57c5fbc6949ee8b013ad6d6449a8ae9437"},
+    {file = "pycodestyle-2.9.0.tar.gz", hash = "sha256:beaba44501f89d785be791c9462553f06958a221d166c64e1f107320f839acc2"},
 ]
 pycparser = [
     {file = "pycparser-2.20-py2.py3-none-any.whl", hash = "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"},
@@ -2218,8 +2217,8 @@ urllib3 = [
     {file = "urllib3-1.26.6.tar.gz", hash = "sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.15.1-py2.py3-none-any.whl", hash = "sha256:b30aefac647e86af6d82bfc944c556f8f1a9c90427b2fb4e3bfbf338cb82becf"},
-    {file = "virtualenv-20.15.1.tar.gz", hash = "sha256:288171134a2ff3bfb1a2f54f119e77cd1b81c29fc1265a2356f3e8d14c7d58c4"},
+    {file = "virtualenv-20.16.2-py2.py3-none-any.whl", hash = "sha256:635b272a8e2f77cb051946f46c60a54ace3cb5e25568228bd6b57fc70eca9ff3"},
+    {file = "virtualenv-20.16.2.tar.gz", hash = "sha256:0ef5be6d07181946891f5abc8047fda8bc2f0b4b9bf222c64e6e8963baee76db"},
 ]
 websocket-client = [
     {file = "websocket-client-1.1.1.tar.gz", hash = "sha256:4cf754af7e3b3ba76589d49f9e09fd9a6c0aae9b799a89124d656009c01a261d"},
