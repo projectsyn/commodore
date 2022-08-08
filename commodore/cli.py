@@ -23,6 +23,7 @@ from .inventory.lint import LINTERS
 from .login import login, fetch_token
 from .package.compile import compile_package
 from .package.template import PackageTemplater
+from .package.sync import sync_packages
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -674,6 +675,34 @@ def package_compile(
     config.local = local
     config.fetch_dependencies = fetch_dependencies
     compile_package(config, path, test_class, values, tmp_dir, keep_dir)
+
+
+@package.command("sync", short_help="Synchronize packages to template")
+@verbosity
+@pass_config
+@click.argument(
+    "package_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
+)
+@click.option(
+    "--github-token",
+    help="GitHub API token",
+    envvar="COMMODORE_GITHUB_TOKEN",
+    default="",
+)
+@click.option(
+    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+)
+def package_sync(
+    config: Config, verbose: int, package_list: str, github_token: str, dry_run: bool
+):
+    """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
+
+    It runs `package update` for each package, and creates a PR for the changes, if
+    there are any. Currently only packages hosted on GitHub are supported."""
+    config.update_verbosity(verbose)
+    config.github_token = github_token
+
+    sync_packages(config, Path(package_list), dry_run)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")

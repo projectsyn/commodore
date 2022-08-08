@@ -15,7 +15,7 @@ class Package:
     _gitrepo: Optional[GitRepo]
 
     @classmethod
-    def clone(cls, cfg: "Config", clone_url: str, name: str, version: str = "master"):
+    def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
         pdep = MultiDependency(clone_url, cfg.inventory.dependencies_dir)
         p = Package(
             name,

@@ -37,6 +37,7 @@ class Config:
     _deprecation_notices: list[str]
     _migration: Optional[Migration]
     _dynamic_facts: dict[str, Any]
+    _github_token: Optional[str]
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -75,6 +76,7 @@ class Config:
         self._tenant_repo_revision_override = None
         self._migration = None
         self._dynamic_facts = {}
+        self._github_token = None
 
     @property
     def verbose(self):
@@ -203,6 +205,14 @@ class Config:
     @dynamic_facts.setter
     def dynamic_facts(self, facts: dict[str, Any]):
         self._dynamic_facts = facts
+
+    @property
+    def github_token(self) -> Optional[str]:
+        return self._github_token
+
+    @github_token.setter
+    def github_token(self, github_token: str):
+        self._github_token = github_token
 
     @property
     def inventory(self):
