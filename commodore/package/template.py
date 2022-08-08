@@ -151,7 +151,7 @@ class PackageTemplater(Templater):
             ".cruft.json",
         ]
 
-    def update(self):
+    def update(self) -> bool:
         cruft_update(
             self.target_dir,
             cookiecutter_input=False,
@@ -175,3 +175,5 @@ class PackageTemplater(Templater):
                 f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
                 bold=True,
             )
+
+        return updated
