@@ -3,20 +3,34 @@ from __future__ import annotations
 import json
 
 from pathlib import Path
+from unittest.mock import patch
 
 import click
 import git
 import github
 import pytest
 import responses
+import yaml
 
+from conftest import RunnerFunc
 from test_package import _setup_package_remote
+from test_package_template import call_package_new
 
 from commodore.config import Config
+from commodore.gitrepo import GitRepo
 from commodore.package import Package
 from commodore.package import sync
+from commodore.package.template import PackageTemplater
 
 DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
+
+
+def create_pkg_list(tmp_path: Path) -> Path:
+    pkg_list = tmp_path / "pkgs.yaml"
+    with open(pkg_list, "w", encoding="utf-8") as f:
+        yaml.safe_dump(["projectsyn/package-foo"], f)
+
+    return pkg_list
 
 
 @pytest.mark.parametrize("sync_branch", ["none", "local", "remote"])
@@ -55,10 +69,12 @@ API_TOKEN_MATCHER = responses.matchers.header_matcher(
 )
 
 
-def _setup_gh_get_responses(has_open_pr: bool):
+def _setup_gh_get_responses(has_open_pr: bool, clone_url: str = ""):
 
     with open(DATA_DIR / "projectsyn-package-foo-response.json", encoding="utf-8") as f:
         resp = json.load(f)
+        if clone_url:
+            resp["clone_url"] = clone_url
         responses.add(
             responses.GET,
             "https://api.github.com:443/repos/projectsyn/package-foo",
@@ -112,7 +128,7 @@ def labels_post_body_match(request) -> tuple[bool, str]:
     return valid, reason
 
 
-def _setup_gh_pr_response(method):
+def _setup_gh_pr_response(method, pr_body=""):
     with open(
         DATA_DIR / "projectsyn-package-foo-response-pr.json", encoding="utf-8"
     ) as f:
@@ -121,7 +137,7 @@ def _setup_gh_pr_response(method):
         body_matcher = responses.matchers.json_params_matcher(
             {
                 "title": "Update from package template",
-                "body": "",
+                "body": pr_body,
                 "draft": False,
                 "base": "master",
                 "head": "template-sync",
@@ -222,3 +238,111 @@ def test_sync_packages_package_list_parsing(
             str(exc.value)
             == f"Expected a list in '{pkg_list}', but got unexpected type: {typ}"
         )
+
+
+def make_mock_package_templater(remote_url: str):
+    """Create a Mock package templater class which overrides property `repo_url` with
+    the provided remote_url string.
+
+    Use as follows:
+
+        with patch(
+            "commodore.package.template.PackageTemplater",
+            new_callable=lambda: make_mock_package_templater("file://path/to/remote.git",
+        ):
+            function_under_test()
+    """
+
+    class MockPkgTemplater(PackageTemplater):
+        fake_url = remote_url
+
+        @property
+        def repo_url(self) -> str:
+            return self.fake_url
+
+    return MockPkgTemplater
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+@responses.activate
+def test_sync_packages(
+    tmp_path: Path, cli_runner: RunnerFunc, config: Config, dry_run: bool
+):
+    config.github_token = "ghp_fake-token"
+    responses.add_passthru("https://github.com")
+    remote_path = tmp_path / "remote.git"
+    remote_url = f"file://{remote_path}"
+    rem = git.Repo.init(remote_path, bare=True)
+    _setup_gh_get_responses(False, clone_url=remote_url)
+
+    # Get template latest commit sha
+    tpl = git.Repo.clone_from(
+        "https://github.com/projectsyn/commodore-config-package-template.git",
+        tmp_path / "template.git",
+    )
+    tpl_head_name = tpl.head.reference.name
+    tpl_head_short = tpl.head.commit.hexsha[:7]
+
+    pr_body = f"Template version: {tpl_head_name} ({tpl_head_short})"
+    if not dry_run:
+        _setup_gh_pr_response(responses.POST, pr_body=pr_body)
+
+    # Create package with old version
+    call_package_new(
+        tmp_path, cli_runner, "foo", template_version="--template-version=main^"
+    )
+    pkg_path = tmp_path / "dependencies" / "pkg.foo"
+    with open(pkg_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+
+    # Adjust template version, so sync has something to update
+    cruft_json["checkout"] = "main"
+    # Write back adjusted .cruft.json and amend initial commit
+    with open(pkg_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+    r = GitRepo(None, pkg_path)
+    r.stage_files([".cruft.json"])
+    r.commit("Initial commit", amend=True)
+
+    # Set fake remote for the test package
+    r.repo.remote().set_url(remote_url)
+    r.push()
+    assert rem.head.commit == r.repo.head.commit
+
+    # Setup package list
+    pkg_list = create_pkg_list(tmp_path)
+
+    with patch(
+        "commodore.package.template.PackageTemplater",
+        new_callable=lambda: make_mock_package_templater(remote_url),
+    ):
+        sync.sync_packages(config, pkg_list, dry_run)
+
+    assert len(responses.calls) == 2 + (2 if not dry_run else 0)
+    assert r.repo.head.commit.message == f"Update from template\n\n{pr_body}"
+
+
+@responses.activate
+def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
+    config.github_token = "ghp_fake-token"
+
+    pkg_dir = tmp_path / "package-foo"
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    _setup_gh_get_responses(False, clone_url=f"file://{pkg_dir}")
+
+    # setup non-package repo
+    with open(pkg_dir / "test.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+    r = git.Repo.init(pkg_dir)
+    r.index.add("test.txt")
+    r.index.commit("Initial commit")
+
+    pkg_list = create_pkg_list(tmp_path)
+
+    sync.sync_packages(config, pkg_list, True)
+
+    captured = capsys.readouterr()
+    assert (
+        " > Skipping repo projectsyn/package-foo which doesn't have `.cruft.json`"
+        in captured.out
+    )
