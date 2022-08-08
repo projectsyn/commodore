@@ -11,6 +11,18 @@ class Package:
     version
     """
 
+    @classmethod
+    def clone(cls, cfg: "Config", clone_url: str, name: str, version: str = "master"):
+        pdep = MultiDependency(clone_url, cfg.inventory.dependencies_dir)
+        p = Package(
+            name,
+            pdep,
+            package_dependency_dir(cfg.work_dir, name),
+            version=version,
+        )
+        p.checkout()
+        return p
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
