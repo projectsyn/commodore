@@ -3,13 +3,18 @@ from __future__ import annotations
 from pathlib import Path
 
 import git
+import github
+import json
 import pytest
+import responses
 
 from test_package import _setup_package_remote
 
 from commodore.config import Config
 from commodore.package import Package
 from commodore.package import sync
+
+DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
 
 
 @pytest.mark.parametrize("sync_branch", ["none", "local", "remote"])
@@ -41,3 +46,139 @@ def test_ensure_branch(tmp_path: Path, config: Config, sync_branch: str):
 
     h = hs[0]
     assert h.commit.message == "Add test.txt"
+
+
+API_TOKEN_MATCHER = responses.matchers.header_matcher(
+    {"Authorization": "token ghp_fake-token"}
+)
+
+
+def _setup_gh_get_responses(has_open_pr: bool):
+
+    with open(DATA_DIR / "projectsyn-package-foo-response.json", encoding="utf-8") as f:
+        resp = json.load(f)
+        responses.add(
+            responses.GET,
+            "https://api.github.com:443/repos/projectsyn/package-foo",
+            status=200,
+            json=resp,
+            match=[API_TOKEN_MATCHER],
+        )
+
+    if has_open_pr:
+        with open(
+            DATA_DIR / "projectsyn-package-foo-response-pulls.json", encoding="utf-8"
+        ) as f:
+            pulls = json.load(f)
+    else:
+        pulls = []
+    responses.add(
+        responses.GET,
+        "https://api.github.com:443/repos/projectsyn/package-foo/pulls",
+        json=pulls,
+        status=200,
+        match=[API_TOKEN_MATCHER],
+    )
+
+
+def _setup_gh_pr_response(method):
+    with open(
+        DATA_DIR / "projectsyn-package-foo-response-pr.json", encoding="utf-8"
+    ) as f:
+        resp = json.load(f)
+        suffix = ""
+        body_matcher = responses.matchers.json_params_matcher(
+            {
+                "title": "Update from package template",
+                "body": "",
+                "draft": False,
+                "base": "master",
+                "head": "template-sync",
+            }
+        )
+        if method == responses.PATCH:
+            suffix = "/1"
+            body_matcher = responses.matchers.json_params_matcher({"body": ""})
+        responses.add(
+            method,
+            f"https://api.github.com:443/repos/projectsyn/package-foo/pulls{suffix}",
+            json=resp,
+            status=200,
+            match=[API_TOKEN_MATCHER, body_matcher],
+        )
+
+    if method == responses.POST:
+        label_resp = [
+            {
+                "id": 4405096203,
+                "node_id": "LA_kwDOHyQSds8AAAABBpBvCw",
+                "url": "https://api.github.com/repos/projectsyn/package-foo/labels/template-sync",
+                "name": "template-sync",
+                "color": "ededed",
+                "default": False,
+                "description": None,
+            }
+        ]
+
+        def labels_req_body_match(request) -> tuple[bool, str]:
+            """Custom matcher for the labels API POST request body.
+
+            `responses.matchers.json_params_matcher()` doesn't support top-level JSON
+            list, but PyGitHub just posts a top-level list when updating labels, so we
+            implement our own matcher function."""
+            reason = ""
+            request_body = request.body
+            try:
+                if isinstance(request_body, bytes):
+                    request_body = request_body.decode("utf-8")
+                json_body = json.loads(request_body) if request_body else []
+
+                valid = json_body == ["template-sync"]
+
+                if not valid:
+                    reason = "request.body doesn't match: {} doesn't match {}".format(
+                        json_body, ["template-sync"]
+                    )
+
+            except json.JSONDecodeError:
+                valid = False
+                reason = "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+
+            return valid, reason
+
+        responses.add(
+            responses.POST,
+            "https://api.github.com:443/repos/projectsyn/package-foo/issues/1/labels",
+            json=label_resp,
+            status=200,
+            match=[API_TOKEN_MATCHER, labels_req_body_match],
+        )
+
+
+@responses.activate
+@pytest.mark.parametrize("dry_run", [True, False])
+@pytest.mark.parametrize("pr_exists", [True, False])
+def test_ensure_pr(
+    capsys, tmp_path: Path, config: Config, dry_run: bool, pr_exists: bool
+):
+    _setup_gh_get_responses(pr_exists)
+    if not dry_run:
+        _setup_gh_pr_response(responses.PATCH if pr_exists else responses.POST)
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    config.github_token = "ghp_fake-token"
+    p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
+    pname = "projectsyn/package-foo"
+    sync.ensure_branch(p)
+
+    gh = github.Github(config.github_token)
+    gr = gh.get_repo(pname)
+
+    sync.ensure_pr(p, pname, gr, dry_run)
+
+    if dry_run:
+        captured = capsys.readouterr()
+        cu = "update" if pr_exists else "create"
+        assert f"Would {cu} PR for {pname}" in captured.out
+        assert len(responses.calls) == 2
+    else:
+        assert len(responses.calls) == 3 + (1 if not pr_exists else 0)
