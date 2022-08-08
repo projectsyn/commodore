@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
+
 from pathlib import Path
 
+import click
 import git
 import github
-import json
 import pytest
 import responses
 
@@ -81,6 +83,35 @@ def _setup_gh_get_responses(has_open_pr: bool):
     )
 
 
+def labels_post_body_match(request) -> tuple[bool, str]:
+    """Custom matcher for the labels API POST request body.
+
+    `responses.matchers.json_params_matcher()` doesn't support top-level JSON
+    list, but PyGitHub just posts a top-level list when updating labels, so we
+    implement our own matcher function."""
+    reason = ""
+    request_body = request.body
+    try:
+        if isinstance(request_body, bytes):
+            request_body = request_body.decode("utf-8")
+        json_body = json.loads(request_body) if request_body else []
+
+        valid = json_body == ["template-sync"]
+
+        if not valid:
+            reason = "request.body doesn't match: {} doesn't match {}".format(
+                json_body, ["template-sync"]
+            )
+
+    except json.JSONDecodeError:
+        valid = False
+        reason = (
+            "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+        )
+
+    return valid, reason
+
+
 def _setup_gh_pr_response(method):
     with open(
         DATA_DIR / "projectsyn-package-foo-response-pr.json", encoding="utf-8"
@@ -120,38 +151,12 @@ def _setup_gh_pr_response(method):
             }
         ]
 
-        def labels_req_body_match(request) -> tuple[bool, str]:
-            """Custom matcher for the labels API POST request body.
-
-            `responses.matchers.json_params_matcher()` doesn't support top-level JSON
-            list, but PyGitHub just posts a top-level list when updating labels, so we
-            implement our own matcher function."""
-            reason = ""
-            request_body = request.body
-            try:
-                if isinstance(request_body, bytes):
-                    request_body = request_body.decode("utf-8")
-                json_body = json.loads(request_body) if request_body else []
-
-                valid = json_body == ["template-sync"]
-
-                if not valid:
-                    reason = "request.body doesn't match: {} doesn't match {}".format(
-                        json_body, ["template-sync"]
-                    )
-
-            except json.JSONDecodeError:
-                valid = False
-                reason = "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
-
-            return valid, reason
-
         responses.add(
             responses.POST,
             "https://api.github.com:443/repos/projectsyn/package-foo/issues/1/labels",
             json=label_resp,
             status=200,
-            match=[API_TOKEN_MATCHER, labels_req_body_match],
+            match=[API_TOKEN_MATCHER, labels_post_body_match],
         )
 
 
@@ -182,3 +187,38 @@ def test_ensure_pr(
         assert len(responses.calls) == 2
     else:
         assert len(responses.calls) == 3 + (1 if not pr_exists else 0)
+
+
+@pytest.mark.parametrize(
+    "ghtoken,package_list_contents",
+    [
+        (None, ""),
+        ("ghp_token", '"foo"'),
+        ("ghp_token", 'foo: "bar"'),
+        ("ghp_token", "foo: bar:"),
+        ("ghp_token", "fff: bar\n- foo"),
+    ],
+)
+def test_sync_packages_package_list_parsing(
+    tmp_path: Path, config: Config, ghtoken, package_list_contents
+):
+    config.github_token = ghtoken
+    pkg_list = tmp_path / "pkgs.yaml"
+    with open(pkg_list, "w", encoding="utf-8") as f:
+        f.write(package_list_contents)
+
+    with pytest.raises(click.ClickException) as exc:
+        sync.sync_packages(config, pkg_list, False)
+
+    if ghtoken is None:
+        assert str(exc.value) == "Can't continue, missing GitHub API token."
+    elif package_list_contents.endswith(":") or package_list_contents.startswith("fff"):
+        # parse error
+        assert str(exc.value) == f"Failed to parse YAML in '{pkg_list}'"
+    else:
+        # type error
+        typ = "<class 'dict'>" if ":" in package_list_contents else "<class 'str'>"
+        assert (
+            str(exc.value)
+            == f"Expected a list in '{pkg_list}', but got unexpected type: {typ}"
+        )
