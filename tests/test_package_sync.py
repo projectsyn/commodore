@@ -31,10 +31,10 @@ GH_404_RESP = {
 }
 
 
-def create_pkg_list(tmp_path: Path) -> Path:
+def create_pkg_list(tmp_path: Path, additional_packages: list[str] = []) -> Path:
     pkg_list = tmp_path / "pkgs.yaml"
     with open(pkg_list, "w", encoding="utf-8") as f:
-        yaml.safe_dump(["projectsyn/package-foo"], f)
+        yaml.safe_dump(["projectsyn/package-foo"] + additional_packages, f)
 
     return pkg_list
 
@@ -102,6 +102,14 @@ def _setup_gh_get_responses(has_open_pr: bool, clone_url: str = ""):
         json=pulls,
         status=200,
         match=[API_TOKEN_MATCHER],
+    )
+
+    # Add hard-coded 404 for projectsyn/package-bar
+    responses.add(
+        responses.GET,
+        "https://api.github.com:443/repos/projectsyn/package-bar",
+        json=GH_404_RESP,
+        status=404,
     )
 
 
@@ -311,10 +319,16 @@ def make_mock_package_templater(remote_url: str):
     return MockPkgTemplater
 
 
-@pytest.mark.parametrize("dry_run", [False, True])
+@pytest.mark.parametrize(
+    "dry_run,second_pkg", [(False, False), (False, True), (True, False)]
+)
 @responses.activate
 def test_sync_packages(
-    tmp_path: Path, cli_runner: RunnerFunc, config: Config, dry_run: bool
+    tmp_path: Path,
+    cli_runner: RunnerFunc,
+    config: Config,
+    dry_run: bool,
+    second_pkg: bool,
 ):
     config.github_token = "ghp_fake-token"
     responses.add_passthru("https://github.com")
@@ -358,7 +372,10 @@ def test_sync_packages(
     assert rem.head.commit == r.repo.head.commit
 
     # Setup package list
-    pkg_list = create_pkg_list(tmp_path)
+    add_pkgs = []
+    if second_pkg:
+        add_pkgs = ["projectsyn/package-bar"]
+    pkg_list = create_pkg_list(tmp_path, additional_packages=add_pkgs)
 
     with patch(
         "commodore.package.template.PackageTemplater",
@@ -368,7 +385,8 @@ def test_sync_packages(
             config, pkg_list, dry_run, "template-sync", ["template-sync"]
         )
 
-    assert len(responses.calls) == 2 + (2 if not dry_run else 0)
+    expected_call_count = 2 + (2 if not dry_run else 0) + (1 if second_pkg else 0)
+    assert len(responses.calls) == expected_call_count
     assert r.repo.head.commit.message == f"Update from template\n\n{pr_body}"
 
 

@@ -41,7 +41,8 @@ def sync_packages(
         raise click.ClickException(f"Failed to parse YAML in '{package_list}'")
 
     gh = github.Github(config.github_token)
-    for pn in pkgs:
+    pkg_count = len(pkgs)
+    for i, pn in enumerate(pkgs, start=1):
         click.secho(f"Synchronizing {pn}", bold=True)
         porg, preponame = pn.split("/")
         pname = preponame.replace("package-", "", 1)
@@ -67,10 +68,16 @@ def sync_packages(
             ensure_branch(p, pr_branch)
             ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
 
-            # sleep for 1-2 seconds to avoid hitting secondary rate-limits for PR
-            # creation. No need to sleep if we're not creating a PR.
-            backoff = 1.0 + random.random()  # nosec
-            time.sleep(backoff)
+            if i < pkg_count:
+                # except when processing the last package in the list, sleep for 1-2
+                # seconds to avoid hitting secondary rate-limits for PR creation. No
+                # need to sleep if we're not creating a PR.
+                # Without the #nosec annotations bandit warns (correctly) that
+                # `random.random()` generates weak random numbers, but since the quality
+                # of the randomness doesn't matter here, we don't need to use a more
+                # expensive RNG.
+                backoff = 1.0 + random.random()  # nosec
+                time.sleep(backoff)
 
 
 def message_body(c: git.objects.commit.Commit) -> str:
