@@ -700,6 +700,14 @@ def package_compile(
     type=str,
     help="Branch name to use for updates from template",
 )
+@click.option(
+    "--pr-label",
+    "-l",
+    metavar="LABEL",
+    default=[],
+    multiple=True,
+    help="Labels to set on the PR. Can be repeated",
+)
 def package_sync(
     config: Config,
     verbose: int,
@@ -707,6 +715,7 @@ def package_sync(
     github_token: str,
     dry_run: bool,
     pr_branch: str,
+    pr_label: Iterable[str],
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
@@ -715,7 +724,7 @@ def package_sync(
     config.update_verbosity(verbose)
     config.github_token = github_token
 
-    sync_packages(config, Path(package_list), dry_run, pr_branch)
+    sync_packages(config, Path(package_list), dry_run, pr_branch, pr_label)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")

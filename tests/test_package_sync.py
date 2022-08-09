@@ -160,26 +160,26 @@ def _setup_gh_pr_response(method, pr_body=""):
             match=[API_TOKEN_MATCHER, body_matcher],
         )
 
-    if method == responses.POST:
-        label_resp = [
-            {
-                "id": 4405096203,
-                "node_id": "LA_kwDOHyQSds8AAAABBpBvCw",
-                "url": "https://api.github.com/repos/projectsyn/package-foo/labels/template-sync",
-                "name": "template-sync",
-                "color": "ededed",
-                "default": False,
-                "description": None,
-            }
-        ]
+    # With customizable labels we also update labels when editing existing PRs
+    label_resp = [
+        {
+            "id": 4405096203,
+            "node_id": "LA_kwDOHyQSds8AAAABBpBvCw",
+            "url": "https://api.github.com/repos/projectsyn/package-foo/labels/template-sync",
+            "name": "template-sync",
+            "color": "ededed",
+            "default": False,
+            "description": None,
+        }
+    ]
 
-        responses.add(
-            responses.POST,
-            "https://api.github.com:443/repos/projectsyn/package-foo/issues/1/labels",
-            json=label_resp,
-            status=200,
-            match=[API_TOKEN_MATCHER, labels_post_body_match],
-        )
+    responses.add(
+        responses.POST,
+        "https://api.github.com:443/repos/projectsyn/package-foo/issues/1/labels",
+        json=label_resp,
+        status=200,
+        match=[API_TOKEN_MATCHER, labels_post_body_match],
+    )
 
 
 @responses.activate
@@ -200,7 +200,7 @@ def test_ensure_pr(
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, dry_run, "template-sync")
+    sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
 
     if dry_run:
         captured = capsys.readouterr()
@@ -208,7 +208,7 @@ def test_ensure_pr(
         assert f"Would {cu} PR for {pname}" in captured.out
         assert len(responses.calls) == 2
     else:
-        assert len(responses.calls) == 3 + (1 if not pr_exists else 0)
+        assert len(responses.calls) == 4
 
 
 @pytest.mark.parametrize("pr_exists", [False, True])
@@ -241,7 +241,7 @@ def test_ensure_pr_no_permission(
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, False, "template-sync")
+    sync.ensure_pr(p, pname, gr, False, "template-sync", [])
 
     captured = capsys.readouterr()
 
@@ -272,7 +272,7 @@ def test_sync_packages_package_list_parsing(
         f.write(package_list_contents)
 
     with pytest.raises(click.ClickException) as exc:
-        sync.sync_packages(config, pkg_list, False, "template-sync")
+        sync.sync_packages(config, pkg_list, False, "template-sync", [])
 
     if ghtoken is None:
         assert str(exc.value) == "Can't continue, missing GitHub API token."
@@ -364,7 +364,9 @@ def test_sync_packages(
         "commodore.package.template.PackageTemplater",
         new_callable=lambda: make_mock_package_templater(remote_url),
     ):
-        sync.sync_packages(config, pkg_list, dry_run, "template-sync")
+        sync.sync_packages(
+            config, pkg_list, dry_run, "template-sync", ["template-sync"]
+        )
 
     assert len(responses.calls) == 2 + (2 if not dry_run else 0)
     assert r.repo.head.commit.message == f"Update from template\n\n{pr_body}"
@@ -387,7 +389,7 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
 
     pkg_list = create_pkg_list(tmp_path)
 
-    sync.sync_packages(config, pkg_list, True, "template-sync")
+    sync.sync_packages(config, pkg_list, True, "template-sync", [])
 
     captured = capsys.readouterr()
     assert (
@@ -408,7 +410,7 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
         status=404,
     )
 
-    sync.sync_packages(config, pkg_list, True, "template-sync")
+    sync.sync_packages(config, pkg_list, True, "template-sync", [])
 
     captured = capsys.readouterr()
 

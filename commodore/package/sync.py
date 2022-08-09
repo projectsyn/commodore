@@ -4,6 +4,7 @@ import random
 import time
 
 from pathlib import Path
+from typing import Iterable
 
 import click
 import git
@@ -20,7 +21,11 @@ from .template import PackageTemplater
 
 
 def sync_packages(
-    config: Config, package_list: Path, dry_run: bool, pr_branch: str
+    config: Config,
+    package_list: Path,
+    dry_run: bool,
+    pr_branch: str,
+    pr_label: Iterable[str],
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
@@ -60,7 +65,7 @@ def sync_packages(
         # Create or update PR if there were updates
         if changed:
             ensure_branch(p, pr_branch)
-            ensure_pr(p, pn, gr, dry_run, pr_branch)
+            ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
 
             # sleep for 1-2 seconds to avoid hitting secondary rate-limits for PR
             # creation. No need to sleep if we're not creating a PR.
@@ -93,7 +98,14 @@ def ensure_branch(p: Package, branch_name: str):
         template_sync.set_reference(new_update)
 
 
-def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool, branch_name: str):
+def ensure_pr(
+    p: Package,
+    pn: str,
+    gr: Repository,
+    dry_run: bool,
+    branch_name: str,
+    pr_labels: Iterable[str],
+):
     """Create or update template sync PR."""
     if not p.repo:
         raise ValueError("package repo not initialized")
@@ -112,16 +124,16 @@ def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool, branch_name: s
 
     try:
         if not has_sync_pr:
-            pr = gr.create_pull(
+            sync_pr = gr.create_pull(
                 "Update from package template",
                 pr_body,
                 "master",
                 branch_name,
             )
-            pr.add_to_labels("template-sync")
         else:
             sync_pr = [pr for pr in prs if pr.head.ref == branch_name][0]
             sync_pr.edit(body=pr_body)
+        sync_pr.add_to_labels(*list(pr_labels))
     except github.UnknownObjectException:
         click.echo(
             f"Unable to {cu} PR for {pn}. "
