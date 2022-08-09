@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from pathlib import Path
+from typing import Union
 from unittest.mock import patch
 
 import click
@@ -415,3 +416,20 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
         " > Repository projectsyn/package-foo doesn't exist, skipping..."
         in captured.out
     )
+
+
+@pytest.mark.parametrize(
+    "raw_message,expected",
+    [
+        ("Test", ""),
+        ("Test\n\nFoo str.", "Foo str."),
+        ("Test\n\nFoo str.\n\nBaz Qux.", "Foo str.\n\nBaz Qux."),
+        (b"Test\n\nFoo bin.\n\nBaz Qux.", "Foo bin.\n\nBaz Qux."),
+    ],
+)
+def test_message_body(tmp_path: Path, raw_message: Union[str, bytes], expected: str):
+    r = git.Repo.init(tmp_path)
+
+    c = git.Commit(r, binsha=b"\0" * 20, message=raw_message)
+
+    assert sync.message_body(c) == expected
