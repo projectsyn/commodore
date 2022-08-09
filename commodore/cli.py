@@ -692,8 +692,21 @@ def package_compile(
 @click.option(
     "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
 )
+@click.option(
+    "--pr-branch",
+    "-b",
+    metavar="BRANCH",
+    default="template-sync",
+    type=str,
+    help="Branch name to use for updates from template",
+)
 def package_sync(
-    config: Config, verbose: int, package_list: str, github_token: str, dry_run: bool
+    config: Config,
+    verbose: int,
+    package_list: str,
+    github_token: str,
+    dry_run: bool,
+    pr_branch: str,
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
@@ -702,7 +715,7 @@ def package_sync(
     config.update_verbosity(verbose)
     config.github_token = github_token
 
-    sync_packages(config, Path(package_list), dry_run)
+    sync_packages(config, Path(package_list), dry_run, pr_branch)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")

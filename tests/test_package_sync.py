@@ -61,7 +61,7 @@ def test_ensure_branch(tmp_path: Path, config: Config, sync_branch: str):
 
     assert any(h.name == "template-sync" for h in r.heads) == (sync_branch == "local")
 
-    sync.ensure_branch(p)
+    sync.ensure_branch(p, "template-sync")
 
     hs = [h for h in r.heads if h.name == "template-sync"]
     assert len(hs) == 1
@@ -195,12 +195,12 @@ def test_ensure_pr(
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p)
+    sync.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, dry_run)
+    sync.ensure_pr(p, pname, gr, dry_run, "template-sync")
 
     if dry_run:
         captured = capsys.readouterr()
@@ -236,12 +236,12 @@ def test_ensure_pr_no_permission(
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p)
+    sync.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, False)
+    sync.ensure_pr(p, pname, gr, False, "template-sync")
 
     captured = capsys.readouterr()
 
@@ -272,7 +272,7 @@ def test_sync_packages_package_list_parsing(
         f.write(package_list_contents)
 
     with pytest.raises(click.ClickException) as exc:
-        sync.sync_packages(config, pkg_list, False)
+        sync.sync_packages(config, pkg_list, False, "template-sync")
 
     if ghtoken is None:
         assert str(exc.value) == "Can't continue, missing GitHub API token."
@@ -364,7 +364,7 @@ def test_sync_packages(
         "commodore.package.template.PackageTemplater",
         new_callable=lambda: make_mock_package_templater(remote_url),
     ):
-        sync.sync_packages(config, pkg_list, dry_run)
+        sync.sync_packages(config, pkg_list, dry_run, "template-sync")
 
     assert len(responses.calls) == 2 + (2 if not dry_run else 0)
     assert r.repo.head.commit.message == f"Update from template\n\n{pr_body}"
@@ -387,7 +387,7 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
 
     pkg_list = create_pkg_list(tmp_path)
 
-    sync.sync_packages(config, pkg_list, True)
+    sync.sync_packages(config, pkg_list, True, "template-sync")
 
     captured = capsys.readouterr()
     assert (
@@ -408,7 +408,7 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
         status=404,
     )
 
-    sync.sync_packages(config, pkg_list, True)
+    sync.sync_packages(config, pkg_list, True, "template-sync")
 
     captured = capsys.readouterr()
 

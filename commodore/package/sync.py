@@ -19,7 +19,9 @@ from . import Package
 from .template import PackageTemplater
 
 
-def sync_packages(config: Config, package_list: Path, dry_run: bool) -> None:
+def sync_packages(
+    config: Config, package_list: Path, dry_run: bool, pr_branch: str
+) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
 
@@ -57,8 +59,8 @@ def sync_packages(config: Config, package_list: Path, dry_run: bool) -> None:
 
         # Create or update PR if there were updates
         if changed:
-            ensure_branch(p)
-            ensure_pr(p, pn, gr, dry_run)
+            ensure_branch(p, pr_branch)
+            ensure_pr(p, pn, gr, dry_run, pr_branch)
 
             # sleep for 1-2 seconds to avoid hitting secondary rate-limits for PR
             # creation. No need to sleep if we're not creating a PR.
@@ -75,29 +77,29 @@ def message_body(c: git.objects.commit.Commit) -> str:
     return "\n\n".join(paragraphs[1:])
 
 
-def ensure_branch(p: Package):
+def ensure_branch(p: Package, branch_name: str):
     """Create or reset `template-sync` branch pointing to our new template update
     commit."""
     if not p.repo:
         raise ValueError("package repo not initialized")
     r = p.repo.repo
-    has_sync_branch = any(h.name == "template-sync" for h in r.heads)
+    has_sync_branch = any(h.name == branch_name for h in r.heads)
 
     if not has_sync_branch:
-        r.create_head("template-sync")
+        r.create_head(branch_name)
     else:
         new_update = r.head.commit
-        template_sync = [h for h in r.heads if h.name == "template-sync"][0]
+        template_sync = [h for h in r.heads if h.name == branch_name][0]
         template_sync.set_reference(new_update)
 
 
-def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool):
+def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool, branch_name: str):
     """Create or update template sync PR."""
     if not p.repo:
         raise ValueError("package repo not initialized")
 
     prs = gr.get_pulls(state="open")
-    has_sync_pr = any(pr.head.ref == "template-sync" for pr in prs)
+    has_sync_pr = any(pr.head.ref == branch_name for pr in prs)
 
     cu = "update" if has_sync_pr else "create"
     if dry_run:
@@ -105,7 +107,7 @@ def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool):
         return
 
     r = p.repo.repo
-    r.remote().push("template-sync", force=True)
+    r.remote().push(branch_name, force=True)
     pr_body = message_body(r.head.commit)
 
     try:
@@ -114,11 +116,11 @@ def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool):
                 "Update from package template",
                 pr_body,
                 "master",
-                "template-sync",
+                branch_name,
             )
             pr.add_to_labels("template-sync")
         else:
-            sync_pr = [pr for pr in prs if pr.head.ref == "template-sync"][0]
+            sync_pr = [pr for pr in prs if pr.head.ref == branch_name][0]
             sync_pr.edit(body=pr_body)
     except github.UnknownObjectException:
         click.echo(
