@@ -719,8 +719,19 @@ def package_sync(
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
-    It runs `package update` for each package, and creates a PR for the changes, if
-    there are any. Currently only packages hosted on GitHub are supported."""
+    Currently, the command only supports updating packages hosted on GitHub. The command
+    expects that the YAML file contains a single document with a list of GitHub
+    repositories in form `organization/repository-name`.
+
+    The command clones each package and runs `package update` on the local copy. If
+    there are any changes, the command creates a PR for the changes. For each package,
+    the command parses the package's `.cruft.json` to determine the template repository
+    and template version for the package.
+
+    The command requires a GitHub Access token with the 'public_repo' permission, which
+    is required to create PRs on public repositories. If you want to manage private
+    repos, the access token may require additional permissions.
+    """
     config.update_verbosity(verbose)
     config.github_token = github_token
 
