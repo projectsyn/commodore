@@ -4,7 +4,7 @@ import json
 import os
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 from unittest import mock
 
 import pytest
@@ -390,10 +390,14 @@ def test_package_sync_cli(
     with open(pkg_list, "w", encoding="utf-8") as f:
         yaml.safe_dump(["projectsyn/package-foo"], f)
 
-    def sync_pkgs(config, pkglist: Path, dry_run: bool):
+    def sync_pkgs(
+        config, pkglist: Path, dry_run: bool, pr_branch: str, pr_labels: Iterable[str]
+    ):
         assert config.github_token == ghtoken
         assert pkglist.absolute() == pkg_list.absolute()
         assert not dry_run
+        assert pr_branch == "template-sync"
+        assert list(pr_labels) == []
 
     mock_sync_packages.side_effect = sync_pkgs
     result = cli_runner(["package", "sync", "pkgs.yaml"])
