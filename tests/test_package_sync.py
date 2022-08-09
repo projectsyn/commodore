@@ -325,7 +325,17 @@ def make_mock_package_templater(remote_url: str):
 
 
 @pytest.mark.parametrize(
-    "dry_run,second_pkg", [(False, False), (False, True), (True, False)]
+    "dry_run,second_pkg,needs_update",
+    [
+        # no dry-run, no 2nd package, update required
+        (False, False, True),
+        # no dry-run, no 2nd package, no update required
+        (False, False, False),
+        # no dry-run, 2nd package, update required
+        (False, True, True),
+        # dry-run, no 2nd package, no update required
+        (True, False, False),
+    ],
 )
 @responses.activate
 def test_sync_packages(
@@ -334,6 +344,7 @@ def test_sync_packages(
     config: Config,
     dry_run: bool,
     second_pkg: bool,
+    needs_update: bool,
 ):
     config.github_token = "ghp_fake-token"
     responses.add_passthru("https://github.com")
@@ -359,22 +370,23 @@ def test_sync_packages(
         tmp_path, cli_runner, "foo", template_version="--template-version=main^"
     )
     pkg_path = tmp_path / "dependencies" / "pkg.foo"
-    with open(pkg_path / ".cruft.json", "r", encoding="utf-8") as f:
-        cruft_json = json.load(f)
-
-    # Adjust template version, so sync has something to update
-    cruft_json["checkout"] = "main"
-    # Write back adjusted .cruft.json and amend initial commit
-    with open(pkg_path / ".cruft.json", "w", encoding="utf-8") as f:
-        json.dump(cruft_json, f, indent=2)
     r = GitRepo(None, pkg_path)
-    r.stage_files([".cruft.json"])
-    r.commit("Initial commit", amend=True)
-
     # Set fake remote for the test package
     r.repo.remote().set_url(remote_url)
-    r.push()
-    assert rem.head.commit == r.repo.head.commit
+
+    if needs_update:
+        with open(pkg_path / ".cruft.json", "r", encoding="utf-8") as f:
+            cruft_json = json.load(f)
+
+        # Adjust template version, so sync has something to update
+        cruft_json["checkout"] = "main"
+        # Write back adjusted .cruft.json and amend initial commit
+        with open(pkg_path / ".cruft.json", "w", encoding="utf-8") as f:
+            json.dump(cruft_json, f, indent=2)
+        r.stage_files([".cruft.json"])
+        r.commit("Initial commit", amend=True)
+        r.push()
+        assert rem.head.commit == r.repo.head.commit
 
     # Setup package list
     add_pkgs = []
@@ -390,9 +402,18 @@ def test_sync_packages(
             config, pkg_list, dry_run, "template-sync", ["template-sync"]
         )
 
-    expected_call_count = 2 + (2 if not dry_run else 0) + (1 if second_pkg else 0)
+    expected_call_count = 1
+    if needs_update:
+        expected_call_count += 1
+    if needs_update and not dry_run:
+        expected_call_count += 2
+    if second_pkg:
+        expected_call_count += 1
     assert len(responses.calls) == expected_call_count
-    assert r.repo.head.commit.message == f"Update from template\n\n{pr_body}"
+    expected_message = "Initial commit\n"
+    if needs_update:
+        expected_message = f"Update from template\n\n{pr_body}"
+    assert r.repo.head.commit.message == expected_message
 
 
 @responses.activate
