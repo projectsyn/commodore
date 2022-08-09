@@ -151,7 +151,7 @@ class PackageTemplater(Templater):
             ".cruft.json",
         ]
 
-    def update(self) -> bool:
+    def update(self, print_completion_message: bool = True) -> bool:
         cruft_update(
             self.target_dir,
             cookiecutter_input=False,
@@ -165,15 +165,16 @@ class PackageTemplater(Templater):
             init=False,
         )
 
-        if updated:
-            click.secho(
-                f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
-                bold=True,
-            )
-        else:
-            click.secho(
-                f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
-                bold=True,
-            )
+        if print_completion_message:
+            if updated:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                    bold=True,
+                )
+            else:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                    bold=True,
+                )
 
         return updated

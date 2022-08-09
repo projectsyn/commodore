@@ -208,7 +208,12 @@ def test_ensure_pr(
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+    cu = sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+
+    if dry_run:
+        assert cu is None
+    else:
+        assert cu == ("updated" if pr_exists else "created")
 
     if dry_run:
         captured = capsys.readouterr()

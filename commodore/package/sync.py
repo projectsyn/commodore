@@ -4,7 +4,7 @@ import random
 import time
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
 import click
 import git
@@ -61,12 +61,13 @@ def sync_packages(
 
         # Run `package update`
         t = PackageTemplater.from_existing(config, p.target_dir)
-        changed = t.update()
+        changed = t.update(print_completion_message=False)
 
         # Create or update PR if there were updates
         if changed:
             ensure_branch(p, pr_branch)
-            ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
+            cu = ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
+            click.secho(f"PR for package {pn} successfully {cu}", bold=True)
 
             if i < pkg_count:
                 # except when processing the last package in the list, sleep for 1-2
@@ -78,6 +79,8 @@ def sync_packages(
                 # expensive RNG.
                 backoff = 1.0 + random.random()  # nosec
                 time.sleep(backoff)
+        else:
+            click.secho(f"Package {pn} already up-to-date", bold=True)
 
 
 def message_body(c: git.objects.commit.Commit) -> str:
@@ -112,7 +115,7 @@ def ensure_pr(
     dry_run: bool,
     branch_name: str,
     pr_labels: Iterable[str],
-):
+) -> Optional[str]:
     """Create or update template sync PR."""
     if not p.repo:
         raise ValueError("package repo not initialized")
@@ -123,7 +126,7 @@ def ensure_pr(
     cu = "update" if has_sync_pr else "create"
     if dry_run:
         click.echo(f"Would {cu} PR for {pn}")
-        return
+        return None
 
     r = p.repo.repo
     r.remote().push(branch_name, force=True)
@@ -146,4 +149,6 @@ def ensure_pr(
             f"Unable to {cu} PR for {pn}. "
             + "Please make sure your GitHub token has permission 'public_repo'"
         )
-        pass
+        return None
+
+    return f"{cu}d"
