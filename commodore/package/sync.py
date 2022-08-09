@@ -99,8 +99,8 @@ def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool):
     prs = gr.get_pulls(state="open")
     has_sync_pr = any(pr.head.ref == "template-sync" for pr in prs)
 
+    cu = "update" if has_sync_pr else "create"
     if dry_run:
-        cu = "update" if has_sync_pr else "create"
         click.echo(f"Would {cu} PR for {pn}")
         return
 
@@ -108,14 +108,21 @@ def ensure_pr(p: Package, pn: str, gr: Repository, dry_run: bool):
     r.remote().push("template-sync", force=True)
     pr_body = message_body(r.head.commit)
 
-    if not has_sync_pr:
-        pr = gr.create_pull(
-            "Update from package template",
-            pr_body,
-            "master",
-            "template-sync",
+    try:
+        if not has_sync_pr:
+            pr = gr.create_pull(
+                "Update from package template",
+                pr_body,
+                "master",
+                "template-sync",
+            )
+            pr.add_to_labels("template-sync")
+        else:
+            sync_pr = [pr for pr in prs if pr.head.ref == "template-sync"][0]
+            sync_pr.edit(body=pr_body)
+    except github.UnknownObjectException:
+        click.echo(
+            f"Unable to {cu} PR for {pn}. "
+            + "Please make sure your GitHub token has permission 'public_repo'"
         )
-        pr.add_to_labels("template-sync")
-    else:
-        sync_pr = [pr for pr in prs if pr.head.ref == "template-sync"][0]
-        sync_pr.edit(body=pr_body)
+        pass

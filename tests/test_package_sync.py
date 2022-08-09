@@ -24,6 +24,11 @@ from commodore.package.template import PackageTemplater
 
 DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
 
+GH_404_RESP = {
+    "message": "Not Found",
+    "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",
+}
+
 
 def create_pkg_list(tmp_path: Path) -> Path:
     pkg_list = tmp_path / "pkgs.yaml"
@@ -205,6 +210,48 @@ def test_ensure_pr(
         assert len(responses.calls) == 3 + (1 if not pr_exists else 0)
 
 
+@pytest.mark.parametrize("pr_exists", [False, True])
+@responses.activate
+def test_ensure_pr_no_permission(
+    capsys, tmp_path: Path, config: Config, pr_exists: bool
+):
+    _setup_gh_get_responses(pr_exists)
+    if pr_exists:
+        responses.add(
+            responses.PATCH,
+            "https://api.github.com:443/repos/projectsyn/package-foo/pulls/1",
+            json=GH_404_RESP,
+            status=404,
+        )
+    else:
+        responses.add(
+            responses.POST,
+            "https://api.github.com:443/repos/projectsyn/package-foo/pulls",
+            json=GH_404_RESP,
+            status=404,
+        )
+
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    config.github_token = "ghp_fake-token"
+    p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
+    pname = "projectsyn/package-foo"
+    sync.ensure_branch(p)
+
+    gh = github.Github(config.github_token)
+    gr = gh.get_repo(pname)
+
+    sync.ensure_pr(p, pname, gr, False)
+
+    captured = capsys.readouterr()
+
+    cu = "update" if pr_exists else "create"
+    assert (
+        captured.out
+        == f"Unable to {cu} PR for projectsyn/package-foo. "
+        + "Please make sure your GitHub token has permission 'public_repo'\n"
+    )
+
+
 @pytest.mark.parametrize(
     "ghtoken,package_list_contents",
     [
@@ -356,10 +403,7 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
     responses.add(
         responses.GET,
         "https://api.github.com:443/repos/projectsyn/package-foo",
-        json={
-            "message": "Not Found",
-            "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",
-        },
+        json=GH_404_RESP,
         status=404,
     )
 
