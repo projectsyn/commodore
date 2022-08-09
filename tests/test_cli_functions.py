@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 
 from pathlib import Path
 from typing import Any
@@ -374,3 +375,27 @@ def test_catalog_compile_cli(
         )
     if expected.get("login", False):
         mock_login.assert_called()
+
+
+@mock.patch.object(cli, "sync_packages")
+@pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
+def test_package_sync_cli(
+    mock_sync_packages, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
+):
+    os.chdir(tmp_path)
+    if ghtoken is not None:
+        os.environ["COMMODORE_GITHUB_TOKEN"] = ghtoken
+
+    pkg_list = tmp_path / "pkgs.yaml"
+    with open(pkg_list, "w", encoding="utf-8") as f:
+        yaml.safe_dump(["projectsyn/package-foo"], f)
+
+    def sync_pkgs(config, pkglist: Path, dry_run: bool):
+        assert config.github_token == ghtoken
+        assert pkglist.absolute() == pkg_list.absolute()
+        assert not dry_run
+
+    mock_sync_packages.side_effect = sync_pkgs
+    result = cli_runner(["package", "sync", "pkgs.yaml"])
+    print(result.stdout)
+    assert result.exit_code == (1 if ghtoken is None else 0)
