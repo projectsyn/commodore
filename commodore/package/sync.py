@@ -40,7 +40,11 @@ def sync_packages(config: Config, package_list: Path, dry_run: bool) -> None:
         pname = preponame.replace("package-", "", 1)
 
         # Clone package
-        gr = gh.get_repo(pn)
+        try:
+            gr = gh.get_repo(pn)
+        except github.UnknownObjectException:
+            click.secho(f" > Repository {pn} doesn't exist, skipping...", fg="yellow")
+            continue
         p = Package.clone(config, gr.clone_url, pname, version="master")
 
         if not (p.target_dir / ".cruft.json").is_file():

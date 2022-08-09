@@ -346,3 +346,28 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
         " > Skipping repo projectsyn/package-foo which doesn't have `.cruft.json`"
         in captured.out
     )
+
+
+@responses.activate
+def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
+    config.github_token = "ghp_fake-token"
+    pkg_list = create_pkg_list(tmp_path)
+
+    responses.add(
+        responses.GET,
+        "https://api.github.com:443/repos/projectsyn/package-foo",
+        json={
+            "message": "Not Found",
+            "documentation_url": "https://docs.github.com/rest/reference/repos#get-a-repository",
+        },
+        status=404,
+    )
+
+    sync.sync_packages(config, pkg_list, True)
+
+    captured = capsys.readouterr()
+
+    assert (
+        " > Repository projectsyn/package-foo doesn't exist, skipping..."
+        in captured.out
+    )
