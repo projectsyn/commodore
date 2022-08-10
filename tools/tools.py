@@ -1,10 +1,6 @@
 from subprocess import call
 
 
-def autopep():
-    call(["autopep8", "--in-place", "--aggressive", "--recursive", "--verbose", "./"])
-
-
 def local_reveal():
     call("./tools/reveal.sh")
 
