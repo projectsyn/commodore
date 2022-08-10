@@ -21,7 +21,7 @@ from commodore.package import package_dependency_dir
 # pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
     template_url: str
-    template_version: str
+    template_version: Optional[str] = None
     _test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
     _target_dir: Optional[Path] = None
@@ -40,8 +40,7 @@ class PackageTemplater(Templater):
         t._target_dir = package_path
         t.output_dir = package_path.absolute().parent
         t.template_url = cruft_json["template"]
-        if cruft_json["checkout"]:
-            t.template_version = cruft_json["checkout"]
+        t.template_version = cruft_json.get("checkout")
 
         if "test_cases" in cookiecutter_args:
             t.test_cases = cookiecutter_args["test_cases"].split(" ")
@@ -152,7 +151,7 @@ class PackageTemplater(Templater):
             ".cruft.json",
         ]
 
-    def update(self):
+    def update(self, print_completion_message: bool = True) -> bool:
         cruft_update(
             self.target_dir,
             cookiecutter_input=False,
@@ -166,13 +165,16 @@ class PackageTemplater(Templater):
             init=False,
         )
 
-        if updated:
-            click.secho(
-                f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
-                bold=True,
-            )
-        else:
-            click.secho(
-                f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
-                bold=True,
-            )
+        if print_completion_message:
+            if updated:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                    bold=True,
+                )
+            else:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                    bold=True,
+                )
+
+        return updated

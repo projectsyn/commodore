@@ -23,6 +23,7 @@ from .inventory.lint import LINTERS
 from .login import login, fetch_token
 from .package.compile import compile_package
 from .package.template import PackageTemplater
+from .package.sync import sync_packages
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -674,6 +675,67 @@ def package_compile(
     config.local = local
     config.fetch_dependencies = fetch_dependencies
     compile_package(config, path, test_class, values, tmp_dir, keep_dir)
+
+
+@package.command("sync", short_help="Synchronize packages to template")
+@verbosity
+@pass_config
+@click.argument(
+    "package_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
+)
+@click.option(
+    "--github-token",
+    help="GitHub API token",
+    envvar="COMMODORE_GITHUB_TOKEN",
+    default="",
+)
+@click.option(
+    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+)
+@click.option(
+    "--pr-branch",
+    "-b",
+    metavar="BRANCH",
+    default="template-sync",
+    type=str,
+    help="Branch name to use for updates from template",
+)
+@click.option(
+    "--pr-label",
+    "-l",
+    metavar="LABEL",
+    default=[],
+    multiple=True,
+    help="Labels to set on the PR. Can be repeated",
+)
+def package_sync(
+    config: Config,
+    verbose: int,
+    package_list: str,
+    github_token: str,
+    dry_run: bool,
+    pr_branch: str,
+    pr_label: Iterable[str],
+):
+    """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
+
+    Currently, the command only supports updating packages hosted on GitHub. The command
+    expects that the YAML file contains a single document with a list of GitHub
+    repositories in form `organization/repository-name`.
+
+    The command clones each package and runs `package update` on the local copy. If
+    there are any changes, the command creates a PR for the changes. For each package,
+    the command parses the package's `.cruft.json` to determine the template repository
+    and template version for the package.
+
+    The command requires a GitHub Access token with the 'public_repo' permission, which
+    is required to create PRs on public repositories. If you want to manage private
+    repos, the access token may require additional permissions.
+    """
+    config.update_verbosity(verbose)
+    config.github_token = github_token
+
+    sync_packages(config, Path(package_list), dry_run, pr_branch, pr_label)
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")

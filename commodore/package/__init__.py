@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from commodore.multi_dependency import MultiDependency
+from commodore.gitrepo import GitRepo
 
 
 class Package:
@@ -10,6 +11,20 @@ class Package:
     Used to abstract from details of cloning/checking out the correct package repo and
     version
     """
+
+    _gitrepo: Optional[GitRepo]
+
+    @classmethod
+    def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
+        pdep = MultiDependency(clone_url, cfg.inventory.dependencies_dir)
+        p = Package(
+            name,
+            pdep,
+            package_dependency_dir(cfg.work_dir, name),
+            version=version,
+        )
+        p.checkout()
+        return p
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -25,6 +40,7 @@ class Package:
         self._sub_path = sub_path
         self._dependency = dependency
         self._dependency.register_package(name, target_dir)
+        self._gitrepo = None
 
     @property
     def url(self) -> Optional[str]:
@@ -41,6 +57,12 @@ class Package:
     @property
     def repository_dir(self) -> Optional[Path]:
         return self._dependency.get_package(self._name)
+
+    @property
+    def repo(self) -> Optional[GitRepo]:
+        if not self._gitrepo and self.target_dir and self.target_dir.is_dir():
+            self._gitrepo = GitRepo(None, self.target_dir)
+        return self._gitrepo
 
     @property
     def target_dir(self) -> Optional[Path]:

@@ -90,3 +90,13 @@ def test_package_compile_command():
 def test_package_new_command():
     exit_status = call("commodore package new --help", shell=True)
     assert exit_status == 0
+
+
+def test_package_update_command():
+    exit_status = call("commodore package update --help", shell=True)
+    assert exit_status == 0
+
+
+def test_package_sync_command():
+    exit_status = call("commodore package sync --help", shell=True)
+    assert exit_status == 0
