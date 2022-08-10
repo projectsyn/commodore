@@ -53,7 +53,7 @@ def sync_packages(
         except github.UnknownObjectException:
             click.secho(f" > Repository {pn} doesn't exist, skipping...", fg="yellow")
             continue
-        p = Package.clone(config, gr.clone_url, pname, version="master")
+        p = Package.clone(config, gr.clone_url, pname, version=gr.default_branch)
 
         if not (p.target_dir / ".cruft.json").is_file():
             click.echo(f" > Skipping repo {pn} which doesn't have `.cruft.json`")
@@ -137,7 +137,7 @@ def ensure_pr(
             sync_pr = gr.create_pull(
                 "Update from package template",
                 pr_body,
-                "master",
+                gr.default_branch,
                 branch_name,
             )
         else:
