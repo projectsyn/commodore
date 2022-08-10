@@ -726,7 +726,8 @@ def package_sync(
     The command clones each package and runs `package update` on the local copy. If
     there are any changes, the command creates a PR for the changes. For each package,
     the command parses the package's `.cruft.json` to determine the template repository
-    and template version for the package.
+    and template version for the package. The command bases each PR on the default
+    branch of the corresponding package repository as reported by the GitHub API.
 
     The command requires a GitHub Access token with the 'public_repo' permission, which
     is required to create PRs on public repositories. If you want to manage private
