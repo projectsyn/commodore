@@ -21,7 +21,7 @@ from commodore.package import package_dependency_dir
 # pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
     template_url: str
-    template_version: str
+    template_version: Optional[str] = None
     _test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
     _target_dir: Optional[Path] = None
@@ -40,8 +40,7 @@ class PackageTemplater(Templater):
         t._target_dir = package_path
         t.output_dir = package_path.absolute().parent
         t.template_url = cruft_json["template"]
-        if cruft_json["checkout"]:
-            t.template_version = cruft_json["checkout"]
+        t.template_version = cruft_json.get("checkout")
 
         if "test_cases" in cookiecutter_args:
             t.test_cases = cookiecutter_args["test_cases"].split(" ")
