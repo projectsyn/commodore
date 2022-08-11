@@ -92,7 +92,7 @@ def _cli_command_string(
     p: P, component: str, instance: Optional[str] = None, subpath: Optional[str] = None
 ) -> str:
     if subpath:
-        cpath = f"'{p}/{component}/{subpath}' -r '{p}/{component}'"
+        cpath = f"'{p}/{component}/{subpath}' -n {component}"
     else:
         cpath = f"'{p}/dependencies/{component}'"
     cmd = f"commodore -d '{p}' component compile -o '{p}/testdir' {cpath}"
@@ -270,9 +270,7 @@ def test_component_compile_subpath(tmp_path):
 
 def test_no_component_compile_command(tmp_path):
     with pytest.raises(ClickException) as excinfo:
-        compile_component(
-            Config(tmp_path), tmp_path / "foo", None, [], [], "./", "", ""
-        )
+        compile_component(Config(tmp_path), tmp_path / "foo", None, [], [], "./", "")
     assert (
         f"Can't compile component, repository {tmp_path / 'foo'} doesn't exist"
         in str(excinfo)

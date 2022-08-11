@@ -415,9 +415,7 @@ def component_delete(config: Config, slug, force, verbose):
     default="",
     show_default=False,
     type=click.Path(file_okay=False, dir_okay=True),
-    help="Path to the root of the Git repo containing the component. "
-    + "The command assumes that the component is in the repo root, "
-    + "if this option is not provided.",
+    help="DEPRECATED.  This option has no effect anymore.",
 )
 @click.option(
     "-n",
@@ -442,9 +440,12 @@ def component_compile(
     verbose: int,
 ):
     config.update_verbosity(verbose)
-    compile_component(
-        config, path, alias, values, search_paths, output, repo_directory, name
-    )
+    if repo_directory:
+        click.secho(
+            " > Parameter `-r`/`--repo-directory` is deprecated and has no effect"
+        )
+
+    compile_component(config, path, alias, values, search_paths, output, name)
 
 
 @commodore.group(short_help="Interact with a Commodore config package")

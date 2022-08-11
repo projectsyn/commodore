@@ -3,6 +3,13 @@
 This page lists deprecations of Commodore features organized by version.
 We include a link to relevant documentation, if applicable.
 
+== https://github.com/projectsyn/commodore/releases/tag/v1.8.0[v1.8.0]
+
+=== Parameter `-r / --repo-directory` for `component compile` is deprecated
+
+We instead discover the component's Git repository by recursively searching for a git repository in the component's parent directories.
+When the parameter is provided, a deprecation notice is printed and the value of the parameter is discarded.
+
 == https://github.com/projectsyn/commodore/releases/tag/v1.0.0[v1.0.0]
 
 * Support for external postprocessing filter definitions is removed [<<_external_pp_filters,deprecated in v0.16.0>>].

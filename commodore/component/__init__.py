@@ -14,7 +14,7 @@ from commodore.multi_dependency import MultiDependency
 class Component:
     _name: str
     _repo: Optional[GitRepo]
-    _dependency: MultiDependency
+    _dependency: Optional[MultiDependency] = None
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
@@ -23,7 +23,7 @@ class Component:
     def __init__(
         self,
         name: str,
-        dependency: MultiDependency,
+        dependency: Optional[MultiDependency],
         work_dir: Optional[P] = None,
         version: Optional[str] = None,
         directory: Optional[P] = None,
@@ -38,8 +38,9 @@ class Component:
             raise click.ClickException(
                 "Either `work_dir` or `directory` must be provided."
             )
-        self._dependency = dependency
-        self._dependency.register_component(self.name, self._dir)
+        if dependency:
+            self._dependency = dependency
+            self._dependency.register_component(self.name, self._dir)
         self.version = version
         self._sub_path = sub_path
         self._repo = None
@@ -55,14 +56,20 @@ class Component:
         return self._repo
 
     @property
-    def dependency(self):
+    def dependency(self) -> MultiDependency:
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         return self._dependency
 
     @dependency.setter
-    def dependency(self, dependency: MultiDependency):
+    def dependency(self, dependency: Optional[MultiDependency]):
         """Update the GitRepo backing the component"""
-        self._dependency.deregister_component(self.name)
-        dependency.register_component(self.name, self._dir)
+        if self._dependency:
+            self._dependency.deregister_component(self.name)
+        if dependency:
+            dependency.register_component(self.name, self._dir)
         self._dependency = dependency
         # Clear worktree GitRepo wrapper when we update the component's backing
         # dependency. The new GitRepo wrapper will be created on the nex access of
@@ -71,6 +78,10 @@ class Component:
 
     @property
     def repo_url(self) -> str:
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         return self._dependency.url
 
     @property
@@ -124,6 +135,10 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         self._dependency.checkout_component(self.name, self.version)
 
     def render_jsonnetfile_json(self, component_params):
