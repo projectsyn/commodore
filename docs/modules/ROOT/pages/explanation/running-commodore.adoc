@@ -124,12 +124,18 @@ commodore() {
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:${COMMODORE_VERSION:=latest} \
     $*
 }
 ----
+
+[NOTE]
+====
+We mount the current working directory on the host (`${PWD}`) to the same directory in the container.
+This is necessary to ensure that commands such as `catalog compile` and `component new` create Git repository checkouts which work both in the container and on the host.
+====
 
 === macOS
 
@@ -167,12 +173,18 @@ commodore() {
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:latest \
     $*
 }
 ----
+
+[NOTE]
+====
+We mount the current working directory on the host (`${PWD}`) to the same directory in the container.
+This is necessary to ensure that commands such as `catalog compile` and `component new` create Git repository checkouts which work both in the container and on the host.
+====
 
 Instead you can also mount your SSH key into the container.
 The container will pickup that key and add it do an SSH agent running inside the container.
@@ -192,8 +204,8 @@ commodore() {
     --volume "${HOME}/.ssh:/app/.ssh:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:latest \
     $*
 }
