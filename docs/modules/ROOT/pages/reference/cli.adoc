@@ -126,6 +126,10 @@ This command doesn't have any command line options.
   provide multiple files. Files specified later win when resolving inventory
   values.
 
+*-n, --name* NAME::
+  Provide component name to use when compiling.
+  By default, the component name is derived from the directory which is being compiled.
+
 *-a, --alias* ALIAS::
   Provide component alias to use when compiling component.
 
