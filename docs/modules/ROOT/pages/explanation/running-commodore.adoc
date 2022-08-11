@@ -19,6 +19,9 @@ We recommend that you use the Commodore Python package provided on PyPI to make 
 
 * Python 3.8, 3.9, or 3.10 as `python3` and the Python `venv` module.
 We recommend that you install Python and the `venv` module with your preferred package manager.
+* Additionally, a few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
+On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
+Please refer to your operating system's documentation for instructions to setup a working C compiler.
 * `jsonnet-bundler`, https://github.com/jsonnet-bundler/jsonnet-bundler#install[installation instructions]
 * Helm 3, https://helm.sh/docs/intro/install/[installation instructions]
 
