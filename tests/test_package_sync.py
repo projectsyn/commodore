@@ -193,9 +193,7 @@ def _setup_gh_pr_response(method, pr_body=""):
 @responses.activate
 @pytest.mark.parametrize("dry_run", [True, False])
 @pytest.mark.parametrize("pr_exists", [True, False])
-def test_ensure_pr(
-    capsys, tmp_path: Path, config: Config, dry_run: bool, pr_exists: bool
-):
+def test_ensure_pr(tmp_path: Path, config: Config, dry_run: bool, pr_exists: bool):
     _setup_gh_get_responses(pr_exists)
     if not dry_run:
         _setup_gh_pr_response(responses.PATCH if pr_exists else responses.POST)
@@ -208,27 +206,21 @@ def test_ensure_pr(
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    cu = sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+    msg = sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+
+    cu = "update" if pr_exists else "create"
 
     if dry_run:
-        assert cu is None
-    else:
-        assert cu == ("updated" if pr_exists else "created")
-
-    if dry_run:
-        captured = capsys.readouterr()
-        cu = "update" if pr_exists else "create"
-        assert f"Would {cu} PR for {pname}" in captured.out
+        assert msg == f"Would {cu} PR for {pname}"
         assert len(responses.calls) == 2
     else:
+        assert msg == f"PR for package projectsyn/package-foo successfully {cu}d"
         assert len(responses.calls) == 4
 
 
 @pytest.mark.parametrize("pr_exists", [False, True])
 @responses.activate
-def test_ensure_pr_no_permission(
-    capsys, tmp_path: Path, config: Config, pr_exists: bool
-):
+def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool):
     _setup_gh_get_responses(pr_exists)
     if pr_exists:
         responses.add(
@@ -254,15 +246,13 @@ def test_ensure_pr_no_permission(
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    sync.ensure_pr(p, pname, gr, False, "template-sync", [])
-
-    captured = capsys.readouterr()
+    msg = sync.ensure_pr(p, pname, gr, False, "template-sync", [])
 
     cu = "update" if pr_exists else "create"
     assert (
-        captured.out
+        msg
         == f"Unable to {cu} PR for projectsyn/package-foo. "
-        + "Please make sure your GitHub token has permission 'public_repo'\n"
+        + "Please make sure your GitHub token has permission 'public_repo'"
     )
 
 

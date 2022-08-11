@@ -4,7 +4,7 @@ import random
 import time
 
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable
 
 import click
 import git
@@ -66,8 +66,8 @@ def sync_packages(
         # Create or update PR if there were updates
         if changed:
             ensure_branch(p, pr_branch)
-            cu = ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
-            click.secho(f"PR for package {pn} successfully {cu}", bold=True)
+            msg = ensure_pr(p, pn, gr, dry_run, pr_branch, pr_label)
+            click.secho(msg, bold=True)
 
             if i < pkg_count:
                 # except when processing the last package in the list, sleep for 1-2
@@ -115,7 +115,7 @@ def ensure_pr(
     dry_run: bool,
     branch_name: str,
     pr_labels: Iterable[str],
-) -> Optional[str]:
+) -> str:
     """Create or update template sync PR."""
     if not p.repo:
         raise ValueError("package repo not initialized")
@@ -125,8 +125,7 @@ def ensure_pr(
 
     cu = "update" if has_sync_pr else "create"
     if dry_run:
-        click.echo(f"Would {cu} PR for {pn}")
-        return None
+        return f"Would {cu} PR for {pn}"
 
     r = p.repo.repo
     r.remote().push(branch_name, force=True)
@@ -145,10 +144,9 @@ def ensure_pr(
             sync_pr.edit(body=pr_body)
         sync_pr.add_to_labels(*list(pr_labels))
     except github.UnknownObjectException:
-        click.echo(
+        return (
             f"Unable to {cu} PR for {pn}. "
             + "Please make sure your GitHub token has permission 'public_repo'"
         )
-        return None
 
-    return f"{cu}d"
+    return f"PR for package {pn} successfully {cu}d"
