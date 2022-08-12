@@ -40,6 +40,7 @@ class OIDCCallbackServer:
         client: WebApplicationClient,
         token_url: str,
         lieutenant_url: Optional[str],
+        port: int = 18000,
     ):
         self.client = client
         self.token_endpoint = token_url
@@ -49,7 +50,7 @@ class OIDCCallbackServer:
             OIDCCallbackHandler, client, token_url, lieutenant_url, self.done_queue
         )
 
-        self.server = HTTPServer(("", 18000), handler)
+        self.server = HTTPServer(("", port), handler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.daemon = True
 
