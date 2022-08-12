@@ -68,18 +68,22 @@ The command also removes the deleted component as a dependency in `jsonnetfile.j
 
 This command compiles a single component.
 
-This is the main mode of operation for developing new components, as it allows
-fast iteration while working on a component.
+This is the main mode of operation for developing new components, as it allows fast iteration while working on a component.
 
-This command will create a fake inventory which mocks out all the
-infrastructure which a component would expect to be available when it's
-included in a cluster's configuration.
+This command will create a fake inventory which mocks out all the infrastructure which a component would expect to be available when it's included in a cluster's configuration.
 
-The command takes so called values files which provide custom configuration
-values for any configuration that could be provided from the hierarchical
-configuration repositories.
+The command takes so called values files which provide custom configuration values for any configuration that could be provided from the hierarchical configuration repositories.
+
+The command expects that the component is stored in a directory which matches the component's name.
+By default the component's name is derived from the leaf directory of `PATH`.
+This works reasonably well for components which are stored in the root of a Git repository, as generally component repositories are named `component-<name>`.
+If this isn't the case, the option `--name` (or `-n`) must be used to provide the component name to avoid compilation errors.
 
 The option `--alias` (or `-a`) can be used to compile an instance-aware component with a specific instance.
+
+The command tries to discover whether the provided `PATH` is part of a Git repository.
+If a Git repository is found the command computes the path's subpath in the repository, and ensures that the component is handled as a component stored in a repo subdirectory internally.
+If no Git repository is found, the provided path is treated as if it were the root of a Git repository.
 
 == Inventory Show
 

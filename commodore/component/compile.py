@@ -22,7 +22,6 @@ from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
-from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
 
 
@@ -34,7 +33,6 @@ def compile_component(
     value_files_: Iterable[str],
     search_paths_: Iterable[str],
     output_path_: str,
-    repo_directory_: str,
     component_name: str,
 ):
     # Resolve all input to absolute paths to fix symlinks
@@ -43,18 +41,11 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths_]
     search_paths.append(component_path / "vendor")
     output_path = P(output_path_).resolve()
-    if repo_directory_:
-        repo_directory = P(repo_directory_).resolve()
-        sub_path = str(component_path.relative_to(repo_directory))
-    else:
-        # If no repo directory given, assume component path is repo root
-        repo_directory = component_path
-        sub_path = ""
 
     if not component_name:
         # Ignore 'component-' prefix in repo name, this assumes that the repo name
         # indicates the component name for components in subpaths.
-        component_name = repo_directory.stem.replace("component-", "")
+        component_name = component_path.stem.replace("component-", "")
 
     # Fall back to `component as component` when instance_name is empty
     if instance_name_ is None or instance_name_ == "":
@@ -78,8 +69,7 @@ def compile_component(
             config,
             component_name,
             instance_name,
-            repo_directory,
-            sub_path,
+            component_path,
         )
         _prepare_kapitan_inventory(inv, component, value_files, instance_name)
 
@@ -135,17 +125,39 @@ def _setup_component(
     config: Config,
     component_name: str,
     instance_name: str,
-    repo_directory: P,
-    sub_path: str,
+    component_path: P,
 ) -> Component:
-    if not repo_directory.is_dir():
+    if not component_path.is_dir():
         raise click.ClickException(
-            f"Can't compile component, repository {repo_directory} doesn't exist"
+            f"Can't compile component, repository {component_path} doesn't exist"
         )
-    cr = git.Repo(repo_directory)
-    cdep = MultiDependency(cr.remote().url, config.inventory.dependencies_dir)
+    # Search for git repo in parents, this is necessary when compiling a component in a
+    # repo subdirectory.
+    try:
+        cr = git.Repo(component_path, search_parent_directories=True)
+        if not cr.working_tree_dir:
+            raise click.ClickException(
+                f"Can't compile component, repository {component_path} doesn't exist"
+            )
+        target_dir = P(cr.working_tree_dir)
+        # compute subpath from Repo working tree dir and component path
+        sub_path = str(component_path.absolute().relative_to(target_dir))
+    except git.InvalidGitRepositoryError:
+        click.echo(" > Couldn't determine Git repository for component")
+        # Just treat `component_path` as a directory holding a component, don't care
+        # about Git repo details here.
+        target_dir = component_path
+        sub_path = ""
+
     component = Component(
-        component_name, dependency=cdep, directory=repo_directory, sub_path=sub_path
+        component_name,
+        None,
+        # Use repo working tree as component "target directory", otherwise we get messy
+        # results with duplicate subpaths.
+        directory=target_dir,
+        # Use computed subpath to ensure we accurately replicate the environment in
+        # which the component will be compiled in a cluster catalog.
+        sub_path=sub_path,
     )
     config.register_component(component)
     config.register_component_aliases({instance_name: component_name})

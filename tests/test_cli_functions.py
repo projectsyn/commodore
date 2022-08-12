@@ -403,3 +403,34 @@ def test_package_sync_cli(
     result = cli_runner(["package", "sync", "pkgs.yaml"])
     print(result.stdout)
     assert result.exit_code == (1 if ghtoken is None else 0)
+
+
+@pytest.mark.parametrize("repo_dir", [False, True])
+@mock.patch.object(cli, "compile_component")
+def test_compile_component_cli(mock_compile, tmp_path, repo_dir, cli_runner):
+    cpath = tmp_path / "test-component"
+    cpath.mkdir()
+
+    def _compile(cfg, path, alias, values, search_paths, output, name):
+        assert cfg.verbose == 0
+        assert path == str(cpath)
+        assert values == ()
+        assert alias is None
+        assert search_paths == ()
+        assert output == "./"
+        assert name == ""
+
+    mock_compile.side_effect = _compile
+
+    repo_dir_arg = []
+    if repo_dir:
+        repo_dir_arg = ["-r", str(tmp_path)]
+    result = cli_runner(["component", "compile", str(cpath)] + repo_dir_arg)
+
+    assert result.exit_code == 0
+
+    if repo_dir:
+        assert (
+            result.stdout
+            == " > Parameter `-r`/`--repo-directory` is deprecated and has no effect\n"
+        )
