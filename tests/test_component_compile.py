@@ -2,6 +2,7 @@
 Tests for component compile command
 """
 import shutil
+import os
 
 from pathlib import Path as P
 from subprocess import call, run
@@ -45,6 +46,7 @@ def _prepare_component(tmp_path, component_name="test-component", subpath=""):
             }"""
             )
         )
+    return component_root
 
 
 def _add_postprocessing_filter(tmp_path, component_name="test-component"):
@@ -275,3 +277,34 @@ def test_no_component_compile_command(tmp_path):
         f"Can't compile component, repository {tmp_path / 'foo'} doesn't exist"
         in str(excinfo)
     )
+
+
+def test_component_compile_no_repo(tmp_path):
+    component_name = "test-component"
+    cpath = _prepare_component(tmp_path, component_name)
+    os.unlink(cpath / ".git")
+
+    exit_status = call(_cli_command_string(tmp_path, component_name), shell=True)
+
+    assert exit_status == 0
+    assert (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / "apps"
+        / f"{component_name}.yaml"
+    ).exists()
+    rendered_yaml = (
+        tmp_path
+        / "testdir"
+        / "compiled"
+        / component_name
+        / component_name
+        / "test_service_account.yaml"
+    )
+    assert rendered_yaml.exists()
+    with open(rendered_yaml) as file:
+        target = yaml.safe_load(file)
+        assert target["kind"] == "ServiceAccount"
+        assert target["metadata"]["namespace"] == "syn-test-component"
