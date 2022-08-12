@@ -6,6 +6,7 @@ from typing import Optional
 
 import _jsonnet
 import click
+import git
 
 from commodore.gitrepo import GitRepo
 from commodore.multi_dependency import MultiDependency
@@ -148,12 +149,15 @@ class Component:
         jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
         jsonnetfile_json = self._dir / "jsonnetfile.json"
         if jsonnetfile_jsonnet.is_file():
-            if jsonnetfile_json.name in self.repo.repo.tree():
-                click.secho(
-                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
-                    + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",
-                    fg="yellow",
-                )
+            try:
+                if jsonnetfile_json.name in self.repo.repo.tree():
+                    click.secho(
+                        f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
+                        + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",
+                        fg="yellow",
+                    )
+            except git.InvalidGitRepositoryError:
+                pass
             # pylint: disable=c-extension-no-member
             output = _jsonnet.evaluate_file(
                 str(jsonnetfile_jsonnet),
