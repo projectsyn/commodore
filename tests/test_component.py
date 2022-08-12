@@ -55,7 +55,7 @@ def _setup_component(
     )
 
 
-def _setup_existing_component(tmp_path: P):
+def _setup_existing_component(tmp_path: P, worktree=True):
     cr = Repo.init(tmp_path / ".repo", bare=True)
     upstream = tmp_path / "upstream"
     u = cr.clone(upstream)
@@ -67,9 +67,10 @@ def _setup_existing_component(tmp_path: P):
     u.remote().push()
 
     # Setup w
-    cr.git.execute(
-        ["git", "worktree", "add", "-f", str(tmp_path / "component"), "master"]
-    )
+    if worktree:
+        cr.git.execute(
+            ["git", "worktree", "add", "-f", str(tmp_path / "component"), "master"]
+        )
 
     return cr
 
@@ -404,3 +405,75 @@ def test_component_get_library(tmp_path: P, libfiles: Iterable[str]):
 
     for f in libfiles:
         assert c.get_library(f) == tmp_path / "tc1" / "lib" / f
+
+
+def test_component_no_dep_get_dependency(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        _ = c.dependency
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+def test_component_no_dep_get_url(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        _ = c.repo_url
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+def test_component_no_dep_checkout(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        c.checkout()
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+@pytest.mark.parametrize("init_dep", [False, True])
+@pytest.mark.parametrize("new_dep", [False, True])
+def test_component_update_dependency(tmp_path: P, init_dep: bool, new_dep: bool):
+    r1 = _setup_existing_component(tmp_path / "tc1")
+    r2 = _setup_existing_component(tmp_path / "tc2")
+
+    idep = None
+    if init_dep:
+        idep = MultiDependency(f"file://{r1.common_dir}", tmp_path / "dependencies")
+
+    c = Component("tc1", idep, tmp_path)
+
+    if init_dep:
+        c.checkout()
+        assert c.dependency == idep
+        assert c.repo_url == idep.url
+        assert c.repo.repo.head.commit.hexsha == r1.head.commit.hexsha
+    else:
+        with pytest.raises(ValueError) as exc:
+            _ = c.dependency
+        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+
+    ndep = None
+    if new_dep:
+        ndep = MultiDependency(f"file://{r2.common_dir}", tmp_path / "dependencies")
+
+    c.dependency = ndep
+
+    if ndep:
+        c.checkout()
+        assert c.dependency == ndep
+        assert c.repo_url == ndep.url
+        assert c.repo.repo.head.commit.hexsha == r2.head.commit.hexsha
+    else:
+        with pytest.raises(ValueError) as exc:
+            _ = c.dependency
+        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
