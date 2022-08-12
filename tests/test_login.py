@@ -375,16 +375,16 @@ def test_run_callback_server(config, tmp_path):
     config.oidc_client = "test-client"
     token_url = "https://idp.example.com/token"
     c = WebApplicationClient(config.oidc_client)
-    s = login.OIDCCallbackServer(c, token_url, config.api_url)
+    s = login.OIDCCallbackServer(c, token_url, config.api_url, 19000)
 
     s.start()
 
-    resp = requests.get("http://localhost:18000/healthz")
+    resp = requests.get("http://localhost:19000/healthz")
     assert resp.status_code == 200
     assert resp.text == "ok"
 
     # calls to /healthz don't close the server, so we make a second request
-    resp = requests.get("http://localhost:18000/?foo=bar")
+    resp = requests.get("http://localhost:19000/?foo=bar")
     assert resp.status_code == 422
     assert resp.text == "invalid callback: no code provided"
 
