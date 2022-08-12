@@ -20,11 +20,11 @@ Switch to an exiting Commodore working directory or a new empty directory and ru
 commodore package new cert-manager --owner ${GITHUB_USERNAME}
 ----
 
-The new package is now located at `inventory/classes/cert-manager`.
+The new package is now located at `dependencies/pkg.cert-manager`.
 
 [source,bash]
 ----
-cd inventory/classes/cert-manager
+cd dependencies/pkg.cert-manager
 tree
 ----
 
