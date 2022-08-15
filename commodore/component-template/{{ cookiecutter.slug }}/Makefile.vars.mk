@@ -1,11 +1,11 @@
-# Commodore takes the root dir name as the component name
-COMPONENT_NAME ?= $(shell basename ${PWD} | sed s/component-//)
+# The component name is hard-coded from the template
+COMPONENT_NAME ?= {{ cookiecutter.slug }}
 
 git_dir         ?= $(shell git rev-parse --git-common-dir)
 compiled_path   ?= compiled/$(COMPONENT_NAME)/$(COMPONENT_NAME)
 root_volume     ?= -v "$${PWD}:/$(COMPONENT_NAME)"
 compiled_volume ?= -v "$${PWD}/$(compiled_path):/$(COMPONENT_NAME)"
-commodore_args  ?= --search-paths .
+commodore_args  ?= --search-paths . -n $(COMPONENT_NAME)
 
 ifneq "$(git_dir)" ".git"
 	git_volume        ?= -v "$(git_dir):$(git_dir):ro"
