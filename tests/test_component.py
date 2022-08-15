@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+
 import pytest
 import yaml
 
@@ -334,19 +336,25 @@ def test_render_jsonnetfile_json(tmp_path: P, capsys):
         assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
 
 
-def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
+@pytest.mark.parametrize("has_repo", [False, True])
+def test_render_jsonnetfile_json_warning(tmp_path: P, capsys, has_repo: bool):
     c = _setup_render_jsonnetfile_json(tmp_path)
+    if not has_repo:
+        shutil.rmtree(c.target_directory / ".git")
+
     with open(c.target_directory / "jsonnetfile.json", "w") as jf:
         jf.write("{}")
-    c.repo.repo.index.add("*")
-    c.repo.repo.index.commit("Add jsonnetfile.json")
+    if has_repo:
+        c.repo.repo.index.add("*")
+        c.repo.repo.index.commit("Add jsonnetfile.json")
 
     c.render_jsonnetfile_json(
         {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
     )
 
-    stdout, _ = capsys.readouterr()
-    assert _render_jsonnetfile_json_error_string(c) in stdout
+    if has_repo:
+        stdout, _ = capsys.readouterr()
+        assert _render_jsonnetfile_json_error_string(c) in stdout
 
 
 @pytest.mark.parametrize(
