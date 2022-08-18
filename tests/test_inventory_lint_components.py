@@ -31,6 +31,7 @@ LINT_FILECONTENTS = [
                     "c3": {
                         "url": "https://example.com/syn/component-c3.git",
                         "version": "v1.0.0",
+                        "path": "subpath",
                     },
                 },
             }
