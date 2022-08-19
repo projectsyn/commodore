@@ -31,14 +31,11 @@ class ComponentTemplater(Templater):
         }
 
     @property
-    def target_dir(self) -> Path:
-        if self.output_dir:
-            return self.output_dir / self.slug
-        return component_dir(self.config.work_dir, self.slug)
-
-    @property
     def deptype(self) -> str:
         return "component"
+
+    def dependency_dir(self) -> Path:
+        return component_dir(self.config.work_dir, self.slug)
 
     def delete(self):
         cdir = component_dir(self.config.work_dir, self.slug)

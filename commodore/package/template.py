@@ -102,14 +102,7 @@ class PackageTemplater(Templater):
     def deptype(self) -> str:
         return "package"
 
-    @property
-    def target_dir(self) -> Path:
-        if self._target_dir:
-            return self._target_dir
-
-        if self.output_dir:
-            return self.output_dir / self.slug
-
+    def dependency_dir(self) -> Path:
         return package_dependency_dir(self.config.work_dir, self.slug)
 
     def update(self, print_completion_message: bool = True) -> bool:

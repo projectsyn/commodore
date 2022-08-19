@@ -30,6 +30,7 @@ class Templater(ABC):
     golden_tests: bool
     today: datetime.date
     output_dir: Optional[Path] = None
+    _target_dir: Optional[Path] = None
     template_url: str
     template_version: Optional[str] = None
 
@@ -66,16 +67,28 @@ class Templater(ABC):
 
     @property
     @abstractmethod
-    def target_dir(self) -> Path:
-        """Return Path indicating where to render the template to."""
-
-    @property
-    @abstractmethod
     def cookiecutter_args(self) -> dict[str, str]:
         """Cookiecutter template inputs.
 
         Passed to the rendering function as `extra_context`
         """
+
+    @abstractmethod
+    def dependency_dir(self) -> Path:
+        """Location of dependency in the Commodore working directory.
+
+        Used by `target_dir()` if neither `_target_dir` nor `_output_dir` is set."""
+
+    @property
+    def target_dir(self) -> Path:
+        """Return Path indicating where to render the template to."""
+        if self._target_dir:
+            return self._target_dir
+
+        if self.output_dir:
+            return self.output_dir / self.slug
+
+        return self.dependency_dir()
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
