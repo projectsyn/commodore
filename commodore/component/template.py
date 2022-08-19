@@ -6,6 +6,7 @@ from shutil import rmtree
 import click
 import git
 
+from commodore.config import Config
 from commodore.component import Component, component_dir
 from commodore.dependency_templater import Templater
 from commodore.multi_dependency import MultiDependency
@@ -15,6 +16,16 @@ class ComponentTemplater(Templater):
     library: bool
     post_process: bool
     matrix_tests: bool
+
+    @classmethod
+    def from_existing(cls, config: Config, path: Path):
+        return cls._base_from_existing(config, path, "component")
+
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        super()._initialize_from_cookiecutter_args(cookiecutter_args)
+        self.library = cookiecutter_args["add_lib"] == "y"
+        self.post_process = cookiecutter_args["add_pp"] == "y"
+        self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
