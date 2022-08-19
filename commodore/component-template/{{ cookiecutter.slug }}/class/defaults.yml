@@ -1,4 +1,0 @@
-parameters:
-  {{ cookiecutter.parameter_key }}:
-    =_metadata: {}
-    namespace: syn-{{ cookiecutter.slug }}

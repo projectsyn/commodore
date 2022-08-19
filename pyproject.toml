@@ -11,7 +11,6 @@ packages = [
     {include = "commodore"}
 ]
 include = [
-    "commodore/component-template/**/*",
     "commodore/lib/commodore.libjsonnet",
     "commodore/filters/helm_namespace.jsonnet",
 ]
@@ -64,13 +63,3 @@ compile = 'tools.tools:compile'
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
-[tool.coverage.run]
-omit = [
-    "commodore/component-template/*"
-]
-
-[tool.coverage.report]
-omit = [
-    "commodore/component-template/*"
-]
