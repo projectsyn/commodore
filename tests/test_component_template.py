@@ -20,9 +20,13 @@ def call_component_new(
     pp="--no-pp",
     golden="--no-golden-tests",
     matrix="--no-matrix-tests",
+    output_dir="",
 ):
+    if output_dir:
+        output_dir = f"--output-dir {output_dir}"
     exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
+        f"commodore -d '{tmp_path}' -vvv component new {component_name} "
+        + f"{lib} {pp} {golden} {matrix} {output_dir}",
         shell=True,
     )
     assert exit_status == 0
@@ -181,6 +185,20 @@ def test_run_component_new_command(
                 "--no-matrix-tests": "make gen-golden",
             }
             assert cmd == expected_cmd[matrix]
+
+
+def test_run_component_new_command_with_output_dir(tmp_path: P):
+    """Verify that rendered component is put into specified output directory.
+
+    This test doesn't validate the contents of the rendered files, that part is covered
+    in `test_run_component_new_command()`."""
+    component_name = "test-component"
+    call_component_new(
+        tmp_path, component_name=component_name, output_dir=str(tmp_path)
+    )
+
+    assert (tmp_path / component_name).is_dir()
+    assert not (tmp_path / "dependencies").exists()
 
 
 def test_run_component_new_command_with_name(tmp_path: P):
