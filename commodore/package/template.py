@@ -13,7 +13,6 @@ from commodore.dependency_templater import Templater
 from commodore.package import package_dependency_dir
 
 
-# pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
     _test_cases: list[str] = ["defaults"]
 
