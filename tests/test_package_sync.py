@@ -21,7 +21,6 @@ from commodore.config import Config
 from commodore.gitrepo import GitRepo
 from commodore.package import Package
 from commodore.package import sync
-from commodore.package.template import PackageTemplater
 
 DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
 
@@ -291,29 +290,6 @@ def test_sync_packages_package_list_parsing(
         )
 
 
-def make_mock_package_templater(remote_url: str):
-    """Create a Mock package templater class which overrides property `repo_url` with
-    the provided remote_url string.
-
-    Use as follows:
-
-        with patch(
-            "commodore.package.template.PackageTemplater",
-            new_callable=lambda: make_mock_package_templater("file://path/to/remote.git",
-        ):
-            function_under_test()
-    """
-
-    class MockPkgTemplater(PackageTemplater):
-        fake_url = remote_url
-
-        @property
-        def repo_url(self) -> str:
-            return self.fake_url
-
-    return MockPkgTemplater
-
-
 @pytest.mark.parametrize(
     "dry_run,second_pkg,needs_update",
     [
@@ -385,8 +361,8 @@ def test_sync_packages(
     pkg_list = create_pkg_list(tmp_path, additional_packages=add_pkgs)
 
     with patch(
-        "commodore.package.template.PackageTemplater",
-        new_callable=lambda: make_mock_package_templater(remote_url),
+        "commodore.dependency_templater.Templater.repo_url",
+        new_callable=lambda: remote_url,
     ):
         sync.sync_packages(
             config, pkg_list, dry_run, "template-sync", ["template-sync"]

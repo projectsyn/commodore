@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import json
-
 from pathlib import Path
-from typing import Optional
 
 import click
-
 
 from commodore.config import Config
 from commodore.cruft._commands import update as cruft_update
@@ -21,34 +17,15 @@ from commodore.package import package_dependency_dir
 # pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
     _test_cases: list[str] = ["defaults"]
-    copyright_year: Optional[str] = None
-    _target_dir: Optional[Path] = None
 
     @classmethod
-    def from_existing(cls, config: Config, package_path: Path):
-        if not package_path.is_dir():
-            raise click.ClickException("Provided package path isn't a directory")
-        with open(package_path / ".cruft.json", encoding="utf-8") as cfg:
-            cruft_json = json.load(cfg)
+    def from_existing(cls, config: Config, path: Path):
+        return cls._base_from_existing(config, path, "package")
 
-        cookiecutter_args = cruft_json["context"]["cookiecutter"]
-        t = PackageTemplater(
-            config,
-            cruft_json["template"],
-            cruft_json.get("checkout"),
-            cookiecutter_args["slug"],
-            name=cookiecutter_args["name"],
-        )
-        t._target_dir = package_path
-        t.output_dir = package_path.absolute().parent
-
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        super()._initialize_from_cookiecutter_args(cookiecutter_args)
         if "test_cases" in cookiecutter_args:
-            t.test_cases = cookiecutter_args["test_cases"].split(" ")
-        t.golden_tests = cookiecutter_args["add_golden"] == "y"
-        t.github_owner = cookiecutter_args["github_owner"]
-        t.copyright_holder = cookiecutter_args["copyright_holder"]
-        t.copyright_year = cookiecutter_args["copyright_year"]
-        return t
+            self.test_cases = cookiecutter_args["test_cases"].split(" ")
 
     @property
     def test_cases(self) -> list[str]:

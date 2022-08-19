@@ -27,6 +27,7 @@ class Templater(ABC):
     _name: Optional[str]
     github_owner: str
     copyright_holder: str
+    copyright_year: Optional[str] = None
     golden_tests: bool
     today: datetime.date
     output_dir: Optional[Path] = None
@@ -55,6 +56,31 @@ class Templater(ABC):
                 raise click.ClickException(f"Output directory {odir} doesn't exist")
 
             self.output_dir = odir
+
+    @classmethod
+    def _base_from_existing(cls, config: Config, path: Path, deptype: str):
+        if not path.is_dir():
+            raise click.ClickException(f"Provided {deptype} path isn't a directory")
+        if not (path / ".cruft.json").is_file():
+            raise click.ClickException(
+                f"Provided {deptype} path doesn't have `.cruft.json`, can't update."
+            )
+        with open(path / ".cruft.json", encoding="utf-8") as cfg:
+            cruft_json = json.load(cfg)
+
+        cookiecutter_args = cruft_json["context"]["cookiecutter"]
+        t = cls(
+            config,
+            cruft_json["template"],
+            cruft_json.get("checkout"),
+            cookiecutter_args["slug"],
+            name=cookiecutter_args["name"],
+        )
+        t._target_dir = path
+        t.output_dir = path.absolute().parent
+
+        t._initialize_from_cookiecutter_args(cookiecutter_args)
+        return t
 
     @property
     @abstractmethod
@@ -89,6 +115,12 @@ class Templater(ABC):
             return self.output_dir / self.slug
 
         return self.dependency_dir()
+
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        self.golden_tests = cookiecutter_args["add_golden"] == "y"
+        self.github_owner = cookiecutter_args["github_owner"]
+        self.copyright_holder = cookiecutter_args["copyright_holder"]
+        self.copyright_year = cookiecutter_args["copyright_year"]
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
