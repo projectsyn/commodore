@@ -385,6 +385,80 @@ def component_new(
     f.create()
 
 
+@component.command(
+    name="update", short_help="Update an existing component from a template"
+)
+@click.argument(
+    "component_path", type=click.Path(exists=True, dir_okay=True, file_okay=False)
+)
+@click.option(
+    "--copyright",
+    "copyright_holder",
+    show_default=True,
+    help="Update the copyright holder in the license file.",
+)
+@click.option(
+    "--update-copyright-year/--no-update-copyright-year",
+    default=False,
+    show_default=True,
+    help="Update year in copyright notice.",
+)
+@click.option(
+    "--golden-tests/--no-golden-tests",
+    default=None,
+    show_default=True,
+    help="Add or remove golden tests.",
+)
+@click.option(
+    "--matrix-tests/--no-matrix-tests",
+    default=None,
+    show_default=True,
+    help="Add or remove matrix tests.",
+)
+@click.option(
+    "--lib/--no-lib",
+    default=None,
+    show_default=True,
+    help="Add or remove the component library.",
+)
+@click.option(
+    "--pp/--no-pp",
+    default=None,
+    show_default=True,
+    help="Add or remove the postprocessing filter configuration.",
+)
+@verbosity
+@pass_config
+def component_update(
+    config: Config,
+    verbose: int,
+    component_path: str,
+    copyright_holder: str,
+    golden_tests: Optional[bool],
+    matrix_tests: Optional[bool],
+    lib: Optional[bool],
+    pp: Optional[bool],
+    update_copyright_year: bool,
+):
+    config.update_verbosity(verbose)
+
+    t = ComponentTemplater.from_existing(config, Path(component_path))
+    if copyright_holder:
+        t.copyright_holder = copyright_holder
+    if update_copyright_year:
+        t.copyright_year = None
+    if golden_tests is not None:
+        t.golden_tests = golden_tests
+    if matrix_tests is not None:
+        t.matrix_tests = matrix_tests
+    if lib is not None:
+        t.library = lib
+    if pp is not None:
+        t.post_process = pp
+
+    t.update()
+
+
 @component.command(name="delete", short_help="Remove component from inventory.")
 @click.argument("slug")
 @click.option(

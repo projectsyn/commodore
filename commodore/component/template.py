@@ -35,7 +35,11 @@ class ComponentTemplater(Templater):
             "add_golden": "y" if self.golden_tests else "n",
             "add_matrix": "y" if self.matrix_tests else "n",
             "copyright_holder": self.copyright_holder,
-            "copyright_year": self.today.strftime("%Y"),
+            "copyright_year": (
+                self.today.strftime("%Y")
+                if not self.copyright_year
+                else self.copyright_year
+            ),
             "github_owner": self.github_owner,
             "name": self.name,
             "slug": self.slug,
