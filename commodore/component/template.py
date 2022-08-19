@@ -28,7 +28,6 @@ class ComponentTemplater(Templater):
             "github_owner": self.github_owner,
             "name": self.name,
             "slug": self.slug,
-            "release_date": self.today.strftime("%Y-%m-%d"),
         }
 
     @property
