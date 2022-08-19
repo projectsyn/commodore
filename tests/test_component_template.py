@@ -282,44 +282,6 @@ def test_deleting_inexistant_component(tmp_path: P):
     assert exit_status == 2
 
 
-@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
-@pytest.mark.parametrize(
-    "pp",
-    ["--no-pp", "--pp"],
-)
-@pytest.mark.parametrize(
-    "golden",
-    ["--no-golden-tests", "--golden-tests"],
-)
-@pytest.mark.parametrize(
-    "matrix",
-    ["--no-matrix-tests", "--matrix-tests"],
-)
-def test_check_component_template(
-    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
-):
-    """
-    Run integrated lints in freshly created component
-    """
-
-    setup_directory(tmp_path)
-
-    component_name = "test-component"
-    exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
-        shell=True,
-    )
-    assert exit_status == 0
-
-    # Call `make lint` in component directory
-    exit_status = call(
-        "make lint",
-        shell=True,
-        cwd=tmp_path / "dependencies" / component_name,
-    )
-    assert exit_status == 0
-
-
 def test_check_golden_diff(tmp_path: P):
     """
     Verify that `make golden-diff` passes for a component which has golden tests enabled
