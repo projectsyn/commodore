@@ -563,8 +563,6 @@ def package_new(
     t.github_owner = owner
     t.copyright_holder = copyright_holder
     t.golden_tests = golden_tests
-    t.template_url = template_url
-    t.template_version = template_version
     t.test_cases = ["defaults"] + list(additional_test_case)
     t.create()
 
