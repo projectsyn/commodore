@@ -5,7 +5,6 @@ from pathlib import Path
 import click
 
 from commodore.config import Config
-from commodore.cruft._commands import update as cruft_update
 from commodore.dependency_mgmt.discovery import (
     RESERVED_PACKAGE_PATTERN,
     TENANT_PREFIX_PATTERN,
@@ -81,33 +80,3 @@ class PackageTemplater(Templater):
 
     def dependency_dir(self) -> Path:
         return package_dependency_dir(self.config.work_dir, self.slug)
-
-    def update(self, print_completion_message: bool = True) -> bool:
-        cruft_update(
-            self.target_dir,
-            cookiecutter_input=False,
-            checkout=self.template_version,
-            extra_context=self.cookiecutter_args,
-        )
-
-        commit_msg = (
-            f"Update from template\n\nTemplate version: {self.template_version}"
-        )
-        if self.template_commit:
-            commit_msg += f" ({self.template_commit[:7]})"
-
-        updated = self.commit(commit_msg, init=False)
-
-        if print_completion_message:
-            if updated:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
-                    bold=True,
-                )
-            else:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
-                    bold=True,
-                )
-
-        return updated

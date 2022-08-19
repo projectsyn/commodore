@@ -14,7 +14,7 @@ from typing import Optional, Sequence
 import click
 
 from commodore.config import Config
-from commodore.cruft import create as cruft_create
+from commodore.cruft import create as cruft_create, update as cruft_update
 from commodore.gitrepo import GitRepo
 from commodore.multi_dependency import MultiDependency
 
@@ -207,6 +207,36 @@ class Templater(ABC):
         click.secho(
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
+
+    def update(self, print_completion_message: bool = True) -> bool:
+        cruft_update(
+            self.target_dir,
+            cookiecutter_input=False,
+            checkout=self.template_version,
+            extra_context=self.cookiecutter_args,
+        )
+
+        commit_msg = (
+            f"Update from template\n\nTemplate version: {self.template_version}"
+        )
+        if self.template_commit:
+            commit_msg += f" ({self.template_commit[:7]})"
+
+        updated = self.commit(commit_msg, init=False)
+
+        if print_completion_message:
+            if updated:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                    bold=True,
+                )
+            else:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                    bold=True,
+                )
+
+        return updated
 
     def commit(self, msg: str, amend=False, init=True) -> bool:
         # If we're amending an existing commit, we don't want to force initialize the
