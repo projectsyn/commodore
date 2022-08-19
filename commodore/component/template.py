@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from shutil import rmtree
-from typing import Sequence
 
 import click
 import git
 
-from cookiecutter.main import cookiecutter
-
-from commodore import __install_dir__
 from commodore.component import Component, component_dir
-from commodore.dependency_templater import Templater, Renderer
+from commodore.dependency_templater import Templater
 from commodore.multi_dependency import MultiDependency
 
 
@@ -37,33 +33,13 @@ class ComponentTemplater(Templater):
 
     @property
     def target_dir(self) -> Path:
+        if self.output_dir:
+            return self.output_dir / self.slug
         return component_dir(self.config.work_dir, self.slug)
-
-    @property
-    def template(self) -> str:
-        component_template = __install_dir__ / "component-template"
-        return str(component_template.resolve())
 
     @property
     def deptype(self) -> str:
         return "component"
-
-    @property
-    def template_renderer(self) -> Renderer:
-        return cookiecutter
-
-    @property
-    def repo_url(self) -> str:
-        return f"git@github.com:{self.github_owner}/component-{self.slug}.git"
-
-    @property
-    def additional_files(self) -> Sequence[str]:
-        return [
-            ".github",
-            ".gitignore",
-            ".*.yml",
-            ".editorconfig",
-        ]
 
     def delete(self):
         cdir = component_dir(self.config.work_dir, self.slug)

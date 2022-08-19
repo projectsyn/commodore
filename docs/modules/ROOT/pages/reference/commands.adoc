@@ -45,9 +45,7 @@ The component repository is created using a Cookiecutter template which provides
 The command requires the argument `SLUG` to match the regular expression `^[a-z][a-z0-9-]+[a-z0-9]$`.
 Optionally, the template can be used to add a component library and postprocessing filter configuration.
 
-The command expects to run in a directory which already holds a Commodore directory structure.
-The command makes sure to create symlinks for the new component's classes and creates a new Kapitan target for the component.
-The command also adds the new component as a dependency in `jsonnetfile.json` and runs jsonnet-bundler to symlink the new component into `vendor/`.
+If argument `--output-dir` isn't given, the command expects to run in a directory which already holds a Commodore directory structure.
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 

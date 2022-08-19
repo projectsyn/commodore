@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import re
 import tempfile
 import shutil
@@ -8,26 +9,16 @@ import textwrap
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Optional, Protocol, Sequence
+from typing import Optional, Sequence
 
 import click
 
 from commodore.config import Config
+from commodore.cruft import create as cruft_create
 from commodore.gitrepo import GitRepo
 from commodore.multi_dependency import MultiDependency
 
 SLUG_REGEX = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
-
-
-class Renderer(Protocol):
-    def __call__(
-        self,
-        template_location: str,
-        extra_context: dict[str, Any],
-        no_input: bool,
-        output_dir: Path,
-    ):
-        ...
 
 
 class Templater(ABC):
@@ -39,15 +30,21 @@ class Templater(ABC):
     golden_tests: bool
     today: datetime.date
     output_dir: Optional[Path] = None
+    template_url: str
+    template_version: Optional[str] = None
 
     def __init__(
         self,
         config: Config,
+        template_url: str,
+        template_version: Optional[str],
         slug: str,
         name: Optional[str] = None,
         output_dir: str = "",
     ):
         self.config = config
+        self.template_url = template_url
+        self.template_version = template_version
         self.slug = slug
         self._name = name
         self.today = datetime.date.today()
@@ -57,6 +54,28 @@ class Templater(ABC):
                 raise click.ClickException(f"Output directory {odir} doesn't exist")
 
             self.output_dir = odir
+
+    @property
+    @abstractmethod
+    def deptype(self) -> str:
+        """Return dependency type of template as string.
+
+        The base implementation of `_validate_slug()` will reject slugs which are
+        prefixed with the value of this property.
+        """
+
+    @property
+    @abstractmethod
+    def target_dir(self) -> Path:
+        """Return Path indicating where to render the template to."""
+
+    @property
+    @abstractmethod
+    def cookiecutter_args(self) -> dict[str, str]:
+        """Cookiecutter template inputs.
+
+        Passed to the rendering function as `extra_context`
+        """
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
@@ -88,44 +107,28 @@ class Templater(ABC):
         return f"git@github.com:{self.github_owner}/{self.deptype}-{self.slug}.git"
 
     @property
-    @abstractmethod
-    def deptype(self) -> str:
-        """Return dependency type of template as string.
-
-        The base implementation of `_validate_slug()` will reject slugs which are
-        prefixed with the value of this property.
-        """
-
-    @property
-    @abstractmethod
-    def target_dir(self) -> Path:
-        """Return Path indicating where to render the template to."""
-
-    @property
-    @abstractmethod
-    def template(self) -> str:
-        """Path or URL of the template to render"""
-
-    @property
-    @abstractmethod
-    def template_renderer(self) -> Renderer:
-        """Template rendering function to use for the template.
-
-        Allows child classes to select either plain cookiecutter or cruft.
-        """
-
-    @property
-    @abstractmethod
-    def cookiecutter_args(self) -> dict[str, str]:
-        """Cookiecutter template inputs.
-
-        Passed to the rendering function as `extra_context`
-        """
-
-    @property
-    @abstractmethod
     def additional_files(self) -> Sequence[str]:
-        """Sequence of additional files to include in the initial Git commit."""
+        return [
+            ".github",
+            ".gitignore",
+            ".*.yml",
+            ".editorconfig",
+            ".cruft.json",
+        ]
+
+    @property
+    def template_commit(self) -> Optional[str]:
+        cruft_json = self.target_dir / ".cruft.json"
+        if not cruft_json.is_file():
+            click.echo(
+                f" > {self.deptype.capitalize()} doesn't have a `.cruft.json`, "
+                + "can't determine template commit."
+            )
+            return None
+
+        with open(cruft_json, "r", encoding="utf-8") as f:
+            cruft_json_data = json.load(f)
+            return cruft_json_data["commit"]
 
     def create(self) -> None:
         click.secho(f"Adding {self.deptype} {self.name}...", bold=True)
@@ -144,11 +147,12 @@ class Templater(ABC):
             md.initialize_worktree(self.target_dir)
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            self.template_renderer(
-                self.template,
+            cruft_create(
+                self.template_url,
+                checkout=self.template_version,
+                extra_context=self.cookiecutter_args,
                 no_input=True,
                 output_dir=Path(tmpdir),
-                extra_context=self.cookiecutter_args,
             )
             shutil.copytree(
                 Path(tmpdir) / self.slug, self.target_dir, dirs_exist_ok=True

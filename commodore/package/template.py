@@ -3,25 +3,23 @@ from __future__ import annotations
 import json
 
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Optional
 
 import click
 
 
 from commodore.config import Config
-from commodore.cruft._commands import create as cruft_create, update as cruft_update
+from commodore.cruft._commands import update as cruft_update
 from commodore.dependency_mgmt.discovery import (
     RESERVED_PACKAGE_PATTERN,
     TENANT_PREFIX_PATTERN,
 )
-from commodore.dependency_templater import Templater, Renderer
+from commodore.dependency_templater import Templater
 from commodore.package import package_dependency_dir
 
 
 # pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
-    template_url: str
-    template_version: Optional[str] = None
     _test_cases: list[str] = ["defaults"]
     copyright_year: Optional[str] = None
     _target_dir: Optional[Path] = None
@@ -35,12 +33,14 @@ class PackageTemplater(Templater):
 
         cookiecutter_args = cruft_json["context"]["cookiecutter"]
         t = PackageTemplater(
-            config, cookiecutter_args["slug"], name=cookiecutter_args["name"]
+            config,
+            cruft_json["template"],
+            cruft_json.get("checkout"),
+            cookiecutter_args["slug"],
+            name=cookiecutter_args["name"],
         )
         t._target_dir = package_path
         t.output_dir = package_path.absolute().parent
-        t.template_url = cruft_json["template"]
-        t.template_version = cruft_json.get("checkout")
 
         if "test_cases" in cookiecutter_args:
             t.test_cases = cookiecutter_args["test_cases"].split(" ")
@@ -49,12 +49,6 @@ class PackageTemplater(Templater):
         t.copyright_holder = cookiecutter_args["copyright_holder"]
         t.copyright_year = cookiecutter_args["copyright_year"]
         return t
-
-    @property
-    def template_commit(self) -> str:
-        with open(self.target_dir / ".cruft.json", "r", encoding="utf-8") as f:
-            cruft_json = json.load(f)
-            return cruft_json["commit"]
 
     @property
     def test_cases(self) -> list[str]:
@@ -73,21 +67,6 @@ class PackageTemplater(Templater):
     @test_cases.setter
     def test_cases(self, test_cases: list[str]):
         self._test_cases = test_cases
-
-    def _cruft_renderer(
-        self,
-        template_location: str,
-        extra_context: dict[str, Any],
-        no_input: bool,
-        output_dir: Path,
-    ):
-        cruft_create(
-            template_location,
-            checkout=self.template_version,
-            extra_context=extra_context,
-            no_input=no_input,
-            output_dir=output_dir,
-        )
 
     def _validate_slug(self, value: str):
         # First perform default slug checks
@@ -124,10 +103,6 @@ class PackageTemplater(Templater):
         return "package"
 
     @property
-    def template_renderer(self) -> Renderer:
-        return self._cruft_renderer
-
-    @property
     def target_dir(self) -> Path:
         if self._target_dir:
             return self._target_dir
@@ -137,20 +112,6 @@ class PackageTemplater(Templater):
 
         return package_dependency_dir(self.config.work_dir, self.slug)
 
-    @property
-    def template(self) -> str:
-        return self.template_url
-
-    @property
-    def additional_files(self) -> Sequence[str]:
-        return [
-            ".github",
-            ".gitignore",
-            ".*.yml",
-            ".editorconfig",
-            ".cruft.json",
-        ]
-
     def update(self, print_completion_message: bool = True) -> bool:
         cruft_update(
             self.target_dir,
@@ -159,11 +120,13 @@ class PackageTemplater(Templater):
             extra_context=self.cookiecutter_args,
         )
 
-        updated = self.commit(
-            "Update from template\n\n"
-            + f"Template version: {self.template_version} ({self.template_commit[:7]})",
-            init=False,
+        commit_msg = (
+            f"Update from template\n\nTemplate version: {self.template_version}"
         )
+        if self.template_commit:
+            commit_msg += f" ({self.template_commit[:7]})"
+
+        updated = self.commit(commit_msg, init=False)
 
         if print_completion_message:
             if updated:

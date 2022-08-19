@@ -166,6 +166,18 @@ This command doesn't have any command line options.
 *--matrix-tests / --no-matrix-tests*::
   Enable test matrix for the component compile and golden tests. Defaults to _yes_.
 
+*--output-dir* DIRECTORY::
+  The directory in which to place the new component.
+  If not provided, the component is placed into `dependencies/<component-slug>` in the Commodore working directory.
+
+*--template-url* TEXT::
+  The URL of the component cookiecutter template.
+  By default https://github.com/projectsyn/commodore-component-template.git is used.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  Defaults to `main`.
+
 *--help*::
   Show component new usage and options then exit.
 

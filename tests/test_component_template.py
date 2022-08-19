@@ -20,9 +20,13 @@ def call_component_new(
     pp="--no-pp",
     golden="--no-golden-tests",
     matrix="--no-matrix-tests",
+    output_dir="",
 ):
+    if output_dir:
+        output_dir = f"--output-dir {output_dir}"
     exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
+        f"commodore -d '{tmp_path}' -vvv component new {component_name} "
+        + f"{lib} {pp} {golden} {matrix} {output_dir}",
         shell=True,
     )
     assert exit_status == 0
@@ -183,6 +187,20 @@ def test_run_component_new_command(
             assert cmd == expected_cmd[matrix]
 
 
+def test_run_component_new_command_with_output_dir(tmp_path: P):
+    """Verify that rendered component is put into specified output directory.
+
+    This test doesn't validate the contents of the rendered files, that part is covered
+    in `test_run_component_new_command()`."""
+    component_name = "test-component"
+    call_component_new(
+        tmp_path, component_name=component_name, output_dir=str(tmp_path)
+    )
+
+    assert (tmp_path / component_name).is_dir()
+    assert not (tmp_path / "dependencies").exists()
+
+
 def test_run_component_new_command_with_name(tmp_path: P):
     """
     Run the component new command with the slug option set
@@ -280,44 +298,6 @@ def test_deleting_inexistant_component(tmp_path: P):
         shell=True,
     )
     assert exit_status == 2
-
-
-@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
-@pytest.mark.parametrize(
-    "pp",
-    ["--no-pp", "--pp"],
-)
-@pytest.mark.parametrize(
-    "golden",
-    ["--no-golden-tests", "--golden-tests"],
-)
-@pytest.mark.parametrize(
-    "matrix",
-    ["--no-matrix-tests", "--matrix-tests"],
-)
-def test_check_component_template(
-    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
-):
-    """
-    Run integrated lints in freshly created component
-    """
-
-    setup_directory(tmp_path)
-
-    component_name = "test-component"
-    exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new {component_name} {lib} {pp} {golden} {matrix}",
-        shell=True,
-    )
-    assert exit_status == 0
-
-    # Call `make lint` in component directory
-    exit_status = call(
-        "make lint",
-        shell=True,
-        cwd=tmp_path / "dependencies" / component_name,
-    )
-    assert exit_status == 0
 
 
 def test_check_golden_diff(tmp_path: P):
