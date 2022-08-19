@@ -137,7 +137,7 @@ def test_run_package_new_command(
 )
 def test_package_new_invalid_slug(config: Config, slug: str, expected: str):
     with pytest.raises(click.ClickException) as e:
-        _ = PackageTemplater(config, slug)
+        _ = PackageTemplater(config, "", None, slug)
 
     assert expected in str(e.value)
 
@@ -368,7 +368,7 @@ def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Con
 def test_package_templater_test_cases(
     tmp_path: Path, config: Config, test_cases: list[str], expected: list[str]
 ):
-    p = PackageTemplater(config, "test-package")
+    p = PackageTemplater(config, "", None, "test-package")
     p.test_cases = test_cases
 
     assert p.test_cases == expected

@@ -335,6 +335,25 @@ def component(config: Config, verbose):
     show_default=True,
     help="Enable test matrix for compile/golden tests.",
 )
+@click.option(
+    "--output-dir",
+    default="",
+    show_default=True,
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="The directory in which to place the new component.",
+)
+@click.option(
+    "--template-url",
+    default="https://github.com/projectsyn/commodore-component-template.git",
+    show_default=True,
+    help="The URL of the component cookiecutter template.",
+)
+@click.option(
+    "--template-version",
+    default="main",
+    show_default=True,
+    help="The component template version (Git tree-ish) to use.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -349,9 +368,14 @@ def component_new(
     golden_tests,
     matrix_tests,
     verbose,
+    output_dir,
+    template_url,
+    template_version,
 ):
     config.update_verbosity(verbose)
-    f = ComponentTemplater(config, slug, name=name)
+    f = ComponentTemplater(
+        config, template_url, template_version, slug, name=name, output_dir=output_dir
+    )
     f.library = lib
     f.post_process = pp
     f.github_owner = owner
@@ -375,7 +399,7 @@ def component_new(
 def component_delete(config: Config, slug, force, verbose):
     config.update_verbosity(verbose)
     config.force = force
-    f = ComponentTemplater(config, slug)
+    f = ComponentTemplater(config, "", None, slug)
     f.delete()
 
 
@@ -533,7 +557,9 @@ def package_new(
     to configure golden tests, and the licensing details.
     """
     config.update_verbosity(verbose)
-    t = PackageTemplater(config, slug, name=name, output_dir=output_dir)
+    t = PackageTemplater(
+        config, template_url, template_version, slug, name=name, output_dir=output_dir
+    )
     t.github_owner = owner
     t.copyright_holder = copyright_holder
     t.golden_tests = golden_tests
