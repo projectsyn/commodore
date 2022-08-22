@@ -63,7 +63,12 @@ def check_removed_reclass_variables_components(config: Config):
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
-    repo = GitRepo(cluster.global_git_repo_url, cfg.inventory.global_config_dir)
+    repo = GitRepo(
+        cluster.global_git_repo_url,
+        cfg.inventory.global_config_dir,
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.global_git_repo_revision
     if cfg.global_repo_revision_override:
         rev = cfg.global_repo_revision_override
@@ -76,7 +81,12 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     repo_url = cluster.config_repo_url
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
-    repo = GitRepo(repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id))
+    repo = GitRepo(
+        repo_url,
+        cfg.inventory.tenant_config_dir(cluster.tenant_id),
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.config_git_repo_revision
     if cfg.tenant_repo_revision_override:
         rev = cfg.tenant_repo_revision_override
