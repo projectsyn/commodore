@@ -460,3 +460,19 @@ def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
         lines = lic.readlines()
         year = date.today().year
         assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
+
+
+def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    cruftjson_file = component_path / ".cruft.json"
+    cruftjson_file.unlink()
+
+    result = cli_runner(["component", "update", str(component_path)])
+    assert result.exit_code == 1
+    assert (
+        result.stdout
+        == "Error: Provided component path doesn't have `.cruft.json`, can't update.\n"
+    )
