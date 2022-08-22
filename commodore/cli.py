@@ -440,6 +440,13 @@ def component_update(
     pp: Optional[bool],
     update_copyright_year: bool,
 ):
+    """This command updates the component at COMPONENT_PATH to the latest version of the
+    template which was originally used to create it, if the template version is given as
+    a Git branch.
+
+    The command can also add or remove component features, based on the provided command
+    line options.
+    """
     config.update_verbosity(verbose)
 
     t = ComponentTemplater.from_existing(config, Path(component_path))
