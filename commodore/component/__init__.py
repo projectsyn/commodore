@@ -52,8 +52,14 @@ class Component:
 
     @property
     def repo(self) -> GitRepo:
+        dep_repo = self.dependency.bare_repo
         if not self._repo:
-            self._repo = GitRepo(None, self._dir)
+            self._repo = GitRepo(
+                None,
+                self._dir,
+                author_name=dep_repo.author.name,
+                author_email=dep_repo.author.email,
+            )
         return self._repo
 
     @property

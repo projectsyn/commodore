@@ -255,6 +255,10 @@ class GitRepo:
         null_tree_sha = hashlib.sha1(b"tree 0\0").hexdigest()  # nosec
         return self._repo.tree(null_tree_sha)
 
+    @property
+    def author(self) -> Actor:
+        return self._author
+
     def _remote_prefix(self) -> str:
         """
         Find prefix of Git remote, will usually be 'origin/'.
