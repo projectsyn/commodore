@@ -25,13 +25,16 @@ def call_component_new(
     golden="--no-golden-tests",
     matrix="--no-matrix-tests",
     output_dir="",
+    extra_args: list[str] = [],
 ):
     args = ["-d", str(tmp_path), "component", "new"]
     if output_dir:
         args.extend(["--output-dir", str(output_dir)])
     args.extend([component_name, lib, pp, golden, matrix])
+    args.extend(extra_args)
     result = cli_runner(args)
     assert result.exit_code == 0
+    return result
 
 
 def _validate_rendered_component(
@@ -41,6 +44,7 @@ def _validate_rendered_component(
     has_pp: bool,
     has_golden: bool,
     has_matrix: bool,
+    test_cases: list[str] = ["defaults"],
 ):
     expected_files = [
         P("README.md"),
@@ -58,21 +62,23 @@ def _validate_rendered_component(
         P(".github", "ISSUE_TEMPLATE", "02_feature_request.md"),
         P(".github", "ISSUE_TEMPLATE", "config.yml"),
         P(".sync.yml"),
-        P("tests", "defaults.yml"),
     ]
+    for tc in test_cases:
+        expected_files.append(P("tests", f"{tc}.yml"))
     if has_lib:
         expected_files.append(P("lib", f"{component_name}.libsonnet"))
     if has_golden:
-        expected_files.append(
-            P(
-                "tests",
-                "golden",
-                "defaults",
-                component_name,
-                "apps",
-                f"{component_name}.yaml",
+        for tc in test_cases:
+            expected_files.append(
+                P(
+                    "tests",
+                    "golden",
+                    tc,
+                    component_name,
+                    "apps",
+                    f"{component_name}.yaml",
+                )
             )
-        )
     for file in expected_files:
         assert (tmp_path / "dependencies" / component_name / file).exists()
     # Check that we created a worktree
@@ -200,6 +206,59 @@ def test_run_component_new_command(
     )
 
 
+@pytest.mark.parametrize(
+    "test_cases",
+    [
+        [],
+        ["foo"],
+        ["foo", "bar"],
+    ],
+)
+def test_run_component_new_with_additional_test_cases(
+    tmp_path: P, cli_runner: RunnerFunc, test_cases: list[str]
+):
+    component_name = "test-component"
+    tc_args = []
+    for tc in test_cases:
+        tc_args.extend(["--additional-test-case", tc])
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name=component_name,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        extra_args=tc_args,
+    )
+
+    assert (
+        " > Forcing matrix tests when multiple test cases requested"
+        not in result.stdout
+    )
+    _validate_rendered_component(
+        tmp_path, component_name, False, False, True, True, test_cases
+    )
+
+
+def test_run_component_new_force_matrix_additional_test_cases(
+    tmp_path: P, cli_runner: RunnerFunc
+):
+    component_name = "test-component"
+    tc_args = ["--additional-test-case", "foo"]
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name=component_name,
+        golden="--golden-tests",
+        matrix="--no-matrix-tests",
+        extra_args=tc_args,
+    )
+
+    assert " > Forcing matrix tests when multiple test cases requested" in result.stdout
+    _validate_rendered_component(
+        tmp_path, component_name, False, False, True, True, ["foo"]
+    )
+
+
 def test_run_component_new_command_with_output_dir(tmp_path: P, cli_runner: RunnerFunc):
     """Verify that rendered component is put into specified output directory.
 
@@ -207,7 +266,10 @@ def test_run_component_new_command_with_output_dir(tmp_path: P, cli_runner: Runn
     in `test_run_component_new_command()`."""
     component_name = "test-component"
     call_component_new(
-        tmp_path, cli_runner, component_name=component_name, output_dir=str(tmp_path)
+        tmp_path,
+        cli_runner,
+        component_name=component_name,
+        output_dir=str(tmp_path),
     )
 
     assert (tmp_path / component_name).is_dir()
