@@ -371,7 +371,9 @@ class GitRepo:
         The heavy work is generally done by `_migrate_to_worktree()`,
         `_update_worktree_remote()` or `checkout()`.
         """
-        wtr = GitRepo(None, worktree)
+        wtr = GitRepo(
+            None, worktree, author_name=self.author.name, author_email=self.author.email
+        )
         if not wtr.repo.has_separate_working_tree():
             # If the worktree's common dir is stored in the repository working tree
             # root, we're migrating from a non-worktree checkout to a worktree checkout.
@@ -454,7 +456,14 @@ class GitRepo:
                 continue
             k, v = line.split(" ")
             if k == "worktree":
-                worktrees.append(GitRepo(None, Path(v)))
+                worktrees.append(
+                    GitRepo(
+                        None,
+                        Path(v),
+                        author_name=self.author.name,
+                        author_email=self.author.email,
+                    )
+                )
 
         return worktrees
 
