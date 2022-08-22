@@ -246,6 +246,10 @@ class Templater(ABC):
         )
 
     def update(self, print_completion_message: bool = True) -> bool:
+        if len(self.test_cases) == 0:
+            raise click.ClickException(
+                f"{self.deptype.capitalize()} template doesn't support removing all test cases."
+            )
         cruft_update(
             self.target_dir,
             cookiecutter_input=False,
