@@ -15,6 +15,7 @@ from test_component import setup_directory
 
 def call_component_new(
     tmp_path: P,
+    cli_runner: RunnerFunc,
     component_name="test-component",
     lib="--no-lib",
     pp="--no-pp",
@@ -22,14 +23,12 @@ def call_component_new(
     matrix="--no-matrix-tests",
     output_dir="",
 ):
+    args = ["-d", str(tmp_path), "component", "new"]
     if output_dir:
-        output_dir = f"--output-dir {output_dir}"
-    exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} "
-        + f"{lib} {pp} {golden} {matrix} {output_dir}",
-        shell=True,
-    )
-    assert exit_status == 0
+        args.extend(["--output-dir", str(output_dir)])
+    args.extend([component_name, lib, pp, golden, matrix])
+    result = cli_runner(args)
+    assert result.exit_code == 0
 
 
 @pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
@@ -46,7 +45,7 @@ def call_component_new(
     ["--no-matrix-tests", "--matrix-tests"],
 )
 def test_run_component_new_command(
-    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
+    tmp_path: P, cli_runner: RunnerFunc, lib: str, pp: str, golden: str, matrix: str
 ):
     """
     Run the component new command
@@ -57,6 +56,7 @@ def test_run_component_new_command(
     component_name = "test-component"
     call_component_new(
         tmp_path,
+        cli_runner,
         component_name=component_name,
         lib=lib,
         pp=pp,
@@ -187,14 +187,14 @@ def test_run_component_new_command(
             assert cmd == expected_cmd[matrix]
 
 
-def test_run_component_new_command_with_output_dir(tmp_path: P):
+def test_run_component_new_command_with_output_dir(tmp_path: P, cli_runner: RunnerFunc):
     """Verify that rendered component is put into specified output directory.
 
     This test doesn't validate the contents of the rendered files, that part is covered
     in `test_run_component_new_command()`."""
     component_name = "test-component"
     call_component_new(
-        tmp_path, component_name=component_name, output_dir=str(tmp_path)
+        tmp_path, cli_runner, component_name=component_name, output_dir=str(tmp_path)
     )
 
     assert (tmp_path / component_name).is_dir()

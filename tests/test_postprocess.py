@@ -202,9 +202,9 @@ def _expected_ns(enabled):
     ],
 )
 def test_postprocess_components(
-    tmp_path, capsys, enabled, jsonnet, alias, create_namespace
+    tmp_path, cli_runner, capsys, enabled, jsonnet, alias, create_namespace
 ):
-    call_component_new(tmp_path=tmp_path)
+    call_component_new(tmp_path, cli_runner)
 
     f = _make_ns_filter(
         tmp_path,
@@ -274,9 +274,9 @@ def test_postprocess_components(
     ],
 )
 def test_postprocess_invalid_jsonnet_filter(
-    capsys, tmp_path, error: str, expected: str
+    capsys, tmp_path, cli_runner, error: str, expected: str
 ):
-    call_component_new(tmp_path=tmp_path)
+    call_component_new(tmp_path, cli_runner)
 
     f = _make_jsonnet_filter(tmp_path, "override")
     filtername = f["filters"][0]["filter"]
@@ -331,9 +331,9 @@ def test_postprocess_invalid_jsonnet_filter(
     ],
 )
 def test_postprocess_invalid_builtin_filter(
-    capsys, tmp_path, filtername: str, error: str, expected: str
+    capsys, tmp_path, cli_runner, filtername: str, error: str, expected: str
 ):
-    call_component_new(tmp_path=tmp_path)
+    call_component_new(tmp_path, cli_runner)
 
     f = _make_builtin_filter("myns")
     f["filters"][0]["filter"] = filtername
