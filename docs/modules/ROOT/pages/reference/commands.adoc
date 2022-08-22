@@ -192,6 +192,8 @@ This command updates an existing config package repository stored in `PATH`.
 The command will always update the package to the latest version of the template which was originally used to create the package.
 The command has a number of command line options to modify the package's test cases and selected meta-information.
 
+Commodore will raise an error if the command would end up removing all test cases from the package, since the template currently doesn't render cleanly with no test cases specified.
+
 == Package Compile
 
   package compile PATH TEST_CLASS
