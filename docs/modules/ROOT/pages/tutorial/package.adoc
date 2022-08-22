@@ -87,9 +87,8 @@ This will add the component cert-manager to the cluster and configure the lestse
 
 [NOTE]
 ====
-During catalog compilation, you might see several warnings like `[WARNING] Reclass class not found: 'cert-manager.common'. Skipped!`.
-This is expected, as Commodore first has to render the inventory to even be able to clone packages.
-Still, double-check the manifests to ensure the parameters really get applied.
+During catalog compilation, after the message `Discovering config packages...`, you'll see several warnings like `[WARNING] Reclass class not found: 'cert-manager.common'. Skipped!`.
+This is expected, as Commodore has to render the inventory in order to be able to read the package's Git repository URL and version, which are stored in the inventory.
 ====
 
 == Conclusion
