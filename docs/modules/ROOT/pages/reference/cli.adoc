@@ -178,6 +178,12 @@ This command doesn't have any command line options.
   The component template version (Git tree-ish) to use.
   Defaults to `main`.
 
+*--additional-test-case, -t* CASE::
+  Additional test cases to generate in the new component.
+  Can be repeated.
+  Test case `defaults` will always be generated.
+  Commodore will deduplicate the provided test cases.
+
 *--help*::
   Show component new usage and options then exit.
 

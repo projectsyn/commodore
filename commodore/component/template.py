@@ -15,7 +15,7 @@ from commodore.multi_dependency import MultiDependency
 class ComponentTemplater(Templater):
     library: bool
     post_process: bool
-    matrix_tests: bool
+    _matrix_tests: bool
 
     @classmethod
     def from_existing(cls, config: Config, path: Path):
@@ -34,6 +34,18 @@ class ComponentTemplater(Templater):
         args["add_pp"] = "y" if self.post_process else "n"
         args["add_matrix"] = "y" if self.matrix_tests else "n"
         return args
+
+    @property
+    def matrix_tests(self) -> bool:
+        if len(self.test_cases) > 1:
+            if not self._matrix_tests:
+                click.echo(" > Forcing matrix tests when multiple test cases requested")
+            return True
+        return self._matrix_tests
+
+    @matrix_tests.setter
+    def matrix_tests(self, matrix_tests: bool) -> None:
+        self._matrix_tests = matrix_tests
 
     @property
     def deptype(self) -> str:
