@@ -91,14 +91,6 @@ class Templater(ABC):
         prefixed with the value of this property.
         """
 
-    @property
-    @abstractmethod
-    def cookiecutter_args(self) -> dict[str, str]:
-        """Cookiecutter template inputs.
-
-        Passed to the rendering function as `extra_context`
-        """
-
     @abstractmethod
     def dependency_dir(self) -> Path:
         """Location of dependency in the Commodore working directory.
@@ -115,6 +107,25 @@ class Templater(ABC):
             return self.output_dir / self.slug
 
         return self.dependency_dir()
+
+    @property
+    def cookiecutter_args(self) -> dict[str, str]:
+        """Cookiecutter template inputs.
+
+        Passed to the rendering function as `extra_context`
+        """
+        return {
+            "add_golden": "y" if self.golden_tests else "n",
+            "copyright_holder": self.copyright_holder,
+            "copyright_year": (
+                self.today.strftime("%Y")
+                if not self.copyright_year
+                else self.copyright_year
+            ),
+            "github_owner": self.github_owner,
+            "name": self.name,
+            "slug": self.slug,
+        }
 
     def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
         self.golden_tests = cookiecutter_args["add_golden"] == "y"

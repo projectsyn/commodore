@@ -29,21 +29,11 @@ class ComponentTemplater(Templater):
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
-        return {
-            "add_lib": "y" if self.library else "n",
-            "add_pp": "y" if self.post_process else "n",
-            "add_golden": "y" if self.golden_tests else "n",
-            "add_matrix": "y" if self.matrix_tests else "n",
-            "copyright_holder": self.copyright_holder,
-            "copyright_year": (
-                self.today.strftime("%Y")
-                if not self.copyright_year
-                else self.copyright_year
-            ),
-            "github_owner": self.github_owner,
-            "name": self.name,
-            "slug": self.slug,
-        }
+        args = super().cookiecutter_args
+        args["add_lib"] = "y" if self.library else "n"
+        args["add_pp"] = "y" if self.post_process else "n"
+        args["add_matrix"] = "y" if self.matrix_tests else "n"
+        return args
 
     @property
     def deptype(self) -> str:

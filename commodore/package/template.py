@@ -57,21 +57,10 @@ class PackageTemplater(Templater):
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
-        return {
-            "add_golden": "y" if self.golden_tests else "n",
-            "copyright_holder": self.copyright_holder,
-            "copyright_year": (
-                self.today.strftime("%Y")
-                if not self.copyright_year
-                else self.copyright_year
-            ),
-            "github_owner": self.github_owner,
-            "name": self.name,
-            "slug": self.slug,
-            # The template expects the test cases in a single string separated by
-            # spaces.
-            "test_cases": " ".join(self.test_cases),
-        }
+        args = super().cookiecutter_args
+        # The template expects the test cases in a single string separated by spaces.
+        args["test_cases"] = " ".join(self.test_cases)
+        return args
 
     @property
     def deptype(self) -> str:
