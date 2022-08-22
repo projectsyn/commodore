@@ -249,7 +249,10 @@ class Config:
         depkey = dependency_key(repo_url)
         if depkey not in self._dependency_repos:
             self._dependency_repos[depkey] = MultiDependency(
-                repo_url, self.inventory.dependencies_dir
+                repo_url,
+                self.inventory.dependencies_dir,
+                author_name=self.username,
+                author_email=self.usermail,
             )
 
         dep = self._dependency_repos[depkey]
