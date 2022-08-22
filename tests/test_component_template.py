@@ -1,6 +1,8 @@
 """
 Tests for component new command
 """
+from __future__ import annotations
+
 import json
 import os
 import pytest
@@ -8,6 +10,7 @@ import yaml
 from pathlib import Path as P
 from subprocess import call
 from git import Repo
+from datetime import date
 
 from conftest import RunnerFunc
 from test_component import setup_directory
@@ -335,3 +338,125 @@ def test_check_golden_diff(tmp_path: P):
         cwd=tmp_path / "dependencies" / component_name,
     )
     assert exit_status == 0
+
+
+@pytest.mark.parametrize(
+    "new_args,update_args",
+    [
+        ([], ["--lib"]),
+        ([], ["--pp"]),
+        ([], ["--golden-tests"]),
+        ([], ["--matrix-tests"]),
+        (["--matrix-tests"], ["--no-matrix-tests"]),
+        ([], ["--golden-tests", "--matrix-tests"]),
+    ],
+)
+def test_component_update_bool_flags(
+    tmp_path: P, cli_runner: RunnerFunc, new_args: list[str], update_args: list[str]
+):
+    component_name = "test-component"
+    new_cmd = [
+        "-d",
+        str(tmp_path),
+        "component",
+        "new",
+        "--no-lib",
+        "--no-pp",
+        "--no-golden-tests",
+        "--no-matrix-tests",
+        component_name,
+    ]
+
+    has_lib = "--lib" in new_args
+    has_pp = "--pp" in new_args
+    has_golden = "--golden-tests" in new_args
+    has_matrix = "--matrix-tests" in new_args
+
+    result = cli_runner(new_cmd + new_args)
+    assert result.exit_code == 0
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
+
+    update_cmd = [
+        "-d",
+        str(tmp_path),
+        "component",
+        "update",
+        f"{tmp_path}/dependencies/{component_name}",
+    ]
+    has_lib = "--lib" in update_args
+    has_pp = "--pp" in update_args
+    has_golden = "--golden-tests" in update_args
+    has_matrix = "--matrix-tests" in update_args
+
+    result = cli_runner(update_cmd + update_args)
+    assert result.exit_code == 0
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
+
+
+def test_component_update_copyright(tmp_path: P, cli_runner: RunnerFunc):
+    year = date.today().year
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    license_file = component_path / "LICENSE"
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
+
+    result = cli_runner(
+        [
+            "component",
+            "update",
+            str(component_path),
+            "--copyright",
+            "Foo Bar Inc. <foobar@example.com>",
+        ]
+    )
+    assert result.exit_code == 0
+
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        assert lines[0] == f"Copyright {year}, Foo Bar Inc. <foobar@example.com>\n"
+
+
+def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    license_file = component_path / "LICENSE"
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        lines[0] = "Copyright 2019, VSHN AG <info@vshn.ch>\n"
+
+    with open(license_file, "w", encoding="utf-8") as lic:
+        lic.writelines(lines)
+
+    cruftjson_file = component_path / ".cruft.json"
+    with open(cruftjson_file, "r", encoding="utf-8") as f:
+        cruftjson = json.load(f)
+        cruftjson["context"]["cookiecutter"]["copyright_year"] = "2019"
+
+    with open(cruftjson_file, "w", encoding="utf-8") as f:
+        json.dump(cruftjson, f, indent=2)
+
+    r = Repo(component_path)
+    r.index.add(["LICENSE", ".cruft.json"])
+    r.index.commit("License year")
+
+    result = cli_runner(
+        ["component", "update", str(component_path), "--update-copyright-year"]
+    )
+    assert result.exit_code == 0
+
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        year = date.today().year
+        assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
