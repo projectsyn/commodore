@@ -136,6 +136,10 @@ class Templater(ABC):
         self.github_owner = cookiecutter_args["github_owner"]
         self.copyright_holder = cookiecutter_args["copyright_holder"]
         self.copyright_year = cookiecutter_args["copyright_year"]
+        if "test_cases" in cookiecutter_args:
+            self.test_cases = cookiecutter_args["test_cases"].split(" ")
+        else:
+            self.test_cases = ["defaults"]
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
