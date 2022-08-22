@@ -34,6 +34,7 @@ class Templater(ABC):
     _target_dir: Optional[Path] = None
     template_url: str
     template_version: Optional[str] = None
+    _test_cases: list[str] = ["defaults"]
 
     def __init__(
         self,
@@ -125,6 +126,9 @@ class Templater(ABC):
             "github_owner": self.github_owner,
             "name": self.name,
             "slug": self.slug,
+            # The template expects the test cases in a single string separated by
+            # spaces.
+            "test_cases": " ".join(self.test_cases),
         }
 
     def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
@@ -161,6 +165,24 @@ class Templater(ABC):
     @property
     def repo_url(self) -> str:
         return f"git@github.com:{self.github_owner}/{self.deptype}-{self.slug}.git"
+
+    @property
+    def test_cases(self) -> list[str]:
+        """Return list of test cases.
+
+        The getter deduplicates the stored list before returning it.
+
+        Don't use `append()` on the returned list to add test cases to the package, as
+        the getter returns a copy of the list stored in the object."""
+        cases = []
+        for t in self._test_cases:
+            if t not in cases:
+                cases.append(t)
+        return cases
+
+    @test_cases.setter
+    def test_cases(self, test_cases: list[str]):
+        self._test_cases = test_cases
 
     @property
     def additional_files(self) -> Sequence[str]:
