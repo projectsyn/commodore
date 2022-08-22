@@ -15,6 +15,7 @@ from git import Repo
 
 from commodore import cli
 from commodore.config import Config
+from commodore.gitrepo import GitRepo
 
 
 class RunnerFunc(Protocol):
@@ -103,6 +104,10 @@ class MockMultiDependency:
         assert name == self._name
         assert version == "master"
         self._repo.clone(self._target_dir)
+
+    @property
+    def bare_repo(self) -> GitRepo:
+        return GitRepo(None, self._target_dir)
 
 
 @pytest.fixture
