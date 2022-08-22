@@ -181,6 +181,41 @@ This command doesn't have any command line options.
 *--help*::
   Show component new usage and options then exit.
 
+== Component Update
+
+*--lib / --no-lib*::
+  Add or remove the component library template.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--pp / --no-pp*::
+  Add or remove the component postprocessing config.
+  When neither is provided, the command will reuse the previous value for the flag.
+   Defaults to _unset_.
+
+*--golden-tests / --no-golden-tests*::
+  Enable or disable golden tests for the component.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--matrix-tests / --no-matrix-tests*::
+  Enable test matrix for the component compile and golden tests.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--copyright* TEXT::
+  Update the copyright holder in the license file.
+  When this flag isn't provided the copyright holder is left unchanged.
+  Defaults to _unset_.
+
+*--update-copyright-year / --no-update-copyright-year*::
+  Update the year in the copyright notice to the current year.
+  Defaults to _false_.
+
+*--help*::
+  Show component new usage and options then exit.
+
+
 == Inventory Components / Packages / Show
 
 *-f, --values*::

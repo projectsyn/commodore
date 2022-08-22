@@ -17,7 +17,7 @@ from commodore.helpers import yaml_dump, yaml_load
 from commodore.package import compile
 from test_component_compile import _prepare_component, _add_postprocessing_filter
 
-from conftest import MockMultiDependency
+from conftest import MockMultiDependency, RunnerFunc
 
 
 def test_setup_package_inventory(tmp_path: Path, config: Config):
@@ -101,6 +101,7 @@ def test_compile_package(
     mock_mkdtemp: mock.MagicMock,
     mock_fetch: mock.MagicMock,
     tmp_path: Path,
+    cli_runner: RunnerFunc,
     config: Config,
     pp_filter: bool,
     package_ns: Optional[str],
@@ -125,7 +126,7 @@ def test_compile_package(
 
     config.local = local
     pkg_path = _setup_package(tmp_path, package_ns)
-    _prepare_component(compile_dir)
+    _prepare_component(compile_dir, cli_runner)
     if pp_filter:
         _add_postprocessing_filter(compile_dir)
 

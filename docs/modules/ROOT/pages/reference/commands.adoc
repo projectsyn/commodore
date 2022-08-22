@@ -49,6 +49,15 @@ If argument `--output-dir` isn't given, the command expects to run in a director
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
 
+== Component Update
+
+  commodore component update PATH
+
+This command updates an existing component repository stored in `PATH`.
+The command will always update the component to the latest version of the template which was originally used to create the component.
+The command has a number of command line options to enable or disable component features, such as golden tests.
+
+
 == Component Delete
 
   commodore component delete COMPONENT_NAME

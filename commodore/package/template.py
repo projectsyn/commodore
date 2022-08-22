@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-import json
-
 from pathlib import Path
-from typing import Optional
 
 import click
 
-
 from commodore.config import Config
-from commodore.cruft._commands import update as cruft_update
 from commodore.dependency_mgmt.discovery import (
     RESERVED_PACKAGE_PATTERN,
     TENANT_PREFIX_PATTERN,
@@ -18,37 +13,17 @@ from commodore.dependency_templater import Templater
 from commodore.package import package_dependency_dir
 
 
-# pylint: disable=too-many-instance-attributes
 class PackageTemplater(Templater):
     _test_cases: list[str] = ["defaults"]
-    copyright_year: Optional[str] = None
-    _target_dir: Optional[Path] = None
 
     @classmethod
-    def from_existing(cls, config: Config, package_path: Path):
-        if not package_path.is_dir():
-            raise click.ClickException("Provided package path isn't a directory")
-        with open(package_path / ".cruft.json", encoding="utf-8") as cfg:
-            cruft_json = json.load(cfg)
+    def from_existing(cls, config: Config, path: Path):
+        return cls._base_from_existing(config, path, "package")
 
-        cookiecutter_args = cruft_json["context"]["cookiecutter"]
-        t = PackageTemplater(
-            config,
-            cruft_json["template"],
-            cruft_json.get("checkout"),
-            cookiecutter_args["slug"],
-            name=cookiecutter_args["name"],
-        )
-        t._target_dir = package_path
-        t.output_dir = package_path.absolute().parent
-
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        super()._initialize_from_cookiecutter_args(cookiecutter_args)
         if "test_cases" in cookiecutter_args:
-            t.test_cases = cookiecutter_args["test_cases"].split(" ")
-        t.golden_tests = cookiecutter_args["add_golden"] == "y"
-        t.github_owner = cookiecutter_args["github_owner"]
-        t.copyright_holder = cookiecutter_args["copyright_holder"]
-        t.copyright_year = cookiecutter_args["copyright_year"]
-        return t
+            self.test_cases = cookiecutter_args["test_cases"].split(" ")
 
     @property
     def test_cases(self) -> list[str]:
@@ -82,62 +57,14 @@ class PackageTemplater(Templater):
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
-        return {
-            "add_golden": "y" if self.golden_tests else "n",
-            "copyright_holder": self.copyright_holder,
-            "copyright_year": (
-                self.today.strftime("%Y")
-                if not self.copyright_year
-                else self.copyright_year
-            ),
-            "github_owner": self.github_owner,
-            "name": self.name,
-            "slug": self.slug,
-            # The template expects the test cases in a single string separated by
-            # spaces.
-            "test_cases": " ".join(self.test_cases),
-        }
+        args = super().cookiecutter_args
+        # The template expects the test cases in a single string separated by spaces.
+        args["test_cases"] = " ".join(self.test_cases)
+        return args
 
     @property
     def deptype(self) -> str:
         return "package"
 
-    @property
-    def target_dir(self) -> Path:
-        if self._target_dir:
-            return self._target_dir
-
-        if self.output_dir:
-            return self.output_dir / self.slug
-
+    def dependency_dir(self) -> Path:
         return package_dependency_dir(self.config.work_dir, self.slug)
-
-    def update(self, print_completion_message: bool = True) -> bool:
-        cruft_update(
-            self.target_dir,
-            cookiecutter_input=False,
-            checkout=self.template_version,
-            extra_context=self.cookiecutter_args,
-        )
-
-        commit_msg = (
-            f"Update from template\n\nTemplate version: {self.template_version}"
-        )
-        if self.template_commit:
-            commit_msg += f" ({self.template_commit[:7]})"
-
-        updated = self.commit(commit_msg, init=False)
-
-        if print_completion_message:
-            if updated:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
-                    bold=True,
-                )
-            else:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
-                    bold=True,
-                )
-
-        return updated

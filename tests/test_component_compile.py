@@ -18,15 +18,22 @@ from git import Repo
 from commodore.config import Config
 from commodore.component import component_parameters_key
 from commodore.component.compile import compile_component
+
+from conftest import RunnerFunc
 from test_component_template import call_component_new
 
 
-def _prepare_component(tmp_path, component_name="test-component", subpath=""):
+def _prepare_component(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    component_name: str = "test-component",
+    subpath: str = "",
+):
     if not subpath:
-        call_component_new(tmp_path, lib="--lib")
+        call_component_new(tmp_path, cli_runner, lib="--lib")
         component_root = tmp_path / "dependencies" / component_name
     else:
-        call_component_new(tmp_path / "tmp", lib="--lib")
+        call_component_new(tmp_path / "tmp", cli_runner, lib="--lib")
         component_root = tmp_path / component_name / subpath
         shutil.copytree(
             tmp_path / "tmp" / "dependencies" / "test-component", component_root
@@ -103,12 +110,12 @@ def _cli_command_string(
     return cmd
 
 
-def test_run_component_compile_command(tmp_path: P):
+def test_run_component_compile_command(tmp_path: P, cli_runner: RunnerFunc):
     """
     Run the component compile command
     """
     component_name = "test-component"
-    _prepare_component(tmp_path, component_name)
+    _prepare_component(tmp_path, cli_runner, component_name)
 
     component_repo = Repo(tmp_path / "dependencies" / component_name)
     orig_remote_urls = list(component_repo.remote().urls)
@@ -149,13 +156,13 @@ def test_run_component_compile_command(tmp_path: P):
         assert jfstring[-1] == "\n"
 
 
-def test_run_component_compile_command_postprocess(tmp_path):
+def test_run_component_compile_command_postprocess(tmp_path: P, cli_runner: RunnerFunc):
     """
     Run the component compile command for a component with a postprocessing
     filter
     """
     component_name = "test-component"
-    _prepare_component(tmp_path, component_name)
+    _prepare_component(tmp_path, cli_runner, component_name)
     _add_postprocessing_filter(tmp_path, component_name)
 
     exit_status = call(
@@ -187,14 +194,16 @@ def test_run_component_compile_command_postprocess(tmp_path):
 
 
 @pytest.mark.parametrize("instance_aware", [True, False])
-def test_run_component_compile_command_instance(tmp_path, capsys, instance_aware):
+def test_run_component_compile_command_instance(
+    tmp_path: P, capsys, cli_runner: RunnerFunc, instance_aware: bool
+):
     """
     Run the component compile command for a component with a postprocessing
     filter
     """
     component_name = "test-component"
     instance_name = "test-instance"
-    _prepare_component(tmp_path, component_name)
+    _prepare_component(tmp_path, cli_runner, component_name)
     if instance_aware:
         _make_instance_aware(tmp_path, component_name)
 
@@ -237,9 +246,9 @@ def test_run_component_compile_command_instance(tmp_path, capsys, instance_aware
             assert target["metadata"]["namespace"] == f"syn-{component_name}"
 
 
-def test_component_compile_subpath(tmp_path):
+def test_component_compile_subpath(tmp_path: P, cli_runner: RunnerFunc):
     component_name = "test-component"
-    _prepare_component(tmp_path, component_name, subpath="component")
+    _prepare_component(tmp_path, cli_runner, component_name, subpath="component")
 
     exit_status = call(
         _cli_command_string(tmp_path, component_name, subpath="component"),
@@ -270,7 +279,7 @@ def test_component_compile_subpath(tmp_path):
         assert target["metadata"]["namespace"] == "syn-test-component"
 
 
-def test_no_component_compile_command(tmp_path):
+def test_no_component_compile_command(tmp_path: P):
     with pytest.raises(ClickException) as excinfo:
         compile_component(Config(tmp_path), tmp_path / "foo", None, [], [], "./", "")
     assert (
@@ -279,9 +288,9 @@ def test_no_component_compile_command(tmp_path):
     )
 
 
-def test_component_compile_no_repo(tmp_path):
+def test_component_compile_no_repo(tmp_path: P, cli_runner: RunnerFunc):
     component_name = "test-component"
-    cpath = _prepare_component(tmp_path, component_name)
+    cpath = _prepare_component(tmp_path, cli_runner, component_name)
     os.unlink(cpath / ".git")
 
     exit_status = call(_cli_command_string(tmp_path, component_name), shell=True)

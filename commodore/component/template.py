@@ -6,6 +6,7 @@ from shutil import rmtree
 import click
 import git
 
+from commodore.config import Config
 from commodore.component import Component, component_dir
 from commodore.dependency_templater import Templater
 from commodore.multi_dependency import MultiDependency
@@ -16,30 +17,30 @@ class ComponentTemplater(Templater):
     post_process: bool
     matrix_tests: bool
 
-    @property
-    def cookiecutter_args(self) -> dict[str, str]:
-        return {
-            "add_lib": "y" if self.library else "n",
-            "add_pp": "y" if self.post_process else "n",
-            "add_golden": "y" if self.golden_tests else "n",
-            "add_matrix": "y" if self.matrix_tests else "n",
-            "copyright_holder": self.copyright_holder,
-            "copyright_year": self.today.strftime("%Y"),
-            "github_owner": self.github_owner,
-            "name": self.name,
-            "slug": self.slug,
-            "release_date": self.today.strftime("%Y-%m-%d"),
-        }
+    @classmethod
+    def from_existing(cls, config: Config, path: Path):
+        return cls._base_from_existing(config, path, "component")
+
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        super()._initialize_from_cookiecutter_args(cookiecutter_args)
+        self.library = cookiecutter_args["add_lib"] == "y"
+        self.post_process = cookiecutter_args["add_pp"] == "y"
+        self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
 
     @property
-    def target_dir(self) -> Path:
-        if self.output_dir:
-            return self.output_dir / self.slug
-        return component_dir(self.config.work_dir, self.slug)
+    def cookiecutter_args(self) -> dict[str, str]:
+        args = super().cookiecutter_args
+        args["add_lib"] = "y" if self.library else "n"
+        args["add_pp"] = "y" if self.post_process else "n"
+        args["add_matrix"] = "y" if self.matrix_tests else "n"
+        return args
 
     @property
     def deptype(self) -> str:
         return "component"
+
+    def dependency_dir(self) -> Path:
+        return component_dir(self.config.work_dir, self.slug)
 
     def delete(self):
         cdir = component_dir(self.config.work_dir, self.slug)

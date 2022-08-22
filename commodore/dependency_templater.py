@@ -14,7 +14,7 @@ from typing import Optional, Sequence
 import click
 
 from commodore.config import Config
-from commodore.cruft import create as cruft_create
+from commodore.cruft import create as cruft_create, update as cruft_update
 from commodore.gitrepo import GitRepo
 from commodore.multi_dependency import MultiDependency
 
@@ -27,9 +27,11 @@ class Templater(ABC):
     _name: Optional[str]
     github_owner: str
     copyright_holder: str
+    copyright_year: Optional[str] = None
     golden_tests: bool
     today: datetime.date
     output_dir: Optional[Path] = None
+    _target_dir: Optional[Path] = None
     template_url: str
     template_version: Optional[str] = None
 
@@ -55,6 +57,31 @@ class Templater(ABC):
 
             self.output_dir = odir
 
+    @classmethod
+    def _base_from_existing(cls, config: Config, path: Path, deptype: str):
+        if not path.is_dir():
+            raise click.ClickException(f"Provided {deptype} path isn't a directory")
+        if not (path / ".cruft.json").is_file():
+            raise click.ClickException(
+                f"Provided {deptype} path doesn't have `.cruft.json`, can't update."
+            )
+        with open(path / ".cruft.json", encoding="utf-8") as cfg:
+            cruft_json = json.load(cfg)
+
+        cookiecutter_args = cruft_json["context"]["cookiecutter"]
+        t = cls(
+            config,
+            cruft_json["template"],
+            cruft_json.get("checkout"),
+            cookiecutter_args["slug"],
+            name=cookiecutter_args["name"],
+        )
+        t._target_dir = path
+        t.output_dir = path.absolute().parent
+
+        t._initialize_from_cookiecutter_args(cookiecutter_args)
+        return t
+
     @property
     @abstractmethod
     def deptype(self) -> str:
@@ -64,18 +91,47 @@ class Templater(ABC):
         prefixed with the value of this property.
         """
 
-    @property
     @abstractmethod
-    def target_dir(self) -> Path:
-        """Return Path indicating where to render the template to."""
+    def dependency_dir(self) -> Path:
+        """Location of dependency in the Commodore working directory.
+
+        Used by `target_dir()` if neither `_target_dir` nor `_output_dir` is set."""
 
     @property
-    @abstractmethod
+    def target_dir(self) -> Path:
+        """Return Path indicating where to render the template to."""
+        if self._target_dir:
+            return self._target_dir
+
+        if self.output_dir:
+            return self.output_dir / self.slug
+
+        return self.dependency_dir()
+
+    @property
     def cookiecutter_args(self) -> dict[str, str]:
         """Cookiecutter template inputs.
 
         Passed to the rendering function as `extra_context`
         """
+        return {
+            "add_golden": "y" if self.golden_tests else "n",
+            "copyright_holder": self.copyright_holder,
+            "copyright_year": (
+                self.today.strftime("%Y")
+                if not self.copyright_year
+                else self.copyright_year
+            ),
+            "github_owner": self.github_owner,
+            "name": self.name,
+            "slug": self.slug,
+        }
+
+    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        self.golden_tests = cookiecutter_args["add_golden"] == "y"
+        self.github_owner = cookiecutter_args["github_owner"]
+        self.copyright_holder = cookiecutter_args["copyright_holder"]
+        self.copyright_year = cookiecutter_args["copyright_year"]
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
@@ -162,6 +218,36 @@ class Templater(ABC):
         click.secho(
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
+
+    def update(self, print_completion_message: bool = True) -> bool:
+        cruft_update(
+            self.target_dir,
+            cookiecutter_input=False,
+            checkout=self.template_version,
+            extra_context=self.cookiecutter_args,
+        )
+
+        commit_msg = (
+            f"Update from template\n\nTemplate version: {self.template_version}"
+        )
+        if self.template_commit:
+            commit_msg += f" ({self.template_commit[:7]})"
+
+        updated = self.commit(commit_msg, init=False)
+
+        if print_completion_message:
+            if updated:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                    bold=True,
+                )
+            else:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                    bold=True,
+                )
+
+        return updated
 
     def commit(self, msg: str, amend=False, init=True) -> bool:
         # If we're amending an existing commit, we don't want to force initialize the

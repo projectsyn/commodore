@@ -1,6 +1,8 @@
 """
 Tests for component new command
 """
+from __future__ import annotations
+
 import json
 import os
 import pytest
@@ -8,6 +10,7 @@ import yaml
 from pathlib import Path as P
 from subprocess import call
 from git import Repo
+from datetime import date
 
 from conftest import RunnerFunc
 from test_component import setup_directory
@@ -15,6 +18,7 @@ from test_component import setup_directory
 
 def call_component_new(
     tmp_path: P,
+    cli_runner: RunnerFunc,
     component_name="test-component",
     lib="--no-lib",
     pp="--no-pp",
@@ -22,48 +26,22 @@ def call_component_new(
     matrix="--no-matrix-tests",
     output_dir="",
 ):
+    args = ["-d", str(tmp_path), "component", "new"]
     if output_dir:
-        output_dir = f"--output-dir {output_dir}"
-    exit_status = call(
-        f"commodore -d '{tmp_path}' -vvv component new {component_name} "
-        + f"{lib} {pp} {golden} {matrix} {output_dir}",
-        shell=True,
-    )
-    assert exit_status == 0
+        args.extend(["--output-dir", str(output_dir)])
+    args.extend([component_name, lib, pp, golden, matrix])
+    result = cli_runner(args)
+    assert result.exit_code == 0
 
 
-@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
-@pytest.mark.parametrize(
-    "pp",
-    ["--no-pp", "--pp"],
-)
-@pytest.mark.parametrize(
-    "golden",
-    ["--no-golden-tests", "--golden-tests"],
-)
-@pytest.mark.parametrize(
-    "matrix",
-    ["--no-matrix-tests", "--matrix-tests"],
-)
-def test_run_component_new_command(
-    tmp_path: P, lib: str, pp: str, golden: str, matrix: str
+def _validate_rendered_component(
+    tmp_path: P,
+    component_name: str,
+    has_lib: bool,
+    has_pp: bool,
+    has_golden: bool,
+    has_matrix: bool,
 ):
-    """
-    Run the component new command
-    """
-
-    setup_directory(tmp_path)
-
-    component_name = "test-component"
-    call_component_new(
-        tmp_path,
-        component_name=component_name,
-        lib=lib,
-        pp=pp,
-        golden=golden,
-        matrix=matrix,
-    )
-
     expected_files = [
         P("README.md"),
         P("renovate.json"),
@@ -82,9 +60,9 @@ def test_run_component_new_command(
         P(".sync.yml"),
         P("tests", "defaults.yml"),
     ]
-    if lib == "--lib":
+    if has_lib:
         expected_files.append(P("lib", f"{component_name}.libsonnet"))
-    if golden == "--golden":
+    if has_golden:
         expected_files.append(
             P(
                 "tests",
@@ -118,14 +96,12 @@ def test_run_component_new_command(
         assert "parameters" in class_contents
         params = class_contents["parameters"]
         assert "kapitan" in params
-        if pp == "--pp":
+        if has_pp:
             assert "commodore" in params
             assert "postprocess" in params["commodore"]
             assert "filters" in params["commodore"]["postprocess"]
             assert isinstance(params["commodore"]["postprocess"]["filters"], list)
 
-    has_golden = golden == "--golden-tests"
-    has_matrix = matrix == "--matrix-tests"
     with open(
         tmp_path
         / "dependencies"
@@ -180,21 +156,58 @@ def test_run_component_new_command(
         if has_golden:
             assert len(renovateconfig["postUpgradeTasks"]["commands"]) == 1
             cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
-            expected_cmd = {
-                "--matrix-tests": "make gen-golden-all",
-                "--no-matrix-tests": "make gen-golden",
-            }
-            assert cmd == expected_cmd[matrix]
+            expected_cmd = "make gen-golden-all" if has_matrix else "make gen-golden"
+            assert cmd == expected_cmd
 
 
-def test_run_component_new_command_with_output_dir(tmp_path: P):
+@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
+@pytest.mark.parametrize(
+    "pp",
+    ["--no-pp", "--pp"],
+)
+@pytest.mark.parametrize(
+    "golden",
+    ["--no-golden-tests", "--golden-tests"],
+)
+@pytest.mark.parametrize(
+    "matrix",
+    ["--no-matrix-tests", "--matrix-tests"],
+)
+def test_run_component_new_command(
+    tmp_path: P, cli_runner: RunnerFunc, lib: str, pp: str, golden: str, matrix: str
+):
+    """
+    Run the component new command
+    """
+    has_lib = lib == "--lib"
+    has_pp = pp == "--pp"
+    has_golden = golden == "--golden-tests"
+    has_matrix = matrix == "--matrix-tests"
+
+    component_name = "test-component"
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name=component_name,
+        lib=lib,
+        pp=pp,
+        golden=golden,
+        matrix=matrix,
+    )
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
+
+
+def test_run_component_new_command_with_output_dir(tmp_path: P, cli_runner: RunnerFunc):
     """Verify that rendered component is put into specified output directory.
 
     This test doesn't validate the contents of the rendered files, that part is covered
     in `test_run_component_new_command()`."""
     component_name = "test-component"
     call_component_new(
-        tmp_path, component_name=component_name, output_dir=str(tmp_path)
+        tmp_path, cli_runner, component_name=component_name, output_dir=str(tmp_path)
     )
 
     assert (tmp_path / component_name).is_dir()
@@ -325,3 +338,141 @@ def test_check_golden_diff(tmp_path: P):
         cwd=tmp_path / "dependencies" / component_name,
     )
     assert exit_status == 0
+
+
+@pytest.mark.parametrize(
+    "new_args,update_args",
+    [
+        ([], ["--lib"]),
+        ([], ["--pp"]),
+        ([], ["--golden-tests"]),
+        ([], ["--matrix-tests"]),
+        (["--matrix-tests"], ["--no-matrix-tests"]),
+        ([], ["--golden-tests", "--matrix-tests"]),
+    ],
+)
+def test_component_update_bool_flags(
+    tmp_path: P, cli_runner: RunnerFunc, new_args: list[str], update_args: list[str]
+):
+    component_name = "test-component"
+    new_cmd = [
+        "-d",
+        str(tmp_path),
+        "component",
+        "new",
+        "--no-lib",
+        "--no-pp",
+        "--no-golden-tests",
+        "--no-matrix-tests",
+        component_name,
+    ]
+
+    has_lib = "--lib" in new_args
+    has_pp = "--pp" in new_args
+    has_golden = "--golden-tests" in new_args
+    has_matrix = "--matrix-tests" in new_args
+
+    result = cli_runner(new_cmd + new_args)
+    assert result.exit_code == 0
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
+
+    update_cmd = [
+        "-d",
+        str(tmp_path),
+        "component",
+        "update",
+        f"{tmp_path}/dependencies/{component_name}",
+    ]
+    has_lib = "--lib" in update_args
+    has_pp = "--pp" in update_args
+    has_golden = "--golden-tests" in update_args
+    has_matrix = "--matrix-tests" in update_args
+
+    result = cli_runner(update_cmd + update_args)
+    assert result.exit_code == 0
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
+
+
+def test_component_update_copyright(tmp_path: P, cli_runner: RunnerFunc):
+    year = date.today().year
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    license_file = component_path / "LICENSE"
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
+
+    result = cli_runner(
+        [
+            "component",
+            "update",
+            str(component_path),
+            "--copyright",
+            "Foo Bar Inc. <foobar@example.com>",
+        ]
+    )
+    assert result.exit_code == 0
+
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        assert lines[0] == f"Copyright {year}, Foo Bar Inc. <foobar@example.com>\n"
+
+
+def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    license_file = component_path / "LICENSE"
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        lines[0] = "Copyright 2019, VSHN AG <info@vshn.ch>\n"
+
+    with open(license_file, "w", encoding="utf-8") as lic:
+        lic.writelines(lines)
+
+    cruftjson_file = component_path / ".cruft.json"
+    with open(cruftjson_file, "r", encoding="utf-8") as f:
+        cruftjson = json.load(f)
+        cruftjson["context"]["cookiecutter"]["copyright_year"] = "2019"
+
+    with open(cruftjson_file, "w", encoding="utf-8") as f:
+        json.dump(cruftjson, f, indent=2)
+
+    r = Repo(component_path)
+    r.index.add(["LICENSE", ".cruft.json"])
+    r.index.commit("License year")
+
+    result = cli_runner(
+        ["component", "update", str(component_path), "--update-copyright-year"]
+    )
+    assert result.exit_code == 0
+
+    with open(license_file, "r", encoding="utf-8") as lic:
+        lines = lic.readlines()
+        year = date.today().year
+        assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
+
+
+def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    cruftjson_file = component_path / ".cruft.json"
+    cruftjson_file.unlink()
+
+    result = cli_runner(["component", "update", str(component_path)])
+    assert result.exit_code == 1
+    assert (
+        result.stdout
+        == "Error: Provided component path doesn't have `.cruft.json`, can't update.\n"
+    )
