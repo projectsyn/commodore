@@ -549,6 +549,7 @@ def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
     "initial_cases,additional_cases,removed_cases",
     [
         ([], [], []),
+        ([], [], ["defaults"]),
         ([], ["foo"], []),
         ([], ["foo"], ["defaults"]),
         (["foo"], ["bar"], ["foo"]),
@@ -585,12 +586,21 @@ def test_component_update_test_cases(
     update_args += _format_test_case_args("--remove-test-case", removed_cases)
 
     result = cli_runner(["component", "update", str(component_path)] + update_args)
-    assert result.exit_code == 0
 
-    final_cases = []
+    updated_cases = []
     for tc in orig_cases + additional_cases:
-        if tc not in final_cases and tc not in removed_cases:
-            final_cases.append(tc)
+        if tc not in updated_cases and tc not in removed_cases:
+            updated_cases.append(tc)
+
+    assert result.exit_code == (0 if len(updated_cases) > 0 else 1)
+    if len(updated_cases) == 0:
+        assert (
+            result.stdout
+            == "Error: Component template doesn't support removing all test cases.\n"
+        )
+        final_cases = orig_cases
+    else:
+        final_cases = updated_cases
 
     _validate_rendered_component(
         tmp_path, component_name, False, False, True, True, final_cases
