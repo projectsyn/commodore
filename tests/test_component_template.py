@@ -166,6 +166,13 @@ def _validate_rendered_component(
             assert cmd == expected_cmd
 
 
+def _format_test_case_args(flag: str, test_cases: list[str]) -> list[str]:
+    args = []
+    for tc in test_cases:
+        args.extend([flag, tc])
+    return args
+
+
 @pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
 @pytest.mark.parametrize(
     "pp",
@@ -218,9 +225,7 @@ def test_run_component_new_with_additional_test_cases(
     tmp_path: P, cli_runner: RunnerFunc, test_cases: list[str]
 ):
     component_name = "test-component"
-    tc_args = []
-    for tc in test_cases:
-        tc_args.extend(["--additional-test-case", tc])
+    tc_args = _format_test_case_args("--additional-test-case", test_cases)
     result = call_component_new(
         tmp_path,
         cli_runner,
@@ -537,4 +542,56 @@ def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
     assert (
         result.stdout
         == "Error: Provided component path doesn't have `.cruft.json`, can't update.\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "initial_cases,additional_cases,removed_cases",
+    [
+        ([], [], []),
+        ([], ["foo"], []),
+        ([], ["foo"], ["defaults"]),
+        (["foo"], ["bar"], ["foo"]),
+        (["foo", "bar"], ["baz"], ["foo", "bar"]),
+    ],
+)
+def test_component_update_test_cases(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    initial_cases: list[str],
+    additional_cases: list[str],
+    removed_cases: list[str],
+):
+    component_name = "test-component"
+    new_args = _format_test_case_args("--additional-test-case", initial_cases)
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        extra_args=new_args,
+    )
+
+    component_path = tmp_path / "dependencies" / component_name
+
+    orig_cases = ["defaults"] + initial_cases
+
+    _validate_rendered_component(
+        tmp_path, component_name, False, False, True, True, orig_cases
+    )
+
+    update_args = _format_test_case_args("--additional-test-case", additional_cases)
+    update_args += _format_test_case_args("--remove-test-case", removed_cases)
+
+    result = cli_runner(["component", "update", str(component_path)] + update_args)
+    assert result.exit_code == 0
+
+    final_cases = []
+    for tc in orig_cases + additional_cases:
+        if tc not in final_cases and tc not in removed_cases:
+            final_cases.append(tc)
+
+    _validate_rendered_component(
+        tmp_path, component_name, False, False, True, True, final_cases
     )
