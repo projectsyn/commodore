@@ -31,39 +31,14 @@ def call_component_new(
     assert result.exit_code == 0
 
 
-@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
-@pytest.mark.parametrize(
-    "pp",
-    ["--no-pp", "--pp"],
-)
-@pytest.mark.parametrize(
-    "golden",
-    ["--no-golden-tests", "--golden-tests"],
-)
-@pytest.mark.parametrize(
-    "matrix",
-    ["--no-matrix-tests", "--matrix-tests"],
-)
-def test_run_component_new_command(
-    tmp_path: P, cli_runner: RunnerFunc, lib: str, pp: str, golden: str, matrix: str
+def _validate_rendered_component(
+    tmp_path: P,
+    component_name: str,
+    has_lib: bool,
+    has_pp: bool,
+    has_golden: bool,
+    has_matrix: bool,
 ):
-    """
-    Run the component new command
-    """
-
-    setup_directory(tmp_path)
-
-    component_name = "test-component"
-    call_component_new(
-        tmp_path,
-        cli_runner,
-        component_name=component_name,
-        lib=lib,
-        pp=pp,
-        golden=golden,
-        matrix=matrix,
-    )
-
     expected_files = [
         P("README.md"),
         P("renovate.json"),
@@ -82,9 +57,9 @@ def test_run_component_new_command(
         P(".sync.yml"),
         P("tests", "defaults.yml"),
     ]
-    if lib == "--lib":
+    if has_lib:
         expected_files.append(P("lib", f"{component_name}.libsonnet"))
-    if golden == "--golden":
+    if has_golden:
         expected_files.append(
             P(
                 "tests",
@@ -118,14 +93,12 @@ def test_run_component_new_command(
         assert "parameters" in class_contents
         params = class_contents["parameters"]
         assert "kapitan" in params
-        if pp == "--pp":
+        if has_pp:
             assert "commodore" in params
             assert "postprocess" in params["commodore"]
             assert "filters" in params["commodore"]["postprocess"]
             assert isinstance(params["commodore"]["postprocess"]["filters"], list)
 
-    has_golden = golden == "--golden-tests"
-    has_matrix = matrix == "--matrix-tests"
     with open(
         tmp_path
         / "dependencies"
@@ -180,11 +153,48 @@ def test_run_component_new_command(
         if has_golden:
             assert len(renovateconfig["postUpgradeTasks"]["commands"]) == 1
             cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
-            expected_cmd = {
-                "--matrix-tests": "make gen-golden-all",
-                "--no-matrix-tests": "make gen-golden",
-            }
-            assert cmd == expected_cmd[matrix]
+            expected_cmd = "make gen-golden-all" if has_matrix else "make gen-golden"
+            assert cmd == expected_cmd
+
+
+@pytest.mark.parametrize("lib", ["--no-lib", "--lib"])
+@pytest.mark.parametrize(
+    "pp",
+    ["--no-pp", "--pp"],
+)
+@pytest.mark.parametrize(
+    "golden",
+    ["--no-golden-tests", "--golden-tests"],
+)
+@pytest.mark.parametrize(
+    "matrix",
+    ["--no-matrix-tests", "--matrix-tests"],
+)
+def test_run_component_new_command(
+    tmp_path: P, cli_runner: RunnerFunc, lib: str, pp: str, golden: str, matrix: str
+):
+    """
+    Run the component new command
+    """
+    has_lib = lib == "--lib"
+    has_pp = pp == "--pp"
+    has_golden = golden == "--golden-tests"
+    has_matrix = matrix == "--matrix-tests"
+
+    component_name = "test-component"
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name=component_name,
+        lib=lib,
+        pp=pp,
+        golden=golden,
+        matrix=matrix,
+    )
+
+    _validate_rendered_component(
+        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+    )
 
 
 def test_run_component_new_command_with_output_dir(tmp_path: P, cli_runner: RunnerFunc):
