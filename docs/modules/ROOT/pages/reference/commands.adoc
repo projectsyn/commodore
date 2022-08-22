@@ -57,6 +57,9 @@ This command updates an existing component repository stored in `PATH`.
 The command will always update the component to the latest version of the template which was originally used to create the component.
 The command has a number of command line options to enable or disable component features, such as golden tests.
 
+Additionally, the command allows users to add or remove test cases.
+Commodore will raise an error if the command would end up removing all test cases from the component, since the template currently doesn't render cleanly with no test cases specified.
+
 
 == Component Delete
 
