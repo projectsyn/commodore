@@ -63,7 +63,12 @@ def check_removed_reclass_variables_components(config: Config):
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
-    repo = GitRepo(cluster.global_git_repo_url, cfg.inventory.global_config_dir)
+    repo = GitRepo(
+        cluster.global_git_repo_url,
+        cfg.inventory.global_config_dir,
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.global_git_repo_revision
     if cfg.global_repo_revision_override:
         rev = cfg.global_repo_revision_override
@@ -76,7 +81,12 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     repo_url = cluster.config_repo_url
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
-    repo = GitRepo(repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id))
+    repo = GitRepo(
+        repo_url,
+        cfg.inventory.tenant_config_dir(cluster.tenant_id),
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.config_git_repo_revision
     if cfg.tenant_repo_revision_override:
         rev = cfg.tenant_repo_revision_override
@@ -137,9 +147,23 @@ def _local_setup(config: Config, cluster_id):
         raise click.ClickException(error)
 
     click.secho("Registering config...", bold=True)
-    config.register_config("global", GitRepo(None, config.inventory.global_config_dir))
     config.register_config(
-        "customer", GitRepo(None, config.inventory.tenant_config_dir(tenant))
+        "global",
+        GitRepo(
+            None,
+            config.inventory.global_config_dir,
+            author_name=config.username,
+            author_email=config.usermail,
+        ),
+    )
+    config.register_config(
+        "customer",
+        GitRepo(
+            None,
+            config.inventory.tenant_config_dir(tenant),
+            author_name=config.username,
+            author_email=config.usermail,
+        ),
     )
 
     check_removed_reclass_variables_inventory(config, tenant)
@@ -162,7 +186,12 @@ def _local_setup(config: Config, cluster_id):
     update_target(config, config.inventory.bootstrap_target)
 
     click.secho("Configuring catalog repo...", bold=True)
-    return GitRepo(None, config.catalog_dir)
+    return GitRepo(
+        None,
+        config.catalog_dir,
+        author_name=config.username,
+        author_email=config.usermail,
+    )
 
 
 def check_parameters_component_versions(cluster_parameters):
