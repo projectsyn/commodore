@@ -440,6 +440,24 @@ def component_new(
     show_default=True,
     help="Add or remove the postprocessing filter configuration.",
 )
+@click.option(
+    "--additional-test-case",
+    "-t",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Additional test cases to add to the component. Can be repeated. "
+    + "Commodore will deduplicate test cases by name.",
+)
+@click.option(
+    "--remove-test-case",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Test cases to remove from the package. Can be repeated.",
+)
 @verbosity
 @pass_config
 def component_update(
@@ -452,6 +470,8 @@ def component_update(
     lib: Optional[bool],
     pp: Optional[bool],
     update_copyright_year: bool,
+    additional_test_case: Iterable[str],
+    remove_test_case: Iterable[str],
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -475,6 +495,10 @@ def component_update(
         t.library = lib
     if pp is not None:
         t.post_process = pp
+
+    test_cases = t.test_cases
+    test_cases.extend(additional_test_case)
+    t.test_cases = [tc for tc in test_cases if tc not in remove_test_case]
 
     t.update()
 
