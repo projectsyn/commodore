@@ -354,35 +354,48 @@ def component(config: Config, verbose):
     show_default=True,
     help="The component template version (Git tree-ish) to use.",
 )
+@click.option(
+    "--additional-test-case",
+    "-t",
+    metavar="CASE",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help="Additional test cases to generate in the new component. Can be repeated. "
+    + "Test case `defaults` will always be generated."
+    + "Commodore will deduplicate test cases by name.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_new(
     config: Config,
-    slug,
-    name,
-    lib,
-    pp,
-    owner,
-    copyright_holder,
-    golden_tests,
-    matrix_tests,
-    verbose,
-    output_dir,
-    template_url,
-    template_version,
+    slug: str,
+    name: str,
+    lib: bool,
+    pp: bool,
+    owner: str,
+    copyright_holder: str,
+    golden_tests: bool,
+    matrix_tests: bool,
+    verbose: int,
+    output_dir: str,
+    template_url: str,
+    template_version: str,
+    additional_test_case: Iterable[str],
 ):
     config.update_verbosity(verbose)
-    f = ComponentTemplater(
+    t = ComponentTemplater(
         config, template_url, template_version, slug, name=name, output_dir=output_dir
     )
-    f.library = lib
-    f.post_process = pp
-    f.github_owner = owner
-    f.copyright_holder = copyright_holder
-    f.golden_tests = golden_tests
-    f.matrix_tests = matrix_tests
-    f.create()
+    t.library = lib
+    t.post_process = pp
+    t.github_owner = owner
+    t.copyright_holder = copyright_holder
+    t.golden_tests = golden_tests
+    t.matrix_tests = matrix_tests
+    t.test_cases = ["defaults"] + list(additional_test_case)
+    t.create()
 
 
 @component.command(
