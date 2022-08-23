@@ -60,13 +60,20 @@ class Package:
 
     @property
     def repo(self) -> Optional[GitRepo]:
-        dep_repo = self._dependency.bare_repo
         if not self._gitrepo and self.target_dir and self.target_dir.is_dir():
+            if self._dependency:
+                dep_repo = self._dependency.bare_repo
+                author_name = dep_repo.author.name
+                author_email = dep_repo.author.email
+            else:
+                # Fall back to author detection if we don't have a dependency
+                author_name = None
+                author_email = None
             self._gitrepo = GitRepo(
                 None,
                 self.target_dir,
-                author_name=dep_repo.author.name,
-                author_email=dep_repo.author.email,
+                author_name=author_name,
+                author_email=author_email,
             )
         return self._gitrepo
 
