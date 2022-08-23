@@ -43,6 +43,10 @@ class MultiDependency:
     def repo_directory(self) -> Path:
         return Path(self._repo.repo.common_dir).resolve().absolute()
 
+    @property
+    def bare_repo(self) -> GitRepo:
+        return self._repo
+
     def get_component(self, name: str) -> Optional[Path]:
         return self._components.get(name)
 
