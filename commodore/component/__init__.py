@@ -52,13 +52,20 @@ class Component:
 
     @property
     def repo(self) -> GitRepo:
-        dep_repo = self.dependency.bare_repo
         if not self._repo:
+            if self._dependency:
+                dep_repo = self._dependency.bare_repo
+                author_name = dep_repo.author.name
+                author_email = dep_repo.author.email
+            else:
+                # Fall back to author detection if we don't have a dependency
+                author_name = None
+                author_email = None
             self._repo = GitRepo(
                 None,
                 self._dir,
-                author_name=dep_repo.author.name,
-                author_email=dep_repo.author.email,
+                author_name=author_name,
+                author_email=author_email,
             )
         return self._repo
 

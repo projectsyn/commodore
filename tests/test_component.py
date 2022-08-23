@@ -485,3 +485,24 @@ def test_component_update_dependency(tmp_path: P, init_dep: bool, new_dep: bool)
         with pytest.raises(ValueError) as exc:
             _ = c.dependency
         assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+
+
+@pytest.mark.parametrize("dep", [True, False])
+def test_component_repo(tmp_path: P, dep: bool):
+    u = Repo.init(tmp_path / "bare.git")
+    (tmp_path / "bare.git" / "x").touch()
+    u.index.add(["x"])
+    u.index.commit("Initial commit")
+
+    if dep:
+        md = MultiDependency(f"file://{tmp_path}/bare.git", tmp_path)
+    else:
+        md = None
+
+    c = Component(
+        "test-component", md, directory=tmp_path / "test-component", version="master"
+    )
+    if md:
+        c.checkout()
+
+    assert c.repo.working_tree_dir == tmp_path / "test-component"
