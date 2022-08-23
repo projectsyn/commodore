@@ -139,6 +139,7 @@ def _process_diff(change_type: str, change, diff_func: DiffFunc) -> Iterable[str
 
 class GitRepo:
     _repo: Repo
+    _author: Optional[Actor]
 
     @classmethod
     def clone(cls, repository_url: str, directory: Path, cfg):
@@ -187,10 +188,9 @@ class GitRepo:
         if remote:
             self.remote = remote
 
-        if author_name and author_email:
-            self._author = Actor(author_name, author_email)
-        else:
-            self._author = Actor.committer(self._repo.config_reader())
+        self._author = None
+        self._author_name = author_name
+        self._author_email = author_email
 
         if config:
             self._debug = config.debug
@@ -238,10 +238,10 @@ class GitRepo:
     @property
     def _author_env(self) -> dict[str, str]:
         return {
-            Actor.env_author_name: self._author.name or "",
-            Actor.env_author_email: self._author.email or "",
-            Actor.env_committer_name: self._author.name or "",
-            Actor.env_committer_email: self._author.email or "",
+            Actor.env_author_name: self.author.name or "",
+            Actor.env_author_email: self.author.email or "",
+            Actor.env_committer_name: self.author.name or "",
+            Actor.env_committer_email: self.author.email or "",
         }
 
     @property
@@ -257,6 +257,19 @@ class GitRepo:
 
     @property
     def author(self) -> Actor:
+        if not self._author:
+            if self._author_name and self._author_email:
+                self._author = Actor(self._author_name, self._author_email)
+            else:
+                try:
+                    self._author = Actor.committer(self._repo.config_reader())
+                except KeyError:
+                    # Handle case where UID-based user info fallback doesn't work
+                    click.echo(
+                        " > Can't determine author information, falling back to "
+                        + "`Commodore <commodore@syn.tools>`"
+                    )
+                    self._author = Actor("Commodore", "commodore@syn.tools")
         return self._author
 
     def _remote_prefix(self) -> str:
@@ -560,7 +573,7 @@ class GitRepo:
         self._repo.index.add(files)
 
     def commit(self, commit_message: str, amend=False):
-        author = self._author
+        author = self.author
 
         if self._trace:
             click.echo(f' > Using "{author.name} <{author.email}>" as commit author')
