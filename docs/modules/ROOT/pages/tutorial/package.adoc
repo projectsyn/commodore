@@ -85,6 +85,12 @@ This gives us access to the provided classes.
 
 This will add the component cert-manager to the cluster and configure the lestsencrypt mail to `cert@example.com`.
 
+[NOTE]
+====
+During catalog compilation, after the message `Discovering config packages...`, you'll see several warnings like `[WARNING] Reclass class not found: 'cert-manager.common'. Skipped!`.
+This is expected, as Commodore has to render the inventory in order to be able to read the package's Git repository URL and version, which are stored in the inventory.
+====
+
 == Conclusion
 
 This package is very much a toy example, but I hope it has shown you how we can use Commodore Packages to bundle common configuration for one or more Components and simplify configuration reuse.
