@@ -218,6 +218,15 @@ This command doesn't have any command line options.
   Update the year in the copyright notice to the current year.
   Defaults to _false_.
 
+*--additional-test-case, -t* CASE::
+  Additional test cases to add to the component.
+  Can be repeated.
+  Commodore will deduplicate the provided test cases.
+
+*--remove-test-case* CASE::
+  Test cases to remove from the component.
+  Can be repeated.
+
 *--help*::
   Show component new usage and options then exit.
 

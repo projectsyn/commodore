@@ -18,11 +18,6 @@ class PackageTemplater(Templater):
     def from_existing(cls, config: Config, path: Path):
         return cls._base_from_existing(config, path, "package")
 
-    def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
-        super()._initialize_from_cookiecutter_args(cookiecutter_args)
-        if "test_cases" in cookiecutter_args:
-            self.test_cases = cookiecutter_args["test_cases"].split(" ")
-
     def _validate_slug(self, value: str):
         # First perform default slug checks
         slug = super()._validate_slug(value)
