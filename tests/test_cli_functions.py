@@ -4,7 +4,7 @@ import json
 import os
 
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Type
 from unittest import mock
 
 import pytest
@@ -13,6 +13,8 @@ import yaml
 
 from commodore import cli
 from commodore.config import Config
+from commodore.package import Package
+from commodore.package.template import PackageTemplater
 from test_catalog import cluster_resp
 
 from conftest import RunnerFunc
@@ -377,7 +379,7 @@ def test_catalog_compile_cli(
         mock_login.assert_called()
 
 
-@mock.patch.object(cli, "sync_packages")
+@mock.patch.object(cli, "sync_dependencies")
 @pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
 def test_package_sync_cli(
     mock_sync_packages, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
@@ -391,13 +393,21 @@ def test_package_sync_cli(
         yaml.safe_dump(["projectsyn/package-foo"], f)
 
     def sync_pkgs(
-        config, pkglist: Path, dry_run: bool, pr_branch: str, pr_labels: Iterable[str]
+        config,
+        pkglist: Path,
+        dry_run: bool,
+        pr_branch: str,
+        pr_labels: Iterable[str],
+        deptype: Type,
+        templater: Type,
     ):
         assert config.github_token == ghtoken
         assert pkglist.absolute() == pkg_list.absolute()
         assert not dry_run
         assert pr_branch == "template-sync"
         assert list(pr_labels) == []
+        assert deptype == Package
+        assert templater == PackageTemplater
 
     mock_sync_packages.side_effect = sync_pkgs
     result = cli_runner(["package", "sync", "pkgs.yaml"])

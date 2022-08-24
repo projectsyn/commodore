@@ -20,7 +20,9 @@ from test_package_template import call_package_new
 from commodore.config import Config
 from commodore.gitrepo import GitRepo
 from commodore.package import Package
-from commodore.package import sync
+from commodore.package.template import PackageTemplater
+
+from commodore import dependency_syncer
 
 DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
 
@@ -60,7 +62,7 @@ def test_ensure_branch(tmp_path: Path, config: Config, sync_branch: str):
 
     assert any(h.name == "template-sync" for h in r.heads) == (sync_branch == "local")
 
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     hs = [h for h in r.heads if h.name == "template-sync"]
     assert len(hs) == 1
@@ -200,12 +202,14 @@ def test_ensure_pr(tmp_path: Path, config: Config, dry_run: bool, pr_exists: boo
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+    msg = dependency_syncer.ensure_pr(
+        p, pname, gr, dry_run, "template-sync", ["template-sync"]
+    )
 
     cu = "update" if pr_exists else "create"
 
@@ -240,12 +244,12 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = sync.ensure_pr(p, pname, gr, False, "template-sync", [])
+    msg = dependency_syncer.ensure_pr(p, pname, gr, False, "template-sync", [])
 
     cu = "update" if pr_exists else "create"
     assert (
@@ -274,7 +278,15 @@ def test_sync_packages_package_list_parsing(
         f.write(package_list_contents)
 
     with pytest.raises(click.ClickException) as exc:
-        sync.sync_packages(config, pkg_list, False, "template-sync", [])
+        dependency_syncer.sync_dependencies(
+            config,
+            pkg_list,
+            False,
+            "template-sync",
+            [],
+            Package,
+            PackageTemplater,
+        )
 
     if ghtoken is None:
         assert str(exc.value) == "Can't continue, missing GitHub API token."
@@ -364,8 +376,14 @@ def test_sync_packages(
         "commodore.dependency_templater.Templater.repo_url",
         new_callable=lambda: remote_url,
     ):
-        sync.sync_packages(
-            config, pkg_list, dry_run, "template-sync", ["template-sync"]
+        dependency_syncer.sync_dependencies(
+            config,
+            pkg_list,
+            dry_run,
+            "template-sync",
+            ["template-sync"],
+            Package,
+            PackageTemplater,
         )
 
     expected_call_count = 1
@@ -399,7 +417,9 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
 
     pkg_list = create_pkg_list(tmp_path)
 
-    sync.sync_packages(config, pkg_list, True, "template-sync", [])
+    dependency_syncer.sync_dependencies(
+        config, pkg_list, True, "template-sync", [], Package, PackageTemplater
+    )
 
     captured = capsys.readouterr()
     assert (
@@ -420,7 +440,9 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
         status=404,
     )
 
-    sync.sync_packages(config, pkg_list, True, "template-sync", [])
+    dependency_syncer.sync_dependencies(
+        config, pkg_list, True, "template-sync", [], Package, PackageTemplater
+    )
 
     captured = capsys.readouterr()
 
@@ -444,4 +466,4 @@ def test_message_body(tmp_path: Path, raw_message: Union[str, bytes], expected: 
 
     c = git.Commit(r, binsha=b"\0" * 20, message=raw_message)
 
-    assert sync.message_body(c) == expected
+    assert dependency_syncer.message_body(c) == expected
