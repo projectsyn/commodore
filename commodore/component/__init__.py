@@ -127,6 +127,10 @@ class Component:
         return self._dir / self._sub_path
 
     @property
+    def target_dir(self) -> P:
+        return self.target_directory
+
+    @property
     def class_file(self) -> P:
         return self.target_directory / "class" / f"{self.name}.yml"
 
