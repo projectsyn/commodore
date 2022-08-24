@@ -15,8 +15,9 @@ from .catalog import catalog_list
 from .config import Config, Migration, parse_dynamic_facts_from_cli
 from .helpers import clean_working_tree
 from .compile import compile as _compile
-from .component.template import ComponentTemplater
+from .component import Component
 from .component.compile import compile_component
+from .component.template import ComponentTemplater
 from .dependency_syncer import sync_dependencies
 from .inventory.render import extract_components, extract_packages, extract_parameters
 from .inventory.parameters import InventoryFacts
@@ -589,6 +590,77 @@ def component_compile(
         )
 
     compile_component(config, path, alias, values, search_paths, output, name)
+
+
+@component.command("sync", short_help="Synchronize components to template")
+@verbosity
+@pass_config
+@click.argument(
+    "component_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
+)
+@click.option(
+    "--github-token",
+    help="GitHub API token",
+    envvar="COMMODORE_GITHUB_TOKEN",
+    default="",
+)
+@click.option(
+    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+)
+@click.option(
+    "--pr-branch",
+    "-b",
+    metavar="BRANCH",
+    default="template-sync",
+    type=str,
+    help="Branch name to use for updates from template",
+)
+@click.option(
+    "--pr-label",
+    "-l",
+    metavar="LABEL",
+    default=[],
+    multiple=True,
+    help="Labels to set on the PR. Can be repeated",
+)
+def component_sync(
+    config: Config,
+    verbose: int,
+    component_list: str,
+    github_token: str,
+    dry_run: bool,
+    pr_branch: str,
+    pr_label: Iterable[str],
+):
+    """This command processes all components listed in the provided `COMPONENT_LIST`
+    YAML file.
+
+    Currently, the command only supports updating components hosted on GitHub. The
+    command expects that the YAML file contains a single document with a list of GitHub
+    repositories in form `organization/repository-name`.
+
+    The command clones each component and runs `component update` on the local copy. If
+    there are any changes, the command creates a PR for the changes. For each component,
+    the command parses the component's `.cruft.json` to determine the template repository
+    and template version for the component. The command bases each PR on the default
+    branch of the corresponding component repository as reported by the GitHub API.
+
+    The command requires a GitHub Access token with the 'public_repo' permission, which
+    is required to create PRs on public repositories. If you want to manage private
+    repos, the access token may require additional permissions.
+    """
+    config.update_verbosity(verbose)
+    config.github_token = github_token
+
+    sync_dependencies(
+        config,
+        Path(component_list),
+        dry_run,
+        pr_branch,
+        pr_label,
+        Component,
+        ComponentTemplater,
+    )
 
 
 @commodore.group(short_help="Interact with a Commodore config package")
