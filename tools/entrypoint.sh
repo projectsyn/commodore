@@ -23,7 +23,9 @@ if ! whoami &> /dev/null; then
 fi
 
 if [ ! -z "${SSH_PRIVATE_KEY}" ]; then
-  mkdir /app/.ssh
+  if [ ! -d "/app/.ssh" ]; then
+    mkdir /app/.ssh
+  fi
   echo "${SSH_PRIVATE_KEY}" > /app/.ssh/id
   chmod 0400 /app/.ssh/id
 fi
