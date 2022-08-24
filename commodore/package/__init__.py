@@ -16,7 +16,7 @@ class Package:
 
     @classmethod
     def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
-        pdep = MultiDependency(clone_url, cfg.inventory.dependencies_dir)
+        pdep = cfg.register_dependency_repo(clone_url)
         p = Package(
             name,
             pdep,
