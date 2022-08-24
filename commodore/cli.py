@@ -17,13 +17,14 @@ from .helpers import clean_working_tree
 from .compile import compile as _compile
 from .component.template import ComponentTemplater
 from .component.compile import compile_component
+from .dependency_syncer import sync_dependencies
 from .inventory.render import extract_components, extract_packages, extract_parameters
 from .inventory.parameters import InventoryFacts
 from .inventory.lint import LINTERS
 from .login import login, fetch_token
+from .package import Package
 from .package.compile import compile_package
 from .package.template import PackageTemplater
-from .package.sync import sync_packages
 
 pass_config = click.make_pass_decorator(Config)
 
@@ -879,7 +880,15 @@ def package_sync(
     config.update_verbosity(verbose)
     config.github_token = github_token
 
-    sync_packages(config, Path(package_list), dry_run, pr_branch, pr_label)
+    sync_dependencies(
+        config,
+        Path(package_list),
+        dry_run,
+        pr_branch,
+        pr_label,
+        Package,
+        PackageTemplater,
+    )
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")
