@@ -17,6 +17,7 @@ from commodore.component import (
     component_dir,
     component_parameters_key,
 )
+from commodore.config import Config
 from commodore.gitrepo import RefError
 from commodore.inventory import Inventory
 from commodore.multi_dependency import MultiDependency
@@ -506,3 +507,15 @@ def test_component_repo(tmp_path: P, dep: bool):
         c.checkout()
 
     assert c.repo.working_tree_dir == tmp_path / "test-component"
+
+
+def test_component_clone(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+
+    assert c.repo.repo.head.commit.hexsha == rem.head.commit.hexsha
+    assert c.target_directory == tmp_path / "dependencies" / "test-component"
+    assert c.target_directory == c.target_dir
+    assert c.dependency == config.register_dependency_repo(clone_url)
