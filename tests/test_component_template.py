@@ -15,6 +15,9 @@ from datetime import date
 from conftest import RunnerFunc
 from test_component import setup_directory
 
+from commodore.component import template
+from commodore.config import Config
+
 
 def call_component_new(
     tmp_path: P,
@@ -605,3 +608,54 @@ def test_component_update_test_cases(
     _validate_rendered_component(
         tmp_path, component_name, False, False, True, True, final_cases
     )
+
+
+def test_cookiecutter_args_fallback(
+    tmp_path: P, cli_runner: RunnerFunc, config: Config
+):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+
+    component_path = tmp_path / "dependencies" / component_name
+    cruft_json_file = component_path / ".cruft.json"
+
+    with open(cruft_json_file, "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+
+    cruft_json["context"]["cookiecutter"]["foo"] = "bar"
+    cruft_json["context"]["cookiecutter"]["baz"] = "qux"
+
+    with open(cruft_json_file, "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    # Verify provided values override values from `.cruft.json`
+    assert t.cookiecutter_args["add_golden"] == "n"
+    t.golden_tests = True
+    assert t.cookiecutter_args["add_golden"] == "y"
+
+    templater_cookiecutter_args = t.cookiecutter_args
+
+    # Verify unknown values from `.cruft.json` are preserved
+    assert "foo" in templater_cookiecutter_args
+    assert templater_cookiecutter_args["foo"] == "bar"
+    assert "baz" in templater_cookiecutter_args
+    assert templater_cookiecutter_args["baz"] == "qux"
+
+
+def test_cookiecutter_args_no_cruft_json(tmp_path: P, config: Config):
+    t = template.ComponentTemplater(
+        config, "https://git.example.com", None, "test-component"
+    )
+    t.golden_tests = True
+    t.library = False
+    t.matrix_tests = False
+    t.post_process = False
+    t.copyright_holder = ""
+    t.github_owner = "projectsyn"
+
+    templater_cookiecutter_args = t.cookiecutter_args
+
+    assert templater_cookiecutter_args["add_lib"] == "n"
+    assert templater_cookiecutter_args["add_golden"] == "y"
