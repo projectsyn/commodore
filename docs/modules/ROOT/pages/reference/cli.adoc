@@ -230,6 +230,27 @@ This command doesn't have any command line options.
 *--help*::
   Show component new usage and options then exit.
 
+== Component Sync
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+*--dry-run*::
+  If this flag is provided, the sync command doesn't push the template branch to GitHub and doesn't create or update any PRs.
+
+*-b, --pr-branch* BRANCH::
+  The branch name to use when pushing updates to GitHub.
+  By default `template-sync` is used used as the branch name.
++
+NOTE: Changing this flag will orphan any open update PRs created with a different branch name.
+
+*-l, --pr-label* LABEL::
+  Labels to set on the PR.
+  Can be repeated.
++
+When changing the set of labels, new labels will be added to open PRs.
+However, labels added by previous runs can't be removed since we've got no easy way to distinguish between old labels and externally added labels.
 
 == Inventory Components / Packages / Show
 

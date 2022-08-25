@@ -20,6 +20,18 @@ class Component:
     _dir: P
     _sub_path: str
 
+    @classmethod
+    def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
+        cdep = cfg.register_dependency_repo(clone_url)
+        c = Component(
+            name,
+            cdep,
+            directory=component_dir(cfg.work_dir, name),
+            version=version,
+        )
+        c.checkout()
+        return c
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -113,6 +125,10 @@ class Component:
     @property
     def target_directory(self) -> P:
         return self._dir / self._sub_path
+
+    @property
+    def target_dir(self) -> P:
+        return self.target_directory
 
     @property
     def class_file(self) -> P:

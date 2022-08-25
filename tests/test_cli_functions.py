@@ -4,7 +4,7 @@ import json
 import os
 
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Type
 from unittest import mock
 
 import pytest
@@ -12,7 +12,11 @@ import responses
 import yaml
 
 from commodore import cli
+from commodore.component import Component
+from commodore.component.template import ComponentTemplater
 from commodore.config import Config
+from commodore.package import Package
+from commodore.package.template import PackageTemplater
 from test_catalog import cluster_resp
 
 from conftest import RunnerFunc
@@ -377,7 +381,7 @@ def test_catalog_compile_cli(
         mock_login.assert_called()
 
 
-@mock.patch.object(cli, "sync_packages")
+@mock.patch.object(cli, "sync_dependencies")
 @pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
 def test_package_sync_cli(
     mock_sync_packages, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
@@ -391,13 +395,21 @@ def test_package_sync_cli(
         yaml.safe_dump(["projectsyn/package-foo"], f)
 
     def sync_pkgs(
-        config, pkglist: Path, dry_run: bool, pr_branch: str, pr_labels: Iterable[str]
+        config,
+        pkglist: Path,
+        dry_run: bool,
+        pr_branch: str,
+        pr_labels: Iterable[str],
+        deptype: Type,
+        templater: Type,
     ):
         assert config.github_token == ghtoken
         assert pkglist.absolute() == pkg_list.absolute()
         assert not dry_run
         assert pr_branch == "template-sync"
         assert list(pr_labels) == []
+        assert deptype == Package
+        assert templater == PackageTemplater
 
     mock_sync_packages.side_effect = sync_pkgs
     result = cli_runner(["package", "sync", "pkgs.yaml"])
@@ -434,3 +446,38 @@ def test_compile_component_cli(mock_compile, tmp_path, repo_dir, cli_runner):
             result.stdout
             == " > Parameter `-r`/`--repo-directory` is deprecated and has no effect\n"
         )
+
+
+@mock.patch.object(cli, "sync_dependencies")
+@pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
+def test_component_sync_cli(
+    mock_sync_dependencies, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
+):
+    os.chdir(tmp_path)
+    if ghtoken is not None:
+        os.environ["COMMODORE_GITHUB_TOKEN"] = ghtoken
+
+    dep_list = tmp_path / "deps.yaml"
+    with open(dep_list, "w", encoding="utf-8") as f:
+        yaml.safe_dump(["projectsyn/component-foo"], f)
+
+    def sync_deps(
+        config,
+        deplist: Path,
+        dry_run: bool,
+        pr_branch: str,
+        pr_labels: Iterable[str],
+        deptype: Type,
+        templater: Type,
+    ):
+        assert config.github_token == ghtoken
+        assert deplist.absolute() == dep_list.absolute()
+        assert not dry_run
+        assert pr_branch == "template-sync"
+        assert list(pr_labels) == []
+        assert deptype == Component
+        assert templater == ComponentTemplater
+
+    mock_sync_dependencies.side_effect = sync_deps
+    result = cli_runner(["component", "sync", "deps.yaml"])
+    assert result.exit_code == (1 if ghtoken is None else 0)

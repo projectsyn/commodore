@@ -59,6 +59,11 @@ class Templater(ABC):
             self.output_dir = odir
 
     @classmethod
+    @abstractmethod
+    def from_existing(cls, config: Config, path: Path):
+        ...
+
+    @classmethod
     def _base_from_existing(cls, config: Config, path: Path, deptype: str):
         if not path.is_dir():
             raise click.ClickException(f"Provided {deptype} path isn't a directory")

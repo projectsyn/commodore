@@ -20,7 +20,9 @@ from test_package_template import call_package_new
 from commodore.config import Config
 from commodore.gitrepo import GitRepo
 from commodore.package import Package
-from commodore.package import sync
+from commodore.package.template import PackageTemplater
+
+from commodore import dependency_syncer
 
 DATA_DIR = Path(__file__).parent.absolute() / "testdata" / "github"
 
@@ -60,13 +62,25 @@ def test_ensure_branch(tmp_path: Path, config: Config, sync_branch: str):
 
     assert any(h.name == "template-sync" for h in r.heads) == (sync_branch == "local")
 
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     hs = [h for h in r.heads if h.name == "template-sync"]
     assert len(hs) == 1
 
     h = hs[0]
     assert h.commit.message == "Add test.txt"
+
+
+def test_ensure_branch_no_repo(tmp_path: Path, config: Config):
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    clone_url = f"file://{tmp_path}/foo.git"
+    dep = config.register_dependency_repo(clone_url)
+    p = Package("foo", dep, tmp_path / "pkg.foo")
+
+    with pytest.raises(ValueError) as e:
+        dependency_syncer.ensure_branch(p, "template-sync")
+
+    assert str(e.value) == "package repo not initialized"
 
 
 API_TOKEN_MATCHER = responses.matchers.header_matcher(
@@ -200,12 +214,14 @@ def test_ensure_pr(tmp_path: Path, config: Config, dry_run: bool, pr_exists: boo
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = sync.ensure_pr(p, pname, gr, dry_run, "template-sync", ["template-sync"])
+    msg = dependency_syncer.ensure_pr(
+        p, pname, gr, dry_run, "template-sync", ["template-sync"]
+    )
 
     cu = "update" if pr_exists else "create"
 
@@ -240,12 +256,12 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
     pname = "projectsyn/package-foo"
-    sync.ensure_branch(p, "template-sync")
+    dependency_syncer.ensure_branch(p, "template-sync")
 
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = sync.ensure_pr(p, pname, gr, False, "template-sync", [])
+    msg = dependency_syncer.ensure_pr(p, pname, gr, False, "template-sync", [])
 
     cu = "update" if pr_exists else "create"
     assert (
@@ -253,6 +269,19 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
         == f"Unable to {cu} PR for projectsyn/package-foo. "
         + "Please make sure your GitHub token has permission 'public_repo'"
     )
+
+
+def test_ensure_pr_no_repo(tmp_path: Path, config: Config):
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    clone_url = f"file://{tmp_path}/foo.git"
+    dep = config.register_dependency_repo(clone_url)
+    p = Package("foo", dep, tmp_path / "pkg.foo")
+    gr = None
+
+    with pytest.raises(ValueError) as e:
+        dependency_syncer.ensure_pr(p, "foo", gr, False, "template-sync", [])
+
+    assert str(e.value) == "package repo not initialized"
 
 
 @pytest.mark.parametrize(
@@ -274,7 +303,15 @@ def test_sync_packages_package_list_parsing(
         f.write(package_list_contents)
 
     with pytest.raises(click.ClickException) as exc:
-        sync.sync_packages(config, pkg_list, False, "template-sync", [])
+        dependency_syncer.sync_dependencies(
+            config,
+            pkg_list,
+            False,
+            "template-sync",
+            [],
+            Package,
+            PackageTemplater,
+        )
 
     if ghtoken is None:
         assert str(exc.value) == "Can't continue, missing GitHub API token."
@@ -283,7 +320,7 @@ def test_sync_packages_package_list_parsing(
         assert str(exc.value) == f"Failed to parse YAML in '{pkg_list}'"
     else:
         # type error
-        typ = "<class 'dict'>" if ":" in package_list_contents else "<class 'str'>"
+        typ = "dict" if ":" in package_list_contents else "str"
         assert (
             str(exc.value)
             == f"Expected a list in '{pkg_list}', but got unexpected type: {typ}"
@@ -364,8 +401,14 @@ def test_sync_packages(
         "commodore.dependency_templater.Templater.repo_url",
         new_callable=lambda: remote_url,
     ):
-        sync.sync_packages(
-            config, pkg_list, dry_run, "template-sync", ["template-sync"]
+        dependency_syncer.sync_dependencies(
+            config,
+            pkg_list,
+            dry_run,
+            "template-sync",
+            ["template-sync"],
+            Package,
+            PackageTemplater,
         )
 
     expected_call_count = 1
@@ -399,7 +442,9 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
 
     pkg_list = create_pkg_list(tmp_path)
 
-    sync.sync_packages(config, pkg_list, True, "template-sync", [])
+    dependency_syncer.sync_dependencies(
+        config, pkg_list, True, "template-sync", [], Package, PackageTemplater
+    )
 
     captured = capsys.readouterr()
     assert (
@@ -420,7 +465,9 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
         status=404,
     )
 
-    sync.sync_packages(config, pkg_list, True, "template-sync", [])
+    dependency_syncer.sync_dependencies(
+        config, pkg_list, True, "template-sync", [], Package, PackageTemplater
+    )
 
     captured = capsys.readouterr()
 
@@ -444,4 +491,22 @@ def test_message_body(tmp_path: Path, raw_message: Union[str, bytes], expected: 
 
     c = git.Commit(r, binsha=b"\0" * 20, message=raw_message)
 
-    assert sync.message_body(c) == expected
+    assert dependency_syncer.message_body(c) == expected
+
+
+class Foo:
+    ...
+
+
+@pytest.mark.parametrize(
+    "o,expected",
+    [
+        (None, "nonetype"),
+        ("test", "str"),
+        ({"foo": "bar"}, "dict"),
+        (["foo", "bar"], "list"),
+        (Foo(), "foo"),
+    ],
+)
+def test_type_name(o: object, expected: str):
+    assert dependency_syncer.type_name(o) == expected
