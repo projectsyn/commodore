@@ -99,6 +99,22 @@ The command tries to discover whether the provided `PATH` is part of a Git repos
 If a Git repository is found the command computes the path's subpath in the repository, and ensures that the component is handled as a component stored in a repo subdirectory internally.
 If no Git repository is found, the provided path is treated as if it were the root of a Git repository.
 
+== Component Sync
+
+  commodore component sync COMPONENT_LIST
+
+This command processes all components listed in the provided `COMPONENT_LIST` YAML file.
+
+Currently, the command only supports updating components hosted on GitHub.
+The command expects that the YAML file contains a single document with a list of GitHub repositories in form `organization/repository-name`.
+
+The command clones each component and runs `component update` on the local copy. If there are any changes, the command creates a PR for the changes.
+For each component, the command parses the component's `.cruft.json` to determine the template repository and template version for the component.
+The command bases each PR on the default branch of the corresponding component repository as reported by the GitHub API.
+
+The command requires a GitHub Access token with the 'public_repo' permission, which is required to create PRs on public repositories.
+If you want to manage private repos, the access token may require additional permissions.
+
 == Inventory Show
 
   commodore inventory show|components|packages GLOBAL_CONFIG [TENANT_CONFIG]
