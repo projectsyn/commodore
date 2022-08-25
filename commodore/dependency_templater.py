@@ -85,7 +85,26 @@ class Templater(ABC):
         t._target_dir = path
         t.output_dir = path.absolute().parent
 
-        t._initialize_from_cookiecutter_args(cookiecutter_args)
+        # We pass the cookiecutter args dict to `_initialize_from_cookiecutter_args()`.
+        # Because Python dicts are passed by reference, the function can simply add
+        # missing args into the dict and return `True` to cause us to write back and
+        # commit the updated `.cruft.json` data.
+        update_cruft_json = t._initialize_from_cookiecutter_args(cookiecutter_args)
+
+        if update_cruft_json:
+            click.echo(" > Adding missing cookiecutter args to `.cruft.json`")
+            with open(path / ".cruft.json", "w", encoding="utf-8") as f:
+                json.dump(cruft_json, f, indent=2)
+                f.write("\n")
+            r = GitRepo(
+                None,
+                path,
+                author_name=config.username,
+                author_email=config.usermail,
+            )
+            r.stage_files([".cruft.json"])
+            r.commit("Add missing cookiecutter args to `.cruft.json`")
+
         return t
 
     @property
@@ -152,6 +171,12 @@ class Templater(ABC):
         return args
 
     def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
+        """This method sets the class properties corresponding to the cookiecutter
+        template args from the provided cookiecutter_args dict.
+
+        The method returns a boolean which indicates if the method extended the provided
+        args dict with missing template args. If the method returns `True`, the caller
+        should ensure that the updated args dict is written back to `.cruft.json`."""
         self.golden_tests = cookiecutter_args["add_golden"] == "y"
         self.github_owner = cookiecutter_args["github_owner"]
         self.copyright_holder = cookiecutter_args["copyright_holder"]
@@ -160,6 +185,8 @@ class Templater(ABC):
             self.test_cases = cookiecutter_args["test_cases"].split(" ")
         else:
             self.test_cases = ["defaults"]
+
+        return False
 
     def _validate_slug(self, value: str) -> str:
         if value.startswith(f"{self.deptype}-"):
