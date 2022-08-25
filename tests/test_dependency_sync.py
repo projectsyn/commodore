@@ -71,6 +71,18 @@ def test_ensure_branch(tmp_path: Path, config: Config, sync_branch: str):
     assert h.commit.message == "Add test.txt"
 
 
+def test_ensure_branch_no_repo(tmp_path: Path, config: Config):
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    clone_url = f"file://{tmp_path}/foo.git"
+    dep = config.register_dependency_repo(clone_url)
+    p = Package("foo", dep, tmp_path / "pkg.foo")
+
+    with pytest.raises(ValueError) as e:
+        dependency_syncer.ensure_branch(p, "template-sync")
+
+    assert str(e.value) == "package repo not initialized"
+
+
 API_TOKEN_MATCHER = responses.matchers.header_matcher(
     {"Authorization": "token ghp_fake-token"}
 )
@@ -257,6 +269,19 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
         == f"Unable to {cu} PR for projectsyn/package-foo. "
         + "Please make sure your GitHub token has permission 'public_repo'"
     )
+
+
+def test_ensure_pr_no_repo(tmp_path: Path, config: Config):
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    clone_url = f"file://{tmp_path}/foo.git"
+    dep = config.register_dependency_repo(clone_url)
+    p = Package("foo", dep, tmp_path / "pkg.foo")
+    gr = None
+
+    with pytest.raises(ValueError) as e:
+        dependency_syncer.ensure_pr(p, "foo", gr, False, "template-sync", [])
+
+    assert str(e.value) == "package repo not initialized"
 
 
 @pytest.mark.parametrize(
