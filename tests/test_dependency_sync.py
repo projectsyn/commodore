@@ -295,7 +295,7 @@ def test_sync_packages_package_list_parsing(
         assert str(exc.value) == f"Failed to parse YAML in '{pkg_list}'"
     else:
         # type error
-        typ = "<class 'dict'>" if ":" in package_list_contents else "<class 'str'>"
+        typ = "dict" if ":" in package_list_contents else "str"
         assert (
             str(exc.value)
             == f"Expected a list in '{pkg_list}', but got unexpected type: {typ}"
@@ -467,3 +467,21 @@ def test_message_body(tmp_path: Path, raw_message: Union[str, bytes], expected: 
     c = git.Commit(r, binsha=b"\0" * 20, message=raw_message)
 
     assert dependency_syncer.message_body(c) == expected
+
+
+class Foo:
+    ...
+
+
+@pytest.mark.parametrize(
+    "o,expected",
+    [
+        (None, "nonetype"),
+        ("test", "str"),
+        ({"foo": "bar"}, "dict"),
+        (["foo", "bar"], "list"),
+        (Foo(), "foo"),
+    ],
+)
+def test_type_name(o: object, expected: str):
+    assert dependency_syncer.type_name(o) == expected

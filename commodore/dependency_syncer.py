@@ -39,8 +39,7 @@ def sync_dependencies(
     try:
         deps = yaml_load(dependency_list)
         if not isinstance(deps, list):
-            typ = type(deps)
-            raise ValueError(f"unexpected type: {typ}")
+            raise ValueError(f"unexpected type: {type_name(deps)}")
     except ValueError as e:
         raise click.ClickException(
             f"Expected a list in '{dependency_list}', but got {e}"
@@ -103,12 +102,7 @@ def message_body(c: git.objects.commit.Commit) -> str:
 def ensure_branch(d: Union[Component, Package], branch_name: str):
     """Create or reset `template-sync` branch pointing to our new template update
     commit."""
-    if isinstance(d, Component):
-        deptype = "component"
-    elif isinstance(d, Package):
-        deptype = "package"
-    else:
-        raise ValueError(f"Unexpected dependency type {type(d)}")
+    deptype = type_name(d)
 
     if not d.repo:
         raise ValueError(f"{deptype} repo not initialized")
@@ -132,12 +126,7 @@ def ensure_pr(
     pr_labels: Iterable[str],
 ) -> str:
     """Create or update template sync PR."""
-    if isinstance(d, Component):
-        deptype = "component"
-    elif isinstance(d, Package):
-        deptype = "package"
-    else:
-        raise ValueError(f"Unexpected dependency type {type(d)}")
+    deptype = type_name(d)
 
     if not d.repo:
         raise ValueError(f"{deptype} repo not initialized")
@@ -172,3 +161,7 @@ def ensure_pr(
         )
 
     return f"PR for {deptype} {dn} successfully {cu}d"
+
+
+def type_name(o: object) -> str:
+    return type(o).__name__.lower()
