@@ -119,8 +119,12 @@ class Templater(ABC):
         """Cookiecutter template inputs.
 
         Passed to the rendering function as `extra_context`
+
+        The method tries to load cookiecutter args from the dependency's `.cruft.json`
+        but doesn't fail if it doesn't find a `.cruft.json`. This approach allows us to
+        handle templates with unknown cookiecutter args.
         """
-        return {
+        local_args = {
             "add_golden": "y" if self.golden_tests else "n",
             "copyright_holder": self.copyright_holder,
             "copyright_year": (
@@ -135,6 +139,17 @@ class Templater(ABC):
             # spaces.
             "test_cases": " ".join(self.test_cases),
         }
+        cruft_json = self.target_dir / ".cruft.json"
+        if cruft_json.is_file():
+            with open(cruft_json, "r", encoding="utf-8") as f:
+                cruft_json_data = json.load(f)
+                args = cruft_json_data["context"]["cookiecutter"]
+            for k, v in local_args.items():
+                args[k] = v
+        else:
+            args = local_args
+
+        return args
 
     def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
         self.golden_tests = cookiecutter_args["add_golden"] == "y"
