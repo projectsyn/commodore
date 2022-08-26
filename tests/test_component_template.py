@@ -738,3 +738,43 @@ def test_component_templater_has_pp(
     with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
         cruft_json_data = json.load(f)
         assert cruft_json_data["context"]["cookiecutter"]["add_pp"] == add_pp
+
+
+def test_component_update_raises_on_merge_conflict(
+    tmp_path: P, cli_runner: RunnerFunc, config: Config
+):
+    component_name = "test-component"
+    component_path = tmp_path / "dependencies" / component_name
+    call_component_new(tmp_path, cli_runner, component_name, lib="--lib")
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+    cruft_json["context"]["cookiecutter"]["add_lib"] = "n"
+    with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+        f.write("\n")
+
+    with open(
+        component_path / "lib" / "test-component.libsonnet", "w", encoding="utf-8"
+    ) as f:
+        f.write(
+            """// Test contents
+
+{
+  Foo: {bar: 1, baz: false},
+}
+"""
+        )
+
+    r = Repo(component_path)
+    r.index.add([".cruft.json", "lib/test-component.libsonnet"])
+    r.index.commit("Update component lib")
+
+    result = cli_runner(["component", "update", "--lib", str(component_path)])
+
+    assert result.exit_code == 1
+    stdout_lines = result.stdout.strip().split("\n")
+    assert (
+        stdout_lines[-1]
+        == "Error: Can't commit template changes: merge error in "
+        + "'lib/test-component.libsonnet'. Please resolve conflicts and commit manually."
+    )
