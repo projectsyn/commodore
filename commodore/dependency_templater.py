@@ -15,7 +15,7 @@ import click
 
 from commodore.config import Config
 from commodore.cruft import create as cruft_create, update as cruft_update
-from commodore.gitrepo import GitRepo
+from commodore.gitrepo import GitRepo, MergeConflict
 from commodore.multi_dependency import MultiDependency
 
 SLUG_REGEX = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
@@ -297,12 +297,14 @@ class Templater(ABC):
             raise click.ClickException(
                 f"{self.deptype.capitalize()} template doesn't support removing all test cases."
             )
-        cruft_update(
+        cruft_updated = cruft_update(
             self.target_dir,
             cookiecutter_input=False,
             checkout=self.template_version,
             extra_context=self.cookiecutter_args,
         )
+        if not cruft_updated:
+            raise click.ClickException("Update from template failed")
 
         commit_msg = (
             f"Update from template\n\nTemplate version: {self.template_version}"
@@ -334,8 +336,14 @@ class Templater(ABC):
         # stage_all() returns the full diff compared to the last commit. Therefore, we
         # do stage_files() first and then stage_all(), to ensure we get the complete
         # diff.
-        repo.stage_files(self.additional_files)
-        diff_text, changed = repo.stage_all()
+        try:
+            repo.stage_files(self.additional_files)
+            diff_text, changed = repo.stage_all()
+        except MergeConflict as e:
+            raise click.ClickException(
+                f"Can't commit template changes: merge error in '{e}'. "
+                + "Please resolve conflicts and commit manually."
+            ) from e
 
         if changed:
             indented = textwrap.indent(diff_text, "     ")

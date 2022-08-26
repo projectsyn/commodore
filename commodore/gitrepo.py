@@ -22,6 +22,10 @@ class RefError(ValueError):
     pass
 
 
+class MergeConflict(ValueError):
+    pass
+
+
 CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
 
 
@@ -527,12 +531,22 @@ class GitRepo:
         except BadName as e:
             raise RefError(f"Revision '{version}' not found in repository") from e
 
+    def _check_conflicts(self):
+        """Check for conflicts in index. Raise `MergeConflict` for the first conflict
+        found."""
+        for (path, blobs) in self.repo.index.unmerged_blobs().items():
+            for stage, b in blobs:
+                if stage != 0:
+                    raise MergeConflict(path)
+
     def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
 
         This method returns a tuple containing the colorized diff of the staged changes
         and a boolean indicating whether any changes were staged.
+
+        The method can raise `MergeConflict` if staged changes contain merge conflicts.
         """
         index = self._repo.index
 
@@ -547,6 +561,9 @@ class GitRepo:
 
         # Stage all remaining changes
         index.add("*")
+
+        self._check_conflicts()
+
         # Compute diff of all changes
         try:
             diff = index.diff(self._repo.head.commit)
@@ -569,8 +586,10 @@ class GitRepo:
         return "\n".join(difftext), changed
 
     def stage_files(self, files: Sequence[str]):
-        """Add provided list of files to index."""
+        """Add provided list of files to index.
+        Can raise `MergeConflict` if staged changes contain merge conflicts."""
         self._repo.index.add(files)
+        self._check_conflicts()
 
     def commit(self, commit_message: str, amend=False):
         author = self.author
