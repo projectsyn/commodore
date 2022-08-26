@@ -5,6 +5,7 @@ from shutil import rmtree
 
 import click
 import git
+import yaml
 
 from commodore.config import Config
 from commodore.component import Component, component_dir
@@ -21,11 +22,46 @@ class ComponentTemplater(Templater):
     def from_existing(cls, config: Config, path: Path):
         return cls._base_from_existing(config, path, "component")
 
+    @property
+    def _has_lib(self) -> bool:
+        """Determine whether component has a component library by checking the presence
+        of the `lib` folder."""
+        return (self.target_dir / "lib").is_dir()
+
+    @property
+    def _has_pp(self) -> bool:
+        """Determine whether component has postprocessing filters by looking at the
+        component class contents."""
+        with open(
+            self.target_dir / "class" / f"{self.slug}.yml", "r", encoding="utf-8"
+        ) as cls:
+            class_data = yaml.safe_load(cls)
+            return "postprocess" in class_data["parameters"].get("commodore", {})
+
     def _initialize_from_cookiecutter_args(self, cookiecutter_args: dict[str, str]):
-        super()._initialize_from_cookiecutter_args(cookiecutter_args)
+        update_cruft_json = super()._initialize_from_cookiecutter_args(
+            cookiecutter_args
+        )
+
+        if "add_lib" not in cookiecutter_args:
+            # If `add_lib` is not present in the cookiecutter args, determine if the
+            # component has a component library and set the arg in `cookiecutter_args`
+            # accordingly.
+            cookiecutter_args["add_lib"] = "y" if self._has_lib else "n"
+            update_cruft_json = True
+
+        if "add_pp" not in cookiecutter_args:
+            # If `add_pp` is not present in the cookiecutter args, determine if the
+            # component has postprocessing filters and set the arg in
+            # `cookiecutter_args` accordingly.
+            cookiecutter_args["add_pp"] = "y" if self._has_pp else "n"
+            update_cruft_json = True
+
         self.library = cookiecutter_args["add_lib"] == "y"
         self.post_process = cookiecutter_args["add_pp"] == "y"
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
+
+        return update_cruft_json
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:

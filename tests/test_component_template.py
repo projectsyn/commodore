@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import pytest
+import shutil
 import yaml
 from pathlib import Path as P
 from subprocess import call
@@ -659,3 +660,81 @@ def test_cookiecutter_args_no_cruft_json(tmp_path: P, config: Config):
 
     assert templater_cookiecutter_args["add_lib"] == "n"
     assert templater_cookiecutter_args["add_golden"] == "y"
+
+
+def _setup_component_wo_cookiecutter_arg(
+    tmp_path: P, cli_runner: RunnerFunc, component_name: str, arg_key: str
+):
+    call_component_new(tmp_path, cli_runner, component_name, lib="--lib", pp="--pp")
+    component_path = tmp_path / "dependencies" / component_name
+
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json_data = json.load(f)
+        del cruft_json_data["context"]["cookiecutter"][arg_key]
+
+    with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json_data, f, indent=2)
+
+    return component_path
+
+
+@pytest.mark.parametrize("expected", [True, False])
+def test_component_templater_updates_cookiecutter_args(
+    capsys, tmp_path: P, cli_runner: RunnerFunc, config: Config, expected: bool
+):
+    component_name = "test-component"
+    component_path = _setup_component_wo_cookiecutter_arg(
+        tmp_path, cli_runner, component_name, "add_lib"
+    )
+    if not expected:
+        shutil.rmtree(component_path / "lib")
+
+    r = Repo(component_path)
+    r.index.add(["*", ".cruft.json"])
+    c = r.index.commit("Update from test")
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    assert t.library == expected
+
+    add_lib = "y" if expected else "n"
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json_data = json.load(f)
+        assert cruft_json_data["context"]["cookiecutter"]["add_lib"] == add_lib
+
+    assert r.head.commit != c
+    assert r.head.commit.message == "Add missing cookiecutter args to `.cruft.json`"
+
+    captured = capsys.readouterr()
+    assert captured.out == " > Adding missing cookiecutter args to `.cruft.json`\n"
+
+
+@pytest.mark.parametrize("expected", [True, False])
+def test_component_templater_has_pp(
+    tmp_path: P, cli_runner: RunnerFunc, config: Config, expected: bool
+):
+    component_name = "test-component"
+    component_path = _setup_component_wo_cookiecutter_arg(
+        tmp_path, cli_runner, component_name, "add_pp"
+    )
+
+    if not expected:
+        with open(
+            component_path / "class" / f"{component_name}.yml", "r", encoding="utf-8"
+        ) as f:
+            class_data = yaml.safe_load(f)
+            del class_data["parameters"]["commodore"]["postprocess"]
+
+        with open(
+            component_path / "class" / f"{component_name}.yml", "w", encoding="utf-8"
+        ) as f:
+            yaml.safe_dump(class_data, f)
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    assert t.post_process == expected
+
+    add_pp = "y" if expected else "n"
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json_data = json.load(f)
+        assert cruft_json_data["context"]["cookiecutter"]["add_pp"] == add_pp
