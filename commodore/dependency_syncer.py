@@ -89,7 +89,9 @@ def sync_dependencies(
                 backoff = 1.0 + random.random()  # nosec
                 time.sleep(backoff)
         else:
-            click.secho(f"Package {dn} already up-to-date", bold=True)
+            click.secho(
+                f"{deptype_str.capitalize()} {dn} already up-to-date", bold=True
+            )
 
 
 def message_body(c: git.objects.commit.Commit) -> str:
