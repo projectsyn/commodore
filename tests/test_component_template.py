@@ -12,6 +12,7 @@ from pathlib import Path as P
 from subprocess import call
 from git import Repo
 from datetime import date
+from typing import Optional
 
 from conftest import RunnerFunc
 from test_component import setup_directory
@@ -778,3 +779,64 @@ def test_component_update_raises_on_merge_conflict(
         == "Error: Can't commit template changes: merge error in "
         + "'lib/test-component.libsonnet'. Please resolve conflicts and commit manually."
     )
+
+
+@pytest.mark.parametrize(
+    "license_data,expected_holder,expected_year",
+    [
+        (None, "VSHN AG <info@vshn.ch>", ""),
+        ({}, "VSHN AG <info@vshn.ch>", "2021"),
+        (
+            {"holder": "Foo Inc. <foo@example.com>"},
+            "Foo Inc. <foo@example.com>",
+            "2021",
+        ),
+        ({"year": 2022}, "VSHN AG <info@vshn.ch>", "2022"),
+        (
+            {"holder": "Foo Inc. <foo@example.com>", "year": 2022},
+            "Foo Inc. <foo@example.com>",
+            "2022",
+        ),
+    ],
+)
+def test_component_templater_read_from_modulesync_config(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    config: Config,
+    license_data: Optional[dict],
+    expected_holder: str,
+    expected_year: str,
+):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+    component_path = tmp_path / "dependencies" / component_name
+    r = Repo(component_path)
+
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+
+    del cruft_json["context"]["cookiecutter"]["copyright_year"]
+    del cruft_json["context"]["cookiecutter"]["copyright_holder"]
+
+    with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+        f.write("\n")
+    r.index.add([".cruft.json"])
+
+    if license_data is None:
+        (component_path / ".sync.yml").unlink(missing_ok=True)
+        r.index.remove([".sync.yml"])
+    elif len(license_data) > 0:
+        with open(component_path / ".sync.yml", "w", encoding="utf-8") as f:
+            yaml.safe_dump({"LICENSE": license_data}, f)
+        r.index.add([".sync.yml"])
+
+    r.index.commit("Update component template metadata")
+
+    if not expected_year:
+        expected_year = str(date.today().year)
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    assert t.cookiecutter_args["copyright_holder"] == expected_holder
+    assert t.cookiecutter_args["copyright_year"] == expected_year
