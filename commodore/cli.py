@@ -612,7 +612,10 @@ def component_compile(
     default="",
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+    "--dry-run",
+    is_flag=True,
+    help="Don't commit rendered changes or create or update PRs",
+    default=False,
 )
 @click.option(
     "--pr-branch",
@@ -920,7 +923,10 @@ def package_compile(
     default="",
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+    "--dry-run",
+    is_flag=True,
+    help="Don't commit rendered changes, or create or update PRs",
+    default=False,
 )
 @click.option(
     "--pr-branch",

@@ -204,12 +204,10 @@ def _setup_gh_pr_response(method, pr_body=""):
 
 
 @responses.activate
-@pytest.mark.parametrize("dry_run", [True, False])
 @pytest.mark.parametrize("pr_exists", [True, False])
-def test_ensure_pr(tmp_path: Path, config: Config, dry_run: bool, pr_exists: bool):
+def test_ensure_pr(tmp_path: Path, config: Config, pr_exists: bool):
     _setup_gh_get_responses(pr_exists)
-    if not dry_run:
-        _setup_gh_pr_response(responses.PATCH if pr_exists else responses.POST)
+    _setup_gh_pr_response(responses.PATCH if pr_exists else responses.POST)
     _setup_package_remote("foo", tmp_path / "foo.git")
     config.github_token = "ghp_fake-token"
     p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
@@ -219,18 +217,12 @@ def test_ensure_pr(tmp_path: Path, config: Config, dry_run: bool, pr_exists: boo
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(
-        p, pname, gr, dry_run, "template-sync", ["template-sync"]
-    )
+    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", ["template-sync"])
 
     cu = "update" if pr_exists else "create"
 
-    if dry_run:
-        assert msg == f"Would {cu} PR for {pname}"
-        assert len(responses.calls) == 2
-    else:
-        assert msg == f"PR for package projectsyn/package-foo successfully {cu}d"
-        assert len(responses.calls) == 4
+    assert msg == f"PR for package projectsyn/package-foo successfully {cu}d"
+    assert len(responses.calls) == 4
 
 
 @pytest.mark.parametrize("pr_exists", [False, True])
@@ -261,7 +253,7 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(p, pname, gr, False, "template-sync", [])
+    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [])
 
     cu = "update" if pr_exists else "create"
     assert (
@@ -279,7 +271,7 @@ def test_ensure_pr_no_repo(tmp_path: Path, config: Config):
     gr = None
 
     with pytest.raises(ValueError) as e:
-        dependency_syncer.ensure_pr(p, "foo", gr, False, "template-sync", [])
+        dependency_syncer.ensure_pr(p, "foo", gr, "template-sync", [])
 
     assert str(e.value) == "package repo not initialized"
 

@@ -68,12 +68,14 @@ def sync_dependencies(
 
         # Update the dependency
         t = templater.from_existing(config, d.target_dir)
-        changed = t.update(print_completion_message=False)
+        changed = t.update(print_completion_message=False, commit=not dry_run)
 
         # Create or update PR if there were updates
-        if changed:
+        if dry_run and changed:
+            click.secho(f"Would create or update PR for {dn}", bold=True)
+        elif changed:
             ensure_branch(d, pr_branch)
-            msg = ensure_pr(d, dn, gr, dry_run, pr_branch, pr_label)
+            msg = ensure_pr(d, dn, gr, pr_branch, pr_label)
             click.secho(msg, bold=True)
 
             if i < dep_count:
@@ -121,7 +123,6 @@ def ensure_pr(
     d: Union[Component, Package],
     dn: str,
     gr: Repository,
-    dry_run: bool,
     branch_name: str,
     pr_labels: Iterable[str],
 ) -> str:
@@ -133,10 +134,7 @@ def ensure_pr(
 
     prs = gr.get_pulls(state="open")
     has_sync_pr = any(pr.head.ref == branch_name for pr in prs)
-
     cu = "update" if has_sync_pr else "create"
-    if dry_run:
-        return f"Would {cu} PR for {dn}"
 
     r = d.repo.repo
     r.remote().push(branch_name, force=True)
