@@ -179,8 +179,12 @@ class Templater(ABC):
         should ensure that the updated args dict is written back to `.cruft.json`."""
         self.golden_tests = cookiecutter_args["add_golden"] == "y"
         self.github_owner = cookiecutter_args["github_owner"]
-        self.copyright_holder = cookiecutter_args["copyright_holder"]
-        self.copyright_year = cookiecutter_args["copyright_year"]
+        # Allow copyright holder and copyright year to be missing in the cookiecutter
+        # args. Fallback to VSHN AG <info@vshn.ch> and the current year here.
+        self.copyright_holder = cookiecutter_args.get(
+            "copyright_holder", "VSHN AG <info@vshn.ch>"
+        )
+        self.copyright_year = cookiecutter_args.get("copyright_year")
         if "test_cases" in cookiecutter_args:
             self.test_cases = cookiecutter_args["test_cases"].split(" ")
         else:

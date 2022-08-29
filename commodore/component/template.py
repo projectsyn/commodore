@@ -57,6 +57,25 @@ class ComponentTemplater(Templater):
             cookiecutter_args["add_pp"] = "y" if self._has_pp else "n"
             update_cruft_json = True
 
+        if (self.target_dir / ".sync.yml").is_file():
+            # Migrate copyright information from modulesync config, if it's present and
+            # the information is missing in the cookiecutter args.
+            with open(self.target_dir / ".sync.yml", "r", encoding="utf-8") as f:
+                sync_yml = yaml.safe_load(f)
+            license_data = sync_yml.get("LICENSE", {})
+            if "copyright_holder" not in cookiecutter_args:
+                cookiecutter_args["copyright_holder"] = license_data.get(
+                    "holder", "VSHN AG <info@vshn.ch>"
+                )
+                update_cruft_json = True
+            self.copyright_holder = cookiecutter_args["copyright_holder"]
+            if "copyright_year" not in cookiecutter_args:
+                cookiecutter_args["copyright_year"] = str(
+                    license_data.get("year", 2021)
+                )
+                update_cruft_json = True
+            self.copyright_year = cookiecutter_args["copyright_year"]
+
         self.library = cookiecutter_args["add_lib"] == "y"
         self.post_process = cookiecutter_args["add_pp"] == "y"
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
