@@ -227,6 +227,9 @@ This command doesn't have any command line options.
   Test cases to remove from the component.
   Can be repeated.
 
+*--commit / --no-commit*::
+  Whether to commit the rendered template changes.
+
 *--help*::
   Show component new usage and options then exit.
 
@@ -353,6 +356,9 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--remove-test-case* CASE::
   Test cases to remove from the package.
   Can be repeated.
+
+*--commit / --no-commit*::
+  Whether to commit the rendered template changes.
 
 == Package Compile
 
