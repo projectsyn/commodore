@@ -330,6 +330,8 @@ def test_sync_packages_package_list_parsing(
         (False, True, True),
         # dry-run, no 2nd package, no update required
         (True, False, False),
+        # dry-run, no 2nd package, update required
+        (True, False, True),
     ],
 )
 @responses.activate
@@ -403,16 +405,17 @@ def test_sync_packages(
             PackageTemplater,
         )
 
+    # Fetch info for 1st package
     expected_call_count = 1
-    if needs_update:
-        expected_call_count += 1
     if needs_update and not dry_run:
-        expected_call_count += 2
+        # check for PR, create/update PR, add/update labels
+        expected_call_count += 3
     if second_pkg:
+        # fetch info for 2nd package
         expected_call_count += 1
     assert len(responses.calls) == expected_call_count
     expected_message = "Initial commit\n"
-    if needs_update:
+    if needs_update and not dry_run:
         expected_message = f"Update from template\n\n{pr_body}"
     assert r.repo.head.commit.message == expected_message
 
