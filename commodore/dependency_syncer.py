@@ -71,27 +71,37 @@ def sync_dependencies(
         changed = t.update(print_completion_message=False, commit=not dry_run)
 
         # Create or update PR if there were updates
-        if dry_run and changed:
-            click.secho(f"Would create or update PR for {dn}", bold=True)
-        elif changed:
-            ensure_branch(d, pr_branch)
-            msg = ensure_pr(d, dn, gr, pr_branch, pr_label)
-            click.secho(msg, bold=True)
+        create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
+        if changed and not dry_run and i < dep_count:
+            # except when processing the last dependency in the list, sleep for 1-2
+            # seconds to avoid hitting secondary rate-limits for PR creation. No
+            # need to sleep if we're not creating a PR.
+            # Without the #nosec annotations bandit warns (correctly) that
+            # `random.random()` generates weak random numbers, but since the quality
+            # of the randomness doesn't matter here, we don't need to use a more
+            # expensive RNG.
+            backoff = 1.0 + random.random()  # nosec
+            time.sleep(backoff)
 
-            if i < dep_count:
-                # except when processing the last dependency in the list, sleep for 1-2
-                # seconds to avoid hitting secondary rate-limits for PR creation. No
-                # need to sleep if we're not creating a PR.
-                # Without the #nosec annotations bandit warns (correctly) that
-                # `random.random()` generates weak random numbers, but since the quality
-                # of the randomness doesn't matter here, we don't need to use a more
-                # expensive RNG.
-                backoff = 1.0 + random.random()  # nosec
-                time.sleep(backoff)
-        else:
-            click.secho(
-                f"{deptype_str.capitalize()} {dn} already up-to-date", bold=True
-            )
+
+def create_or_update_pr(
+    d: Union[Component, Package],
+    dn: str,
+    gr: Repository,
+    changed: bool,
+    pr_branch: str,
+    pr_label,
+    dry_run: bool,
+):
+    if dry_run and changed:
+        click.secho(f"Would create or update PR for {dn}", bold=True)
+    elif changed:
+        ensure_branch(d, pr_branch)
+        msg = ensure_pr(d, dn, gr, pr_branch, pr_label)
+        click.secho(msg, bold=True)
+    else:
+        dep_type = type_name(d)
+        click.secho(f"{dep_type.capitalize()} {dn} already up-to-date", bold=True)
 
 
 def message_body(c: git.objects.commit.Commit) -> str:
