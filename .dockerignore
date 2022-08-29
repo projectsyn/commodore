@@ -7,6 +7,7 @@ inventory/
 tools/
 !tools/entrypoint.sh
 !tools/install-jb.sh
+!tools/install-kustomize.sh
 Dockerfile
 docker-compose.*
 _antora
