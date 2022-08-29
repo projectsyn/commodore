@@ -498,7 +498,10 @@ def test_component_update_copyright(tmp_path: P, cli_runner: RunnerFunc):
         assert lines[0] == f"Copyright {year}, Foo Bar Inc. <foobar@example.com>\n"
 
 
-def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
+@pytest.mark.parametrize("commit", [True, False])
+def test_component_update_copyright_year(
+    tmp_path: P, cli_runner: RunnerFunc, commit: bool
+):
     component_name = "test-component"
     call_component_new(tmp_path, cli_runner, component_name)
 
@@ -521,10 +524,13 @@ def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
 
     r = Repo(component_path)
     r.index.add(["LICENSE", ".cruft.json"])
-    r.index.commit("License year")
+    lic_update_commit = r.index.commit("License year")
+
+    commit_arg = ["--commit" if commit else "--no-commit"]
 
     result = cli_runner(
         ["component", "update", str(component_path), "--update-copyright-year"]
+        + commit_arg
     )
     assert result.exit_code == 0
 
@@ -532,6 +538,12 @@ def test_component_update_copyright_year(tmp_path: P, cli_runner: RunnerFunc):
         lines = lic.readlines()
         year = date.today().year
         assert lines[0] == f"Copyright {year}, VSHN AG <info@vshn.ch>\n"
+
+    assert r.is_dirty() != commit
+    if not commit:
+        assert r.head.commit == lic_update_commit
+    else:
+        assert r.head.commit.message.startswith("Update from template\n\n")
 
 
 def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
