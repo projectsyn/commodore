@@ -296,7 +296,9 @@ class Templater(ABC):
             f"{self.deptype.capitalize()} {self.name} successfully added 🎉", bold=True
         )
 
-    def update(self, print_completion_message: bool = True) -> bool:
+    def update(
+        self, print_completion_message: bool = True, commit: bool = True
+    ) -> bool:
         if len(self.test_cases) == 0:
             raise click.ClickException(
                 f"{self.deptype.capitalize()} template doesn't support removing all test cases."
@@ -310,15 +312,29 @@ class Templater(ABC):
         if not cruft_updated:
             raise click.ClickException("Update from template failed")
 
-        commit_msg = (
-            f"Update from template\n\nTemplate version: {self.template_version}"
-        )
-        if self.template_commit:
-            commit_msg += f" ({self.template_commit[:7]})"
+        if not commit:
+            diff_text, updated = self.diff()
+            if updated:
+                indented = textwrap.indent(diff_text, "     ")
+                message = f" > Changes:\n{indented}"
+            else:
+                message = " > No changes."
+            click.echo(message)
+        else:
+            commit_msg = (
+                f"Update from template\n\nTemplate version: {self.template_version}"
+            )
+            if self.template_commit:
+                commit_msg += f" ({self.template_commit[:7]})"
 
-        updated = self.commit(commit_msg, init=False)
+            updated = self.commit(commit_msg, init=False)
 
         if print_completion_message:
+            if not commit:
+                click.secho(
+                    " > User requested to skip committing the rendered changes."
+                )
+
             if updated:
                 click.secho(
                     f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
@@ -331,6 +347,13 @@ class Templater(ABC):
                 )
 
         return updated
+
+    def diff(self) -> tuple[str, bool]:
+        repo = GitRepo(self.repo_url, self.target_dir, force_init=False)
+        repo.stage_files(self.additional_files)
+        diff_text, changed = repo.stage_all()
+        repo.reset(working_tree=False)
+        return diff_text, changed
 
     def commit(self, msg: str, amend=False, init=True) -> bool:
         # If we're amending an existing commit, we don't want to force initialize the

@@ -460,6 +460,12 @@ def component_new(
     multiple=True,
     help="Test cases to remove from the package. Can be repeated.",
 )
+@click.option(
+    "--commit / --no-commit",
+    is_flag=True,
+    default=True,
+    help="Whether to commit the rendered template changes.",
+)
 @verbosity
 @pass_config
 def component_update(
@@ -474,6 +480,7 @@ def component_update(
     update_copyright_year: bool,
     additional_test_case: Iterable[str],
     remove_test_case: Iterable[str],
+    commit: bool,
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -502,7 +509,7 @@ def component_update(
     test_cases.extend(additional_test_case)
     t.test_cases = [tc for tc in test_cases if tc not in remove_test_case]
 
-    t.update()
+    t.update(commit=commit)
 
 
 @component.command(name="delete", short_help="Remove component from inventory.")
@@ -605,7 +612,10 @@ def component_compile(
     default="",
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+    "--dry-run",
+    is_flag=True,
+    help="Don't commit rendered changes or create or update PRs",
+    default=False,
 )
 @click.option(
     "--pr-branch",
@@ -801,6 +811,12 @@ def package_new(
     multiple=True,
     help="Test cases to remove from the package. Can be repeated.",
 )
+@click.option(
+    "--commit / --no-commit",
+    is_flag=True,
+    default=True,
+    help="Whether to commit the rendered template changes.",
+)
 @verbosity
 @pass_config
 # pylint: disable=too-many-arguments
@@ -813,6 +829,7 @@ def package_update(
     update_copyright_year: bool,
     additional_test_case: Iterable[str],
     remove_test_case: Iterable[str],
+    commit: bool,
 ):
     config.update_verbosity(verbose)
     t = PackageTemplater.from_existing(config, Path(package_path))
@@ -828,7 +845,7 @@ def package_update(
     test_cases.extend(additional_test_case)
     t.test_cases = [tc for tc in test_cases if tc not in remove_test_case]
 
-    t.update()
+    t.update(commit=commit)
 
 
 @package.command(name="compile", short_help="Compile a config package standalone")
@@ -906,7 +923,10 @@ def package_compile(
     default="",
 )
 @click.option(
-    "--dry-run", is_flag=True, help="Don't create or update PRs", default=False
+    "--dry-run",
+    is_flag=True,
+    help="Don't commit rendered changes, or create or update PRs",
+    default=False,
 )
 @click.option(
     "--pr-branch",

@@ -68,26 +68,40 @@ def sync_dependencies(
 
         # Update the dependency
         t = templater.from_existing(config, d.target_dir)
-        changed = t.update(print_completion_message=False)
+        changed = t.update(print_completion_message=False, commit=not dry_run)
 
         # Create or update PR if there were updates
-        if changed:
-            ensure_branch(d, pr_branch)
-            msg = ensure_pr(d, dn, gr, dry_run, pr_branch, pr_label)
-            click.secho(msg, bold=True)
+        create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
+        if changed and not dry_run and i < dep_count:
+            # except when processing the last dependency in the list, sleep for 1-2
+            # seconds to avoid hitting secondary rate-limits for PR creation. No
+            # need to sleep if we're not creating a PR.
+            # Without the #nosec annotations bandit warns (correctly) that
+            # `random.random()` generates weak random numbers, but since the quality
+            # of the randomness doesn't matter here, we don't need to use a more
+            # expensive RNG.
+            backoff = 1.0 + random.random()  # nosec
+            time.sleep(backoff)
 
-            if i < dep_count:
-                # except when processing the last dependency in the list, sleep for 1-2
-                # seconds to avoid hitting secondary rate-limits for PR creation. No
-                # need to sleep if we're not creating a PR.
-                # Without the #nosec annotations bandit warns (correctly) that
-                # `random.random()` generates weak random numbers, but since the quality
-                # of the randomness doesn't matter here, we don't need to use a more
-                # expensive RNG.
-                backoff = 1.0 + random.random()  # nosec
-                time.sleep(backoff)
-        else:
-            click.secho(f"Package {dn} already up-to-date", bold=True)
+
+def create_or_update_pr(
+    d: Union[Component, Package],
+    dn: str,
+    gr: Repository,
+    changed: bool,
+    pr_branch: str,
+    pr_label,
+    dry_run: bool,
+):
+    if dry_run and changed:
+        click.secho(f"Would create or update PR for {dn}", bold=True)
+    elif changed:
+        ensure_branch(d, pr_branch)
+        msg = ensure_pr(d, dn, gr, pr_branch, pr_label)
+        click.secho(msg, bold=True)
+    else:
+        dep_type = type_name(d)
+        click.secho(f"{dep_type.capitalize()} {dn} already up-to-date", bold=True)
 
 
 def message_body(c: git.objects.commit.Commit) -> str:
@@ -121,7 +135,6 @@ def ensure_pr(
     d: Union[Component, Package],
     dn: str,
     gr: Repository,
-    dry_run: bool,
     branch_name: str,
     pr_labels: Iterable[str],
 ) -> str:
@@ -133,10 +146,7 @@ def ensure_pr(
 
     prs = gr.get_pulls(state="open")
     has_sync_pr = any(pr.head.ref == branch_name for pr in prs)
-
     cu = "update" if has_sync_pr else "create"
-    if dry_run:
-        return f"Would {cu} PR for {dn}"
 
     r = d.repo.repo
     r.remote().push(branch_name, force=True)
