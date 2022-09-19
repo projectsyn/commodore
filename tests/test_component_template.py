@@ -66,7 +66,7 @@ def _validate_rendered_component(
         P(".github", "ISSUE_TEMPLATE", "01_bug_report.md"),
         P(".github", "ISSUE_TEMPLATE", "02_feature_request.md"),
         P(".github", "ISSUE_TEMPLATE", "config.yml"),
-        P(".sync.yml"),
+        P(".cruft.json"),
     ]
     for tc in test_cases:
         expected_files.append(P("tests", f"{tc}.yml"))
@@ -142,22 +142,38 @@ def _validate_rendered_component(
             else:
                 assert run_step["run"] == "make golden-diff"
 
-    with open(tmp_path / "dependencies" / component_name / ".sync.yml") as syncyml:
-        syncconfig = yaml.safe_load(syncyml)
-        assert ":global" in syncconfig
+    with open(tmp_path / "dependencies" / component_name / ".cruft.json") as cruftjson:
+        cruft_config = json.load(cruftjson)
+        expected_keys = {"template", "commit", "checkout", "context", "directory"}
+        assert set(cruft_config.keys()) == expected_keys
+        assert "cookiecutter" in cruft_config["context"]
 
-        globalconfig = syncconfig[":global"]
-        assert "componentName" in globalconfig
-        assert "feature_goldenTests" in globalconfig
-        assert ("testMatrix" in globalconfig) == has_matrix
+        cookiecutter_context = cruft_config["context"]["cookiecutter"]
 
-        assert globalconfig["componentName"] == component_name
-        assert globalconfig["feature_goldenTests"] == has_golden
+        context_keys = {
+            "name",
+            "slug",
+            "parameter_key",
+            "test_cases",
+            "add_lib",
+            "add_pp",
+            "add_golden",
+            "add_matrix",
+            "add_go_unit",
+            "copyright_holder",
+            "copyright_year",
+            "github_owner",
+            "github_name",
+            "github_url",
+            "_template",
+        }
 
-        assert (".github/workflows/test.yaml" in syncconfig) == has_matrix
-        if has_matrix:
-            ghconfig = syncconfig[".github/workflows/test.yaml"]
-            assert ("goldenTest_makeTarget" in ghconfig) == has_golden
+        assert set(cookiecutter_context.keys()) == context_keys
+
+        assert cookiecutter_context["add_matrix"] == "y" if has_matrix else "n"
+        assert cookiecutter_context["name"] == component_name
+        assert cookiecutter_context["add_golden"] == "y" if has_golden else "n"
+        assert cookiecutter_context["test_cases"] == " ".join(test_cases)
 
     with open(
         tmp_path / "dependencies" / component_name / "renovate.json"
@@ -245,7 +261,7 @@ def test_run_component_new_with_additional_test_cases(
         not in result.stdout
     )
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, test_cases
+        tmp_path, component_name, False, False, True, True, ["defaults"] + test_cases
     )
 
 
@@ -265,7 +281,7 @@ def test_run_component_new_force_matrix_additional_test_cases(
 
     assert " > Forcing matrix tests when multiple test cases requested" in result.stdout
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, ["foo"]
+        tmp_path, component_name, False, False, True, True, ["defaults", "foo"]
     )
 
 
@@ -296,7 +312,7 @@ def test_run_component_new_command_with_name(tmp_path: P):
     component_name = "Component with custom name"
     component_slug = "named-component"
     readme_path = tmp_path / "dependencies" / component_slug / "README.md"
-    syncyml_path = tmp_path / "dependencies" / component_slug / ".sync.yml"
+    cruftjson_path = tmp_path / "dependencies" / component_slug / ".cruft.json"
 
     exit_status = call(
         f"commodore -d {tmp_path} -vvv component new --name '{component_name}' {component_slug}",
@@ -311,9 +327,9 @@ def test_run_component_new_command_with_name(tmp_path: P):
         assert lines[0] == f"# Commodore Component: {component_name}"
         assert any(f"https://hub.syn.tools/{component_slug}" in line for line in lines)
 
-    with open(syncyml_path, "r") as file:
-        syncyml = yaml.safe_load(file)
-        assert syncyml[":global"]["componentName"] == component_name
+    with open(cruftjson_path, "r") as file:
+        cruftjson = json.load(file)
+        assert cruftjson["context"]["cookiecutter"]["name"] == component_name
 
 
 @pytest.mark.parametrize(
@@ -835,12 +851,17 @@ def test_component_templater_read_from_modulesync_config(
         f.write("\n")
     r.index.add([".cruft.json"])
 
-    if license_data is None:
+    if license_data is None and (component_path / ".sync.yml").is_file():
+        # Remove existing `.sync.yml`, if necessary
         (component_path / ".sync.yml").unlink(missing_ok=True)
         r.index.remove([".sync.yml"])
-    elif len(license_data) > 0:
+    elif license_data is not None:
+        # Create `.sync.yml` with provided LICENSE data
+        sync_yml = {}
+        if len(license_data) > 0:
+            sync_yml["LICENSE"] = license_data
         with open(component_path / ".sync.yml", "w", encoding="utf-8") as f:
-            yaml.safe_dump({"LICENSE": license_data}, f)
+            yaml.safe_dump(sync_yml, f)
         r.index.add([".sync.yml"])
 
     r.index.commit("Update component template metadata")
