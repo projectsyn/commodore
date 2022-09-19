@@ -902,11 +902,11 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyfakefs"
-version = "4.6.3"
+version = "4.7.0"
 description = "pyfakefs implements a fake file system that mocks the Python file system modules."
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [[package]]
 name = "pygithub"
@@ -1458,7 +1458,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "271dd6147ec1bbb7bc4ba0b9b33bf98d840a42dc8b7df3ca30762a2766183c9a"
+content-hash = "f967a7f72626f726a58e531caef7f6bd1a7fde36192565fea55897054556cc43"
 
 [metadata.files]
 addict = [
@@ -2020,8 +2020,8 @@ pydantic = [
     {file = "pydantic-1.9.2.tar.gz", hash = "sha256:8cb0bc509bfb71305d7a59d00163d5f9fc4530f0881ea32c74ff4f74c85f3d3d"},
 ]
 pyfakefs = [
-    {file = "pyfakefs-4.6.3-py3-none-any.whl", hash = "sha256:8959fe7058ba7efa65694b7979e123e27921a58f557a88628be93f0a936e6757"},
-    {file = "pyfakefs-4.6.3.tar.gz", hash = "sha256:6df12a7cf657637a1b036bc20059727c642f92990e90fee2fb003daa3cda6ca1"},
+    {file = "pyfakefs-4.7.0-py3-none-any.whl", hash = "sha256:29203a7482b25406dd3ea41c8740be2697c6058b0f6577485c3ae9cd4c5e96cd"},
+    {file = "pyfakefs-4.7.0.tar.gz", hash = "sha256:f22d30d93d2989bf2d2c67b606a14cbab2df0be912c09dcdb590ea4931073ade"},
 ]
 pygithub = [
     {file = "PyGithub-1.55-py3-none-any.whl", hash = "sha256:2caf0054ea079b71e539741ae56c5a95e073b81fa472ce222e81667381b9601b"},
