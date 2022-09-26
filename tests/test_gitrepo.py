@@ -8,6 +8,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Optional
 
+import os
 import shutil
 
 import click
@@ -31,7 +32,11 @@ def setup_remote(tmp_path: Path):
 
     (remote / "test.txt").touch(exist_ok=True)
 
-    repo.index.add(["test.txt"])
+    # setup .gitignore
+    with open(remote / ".gitignore", "w", encoding="utf-8") as f:
+        f.write("/ignored.txt\n")
+
+    repo.index.add(["test.txt", ".gitignore"])
     commit = repo.index.commit("initial commit")
 
     (remote / "branch.txt").touch(exist_ok=True)
@@ -605,3 +610,61 @@ def test_gitrepo_stage_files_raises_on_conflict(tmp_path: Path):
         r.stage_files(["test.txt"])
 
     assert str(e.value) == "test.txt"
+
+
+@pytest.mark.parametrize("add_file", [True, False])
+@pytest.mark.parametrize("add_ignored_file", [True, False])
+@pytest.mark.parametrize(
+    "copy_file,convert_to_symlink,remove_file",
+    [
+        (False, False, False),  # none
+        (True, False, False),  # copy test.txt to test2.txt
+        (True, True, False),  # change test.txt to a symlink to test2.txt
+        (True, False, True),  # copy test.txt to test2.txt and remove test.txt
+    ],
+)
+def test_gitrepo_stage_all(
+    tmp_path: Path,
+    add_file: bool,
+    add_ignored_file: bool,
+    copy_file: bool,
+    convert_to_symlink: bool,
+    remove_file: bool,
+):
+    r, _ = setup_repo(tmp_path)
+    # Initial state of repo: empty file test.txt 0664.
+
+    if add_file:
+        with open(r.working_tree_dir / "bar.txt", "w", encoding="utf-8") as f:
+            f.write("hello\n")
+
+    if add_file:
+        with open(r.working_tree_dir / "ignored.txt", "w", encoding="utf-8") as f:
+            f.write("foo\n")
+
+    if copy_file:
+        (r.working_tree_dir / "test2.txt").touch()
+
+    if convert_to_symlink:
+        assert copy_file
+        os.unlink(r.working_tree_dir / "test.txt")
+        os.symlink(r.working_tree_dir / "test2.txt", r.working_tree_dir / "test.txt")
+
+    if remove_file:
+        os.unlink(r.working_tree_dir / "test.txt")
+
+    diff, changed = r.stage_all()
+
+    assert "ignored.txt" not in diff
+
+    r.commit("Test")
+
+    assert not r.repo.untracked_files
+    assert not r.repo.is_dirty()
+
+    committed_paths = list(b[1].path for b in r.repo.index.iter_blobs())
+
+    assert "ignored.txt" not in committed_paths
+    assert ("bar.txt" in committed_paths) == add_file
+    assert ("test.txt" not in committed_paths) == remove_file
+    assert ("test2.txt" in committed_paths) == copy_file
