@@ -550,17 +550,30 @@ class GitRepo:
         """
         index = self._repo.index
 
-        # Stage deletions
-        dels = index.diff(None)
-        if dels:
+        # We always want to stage untracked files. The implementation for
+        # `untracked_files` respects the repo's `.gitignore`.
+        to_add = self._repo.untracked_files
+        # Stage deletions and add changes to `to_add`
+        changes = index.diff(None)
+        if changes:
             to_remove = []
-            for c in dels.iter_change_type("D"):
+            for c in changes.iter_change_type("D"):
                 to_remove.append(c.b_path)
             if len(to_remove) > 0:
                 index.remove(items=to_remove)
 
-        # Stage all remaining changes
-        index.add("*")
+            for c in changes.iter_change_type("M"):
+                # Stage modified files
+                to_add.append(c.a_path)
+            for c in changes.iter_change_type("T"):
+                # Stage changed file mode
+                to_add.append(c.a_path)
+            # Omitting change types "R" (renamed files) and "C" (copied files) as those
+            # can't appear in a diff against the working tree.
+
+        # Stage additions and changes
+        if len(to_add) > 0:
+            index.add(items=to_add)
 
         self._check_conflicts()
 
