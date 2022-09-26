@@ -539,6 +539,33 @@ class GitRepo:
                 if stage != 0:
                     raise MergeConflict(path)
 
+    def _compute_changed_files(self) -> tuple[list[str], list[str]]:
+        """Return a list of files to add to the index and a list of files to remove from
+        the index."""
+        # We always want to stage untracked files. The implementation for
+        # `untracked_files` respects the repo's `.gitignore`.
+        to_add = self._repo.untracked_files
+        # We don't want to remove anything by default.
+        to_remove = []
+        # Stage deletions and add changes to `to_add`
+        changes = self._repo.index.diff(None)
+        if changes:
+            for c in changes.iter_change_type("D"):
+                # Track removed files for `index.remove()`
+                to_remove.append(c.b_path)
+
+            for c in changes.iter_change_type("M"):
+                # Track modified files for `index.add()`
+                to_add.append(c.a_path)
+            for c in changes.iter_change_type("T"):
+                # Track files with mode changes (e.g. regular file to symlink) for
+                # `index.add()`
+                to_add.append(c.a_path)
+            # Omitting change types "R" (renamed files) and "C" (copied files) as those
+            # can't appear in a diff against the working tree.
+
+        return to_add, to_remove
+
     def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
@@ -548,32 +575,13 @@ class GitRepo:
 
         The method can raise `MergeConflict` if staged changes contain merge conflicts.
         """
+        to_add, to_remove = self._compute_changed_files()
+
         index = self._repo.index
-
-        # We always want to stage untracked files. The implementation for
-        # `untracked_files` respects the repo's `.gitignore`.
-        to_add = self._repo.untracked_files
-        # Stage deletions and add changes to `to_add`
-        changes = index.diff(None)
-        if changes:
-            to_remove = []
-            for c in changes.iter_change_type("D"):
-                to_remove.append(c.b_path)
-            if len(to_remove) > 0:
-                index.remove(items=to_remove)
-
-            for c in changes.iter_change_type("M"):
-                # Stage modified files
-                to_add.append(c.a_path)
-            for c in changes.iter_change_type("T"):
-                # Stage changed file mode
-                to_add.append(c.a_path)
-            # Omitting change types "R" (renamed files) and "C" (copied files) as those
-            # can't appear in a diff against the working tree.
-
-        # Stage additions and changes
         if len(to_add) > 0:
             index.add(items=to_add)
+        if len(to_remove) > 0:
+            index.remove(items=to_remove)
 
         self._check_conflicts()
 
