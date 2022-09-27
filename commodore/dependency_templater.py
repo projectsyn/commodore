@@ -10,7 +10,7 @@ import textwrap
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 import click
 
@@ -277,16 +277,6 @@ class Templater(ABC):
         self._test_cases = test_cases
 
     @property
-    def additional_files(self) -> Sequence[str]:
-        return [
-            ".github",
-            ".gitignore",
-            ".*.yml",
-            ".editorconfig",
-            ".cruft.json",
-        ]
-
-    @property
     def template_commit(self) -> Optional[str]:
         cruft_json = self.target_dir / ".cruft.json"
         if not cruft_json.is_file():
@@ -408,10 +398,6 @@ class Templater(ABC):
         diff_func = default_difffunc
         if ignore_template_commit:
             diff_func = _ignore_cruft_json_commit_id
-        # stage_all() returns the full diff compared to the last commit. Therefore, we
-        # do stage_files() first and then stage_all(), to ensure we get the complete
-        # diff.
-        repo.stage_files(self.additional_files)
         diff_text, changed = repo.stage_all(diff_func=diff_func)
 
         if ignore_template_commit:
