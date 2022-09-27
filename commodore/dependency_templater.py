@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import difflib
 import json
 import re
 import tempfile
@@ -15,10 +16,46 @@ import click
 
 from commodore.config import Config
 from commodore.cruft import create as cruft_create, update as cruft_update
-from commodore.gitrepo import GitRepo, MergeConflict
+from commodore.gitrepo import GitRepo, MergeConflict, default_difffunc
 from commodore.multi_dependency import MultiDependency
 
 SLUG_REGEX = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
+
+
+def _ignore_cruft_json_commit_id(
+    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
+):
+    """Custom diff function which omits `.cruft.json` diffs which only differ in the
+    template commit id."""
+    before_lines = before_text.split("\n")
+    after_lines = after_text.split("\n")
+    diff_lines = difflib.unified_diff(
+        before_lines, after_lines, lineterm="", fromfile=fromfile, tofile=tofile
+    )
+    omit = False
+    if fromfile == ".cruft.json" and tofile == ".cruft.json":
+        # Compute diff without context lines for `.cruft.json` (n=0) and drop the
+        # unified diff header (first 3 lines).
+        minimal_diff = list(
+            difflib.unified_diff(
+                before_lines,
+                after_lines,
+                lineterm="",
+                fromfile=fromfile,
+                tofile=tofile,
+                n=0,
+            )
+        )[3:]
+        # If the context-less diff has exactly 2 lines and both of them start with
+        # '[-+] "commit":', we omit the diff
+        if (
+            len(minimal_diff) == 2
+            and minimal_diff[0].startswith('-  "commit":')
+            and minimal_diff[1].startswith('+  "commit":')
+        ):
+            omit = True
+    # never suppress diffs in default difffunc
+    return diff_lines, omit
 
 
 class Templater(ABC):
@@ -297,7 +334,10 @@ class Templater(ABC):
         )
 
     def update(
-        self, print_completion_message: bool = True, commit: bool = True
+        self,
+        print_completion_message: bool = True,
+        commit: bool = True,
+        ignore_template_commit: bool = False,
     ) -> bool:
         if len(self.test_cases) == 0:
             raise click.ClickException(
@@ -312,25 +352,10 @@ class Templater(ABC):
         if not cruft_updated:
             raise click.ClickException("Update from template failed")
 
-        if not commit:
-            diff_text, updated = self.diff()
-            if updated:
-                indented = textwrap.indent(diff_text, "     ")
-                message = f" > Changes:\n{indented}"
-            else:
-                message = " > No changes."
-            click.echo(message)
-        else:
-            commit_msg = (
-                f"Update from template\n\nTemplate version: {self.template_version}"
-            )
-            if self.template_commit:
-                commit_msg += f" ({self.template_commit[:7]})"
-
-            updated = self.commit(commit_msg, init=False)
+        updated = self._commit_or_print_changes(commit, ignore_template_commit)
 
         if print_completion_message:
-            if not commit:
+            if not commit and updated:
                 click.secho(
                     " > User requested to skip committing the rendered changes."
                 )
@@ -348,24 +373,80 @@ class Templater(ABC):
 
         return updated
 
-    def diff(self) -> tuple[str, bool]:
+    def _commit_or_print_changes(
+        self, commit: bool, ignore_template_commit: bool
+    ) -> bool:
+        """Helper for update() which either prints or commits the changes in the
+        dependency repo"""
+        if not commit:
+            diff_text, updated = self.diff(
+                ignore_template_commit=ignore_template_commit
+            )
+            if updated:
+                indented = textwrap.indent(diff_text, "     ")
+                message = f" > Changes:\n{indented}"
+            else:
+                message = " > No changes."
+            click.echo(message)
+        else:
+            commit_msg = (
+                f"Update from template\n\nTemplate version: {self.template_version}"
+            )
+            if self.template_commit:
+                commit_msg += f" ({self.template_commit[:7]})"
+
+            updated = self.commit(
+                commit_msg, init=False, ignore_template_commit=ignore_template_commit
+            )
+
+        return updated
+
+    def _stage_all(self, ignore_template_commit: bool = False) -> tuple[str, bool]:
+        """Wrapper for GitRepo.stage_all() which stages all changes for a dependency."""
         repo = GitRepo(self.repo_url, self.target_dir, force_init=False)
+
+        diff_func = default_difffunc
+        if ignore_template_commit:
+            diff_func = _ignore_cruft_json_commit_id
+        # stage_all() returns the full diff compared to the last commit. Therefore, we
+        # do stage_files() first and then stage_all(), to ensure we get the complete
+        # diff.
         repo.stage_files(self.additional_files)
-        diff_text, changed = repo.stage_all()
+        diff_text, changed = repo.stage_all(diff_func=diff_func)
+
+        if ignore_template_commit:
+            # If we want to ignore updates which only modify the template commit id, we
+            # don't use the returned `changed` but instead singal whether there was a
+            # change by checking if the diff_text has any contents.
+            changed = len(diff_text) > 0
+
+        return diff_text, changed
+
+    def diff(self, ignore_template_commit: bool = False) -> tuple[str, bool]:
+        repo = GitRepo(self.repo_url, self.target_dir, force_init=False)
+        diff_text, changed = self._stage_all(
+            ignore_template_commit=ignore_template_commit
+        )
+
+        # When only computing the diff, we reset all staged changes
         repo.reset(working_tree=False)
         return diff_text, changed
 
-    def commit(self, msg: str, amend=False, init=True) -> bool:
+    def commit(
+        self,
+        msg: str,
+        amend: bool = False,
+        init: bool = True,
+        ignore_template_commit: bool = False,
+    ) -> bool:
         # If we're amending an existing commit, we don't want to force initialize the
         # repo.
         repo = GitRepo(self.repo_url, self.target_dir, force_init=not amend and init)
 
-        # stage_all() returns the full diff compared to the last commit. Therefore, we
-        # do stage_files() first and then stage_all(), to ensure we get the complete
-        # diff.
         try:
-            repo.stage_files(self.additional_files)
-            diff_text, changed = repo.stage_all()
+            diff_text, changed = self._stage_all(
+                ignore_template_commit=ignore_template_commit
+            )
         except MergeConflict as e:
             raise click.ClickException(
                 f"Can't commit template changes: merge error in '{e}'. "

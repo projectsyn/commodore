@@ -809,6 +809,37 @@ def test_component_update_raises_on_merge_conflict(
     )
 
 
+@pytest.mark.parametrize("ignore_template_commit", [True, False])
+def test_component_update_ignore_template_commit_id(
+    tmp_path: P, cli_runner: RunnerFunc, config: Config, ignore_template_commit: bool
+):
+    component_name = "test-component"
+    component_path = tmp_path / "dependencies" / component_name
+    call_component_new(tmp_path, cli_runner, component_name)
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+    template_repo = Repo.clone_from(
+        "https://github.com/projectsyn/commodore-component-template",
+        tmp_path / "template",
+    )
+    cruft_json["commit"] = template_repo.head.commit.parents[0].hexsha
+    with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+        f.write("\n")
+
+    r = Repo(component_path)
+    r.index.add([".cruft.json"])
+    head = r.index.commit("Update .cruft.json")
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    changed = t.update(ignore_template_commit=ignore_template_commit)
+
+    assert changed == (not ignore_template_commit)
+    assert (r.head.commit == head) == ignore_template_commit
+    assert r.is_dirty() == ignore_template_commit
+
+
 @pytest.mark.parametrize(
     "license_data,expected_holder,expected_year",
     [

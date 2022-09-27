@@ -68,7 +68,11 @@ def sync_dependencies(
 
         # Update the dependency
         t = templater.from_existing(config, d.target_dir)
-        changed = t.update(print_completion_message=False, commit=not dry_run)
+        changed = t.update(
+            print_completion_message=False,
+            commit=not dry_run,
+            ignore_template_commit=True,
+        )
 
         # Create or update PR if there were updates
         create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
