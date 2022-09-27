@@ -539,6 +539,28 @@ class GitRepo:
                 if stage != 0:
                     raise MergeConflict(path)
 
+    def _compute_changed_files(self) -> tuple[list[str], list[str]]:
+        """Return a list of files to add to the index and a list of files to remove from
+        the index."""
+        # We always want to stage untracked files. The implementation for
+        # `untracked_files` respects the repo's `.gitignore`.
+        to_add = self._repo.untracked_files
+        # We don't want to remove anything by default.
+        to_remove = []
+
+        # Determine changes to stage, separated into removals and other changes
+        changes = self._repo.index.diff(None)
+        if changes:
+            for c in changes:
+                if c.change_type == "D" or c.deleted_file:
+                    # Track removed files for `index.remove()`
+                    to_remove.append(c.b_path)
+                else:
+                    # Track changes which aren't deletions for `index.add()`
+                    to_add.append(c.a_path)
+
+        return to_add, to_remove
+
     def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
@@ -548,19 +570,13 @@ class GitRepo:
 
         The method can raise `MergeConflict` if staged changes contain merge conflicts.
         """
+        to_add, to_remove = self._compute_changed_files()
+
         index = self._repo.index
-
-        # Stage deletions
-        dels = index.diff(None)
-        if dels:
-            to_remove = []
-            for c in dels.iter_change_type("D"):
-                to_remove.append(c.b_path)
-            if len(to_remove) > 0:
-                index.remove(items=to_remove)
-
-        # Stage all remaining changes
-        index.add("*")
+        if len(to_add) > 0:
+            index.add(items=to_add)
+        if len(to_remove) > 0:
+            index.remove(items=to_remove)
 
         self._check_conflicts()
 
