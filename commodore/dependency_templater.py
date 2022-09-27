@@ -21,6 +21,8 @@ from commodore.multi_dependency import MultiDependency
 
 SLUG_REGEX = re.compile("^[a-z][a-z0-9-]+[a-z0-9]$")
 
+REJ_IGNORE = re.compile(r"\.(orig|rej)$")
+
 
 def _ignore_cruft_json_commit_id(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
@@ -398,7 +400,9 @@ class Templater(ABC):
         diff_func = default_difffunc
         if ignore_template_commit:
             diff_func = _ignore_cruft_json_commit_id
-        diff_text, changed = repo.stage_all(diff_func=diff_func)
+        diff_text, changed = repo.stage_all(
+            diff_func=diff_func, ignore_pattern=REJ_IGNORE
+        )
 
         if ignore_template_commit:
             # If we want to ignore updates which only modify the template commit id, we
