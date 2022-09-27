@@ -6,14 +6,14 @@ WORKDIR ${HOME}
 
 FROM base AS builder
 
-ENV PATH=${PATH}:${HOME}/.poetry/bin
+ENV PATH=${PATH}:${HOME}/.local/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
- && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.1.13 \
+ && curl -sSL https://install.python-poetry.org | python - --version 1.1.13 \
  && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./
