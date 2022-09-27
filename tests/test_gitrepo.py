@@ -3,7 +3,9 @@ Unit-tests for git
 """
 from __future__ import annotations
 
+import re
 import subprocess
+
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Optional
@@ -668,3 +670,25 @@ def test_gitrepo_stage_all(
     assert ("bar.txt" in committed_paths) == add_file
     assert ("test.txt" not in committed_paths) == remove_file
     assert ("test2.txt" in committed_paths) == copy_file
+
+
+def test_gitrepo_stage_all_ignore_patterns(tmp_path: Path):
+    r, _ = setup_repo(tmp_path)
+
+    with open(r.working_tree_dir / "foo.txt", "w", encoding="utf-8") as f:
+        f.write("hello\n")
+
+    with open(r.working_tree_dir / "bar.txt", "w", encoding="utf-8") as f:
+        f.write("world\n")
+
+    (r.working_tree_dir / "sub").mkdir()
+    with open(r.working_tree_dir / "sub" / "bar.txt", "w", encoding="utf-8") as f:
+        f.write("world\n")
+
+    r.stage_all(ignore_pattern=re.compile("bar.txt$"))
+    r.commit("Update")
+
+    committed_paths = list(b[1].path for b in r.repo.index.iter_blobs())
+    assert "foo.txt" in committed_paths
+    assert "bar.txt" not in committed_paths
+    assert "sub/bar.txt" not in committed_paths

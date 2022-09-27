@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+import re
 import shutil
 
 from collections import namedtuple
@@ -539,9 +540,14 @@ class GitRepo:
                 if stage != 0:
                     raise MergeConflict(path)
 
-    def _compute_changed_files(self) -> tuple[list[str], list[str]]:
+    def _compute_changed_files(
+        self, ignore_pattern: Optional[re.Pattern]
+    ) -> tuple[list[str], list[str]]:
         """Return a list of files to add to the index and a list of files to remove from
-        the index."""
+        the index.
+
+        New or modified files matching `ignore_pattern` are not considered for staging.
+        The `ignore_pattern` is never applied to files to be removed."""
         # We always want to stage untracked files. The implementation for
         # `untracked_files` respects the repo's `.gitignore`.
         to_add = self._repo.untracked_files
@@ -559,9 +565,16 @@ class GitRepo:
                     # Track changes which aren't deletions for `index.add()`
                     to_add.append(c.a_path)
 
+        if ignore_pattern:
+            to_add = [f for f in to_add if not ignore_pattern.search(f)]
+
         return to_add, to_remove
 
-    def stage_all(self, diff_func: DiffFunc = default_difffunc) -> tuple[str, bool]:
+    def stage_all(
+        self,
+        diff_func: DiffFunc = default_difffunc,
+        ignore_pattern: Optional[re.Pattern] = None,
+    ) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
 
@@ -570,7 +583,7 @@ class GitRepo:
 
         The method can raise `MergeConflict` if staged changes contain merge conflicts.
         """
-        to_add, to_remove = self._compute_changed_files()
+        to_add, to_remove = self._compute_changed_files(ignore_pattern)
 
         index = self._repo.index
         if len(to_add) > 0:
