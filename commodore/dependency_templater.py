@@ -352,6 +352,32 @@ class Templater(ABC):
         if not cruft_updated:
             raise click.ClickException("Update from template failed")
 
+        updated = self._commit_or_print_changes(commit, ignore_template_commit)
+
+        if print_completion_message:
+            if not commit and updated:
+                click.secho(
+                    " > User requested to skip committing the rendered changes."
+                )
+
+            if updated:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
+                    bold=True,
+                )
+            else:
+                click.secho(
+                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
+                    bold=True,
+                )
+
+        return updated
+
+    def _commit_or_print_changes(
+        self, commit: bool, ignore_template_commit: bool
+    ) -> bool:
+        """Helper for update() which either prints or commits the changes in the
+        dependency repo"""
         if not commit:
             diff_text, updated = self.diff(
                 ignore_template_commit=ignore_template_commit
@@ -372,23 +398,6 @@ class Templater(ABC):
             updated = self.commit(
                 commit_msg, init=False, ignore_template_commit=ignore_template_commit
             )
-
-        if print_completion_message:
-            if not commit and updated:
-                click.secho(
-                    " > User requested to skip committing the rendered changes."
-                )
-
-            if updated:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} successfully updated 🎉",
-                    bold=True,
-                )
-            else:
-                click.secho(
-                    f"{self.deptype.capitalize()} {self.name} already up-to-date 🎉",
-                    bold=True,
-                )
 
         return updated
 
