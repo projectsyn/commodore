@@ -218,7 +218,9 @@ def test_ensure_pr(tmp_path: Path, config: Config, pr_exists: bool):
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", ["template-sync"])
+    msg = dependency_syncer.ensure_pr(
+        p, pname, gr, "template-sync", ["template-sync"], ""
+    )
 
     cu = "update" if pr_exists else "create"
 
@@ -254,7 +256,7 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [])
+    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [], "")
 
     cu = "update" if pr_exists else "create"
     assert (
@@ -272,7 +274,7 @@ def test_ensure_pr_no_repo(tmp_path: Path, config: Config):
     gr = None
 
     with pytest.raises(ValueError) as e:
-        dependency_syncer.ensure_pr(p, "foo", gr, "template-sync", [])
+        dependency_syncer.ensure_pr(p, "foo", gr, "template-sync", [], "")
 
     assert str(e.value) == "package repo not initialized"
 
