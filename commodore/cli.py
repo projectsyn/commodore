@@ -623,6 +623,7 @@ def component_compile(
     "-b",
     metavar="BRANCH",
     default="template-sync",
+    show_default=True,
     type=str,
     help="Branch name to use for updates from template",
 )
@@ -945,6 +946,7 @@ def package_compile(
     "-b",
     metavar="BRANCH",
     default="template-sync",
+    show_default=True,
     type=str,
     help="Branch name to use for updates from template",
 )
