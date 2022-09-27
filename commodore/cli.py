@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from collections.abc import Iterable
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -633,6 +634,15 @@ def component_compile(
     multiple=True,
     help="Labels to set on the PR. Can be repeated",
 )
+@click.option(
+    "--github-pause",
+    metavar="DURATION",
+    default=120,
+    type=int,
+    show_default=True,
+    help="Duration for which to pause (in seconds) after creating 10 PRs. "
+    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
+)
 def component_sync(
     config: Config,
     verbose: int,
@@ -641,6 +651,7 @@ def component_sync(
     dry_run: bool,
     pr_branch: str,
     pr_label: Iterable[str],
+    github_pause: int,
 ):
     """This command processes all components listed in the provided `COMPONENT_LIST`
     YAML file.
@@ -670,6 +681,7 @@ def component_sync(
         pr_label,
         Component,
         ComponentTemplater,
+        timedelta(seconds=github_pause),
     )
 
 
@@ -944,6 +956,15 @@ def package_compile(
     multiple=True,
     help="Labels to set on the PR. Can be repeated",
 )
+@click.option(
+    "--github-pause",
+    metavar="DURATION",
+    default=120,
+    type=int,
+    show_default=True,
+    help="Duration for which to pause (in seconds) after creating 10 PRs. "
+    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
+)
 def package_sync(
     config: Config,
     verbose: int,
@@ -952,6 +973,7 @@ def package_sync(
     dry_run: bool,
     pr_branch: str,
     pr_label: Iterable[str],
+    github_pause: int,
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
@@ -980,6 +1002,7 @@ def package_sync(
         pr_label,
         Package,
         PackageTemplater,
+        timedelta(seconds=github_pause),
     )
 
 

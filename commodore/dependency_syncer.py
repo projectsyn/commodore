@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import random
 import time
 
+from datetime import timedelta
 from pathlib import Path
 from typing import Iterable, Union, Type
 
@@ -30,6 +30,7 @@ def sync_dependencies(
     pr_label: Iterable[str],
     deptype: Type[Union[Component, Package]],
     templater: Type[Templater],
+    pause: timedelta = timedelta(seconds=120),
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
@@ -49,6 +50,8 @@ def sync_dependencies(
 
     gh = github.Github(config.github_token)
     dep_count = len(deps)
+    # Keep track of how many PRs we've created to better avoid running into rate limits
+    update_count = 0
     for i, dn in enumerate(deps, start=1):
         click.secho(f"Synchronizing {dn}", bold=True)
         _, dreponame = dn.split("/")
@@ -76,16 +79,18 @@ def sync_dependencies(
 
         # Create or update PR if there were updates
         create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
-        if changed and not dry_run and i < dep_count:
-            # except when processing the last dependency in the list, sleep for 1-2
-            # seconds to avoid hitting secondary rate-limits for PR creation. No
-            # need to sleep if we're not creating a PR.
-            # Without the #nosec annotations bandit warns (correctly) that
-            # `random.random()` generates weak random numbers, but since the quality
-            # of the randomness doesn't matter here, we don't need to use a more
-            # expensive RNG.
-            backoff = 1.0 + random.random()  # nosec
-            time.sleep(backoff)
+        if changed:
+            update_count += 1
+        if changed and not dry_run and update_count % 10 == 0 and i < dep_count:
+            # Pause for 2 minutes after we've created 10 PRs, to avoid hitting secondary
+            # rate limits for PR creation. No need to consider dependencies for which
+            # we're not creating a PR. Additionally, never sleep after processing the
+            # last dependency.
+            click.echo(
+                " > Created or updated 10 PRs, "
+                + f"pausing for {pause}s to avoid secondary rate limits"
+            )
+            time.sleep(pause.seconds)
 
 
 def create_or_update_pr(
