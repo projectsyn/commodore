@@ -6,7 +6,7 @@ WORKDIR ${HOME}
 
 FROM base AS builder
 
-ENV PATH=${PATH}:${HOME}/.poetry/bin
+ENV PATH=${PATH}:${HOME}/.local/bin
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
