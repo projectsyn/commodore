@@ -95,7 +95,7 @@ def _compute_similarity(change):
     return similarity_diff
 
 
-def _default_difffunc(
+def default_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> tuple[Iterable[str], bool]:
     before_lines = before_text.split("\n")
@@ -561,7 +561,7 @@ class GitRepo:
 
         return to_add, to_remove
 
-    def stage_all(self, diff_func: DiffFunc = _default_difffunc) -> tuple[str, bool]:
+    def stage_all(self, diff_func: DiffFunc = default_difffunc) -> tuple[str, bool]:
         """Stage all changes.
         This method currently doesn't handle hidden files correctly.
 
