@@ -547,22 +547,17 @@ class GitRepo:
         to_add = self._repo.untracked_files
         # We don't want to remove anything by default.
         to_remove = []
-        # Stage deletions and add changes to `to_add`
+
+        # Determine changes to stage, separated into removals and other changes
         changes = self._repo.index.diff(None)
         if changes:
-            for c in changes.iter_change_type("D"):
-                # Track removed files for `index.remove()`
-                to_remove.append(c.b_path)
-
-            for c in changes.iter_change_type("M"):
-                # Track modified files for `index.add()`
-                to_add.append(c.a_path)
-            for c in changes.iter_change_type("T"):
-                # Track files with mode changes (e.g. regular file to symlink) for
-                # `index.add()`
-                to_add.append(c.a_path)
-            # Omitting change types "R" (renamed files) and "C" (copied files) as those
-            # can't appear in a diff against the working tree.
+            for c in changes:
+                if c.change_type == "D" or c.deleted_file:
+                    # Track removed files for `index.remove()`
+                    to_remove.append(c.b_path)
+                else:
+                    # Track changes which aren't deletions for `index.add()`
+                    to_add.append(c.a_path)
 
         return to_add, to_remove
 
