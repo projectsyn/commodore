@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import json
 
 from pathlib import Path
 from typing import Union
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import click
 import git
@@ -335,7 +336,9 @@ def test_sync_packages_package_list_parsing(
     ],
 )
 @responses.activate
+@patch.object(dependency_syncer, "_maybe_pause")
 def test_sync_packages(
+    maybe_pause_patch: MagicMock,
     tmp_path: Path,
     cli_runner: RunnerFunc,
     config: Config,
@@ -391,6 +394,13 @@ def test_sync_packages(
         add_pkgs = ["projectsyn/package-bar"]
     pkg_list = create_pkg_list(tmp_path, additional_packages=add_pkgs)
 
+    def _maybe_pause(updated: int, pr_batch_size: int, pause: datetime.timedelta):
+        assert updated == 1
+        assert pr_batch_size == 1
+        assert pause.seconds == 10
+
+    maybe_pause_patch.side_effect = _maybe_pause
+
     with patch(
         "commodore.dependency_templater.Templater.repo_url",
         new_callable=lambda: remote_url,
@@ -403,7 +413,16 @@ def test_sync_packages(
             ["template-sync"],
             Package,
             PackageTemplater,
+            1,
+            datetime.timedelta(seconds=10),
         )
+
+    if needs_update and not dry_run and second_pkg:
+        # We only call maybe_pause if we've created a PR, there's more work to do and
+        # we're not in dry-run mode.
+        assert maybe_pause_patch.call_count == 1
+    else:
+        assert maybe_pause_patch.call_count == 0
 
     # Fetch info for 1st package
     expected_call_count = 1
@@ -414,6 +433,7 @@ def test_sync_packages(
         # fetch info for 2nd package
         expected_call_count += 1
     assert len(responses.calls) == expected_call_count
+
     expected_message = "Initial commit\n"
     if needs_update and not dry_run:
         expected_message = f"Update from template\n\n{pr_body}"
@@ -505,3 +525,38 @@ class Foo:
 )
 def test_type_name(o: object, expected: str):
     assert dependency_syncer.type_name(o) == expected
+
+
+@pytest.mark.parametrize(
+    "update_count,pr_batch_size,pause_seconds,expected_pause",
+    [
+        (0, 1, 2, False),  # 0 updates, batch size 1, no pause
+        (1, 1, 2, True),  # 1 update, batch size 1, sleep 2
+        (1, 3, 2, False),  # 1 update, batch size 3, no pause
+        (3, 3, 2, True),  # 1 update, batch size 3, sleep 2
+        (5, 3, 2, False),  # 1 update, batch size 3, no pause
+    ],
+)
+def test_maybe_pause(
+    capsys,
+    update_count: int,
+    pr_batch_size: int,
+    pause_seconds: int,
+    expected_pause: bool,
+):
+
+    start = datetime.datetime.now()
+    dependency_syncer._maybe_pause(
+        update_count, pr_batch_size, datetime.timedelta(seconds=pause_seconds)
+    )
+    elapsed = datetime.datetime.now() - start
+
+    captured = capsys.readouterr()
+
+    assert (
+        f"Created or updated {pr_batch_size} PRs, "
+        + f"pausing for {pause_seconds}s to avoid secondary rate limits."
+        in captured.out
+    ) == expected_pause
+
+    assert (elapsed.seconds >= pause_seconds) == expected_pause

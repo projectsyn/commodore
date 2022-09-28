@@ -255,6 +255,14 @@ NOTE: Changing this flag will orphan any open update PRs created with a differen
 When changing the set of labels, new labels will be added to open PRs.
 However, labels added by previous runs can't be removed since we've got no easy way to distinguish between old labels and externally added labels.
 
+*--pr-batch-size* COUNT::
+    The number of PRs to create before pausing.
+    Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--github-pause* SECONDS::
+  The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
+  Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
 == Inventory Components / Packages / Show
 
 *-f, --values*::
@@ -437,3 +445,11 @@ NOTE: Changing this flag will orphan any open update PRs created with a differen
 +
 When changing the set of labels, new labels will be added to open PRs.
 However, labels added by previous runs can't be removed since we've got no easy way to distinguish between old labels and externally added labels.
+
+*--pr-batch-size* COUNT::
+    The number of PRs to create before pausing.
+    Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--github-pause* SECONDS::
+  The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
+  Tune this parameter if your sync job hits the GitHub secondary rate limit.
