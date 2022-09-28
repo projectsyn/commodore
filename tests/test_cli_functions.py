@@ -403,6 +403,7 @@ def test_package_sync_cli(
         pr_labels: Iterable[str],
         deptype: Type,
         templater: Type,
+        pr_batch_size: int,
         github_pause: int,
     ):
         assert config.github_token == ghtoken
@@ -412,6 +413,7 @@ def test_package_sync_cli(
         assert list(pr_labels) == []
         assert deptype == Package
         assert templater == PackageTemplater
+        assert pr_batch_size == 10
         assert github_pause == timedelta(seconds=120)
 
     mock_sync_packages.side_effect = sync_pkgs
@@ -472,6 +474,7 @@ def test_component_sync_cli(
         pr_labels: Iterable[str],
         deptype: Type,
         templater: Type,
+        pr_batch_size: int,
         github_pause: int,
     ):
         assert config.github_token == ghtoken
@@ -481,6 +484,7 @@ def test_component_sync_cli(
         assert list(pr_labels) == []
         assert deptype == Component
         assert templater == ComponentTemplater
+        assert pr_batch_size == 10
         assert github_pause == timedelta(seconds=120)
 
     mock_sync_dependencies.side_effect = sync_deps

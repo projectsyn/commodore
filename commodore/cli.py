@@ -636,12 +636,22 @@ def component_compile(
     help="Labels to set on the PR. Can be repeated",
 )
 @click.option(
+    "--pr-batch-size",
+    metavar="COUNT",
+    default=10,
+    type=int,
+    show_default=True,
+    help="Number of PRs to create before pausing"
+    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
+)
+@click.option(
     "--github-pause",
     metavar="DURATION",
     default=120,
     type=int,
     show_default=True,
-    help="Duration for which to pause (in seconds) after creating 10 PRs. "
+    help="Duration for which to pause (in seconds) after creating a number PRs "
+    + "(according to --pr-batch-size). "
     + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
 )
 def component_sync(
@@ -652,6 +662,7 @@ def component_sync(
     dry_run: bool,
     pr_branch: str,
     pr_label: Iterable[str],
+    pr_batch_size: int,
     github_pause: int,
 ):
     """This command processes all components listed in the provided `COMPONENT_LIST`
@@ -682,6 +693,7 @@ def component_sync(
         pr_label,
         Component,
         ComponentTemplater,
+        pr_batch_size,
         timedelta(seconds=github_pause),
     )
 
@@ -959,12 +971,22 @@ def package_compile(
     help="Labels to set on the PR. Can be repeated",
 )
 @click.option(
+    "--pr-batch-size",
+    metavar="COUNT",
+    default=10,
+    type=int,
+    show_default=True,
+    help="Number of PRs to create before pausing"
+    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
+)
+@click.option(
     "--github-pause",
     metavar="DURATION",
     default=120,
     type=int,
     show_default=True,
-    help="Duration for which to pause (in seconds) after creating 10 PRs. "
+    help="Duration for which to pause (in seconds) after creating a number PRs "
+    + "(according to --pr-batch-size). "
     + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
 )
 def package_sync(
@@ -975,6 +997,7 @@ def package_sync(
     dry_run: bool,
     pr_branch: str,
     pr_label: Iterable[str],
+    pr_batch_size: int,
     github_pause: int,
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
@@ -1004,6 +1027,7 @@ def package_sync(
         pr_label,
         Package,
         PackageTemplater,
+        pr_batch_size,
         timedelta(seconds=github_pause),
     )
 

@@ -30,6 +30,7 @@ def sync_dependencies(
     pr_label: Iterable[str],
     deptype: Type[Union[Component, Package]],
     templater: Type[Templater],
+    pr_batch_size: int = 10,
     pause: timedelta = timedelta(seconds=120),
 ) -> None:
     if not config.github_token:
@@ -81,14 +82,19 @@ def sync_dependencies(
         create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
         if changed:
             update_count += 1
-        if changed and not dry_run and update_count % 10 == 0 and i < dep_count:
-            # Pause for 2 minutes after we've created 10 PRs, to avoid hitting secondary
-            # rate limits for PR creation. No need to consider dependencies for which
-            # we're not creating a PR. Additionally, never sleep after processing the
-            # last dependency.
+        if (
+            changed
+            and not dry_run
+            and update_count % pr_batch_size == 0
+            and i < dep_count
+        ):
+            # Pause for 2 minutes after we've created `pr_batch_size` (defaults to 10)
+            # PRs, to avoid hitting secondary rate limits for PR creation. No need to
+            # consider dependencies for which we're not creating a PR. Additionally,
+            # never sleep after processing the last dependency.
             click.echo(
-                " > Created or updated 10 PRs, "
-                + f"pausing for {pause}s to avoid secondary rate limits"
+                f" > Created or updated {pr_batch_size} PRs, "
+                + f"pausing for {pause.seconds}s to avoid secondary rate limits."
             )
             time.sleep(pause.seconds)
 
