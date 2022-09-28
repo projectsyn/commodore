@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import json
 
 from pathlib import Path
@@ -505,3 +506,38 @@ class Foo:
 )
 def test_type_name(o: object, expected: str):
     assert dependency_syncer.type_name(o) == expected
+
+
+@pytest.mark.parametrize(
+    "update_count,pr_batch_size,pause_seconds,expected_pause",
+    [
+        (0, 1, 2, False),  # 0 updates, batch size 1, no pause
+        (1, 1, 2, True),  # 1 update, batch size 1, sleep 2
+        (1, 3, 2, False),  # 1 update, batch size 3, no pause
+        (3, 3, 2, True),  # 1 update, batch size 3, sleep 2
+        (5, 3, 2, False),  # 1 update, batch size 3, no pause
+    ],
+)
+def test_maybe_pause(
+    capsys,
+    update_count: int,
+    pr_batch_size: int,
+    pause_seconds: int,
+    expected_pause: bool,
+):
+
+    start = datetime.datetime.now()
+    dependency_syncer._maybe_pause(
+        update_count, pr_batch_size, datetime.timedelta(seconds=pause_seconds)
+    )
+    elapsed = datetime.datetime.now() - start
+
+    captured = capsys.readouterr()
+
+    assert (
+        f"Created or updated {pr_batch_size} PRs, "
+        + f"pausing for {pause_seconds}s to avoid secondary rate limits."
+        in captured.out
+    ) == expected_pause
+
+    assert (elapsed.seconds >= pause_seconds) == expected_pause

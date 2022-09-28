@@ -82,21 +82,24 @@ def sync_dependencies(
         create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
         if changed:
             update_count += 1
-        if (
-            changed
-            and not dry_run
-            and update_count % pr_batch_size == 0
-            and i < dep_count
-        ):
-            # Pause for 2 minutes after we've created `pr_batch_size` (defaults to 10)
-            # PRs, to avoid hitting secondary rate limits for PR creation. No need to
-            # consider dependencies for which we're not creating a PR. Additionally,
-            # never sleep after processing the last dependency.
-            click.echo(
-                f" > Created or updated {pr_batch_size} PRs, "
-                + f"pausing for {pause.seconds}s to avoid secondary rate limits."
-            )
-            time.sleep(pause.seconds)
+        if not dry_run and i < dep_count:
+            # Pause processing to avoid running into GitHub secondary rate limits, if
+            # we're not in dry run mode, and we've not yet processed the last
+            # dependency.
+            _maybe_pause(update_count, pr_batch_size, pause)
+
+
+def _maybe_pause(update_count: int, pr_batch_size: int, pause: timedelta):
+    if update_count > 0 and update_count % pr_batch_size == 0:
+        # Pause for 2 minutes after we've created `pr_batch_size` (defaults to 10)
+        # PRs, to avoid hitting secondary rate limits for PR creation. No need to
+        # consider dependencies for which we're not creating a PR. Additionally,
+        # never sleep after processing the last dependency.
+        click.echo(
+            f" > Created or updated {pr_batch_size} PRs, "
+            + f"pausing for {pause.seconds}s to avoid secondary rate limits."
+        )
+        time.sleep(pause.seconds)
 
 
 def create_or_update_pr(
