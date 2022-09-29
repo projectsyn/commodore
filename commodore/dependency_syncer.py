@@ -79,7 +79,8 @@ def sync_dependencies(
         )
 
         # Create or update PR if there were updates
-        create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run)
+        comment = render_pr_comment(d)
+        create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run, comment)
         if changed:
             update_count += 1
         if not dry_run and i < dep_count:
@@ -87,6 +88,31 @@ def sync_dependencies(
             # we're not in dry run mode, and we've not yet processed the last
             # dependency.
             _maybe_pause(update_count, pr_batch_size, pause)
+
+
+def render_pr_comment(d: Union[Component, Package]):
+    """Render comment to add to PR if there's `.rej` files in the dependency repo after
+    applying the template update."""
+    deptype = type_name(d)
+
+    if not d.repo or not d.repo.working_tree_dir:
+        raise ValueError(f"{deptype} repo not initialized")
+
+    comment = ""
+    rej_files = [
+        fname for fname in d.repo.repo.untracked_files if fname.endswith(".rej")
+    ]
+    if len(rej_files) > 0:
+        comment = (
+            f"{deptype.capitalize()} update was only partially successful. "
+            + "Please check the PR carefully.\n\n"
+            + "Rejected patches:\n\n"
+        )
+        for fname in rej_files:
+            with open(d.repo.working_tree_dir / fname, "r", encoding="utf-8") as f:
+                comment += "```diff\n" + f.read() + "```\n"
+
+    return comment
 
 
 def _maybe_pause(update_count: int, pr_batch_size: int, pause: timedelta):
@@ -110,12 +136,13 @@ def create_or_update_pr(
     pr_branch: str,
     pr_label,
     dry_run: bool,
+    comment: str,
 ):
     if dry_run and changed:
         click.secho(f"Would create or update PR for {dn}", bold=True)
     elif changed:
         ensure_branch(d, pr_branch)
-        msg = ensure_pr(d, dn, gr, pr_branch, pr_label)
+        msg = ensure_pr(d, dn, gr, pr_branch, pr_label, comment)
         click.secho(msg, bold=True)
     else:
         dep_type = type_name(d)
@@ -155,6 +182,7 @@ def ensure_pr(
     gr: Repository,
     branch_name: str,
     pr_labels: Iterable[str],
+    comment: str,
 ) -> str:
     """Create or update template sync PR."""
     deptype = type_name(d)
@@ -182,6 +210,8 @@ def ensure_pr(
             sync_pr = [pr for pr in prs if pr.head.ref == branch_name][0]
             sync_pr.edit(body=pr_body)
         sync_pr.add_to_labels(*list(pr_labels))
+        if comment != "":
+            sync_pr.as_issue().create_comment(comment)
     except github.UnknownObjectException:
         return (
             f"Unable to {cu} PR for {dn}. "

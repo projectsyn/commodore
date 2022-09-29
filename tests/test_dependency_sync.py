@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import difflib
 import json
 
 from pathlib import Path
@@ -204,6 +205,39 @@ def _setup_gh_pr_response(method, pr_body=""):
     )
 
 
+def _setup_gh_pr_comment_responses(body: str):
+    # Add POST response for issue comment
+    with open(
+        DATA_DIR / "projectsyn-package-foo-response-issue-comment.json",
+        encoding="utf-8",
+    ) as f:
+        comment = json.load(f)
+        comment["body"] = body
+    responses.add(
+        responses.POST,
+        "https://api.github.com:443/repos/projectsyn/package-foo/issues/1/comments",
+        json=comment,
+        status=201,
+        match=[
+            API_TOKEN_MATCHER,
+            responses.matchers.json_params_matcher({"body": body}),
+        ],
+    )
+    # Add issue Get response for `pr.as_issue()`
+    with open(
+        DATA_DIR / "projectsyn-package-foo-response-issue.json",
+        encoding="utf-8",
+    ) as f:
+        issue = json.load(f)
+    responses.add(
+        responses.GET,
+        "https://api.github.com:443/repos/projectsyn/package-foo/issues/1",
+        json=issue,
+        status=200,
+        match=[API_TOKEN_MATCHER],
+    )
+
+
 @responses.activate
 @pytest.mark.parametrize("pr_exists", [True, False])
 def test_ensure_pr(tmp_path: Path, config: Config, pr_exists: bool):
@@ -218,7 +252,9 @@ def test_ensure_pr(tmp_path: Path, config: Config, pr_exists: bool):
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", ["template-sync"])
+    msg = dependency_syncer.ensure_pr(
+        p, pname, gr, "template-sync", ["template-sync"], ""
+    )
 
     cu = "update" if pr_exists else "create"
 
@@ -254,7 +290,7 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     gh = github.Github(config.github_token)
     gr = gh.get_repo(pname)
 
-    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [])
+    msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [], "")
 
     cu = "update" if pr_exists else "create"
     assert (
@@ -272,9 +308,31 @@ def test_ensure_pr_no_repo(tmp_path: Path, config: Config):
     gr = None
 
     with pytest.raises(ValueError) as e:
-        dependency_syncer.ensure_pr(p, "foo", gr, "template-sync", [])
+        dependency_syncer.ensure_pr(p, "foo", gr, "template-sync", [], "")
 
     assert str(e.value) == "package repo not initialized"
+
+
+@responses.activate
+def test_ensure_pr_comment(tmp_path: Path, config: Config):
+    _setup_gh_get_responses(False)
+    _setup_gh_pr_response(responses.POST)
+    _setup_gh_pr_comment_responses("Test comment 123")
+    _setup_package_remote("foo", tmp_path / "foo.git")
+    config.github_token = "ghp_fake-token"
+    p = Package.clone(config, f"file://{tmp_path}/foo.git", "foo")
+    pname = "projectsyn/package-foo"
+    dependency_syncer.ensure_branch(p, "template-sync")
+
+    gh = github.Github(config.github_token)
+    gr = gh.get_repo(pname)
+
+    msg = dependency_syncer.ensure_pr(
+        p, pname, gr, "template-sync", ["template-sync"], "Test comment 123"
+    )
+
+    assert msg == "PR for package projectsyn/package-foo successfully created"
+    assert len(responses.calls) == 6
 
 
 @pytest.mark.parametrize(
@@ -560,3 +618,40 @@ def test_maybe_pause(
     ) == expected_pause
 
     assert (elapsed.seconds >= pause_seconds) == expected_pause
+
+
+def test_render_pr_comment(tmp_path: Path, config: Config):
+    _setup_package_remote("test", tmp_path / "upstream")
+    p = Package.clone(config, f"file://{tmp_path}/upstream", "test")
+
+    with open(p.repo.working_tree_dir / "foo.txt.rej", "w", encoding="utf-8") as f:
+        f.writelines(
+            difflib.unified_diff(
+                [f"{c}\n" for c in "aaabaaa"],
+                [f"{c}\n" for c in "aaacaaa"],
+                fromfile="a/foo.txt",
+                tofile="b/foo.txt",
+            )
+        )
+
+    c = dependency_syncer.render_pr_comment(p)
+    assert len(c) > 0
+    assert (
+        c
+        == "Package update was only partially successful. "
+        + "Please check the PR carefully.\n\n"
+        + "Rejected patches:\n\n"
+        + "```diff\n"
+        + "--- a/foo.txt\n"
+        + "+++ b/foo.txt\n"
+        + "@@ -1,7 +1,7 @@\n"
+        + " a\n"
+        + " a\n"
+        + " a\n"
+        + "-b\n"
+        + "+c\n"
+        + " a\n"
+        + " a\n"
+        + " a\n"
+        + "```\n"
+    )
