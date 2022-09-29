@@ -487,6 +487,9 @@ def component_update(
     template which was originally used to create it, if the template version is given as
     a Git branch.
 
+    The command will never commit `.rej` or `.orig` files which result from template
+    updates which couldn't be applied cleanly.
+
     The command can also add or remove component features, based on the provided command
     line options.
     """
@@ -856,6 +859,16 @@ def package_update(
     remove_test_case: Iterable[str],
     commit: bool,
 ):
+    """This command updates the package at PACKAGE_PATH to the latest version of the
+    template which was originally used to create it, if the template version is given as
+    a Git branch.
+
+    The command will never commit `.rej` or `.orig` files which result from template
+    updates which couldn't be applied cleanly.
+
+    The command can also add or remove package features, based on the provided command
+    line options.
+    """
     config.update_verbosity(verbose)
     t = PackageTemplater.from_existing(config, Path(package_path))
 
