@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import os
+
+import click
 import pytest
 import shutil
 import yaml
@@ -838,6 +840,54 @@ def test_component_update_ignore_template_commit_id(
     assert changed == (not ignore_template_commit)
     assert (r.head.commit == head) == ignore_template_commit
     assert r.is_dirty() == ignore_template_commit
+
+
+@pytest.mark.parametrize(
+    "files,expected,committed",
+    [
+        ([], 0, []),
+        (["foo.txt"], 0, ["foo.txt"]),
+        (["foo.txt", "foo.txt.rej"], 1, ["foo.txt"]),
+        (["foo.txt", "foo.txt.orig"], 1, ["foo.txt"]),
+        (["foo.txt", "foo.txt.rej", "foo.txt.orig"], 2, ["foo.txt"]),
+    ],
+)
+def test_component_diff_commit_ignore_orig_rej_files(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    config: Config,
+    files: list[str],
+    expected: int,
+    committed: list[str],
+):
+    component_name = "test-component"
+    component_path = tmp_path / "dependencies" / component_name
+    call_component_new(tmp_path, cli_runner, component_name)
+    for f in files:
+        (component_path / f).touch()
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+    r = Repo(component_path)
+
+    diff, changed = t.diff()
+
+    # Assumption: when we provide files, we always provide one file which gets committed
+    assert changed == (len(files) > 0)
+    if len(files) == 0:
+        assert diff == ""
+    else:
+        difflines = diff.split("\n")
+        assert len(difflines) == len(committed)
+        for f in committed:
+            assert click.style(f"Added file {f}", fg="green") in difflines
+
+    t.commit("Update")
+
+    assert not r.is_dirty()
+    assert len(r.untracked_files) == expected
+    assert set(r.untracked_files) == set(
+        f for f in files if f.endswith("rej") or f.endswith("orig")
+    )
 
 
 @pytest.mark.parametrize(
