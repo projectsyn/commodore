@@ -1,0 +1,99 @@
+{
+  "url": "https://api.github.com/repos/projectsyn/package-foo/issues/1",
+  "repository_url": "https://api.github.com/repos/projectsyn/package-foo",
+  "labels_url": "https://api.github.com/repos/projectsyn/package-foo/issues/1/labels{/name}",
+  "comments_url": "https://api.github.com/repos/projectsyn/package-foo/issues/1/comments",
+  "events_url": "https://api.github.com/repos/projectsyn/package-foo/issues/1/events",
+  "html_url": "https://github.com/projectsyn/package-foo/pull/1",
+  "id": 1331860795,
+  "node_id": "PR_kwDOHyWSm8480Enh",
+  "number": 1,
+  "title": "Update from package template",
+  "user": {
+    "login": "simu",
+    "id": 393160,
+    "node_id": "MDQ6VXNlcjM5MzE2MA==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/393160?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/simu",
+    "html_url": "https://github.com/simu",
+    "followers_url": "https://api.github.com/users/simu/followers",
+    "following_url": "https://api.github.com/users/simu/following{/other_user}",
+    "gists_url": "https://api.github.com/users/simu/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/simu/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/simu/subscriptions",
+    "organizations_url": "https://api.github.com/users/simu/orgs",
+    "repos_url": "https://api.github.com/users/simu/repos",
+    "events_url": "https://api.github.com/users/simu/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/simu/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "labels": [
+    {
+      "id": 4405886391,
+      "node_id": "LA_kwDOHyWSm88AAAABBpx9tw",
+      "url": "https://api.github.com/repos/projectsyn/package-foo/labels/template-sync",
+      "name": "template-sync",
+      "color": "ededed",
+      "default": false,
+      "description": null
+    },
+    {
+      "id": 4409686608,
+      "node_id": "LA_kwDOHyWSm88AAAABBtZ6UA",
+      "url": "https://api.github.com/repos/projectsyn/package-foo/labels/foo",
+      "name": "foo",
+      "color": "ededed",
+      "default": false,
+      "description": null
+    },
+    {
+      "id": 4409686609,
+      "node_id": "LA_kwDOHyWSm88AAAABBtZ6UQ",
+      "url": "https://api.github.com/repos/projectsyn/package-foo/labels/bar",
+      "name": "bar",
+      "color": "ededed",
+      "default": false,
+      "description": null
+    }
+  ],
+  "state": "open",
+  "locked": false,
+  "assignee": null,
+  "assignees": [
+
+  ],
+  "milestone": null,
+  "comments": 1,
+  "created_at": "2022-08-08T13:16:28Z",
+  "updated_at": "2022-09-29T07:56:56Z",
+  "closed_at": null,
+  "author_association": "OWNER",
+  "active_lock_reason": null,
+  "draft": false,
+  "pull_request": {
+    "url": "https://api.github.com/repos/projectsyn/package-foo/pulls/1",
+    "html_url": "https://github.com/projectsyn/package-foo/pull/1",
+    "diff_url": "https://github.com/projectsyn/package-foo/pull/1.diff",
+    "patch_url": "https://github.com/projectsyn/package-foo/pull/1.patch",
+    "merged_at": null
+  },
+  "body": "Template version: main (cc39fb4)",
+  "closed_by": null,
+  "reactions": {
+    "url": "https://api.github.com/repos/projectsyn/package-foo/issues/1/reactions",
+    "total_count": 0,
+    "+1": 0,
+    "-1": 0,
+    "laugh": 0,
+    "hooray": 0,
+    "confused": 0,
+    "heart": 0,
+    "rocket": 0,
+    "eyes": 0
+  },
+  "timeline_url": "https://api.github.com/repos/projectsyn/package-foo/issues/1/timeline",
+  "performed_via_github_app": null,
+  "state_reason": null
+}
