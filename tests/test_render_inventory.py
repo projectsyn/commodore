@@ -7,7 +7,7 @@ import git
 from commodore.cluster import update_target
 from commodore.component import Component
 from commodore.config import Config
-from commodore.dependency_mgmt import create_component_symlinks
+from commodore.dependency_mgmt import create_component_symlinks, create_alias_symlinks
 from commodore.helpers import kapitan_inventory, yaml_dump, yaml_load
 
 from conftest import MockMultiDependency
@@ -28,7 +28,10 @@ def _setup(tmp_path: Path):
     os.makedirs(tmp_path / "dependencies" / "test")
     cdep = MockMultiDependency(git.Repo.init(tmp_path / "repo.git"))
     c = Component("test", cdep, work_dir=tmp_path)
+    c.register_alias("test-1", "master")
     os.makedirs(c.class_file.parent)
+    # Create alias checkout by symlinking component directory
+    os.symlink(c.target_directory, c.alias_directory("test-1"))
 
     yaml_dump(
         {
@@ -74,6 +77,7 @@ def _setup(tmp_path: Path):
     cfg.register_component(c)
     create_component_symlinks(cfg, c)
     cfg.register_component_aliases({"test-1": "test"})
+    create_alias_symlinks(cfg, c, "test-1")
 
     for alias, component in cfg.get_component_aliases().items():
         update_target(cfg, alias, component=component)

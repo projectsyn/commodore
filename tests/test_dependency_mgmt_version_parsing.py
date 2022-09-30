@@ -23,7 +23,9 @@ from commodore.dependency_mgmt import version_parsing
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    cspecs = version_parsing._read_components(config, ["test-component"])
+    cspecs = version_parsing._read_components(
+        config, {"test-component": "test-component"}
+    )
 
     # check that exactly 'test-component' is discovered
     assert {"test-component"} == set(cspecs.keys())
@@ -34,7 +36,7 @@ def test_read_components(patch_inventory, config: Config):
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components_multiple(patch_inventory, config: Config):
     components = _setup_mock_inventory(patch_inventory)
-    cspecs = version_parsing._read_components(config, components.keys())
+    cspecs = version_parsing._read_components(config, {k: k for k in components.keys()})
     # check that exactly 'test-component' is discovered
     assert set(components.keys()) == set(cspecs.keys())
     assert all(components[cn]["url"] == cspecs[cn].url for cn in components.keys())
@@ -80,7 +82,7 @@ def test_read_components_exc(
     }
 
     with pytest.raises(click.ClickException) as exc_info:
-        _ = version_parsing._read_components(config, ckeys)
+        _ = version_parsing._read_components(config, {k: k for k in ckeys})
 
     assert exc_info.value.args[0] == exctext
 

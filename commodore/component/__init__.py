@@ -19,6 +19,8 @@ class Component:
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
+    _aliases: dict[str, str]
+    _work_dir: Optional[P]
 
     @classmethod
     def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
@@ -57,6 +59,8 @@ class Component:
         self.version = version
         self._sub_path = sub_path
         self._repo = None
+        self._aliases = {self.name: self.version or ""}
+        self._work_dir = work_dir
 
     @property
     def name(self) -> str:
@@ -123,8 +127,12 @@ class Component:
         return self._dir
 
     @property
+    def sub_path(self) -> str:
+        return self._sub_path
+
+    @property
     def target_directory(self) -> P:
-        return self._dir / self._sub_path
+        return self.alias_directory(self.name)
 
     @property
     def target_dir(self) -> P:
@@ -132,11 +140,26 @@ class Component:
 
     @property
     def class_file(self) -> P:
-        return self.target_directory / "class" / f"{self.name}.yml"
+        return self.alias_class_file(self.name)
 
     @property
     def defaults_file(self) -> P:
-        return self.target_directory / "class" / "defaults.yml"
+        return self.alias_defaults_file(self.name)
+
+    def alias_directory(self, alias: str) -> P:
+        apath = self._dependency.get_component(alias)
+        if not apath:
+            raise ValueError(f"unknown alias {alias} for component {self.name}")
+        return apath / self._sub_path
+
+    def alias_class_file(self, alias: str) -> P:
+        return self.alias_directory(alias) / "class" / f"{self.name}.yml"
+
+    def alias_defaults_file(self, alias: str) -> P:
+        return self.alias_directory(alias) / "class" / "defaults.yml"
+
+    def has_alias(self, alias: str):
+        return alias in self._aliases
 
     @property
     def lib_files(self) -> Iterable[P]:
@@ -170,6 +193,26 @@ class Component:
                 f"Dependency for component {self._name} hasn't been initialized"
             )
         self._dependency.checkout_component(self.name, self.version)
+
+    def register_alias(self, alias: str, version: str):
+        if not self._work_dir:
+            raise ValueError(
+                f"Can't register alias on component {self.name} "
+                + "which isn't configured with a working directory"
+            )
+        if alias in self._aliases:
+            raise ValueError(
+                f"alias {alias} already registered on component {self.name}"
+            )
+        self._aliases[alias] = version
+        self._dependency.register_component(alias, component_dir(self._work_dir, alias))
+
+    def checkout_alias(self, alias: str):
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} is not registered on component {self.name}"
+            )
+        self._dependency.checkout_component(alias, self._aliases[alias])
 
     def render_jsonnetfile_json(self, component_params):
         """

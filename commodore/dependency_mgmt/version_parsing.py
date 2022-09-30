@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import Optional
 
 from enum import Enum
 
@@ -33,18 +34,31 @@ class DependencySpec:
     path: str
 
     @classmethod
-    def parse(cls, info: dict[str, str]) -> DependencySpec:
-        if "url" not in info:
+    def parse(
+        cls,
+        info: dict[str, str],
+        base_config: Optional[DependencySpec] = None,
+    ) -> DependencySpec:
+        if "url" not in info and not base_config:
             raise DependencyParseError("url")
 
-        if "version" not in info:
+        if "version" not in info and not base_config:
             raise DependencyParseError("version")
 
         path = info.get("path", "")
         if path.startswith("/"):
             path = path[1:]
 
-        return DependencySpec(info["url"], info["version"], path)
+        if base_config:
+            url = info.get("url", base_config.url)
+            version = info.get("version", base_config.version)
+            if path not in info:
+                path = base_config.path
+        else:
+            url = info["url"]
+            version = info["version"]
+
+        return DependencySpec(url, version, path)
 
 
 def _read_versions(
@@ -53,6 +67,8 @@ def _read_versions(
     dependency_names: Iterable[str],
     require_key: bool = True,
     ignore_class_notfound: bool = False,
+    aliases: dict[str, str] = {},
+    fallback: dict[str, DependencySpec] = {},
 ) -> dict[str, DependencySpec]:
     deps_key = dependency_type.value
     deptype_str = dependency_type.name.lower()
@@ -71,15 +87,26 @@ def _read_versions(
         # just set deps to the empty dict.
         deps = {}
 
+    if aliases:
+        all_dep_keys = set(aliases.keys())
+    else:
+        all_dep_keys = deps.keys()
     for depname in dependency_names:
-        if depname not in deps:
+        if depname not in all_dep_keys:
             raise click.ClickException(
                 f"Unknown {deptype_str} '{depname}'."
                 + f" Please add it to 'parameters.{deps_key}'"
             )
 
         try:
-            dep = DependencySpec.parse(deps[depname])
+            basename_for_dep = aliases.get(depname, depname)
+            print(depname, basename_for_dep)
+            print(deps.get(depname, {}))
+            print(fallback.get(basename_for_dep))
+            dep = DependencySpec.parse(
+                deps.get(depname, {}),
+                base_config=fallback.get(basename_for_dep),
+            )
         except DependencyParseError as e:
             raise click.ClickException(
                 f"{deptype_cap} '{depname}' is missing field '{e.field}'"
@@ -96,9 +123,26 @@ def _read_versions(
 
 
 def _read_components(
-    cfg: Config, component_names: Iterable[str]
+    cfg: Config, component_aliases: dict[str, str]
 ) -> dict[str, DependencySpec]:
-    return _read_versions(cfg, DepType.COMPONENT, component_names)
+    component_names = set(component_aliases.values())
+    alias_names = set(component_aliases.keys()) - component_names
+
+    component_versions = _read_versions(cfg, DepType.COMPONENT, component_names)
+    alias_versions = _read_versions(
+        cfg,
+        DepType.COMPONENT,
+        alias_names,
+        aliases=component_aliases,
+        fallback=component_versions,
+    )
+
+    for alias, aspec in alias_versions.items():
+        if alias in component_versions:
+            raise ValueError("alias name already in component_versions?")
+        component_versions[alias] = aspec
+
+    return component_versions
 
 
 def _read_packages(

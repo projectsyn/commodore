@@ -80,15 +80,12 @@ class Inventory:
     def package_dir(self, pkgname: str) -> P:
         return self.classes_dir / pkgname
 
-    # pylint: disable=unsubscriptable-object
     def component_file(self, component: Union[Component, str]) -> P:
         return self.components_dir / f"{_component_name(component)}.yml"
 
-    # pylint: disable=unsubscriptable-object
     def defaults_file(self, component: Union[Component, str]) -> P:
         return self.defaults_dir / f"{_component_name(component)}.yml"
 
-    # pylint: disable=unsubscriptable-object
     def target_file(self, target: Union[Component, str]) -> P:
         return self.targets_dir / f"{_component_name(target)}.yml"
 
@@ -101,7 +98,6 @@ class Inventory:
         makedirs(self.targets_dir, exist_ok=True)
 
 
-# pylint: disable=unsubscriptable-object
 def _component_name(component: Union[Component, str]) -> str:
     if isinstance(component, Component):
         return component.name

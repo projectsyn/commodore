@@ -124,8 +124,8 @@ def jsonnet_runner(
     write_jsonnet_output(output_dir, output)
 
 
-def _filter_file(component: Component, filterpath: str) -> P:
-    return component.target_directory / filterpath
+def _filter_file(component: Component, instance: str, filterpath: str) -> P:
+    return component.alias_directory(instance) / filterpath
 
 
 def run_jsonnet_filter(
@@ -141,7 +141,7 @@ def run_jsonnet_filter(
     Run user-supplied jsonnet as postprocessing filter. This is the original
     way of doing postprocessing filters.
     """
-    filterfile = _filter_file(component, filterid)
+    filterfile = _filter_file(component, instance, filterid)
     # pylint: disable=c-extension-no-member
     jsonnet_runner(
         config.work_dir,
@@ -157,6 +157,6 @@ def run_jsonnet_filter(
 
 # pylint: disable=unused-argument
 def validate_jsonnet_filter(config: Config, c: Component, instance: str, fd: dict):
-    filterfile = _filter_file(c, fd["filter"])
+    filterfile = _filter_file(c, instance, fd["filter"])
     if not filterfile.is_file():
         raise ValueError("Jsonnet filter definition does not exist")
