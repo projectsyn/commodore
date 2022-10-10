@@ -6,7 +6,7 @@ This class is created by Commodore in file `inventory/classes/params/cluster.yml
 
 The class is included in each Kapitan target with the lowest precedence of all classes.
 
-== Parameters
+== Global parameters
 
 === `cluster`
 
@@ -68,3 +68,21 @@ parameters:
 ----
 <1> The parameter is overwritten using dynamic facts in the Project Syn installation's global configuration repository.
 ====
+
+== Component-specific parameters
+
+Commodore adds some "meta-parameters" to each component's Kapitan target.
+These are provided to simplify component configurations.
+
+Commodore provides the following component-specific top-level parameters
+
+=== `_base_directory`
+
+This parameter provides the absolute path to the component's base directory.
+This parameter is intended for component authors to use in `kapitan.compile` and `kapitan.dependencies` entries when referencing files in the component directory.
+
+=== `_kustomize_wrapper`
+
+This parameter provides the absolute path to the Kustomize wrapper script bundled with Commodore.
+This parameter is intended for component authors to use to call Kustomize in components.
+See the xref:syn:ROOT:explanations/commodore-components/kustomizations.adoc[Kustomization best practices] for more details.
