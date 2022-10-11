@@ -6,6 +6,7 @@ from typing import Any, Optional, Union
 
 import click
 
+from . import __kustomize_wrapper__
 from .helpers import (
     lieutenant_query,
     yaml_dump,
@@ -160,6 +161,7 @@ def render_target(
     }
     if not bootstrap:
         parameters["_base_directory"] = str(components[component].target_directory)
+        parameters["_kustomize_wrapper"] = str(__kustomize_wrapper__)
 
     for c in components:
         if inv.defaults_file(c).is_file():

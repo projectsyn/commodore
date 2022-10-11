@@ -13,6 +13,7 @@ packages = [
 include = [
     "commodore/lib/commodore.libjsonnet",
     "commodore/filters/helm_namespace.jsonnet",
+    "commodore/scripts/run-kustomize",
 ]
 
 [tool.poetry.dependencies]

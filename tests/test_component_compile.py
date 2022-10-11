@@ -28,7 +28,7 @@ def _prepare_component(
     cli_runner: RunnerFunc,
     component_name: str = "test-component",
     subpath: str = "",
-):
+) -> P:
     if not subpath:
         call_component_new(tmp_path, cli_runner, lib="--lib")
         component_root = tmp_path / "dependencies" / component_name
@@ -317,3 +317,100 @@ def test_component_compile_no_repo(tmp_path: P, cli_runner: RunnerFunc):
         target = yaml.safe_load(file)
         assert target["kind"] == "ServiceAccount"
         assert target["metadata"]["namespace"] == "syn-test-component"
+
+
+def test_component_compile_kustomize(tmp_path: P, cli_runner: RunnerFunc):
+    component_name = "test-component"
+    component_path = _prepare_component(tmp_path, cli_runner, component_name)
+
+    with open(
+        component_path / "component" / "kustomization.jsonnet", "w", encoding="utf-8"
+    ) as f:
+        f.write(
+            """
+local com = import 'lib/commodore.libjsonnet';
+
+com.Kustomization(
+  'https://github.com/appuio/appuio-cloud-agent//config/default',
+  'v0.5.0',
+  {
+    'ghcr.io/appuio/appuio-cloud-agent': {
+      newTag: 'v0.5.0',
+      newName: 'ghcr.io/appuio/appuio-cloud-agent',
+    },
+  },
+  {
+    namespace: 'foo',
+  }
+)"""
+        )
+    with open(
+        component_path / "class" / f"{component_name}.yml", "r", encoding="utf-8"
+    ) as cyaml:
+        component_yaml = yaml.safe_load(cyaml)
+
+    component_yaml["parameters"]["kapitan"]["compile"].extend(
+        [
+            {
+                "input_type": "jsonnet",
+                "input_paths": ["${_base_directory}/component/kustomization.jsonnet"],
+                "output_path": "${_base_directory}/kust/",
+            },
+            {
+                "input_type": "external",
+                "input_paths": ["${_kustomize_wrapper}"],
+                "output_path": ".",
+                "env_vars": {
+                    "INPUT_DIR": "${_base_directory}/kust",
+                },
+                "args": [
+                    "\\${compiled_target_dir}/${_instance}/",
+                ],
+            },
+        ]
+    )
+
+    with open(
+        component_path / "class" / f"{component_name}.yml", "w", encoding="utf-8"
+    ) as cyaml:
+        yaml.safe_dump(component_yaml, cyaml)
+
+    exit_status = call(
+        _cli_command_string(tmp_path, component_name),
+        shell=True,
+    )
+
+    assert exit_status == 0
+
+    kustomization = component_path / "kust" / "kustomization.yaml"
+    assert kustomization.is_file()
+    with open(kustomization, "r", encoding="utf-8") as f:
+        kustomization_yaml = yaml.safe_load(f)
+        assert set(kustomization_yaml.keys()) == {"images", "namespace", "resources"}
+        assert kustomization_yaml["namespace"] == "foo"
+        assert len(kustomization_yaml["resources"]) == 1
+        assert (
+            kustomization_yaml["resources"][0]
+            == "https://github.com/appuio/appuio-cloud-agent//config/default?ref=v0.5.0"
+        )
+        assert len(kustomization_yaml["images"]) == 1
+        assert kustomization_yaml["images"][0] == {
+            "name": "ghcr.io/appuio/appuio-cloud-agent",
+            "newName": "ghcr.io/appuio/appuio-cloud-agent",
+            "newTag": "v0.5.0",
+        }
+
+    rendered_manifests = (
+        tmp_path / "testdir" / "compiled" / component_name / component_name
+    )
+    assert rendered_manifests.is_dir()
+    with open(
+        rendered_manifests / "apps_v1_deployment_appuio-cloud-agent.yaml",
+        "r",
+        encoding="utf-8",
+    ) as f:
+        deploy = yaml.safe_load(f)
+        assert deploy["kind"] == "Deployment"
+        assert deploy["metadata"]["namespace"] == "foo"
+        container = deploy["spec"]["template"]["spec"]["containers"][0]
+        assert container["image"] == "ghcr.io/appuio/appuio-cloud-agent:v0.5.0"

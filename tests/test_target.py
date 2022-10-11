@@ -9,7 +9,7 @@ import pytest
 from pathlib import Path as P
 from textwrap import dedent
 
-from commodore import cluster
+from commodore import cluster, __kustomize_wrapper__
 from commodore.inventory import Inventory
 from commodore.config import Config
 
@@ -58,7 +58,6 @@ def test_render_bootstrap_target(tmp_path: P):
         "global.commodore",
     ]
     assert target != ""
-    print(target)
     assert len(target["classes"]) == len(
         classes
     ), "rendered target includes different amount of classes"
@@ -66,6 +65,7 @@ def test_render_bootstrap_target(tmp_path: P):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["_instance"] == "cluster"
     assert "_base_directory" not in target["parameters"]
+    assert "_kustomize_wrapper" not in target["parameters"]
 
 
 def test_render_target(tmp_path: P):
@@ -89,7 +89,6 @@ def test_render_target(tmp_path: P):
         "components.foo",
     ]
     assert target != ""
-    print(target)
     assert len(target["classes"]) == len(
         classes
     ), "rendered target includes different amount of classes"
@@ -98,6 +97,7 @@ def test_render_target(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo"
     assert target["parameters"]["_instance"] == "foo"
     assert target["parameters"]["_base_directory"] == str(tmp_path / "foo")
+    assert target["parameters"]["_kustomize_wrapper"] == str(__kustomize_wrapper__)
 
 
 def test_render_aliased_target(tmp_path: P):
