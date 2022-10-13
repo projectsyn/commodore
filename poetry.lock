@@ -909,8 +909,8 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "PyGithub"
-version = "1.55"
+name = "pygithub"
+version = "1.56"
 description = "Use the full Github API v3"
 category = "main"
 optional = false
@@ -1460,7 +1460,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "8d8e9b3b6e495db43b02d255a9247f5c0fe645b84c30b0c919204844f5cbb512"
+content-hash = "f73a549a6a8b60df27c7942a41720b1ebb18af2b14868f35afb61ea81039009b"
 
 [metadata.files]
 addict = [
@@ -2023,9 +2023,9 @@ pyfakefs = [
     {file = "pyfakefs-5.0.0-py3-none-any.whl", hash = "sha256:e1b01954978fe2d9a4d75f079359d7f8d3af3bb12ff2dc8633a4cc0a0dc7fbda"},
     {file = "pyfakefs-5.0.0.tar.gz", hash = "sha256:19d1d8f1ee520891d78b6ed05c2078e0792d545f83dee33461fbaa5cc72e187d"},
 ]
-PyGithub = [
-    {file = "PyGithub-1.55-py3-none-any.whl", hash = "sha256:2caf0054ea079b71e539741ae56c5a95e073b81fa472ce222e81667381b9601b"},
-    {file = "PyGithub-1.55.tar.gz", hash = "sha256:1bbfff9372047ff3f21d5cd8e07720f3dbfdaf6462fcaed9d815f528f1ba7283"},
+pygithub = [
+    {file = "PyGithub-1.56-py3-none-any.whl", hash = "sha256:d15f13d82165306da8a68aefc0f848a6f6432d5febbff13b60a94758ce3ef8b5"},
+    {file = "PyGithub-1.56.tar.gz", hash = "sha256:80c6d85cf0f9418ffeb840fd105840af694c4f17e102970badbaf678251f2a01"},
 ]
 PyJWT = [
     {file = "PyJWT-2.1.0-py3-none-any.whl", hash = "sha256:934d73fbba91b0483d3857d1aff50e96b2a892384ee2c17417ed3203f173fca1"},

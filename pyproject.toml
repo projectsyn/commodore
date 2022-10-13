@@ -40,7 +40,7 @@ typer = "0.6.1"
 oauthlib = "3.1.1"
 # Kapitan requires exactly 2.1.0
 pyjwt = "2.1.0"
-PyGithub = "1.55"
+PyGithub = "1.56"
 
 [tool.poetry.dev-dependencies]
 tox = "3.26.0"
