@@ -1,0 +1,59 @@
+= Add a component to a cluster in local mode
+
+[abstract]
+This how-to describes the steps required to add a component (new or existing) to a cluster in local mode.
+
+== Add an existing component to a cluster in local mode
+
+To add an existing component to a cluster in local mode for testing purposes, the following steps can be used.
+This example uses the https://github.com/projectsyn/component-nfs-subdir-external-provisioner/[nfs-subdir-external-provisioner] component.
+
+. Create a working directory for the cluster
++
+TIP: You can skip this step if you've already got a working directory in which you can run `commodore catalog compile --local` for the cluster you're targeting.
++
+[source,bash]
+----
+mkdir /path/to/working/directory
+
+commodore catalog compile <cluster-id>
+----
+
+. Clone the component, if it's not present in `dependencies/`
++
+[source,bash]
+--
+COMPONENT_NAME=nfs-subdir-external-provisioner
+test -d dependencies/${COMPONENT_NAME} || \
+git clone https://github.com/projectsyn/component-${COMPONENT_NAME}.git \
+    dependencies/${COMPONENT_NAME}
+--
+
+. Add the component to the cluster, by adding it in the `applications` array in the cluster config:
++
+[source,yaml]
+--
+applications:
+  - nfs-subdir-external-provisioner
+--
+
+. Run Commodore in local mode with dependency fetching enabled
++
+[source,bash]
+--
+commodore catalog compile <cluster-id> --local
+--
+
+. Now you can configure the component and test changes with dependency fetching disabled
++
+[source,bash]
+--
+commodore catalog compile <cluster-id> --local --no-fetch-dependencies
+--
+
+== Testing a new component in local mode
+
+Commodore's `component new` command won't insert the component into the current cluster configuration.
+
+To test a new component in local mode, you need to explicitly add the component to the cluster by following the steps in <<_add_an_existing_component_to_a_cluster_in_local_mode,the previous section>>.
+You can omit the second step of the previous section, if you've created the component in the target cluster's working directory with `component new`, as that command will initialize the component repo in `dependencies/` by default.
