@@ -1,1 +1,1 @@
-
+* xref:commodore:ROOT:how-to/local-mode-component.adoc[]

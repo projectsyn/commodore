@@ -9,7 +9,7 @@ See xref:running-commodore.adoc[Running Commodore] for a guide to get your local
 Commodore provides a local mode for the `catalog compile` command.
 Local mode can be enabled with the `--local` flag.
 
-Local mode is intended for local development, and won't fetch information from the SYNventory API or clone Git repositories for the inventory and components.
+Local mode is intended for local development, and won't fetch information from Lieutenant or clone Git repositories for the inventory and components.
 However, by default Commodore will fetch Jsonnet dependencies in local mode (using jsonnet-bundler) and will configure Kapitan to fetch dependencies.
 This dependency fetching can be disabled with the `--no-fetch-dependencies` command line flag.
 
@@ -36,48 +36,5 @@ commodore catalog compile <cluster-id>
 ====
 Local mode will perform component discovery and will create Kapitan targets for discovered components.
 However, Commodore will only create targets for components which are present in `dependencies/`.
-See <<_add_existing_component_to_a_cluster_in_local_mode,the next section>> for a set of steps to add existing components to a cluster in local mode.
+See the xref:how-to/local-mode-component.adoc[how-to on adding a component to a cluster in local mode] for detailed steps to add new or existing components to a cluster in local mode.
 ====
-
-== Add existing component to a cluster in local mode
-
-To add an existing component to a cluster in local mode for testing purposes, the following steps can be used.
-This example uses the https://github.com/projectsyn/component-nfs-subdir-external-provisioner/[nfs-subdir-external-provisioner] component.
-
-. Clone the component, if it's not present in `dependencies/`
-+
-[source,bash]
---
-COMPONENT_NAME=nfs-subdir-external-provisioner
-test -d dependencies/${COMPONENT_NAME} || \
-git clone https://github.com/projectsyn/component-${COMPONENT_NAME}.git \
-    dependencies/${COMPONENT_NAME}
---
-
-. Add the component to the cluster, by adding it in the `applications` array in the cluster config:
-+
-[source,yaml]
---
-applications:
-  - nfs-subdir-external-provisioner
---
-
-. Run Commodore in local mode with dependency fetching enabled
-+
-[source,bash]
---
-commodore catalog compile <cluster-id> --local
---
-
-. Now you can configure the component and test changes with dependency fetching disabled
-+
-[source,bash]
---
-commodore catalog compile <cluster-id> --local --no-fetch-dependencies
---
-
-== Testing a new component in local mode
-
-Commodore's `component new` command won't insert the component into the current cluster configuration.
-In order to test a new component in local mode, you need to explicitly add the component to the cluster by following the steps in <<_add_existing_component_to_a_cluster_in_local_mode,the previous section>>.
-Note that you can omit step 1 of the previous section, as `component new` will ensure that the component repo is initialized in `dependencies/`.
