@@ -67,6 +67,11 @@ def _lint_file(cfg: Config, file: Path, lintfunc: LintFunc) -> int:
                 click.echo(
                     f"> Skipping file {file}: Expected top-level dictionary in YAML document"
                 )
+        elif not isinstance(filecontents[0].get("parameters", {}), dict):
+            if cfg.debug:
+                click.echo(
+                    f"> Skipping file {file}: Expected key 'parameters' to be a dict"
+                )
         else:
             errcount = lintfunc(file, filecontents[0])
 
