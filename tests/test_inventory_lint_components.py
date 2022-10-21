@@ -103,6 +103,7 @@ SKIP_FILECONTENTS = [
     ("\tTest", "Unable to load as YAML"),
     ([{"a": 1}, {"b": 2}], "Linting multi-document YAML streams is not supported"),
     ([[1, 2, 3]], "Expected top-level dictionary in YAML document"),
+    ([{"parameters": ["foo", "bar"]}], "Expected key 'parameters' to be a dict"),
 ]
 
 
@@ -201,6 +202,7 @@ def _setup_directory(tmp_path: Path):
         tmp_path / "d3" / "tab.txt",
         tmp_path / "d3" / "stream.yaml",
         tmp_path / "d3" / "top-level.yaml",
+        tmp_path / "test6.yml",
     ]
     assert len(skip_direntries) == len(SKIP_FILECONTENTS)
 
