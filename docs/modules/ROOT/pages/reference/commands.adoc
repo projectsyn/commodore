@@ -165,6 +165,18 @@ The command takes zero or more paths to files or directories to lint as command 
 It silently skips files which aren't valid YAML, as well as empty files and files containing multi-document YAML streams.
 All other files are assumed to be Commodore inventory classes.
 
+Individual files or whole directory trees can be ignored by providing glob patterns.
+Glob patterns can be provided in command line argument `--ignore-patterns` or in `.commodoreignore` in the provided path.
+Patterns provided in `--ignore-patterns` are applied in each target path.
+In contrast, `.commodoreignore` files are only applied to the target path in which they're saved.
+
+The provided patterns are expanded recursively using Python's `glob` library.
+You can use `*`, `?`, and character ranges expressed as `[]` with the usual semantics of shell globbing.
+Additionally, you can use `**` to indicate an arbitrary amount of subdirectories.
+Patterns which start with `/` are treated as anchored in the target path.
+All other patterns are treated as matching any subpath in the target path.
+
+
 When linting directories, any hidden files (prefixed with a dot) are ignored.
 Directories are linted recursively and the same skipping logic as for individual files is applied.
 
