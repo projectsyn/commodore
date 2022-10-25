@@ -264,3 +264,70 @@ def test_lint_components_directory(tmp_path: Path, config: Config, capsys):
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)
+
+
+@pytest.mark.parametrize(
+    "ignore_patterns,file_paths,expected_errcount",
+    [
+        (("test.yml",), ["test.yml"], 0),
+        (("test.yml",), ["test.yml", "a/test.yml"], 0),
+        (("test.yml",), ["test.yml", "a/b/c/test.yml"], 0),
+        (("/test.yml",), ["test.yml", "a/test.yml"], 2),  # shouldn't match `a/test.yml`
+        (("/*.yml",), ["test.yml", "foo.yml"], 0),
+        (("/*.yml",), ["test.yml", "foo.yaml"], 2),  # shouldn't match `foo.yaml`
+        (
+            ("/tes?.yml",),
+            ["test.yml", "tesu.yml", "fest.yml"],
+            2,
+        ),  # shouldn't match `fest.yml`
+        (("[t-z]*",), ["test.yml", "uuu"], 0),
+        (("[t-z]*",), ["test.yml", "uuu", "fest.yml"], 2),  # shouldn't match `fest.yml`
+        (
+            ("/manifests",),
+            ["test.yml", "manifests/foo.yml", "manifests/bar.yml"],
+            2,
+        ),  # shouldn't match anything under `/manifests`
+        (
+            (
+                "test.yml",
+                "/manifests",
+            ),
+            ["test.yml", "manifests/foo.yml", "manifests/bar.yml"],
+            0,
+        ),  # shouldn't match anything
+    ],
+)
+def test_lint_components_ignored_path(
+    tmp_path: Path,
+    config: Config,
+    capsys,
+    ignore_patterns: tuple[str],
+    file_paths: list[str],
+    expected_errcount: int,
+):
+    """Each file gets the same contents which should cause 2 errors unless the file is
+    ignored."""
+    filecontents = {
+        "parameters": {
+            "components": {
+                "c1": {
+                    "url": "https://example.com/syn/component-c1.git",
+                },
+                "c2": {
+                    "url": "https://example.com/syn/component-c2.git",
+                },
+                "c3": {
+                    "version": "v1.0.0",
+                },
+            },
+        }
+    }
+    for f in file_paths:
+        testf = tmp_path / f
+        testf.parent.mkdir(parents=True, exist_ok=True)
+        yaml_dump(filecontents, testf)
+
+    ec = lint.ComponentSpecLinter()(config, tmp_path, ignore_patterns)
+
+    captured = capsys.readouterr()
+    _check_lint_result(ec, expected_errcount, captured)
