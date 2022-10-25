@@ -16,6 +16,7 @@ from commodore.inventory import lint
 LINT_FILECONTENTS = [
     ({}, 0),
     ({"a": "b"}, 0),
+    ({"parameters": ["foo", "bar"]}, 1),
     (
         {
             "parameters": {
@@ -103,7 +104,6 @@ SKIP_FILECONTENTS = [
     ("\tTest", "Unable to load as YAML"),
     ([{"a": 1}, {"b": 2}], "Linting multi-document YAML streams is not supported"),
     ([[1, 2, 3]], "Expected top-level dictionary in YAML document"),
-    ([{"parameters": ["foo", "bar"]}], "Expected key 'parameters' to be a dict"),
 ]
 
 
@@ -195,6 +195,7 @@ def _setup_directory(tmp_path: Path):
         tmp_path / "d2" / "test3.yml",
         tmp_path / "d2" / "subd" / "test4.yml",
         tmp_path / "d3" / "test5.yml",
+        tmp_path / "test6.yml",
     ]
     assert len(lint_direntries) == len(LINT_FILECONTENTS)
     skip_direntries = [
@@ -202,7 +203,6 @@ def _setup_directory(tmp_path: Path):
         tmp_path / "d3" / "tab.txt",
         tmp_path / "d3" / "stream.yaml",
         tmp_path / "d3" / "top-level.yaml",
-        tmp_path / "test6.yml",
     ]
     assert len(skip_direntries) == len(SKIP_FILECONTENTS)
 
