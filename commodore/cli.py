@@ -1239,9 +1239,9 @@ def package_versions(
 def inventory_lint(
     config: Config,
     verbose: int,
-    target: tuple[str],
-    linter: tuple[str],
-    ignore_patterns: tuple[str],
+    target: tuple[str, ...],
+    linter: tuple[str, ...],
+    ignore_patterns: tuple[str, ...],
 ):
     """Lint YAML files in the provided paths.
 

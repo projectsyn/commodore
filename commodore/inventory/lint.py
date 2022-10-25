@@ -26,28 +26,28 @@ class LintFunc(Protocol):
 class Linter:
     @abc.abstractmethod
     def __call__(
-        self, config: Config, path: Path, ignore_patterns: tuple[str] = ()
+        self, config: Config, path: Path, ignore_patterns: tuple[str, ...] = ()
     ) -> int:
         ...
 
 
 class ComponentSpecLinter(Linter):
     def __call__(
-        self, config: Config, path: Path, ignore_patterns: tuple[str] = ()
+        self, config: Config, path: Path, ignore_patterns: tuple[str, ...] = ()
     ) -> int:
         return run_linter(config, path, ignore_patterns, lint_components)
 
 
 class DeprecatedParameterLinter(Linter):
     def __call__(
-        self, config: Config, path: Path, ignore_patterns: tuple[str] = ()
+        self, config: Config, path: Path, ignore_patterns: tuple[str, ...] = ()
     ) -> int:
         return run_linter(config, path, ignore_patterns, lint_deprecated_parameters)
 
 
 class PackageSpecLinter(Linter):
     def __call__(
-        self, config: Config, path: Path, ignore_patterns: tuple[str] = ()
+        self, config: Config, path: Path, ignore_patterns: tuple[str, ...] = ()
     ) -> int:
         return run_linter(config, path, ignore_patterns, lint_packages)
 
@@ -124,7 +124,9 @@ def _read_ignore_patterns_from_file(path: Path) -> set[str]:
     return ignore_patterns
 
 
-def _render_ignore_patterns(base_dir: Path, ignore_patterns: tuple[str]) -> set[Path]:
+def _render_ignore_patterns(
+    base_dir: Path, ignore_patterns: tuple[str, ...]
+) -> set[Path]:
     """Use `glob.glob()` to render the paths to ignore from `ignore_patterns`.
     All patterns are rooted at `base_dir`.
 
@@ -149,7 +151,7 @@ def _render_ignore_patterns(base_dir: Path, ignore_patterns: tuple[str]) -> set[
 
 
 def run_linter(
-    cfg: Config, path: Path, ignore_patterns: tuple[str], lintfunc: LintFunc
+    cfg: Config, path: Path, ignore_patterns: tuple[str, ...], lintfunc: LintFunc
 ) -> int:
     """Run lint function `lintfunc` in `path`.
 
