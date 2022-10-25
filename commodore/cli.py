@@ -1224,25 +1224,48 @@ def package_versions(
     multiple=True,
     default=tuple(LINTERS.keys()),
 )
+@click.option(
+    "--ignore-patterns",
+    help="Glob pattern(s) indicating path(s) to ignore",
+    type=click.STRING,
+    multiple=True,
+    default=(),
+)
 @click.argument(
     "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
 )
 @verbosity
 @pass_config
 def inventory_lint(
-    config: Config, verbose: int, target: tuple[str], linter: tuple[str]
+    config: Config,
+    verbose: int,
+    target: tuple[str],
+    linter: tuple[str],
+    ignore_patterns: tuple[str],
 ):
     """Lint YAML files in the provided paths.
 
     The command assumes that any YAML file found in the provided paths is part of a
-    Commodore inventory structure."""
+    Commodore inventory structure.
+
+    Individual files or whole directory trees can be ignored by providing glob patterns.
+    Glob patterns can be provided in command line argument `--ignore-patterns` or in
+    `.commodoreignore` in the provided path. Patterns provided in `--ignore-patterns`
+    are applied in each target path. In contrast, `.commodoreignore` files are only
+    applied to the target path in which they're saved.
+
+    The provided patterns are expanded recursively using Python's `glob` library. You
+    can use `*`, `?`, and character ranges expressed as `[]` with the usual semantics of
+    shell globbing. Additionally, you can use `**` to indicate an arbitrary amount of
+    subdirectories. Patterns which start with `/` are treated as anchored in the target
+    path. All other patterns are treated as matching any subpath in the target path."""
     config.update_verbosity(verbose)
 
     error_counts = []
     for t in target:
         lint_target = Path(t)
         for lint in linter:
-            error_counts.append(LINTERS[lint](config, lint_target))
+            error_counts.append(LINTERS[lint](config, lint_target, ignore_patterns))
 
     errors = sum(error_counts)
     exit_status = 0 if errors == 0 else 1
