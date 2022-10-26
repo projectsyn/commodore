@@ -262,18 +262,22 @@ def _print_clusters_id(clusters):
 
 
 def _print_clusters_pretty(clusters):
-    widths = [15] * 3
+    columns = {
+        "ID": "id",
+        "DISPLAY NAME": "displayName",
+        "TENANT": "tenant",
+    }
+    padding = 2 * " "
+
+    widths = {}
+    for header in columns:
+        widths[header] = len(columns[header] + padding)
+
     for cluster in clusters:
-        widths[0] = max(widths[0], len(cluster.get("id", "")) + 1)
-        widths[1] = max(widths[1], len(cluster.get("displayName", "")) + 1)
-        widths[2] = max(widths[2], len(cluster.get("tenant", "")) + 1)
-    fmtstr = "{:<%d} {:<%d} {:<%d}" % (widths[0], widths[1], widths[2])
-    click.echo(fmtstr.format("ID", "DISPLAY NAME", "TENANT"))
+        for header, path in columns.items():
+            widths[header] = max(widths[header], len(cluster.get(path, "") + padding))
+
+    fmtstr = len(widths) * "{:<%d}" % tuple(widths.values())
+    click.echo(fmtstr.format(*columns))
     for cluster in clusters:
-        click.echo(
-            fmtstr.format(
-                cluster.get("id", ""),
-                cluster.get("displayName", ""),
-                cluster.get("tenant", ""),
-            )
-        )
+        click.echo(fmtstr.format(*[cluster.get(path) for path in columns.values()]))
