@@ -3,6 +3,7 @@ Tests for catalog internals
 """
 from __future__ import annotations
 
+import os
 import copy
 from pathlib import Path
 from unittest.mock import patch
@@ -41,10 +42,13 @@ tenant_resp = {
 }
 
 
-def make_cluster_resp(id: str, displayName: str = "Test cluster") -> dict:
+def make_cluster_resp(
+    id: str, displayName: str = "Test cluster", tenant: str = "t-test-tenant"
+) -> dict:
     r = copy.deepcopy(cluster_resp)
     r["id"] = id
     r["displayName"] = displayName
+    r["tenant"] = tenant
 
     return r
 
@@ -435,31 +439,58 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
 
 @responses.activate
 @pytest.mark.parametrize(
-    "api_resp,verbose,expected",
+    "api_resp,output,expected",
     [
-        ([cluster_resp], 0, ["c-test"]),
+        ([cluster_resp], "id", "id_single"),
         (
             [
-                make_cluster_resp("c-test"),
-                make_cluster_resp("c-foo"),
                 make_cluster_resp("c-bar"),
+                make_cluster_resp("c-foo"),
+                make_cluster_resp("c-test"),
             ],
-            0,
-            ["c-test", "c-foo", "c-bar"],
+            "id",
+            "id_multi",
         ),
         (
             [
-                make_cluster_resp("c-test", "Test cluster"),
-                make_cluster_resp("c-foo", "Foo cluster"),
-                make_cluster_resp("c-bar", "Bar cluster"),
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
             ],
-            1,
-            ["c-test - Test cluster", "c-foo - Foo cluster", "c-bar - Bar cluster"],
+            "",
+            "pretty_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "json",
+            "json_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "yaml",
+            "yaml_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "yml",
+            "yml_multi",
         ),
     ],
 )
 def test_catalog_list(
-    config: Config, capsys, api_resp: list, expected: list[str], verbose: int
+    config: Config, capsys, api_resp: list, expected: str, output: str
 ):
     responses.add(
         responses.GET,
@@ -468,13 +499,26 @@ def test_catalog_list(
         json=api_resp,
     )
 
-    config.update_verbosity(verbose)
-    catalog.catalog_list(config)
+    catalog.catalog_list(config, output)
 
     captured = capsys.readouterr()
 
-    result = captured.out.strip().split("\n")
-    assert result == expected
+    update_golden = os.getenv("COMMODORE_GEN_GOLDEN", "False").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+
+    result = captured.out
+
+    test_file = os.path.realpath(__file__)
+    test_directory = os.path.dirname(test_file)
+    golden_file = Path(test_directory) / "testdata" / "catalog_list" / expected
+    if update_golden:
+        with open(golden_file, "w") as f:
+            f.write(result)
+    with open(golden_file, "r") as f:
+        assert result == f.read()
 
 
 @responses.activate
@@ -487,6 +531,6 @@ def test_catalog_list_error(config: Config):
     )
 
     with pytest.raises(click.ClickException) as e:
-        catalog.catalog_list(config)
+        catalog.catalog_list(config, "id")
 
     assert "While listing clusters on Lieutenant:" in str(e.value)

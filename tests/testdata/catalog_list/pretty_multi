@@ -1,0 +1,4 @@
+ID              DISPLAY NAME    TENANT         
+c-bar           Bar             t-foo          
+c-foo           Foo             t-foo          
+c-test          Test cluster    t-test-tenant  
