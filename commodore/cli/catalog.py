@@ -181,11 +181,35 @@ def compile_catalog(
 @options.api_token
 @options.oidc_client
 @options.oidc_discovery_url
+@click.option(
+    "-o",
+    "--out",
+    envvar="COMMODORE_OUTPUT",
+    help="The output fromat.",
+)
+@click.option(
+    "--tenant",
+    envvar="COMMODORE_TENANT_ID",
+    help="The output fromat.",
+)
+@click.option(
+    "--sort-by",
+    envvar="COMMODORE_SORT_BY",
+    help="The output fromat.",
+)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
 def clusters_list_command(
-    config: Config, api_url, api_token, oidc_client, oidc_discovery_url, verbose
+    config: Config,
+    api_url,
+    api_token,
+    oidc_client,
+    oidc_discovery_url,
+    verbose,
+    out,
+    tenant,
+    sort_by,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -199,4 +223,4 @@ def clusters_list_command(
         except click.ClickException:
             pass
 
-    catalog_list(config)
+    catalog_list(config, out, tenant=tenant, sort_by=sort_by)

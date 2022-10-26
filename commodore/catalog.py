@@ -10,6 +10,7 @@ from pathlib import Path as P
 
 import click
 import yaml
+import json
 
 from .component import Component
 from .gitrepo import GitRepo, GitCommandError
@@ -235,16 +236,44 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
         click.echo(" > Skipping commit+push to catalog...")
 
 
-def catalog_list(cfg):
+def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):
+    params = {"sort_by": sort_by}
+    if tenant != "":
+        params["tenant"] = tenant
     try:
-        clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+        clusters = lieutenant_query(
+            cfg.api_url, cfg.api_token, "clusters", "", params=params
+        )
     except ApiError as e:
         raise click.ClickException(f"While listing clusters on Lieutenant: {e}") from e
+    if out == "yaml" or out == "yml":
+        click.echo(yaml.safe_dump(clusters))
+    elif out == "json":
+        click.echo(json.dumps(clusters, indent=2))
+    elif out == "id":
+        _print_clusters_id(clusters)
+    else:
+        _print_clusters_pretty(clusters)
+
+
+def _print_clusters_id(clusters):
     for cluster in clusters:
-        display_name = cluster["displayName"]
-        catalog_id = cluster["id"]
-        if cfg.verbose:
-            click.secho(catalog_id, nl=False, bold=True)
-            click.echo(f" - {display_name}")
-        else:
-            click.echo(catalog_id)
+        click.echo(cluster.get("id"))
+
+
+def _print_clusters_pretty(clusters):
+    widths = [15] * 3
+    for cluster in clusters:
+        widths[0] = max(widths[0], len(cluster.get("id", "")) + 1)
+        widths[1] = max(widths[1], len(cluster.get("displayName", "")) + 1)
+        widths[2] = max(widths[2], len(cluster.get("tenant", "")) + 1)
+    fmtstr = "{:<%d} {:<%d} {:<%d}" % (widths[0], widths[1], widths[2])
+    click.echo(fmtstr.format("ID", "DISPLAY NAME", "TENANT"))
+    for cluster in clusters:
+        click.echo(
+            fmtstr.format(
+                cluster.get("id", ""),
+                cluster.get("displayName", ""),
+                cluster.get("tenant", ""),
+            )
+        )
