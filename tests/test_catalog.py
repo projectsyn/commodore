@@ -503,7 +503,7 @@ def test_catalog_list(
 
     captured = capsys.readouterr()
 
-    update_golden = os.getenv("COMMODORE_GEN_GOLDEN", "False").lower() in (
+    update_golden = os.getenv("COMMODORE_TESTS_GEN_GOLDEN", "False").lower() in (
         "true",
         "1",
         "t",
@@ -511,9 +511,9 @@ def test_catalog_list(
 
     result = captured.out
 
-    test_file = os.path.realpath(__file__)
-    test_directory = os.path.dirname(test_file)
-    golden_file = Path(test_directory) / "testdata" / "catalog_list" / expected
+    golden_file = (
+        Path(__file__).absolute().parent / "testdata" / "catalog_list" / expected
+    )
     if update_golden:
         with open(golden_file, "w") as f:
             f.write(result)

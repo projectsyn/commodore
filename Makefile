@@ -81,4 +81,4 @@ test_coverage:
 
 .PHONY: test_gen_golden
 test_gen_golden:
-	COMMODORE_GEN_GOLDEN=true poetry run pytest ./tests/test_catalog.py
+	COMMODORE_TESTS_GEN_GOLDEN=true poetry run pytest ./tests/test_catalog.py
