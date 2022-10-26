@@ -258,7 +258,7 @@ def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):
 
 def _print_clusters_id(clusters):
     for cluster in clusters:
-        click.echo(cluster.get("id"))
+        click.echo(cluster["id"])
 
 
 def _print_clusters_pretty(clusters):
