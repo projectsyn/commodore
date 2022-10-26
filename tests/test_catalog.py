@@ -522,6 +522,36 @@ def test_catalog_list(
 
 
 @responses.activate
+@pytest.mark.parametrize(
+    "tenant,sort_by",
+    [
+        ("", ""),
+        ("", "id"),
+        ("", "displayName"),
+        ("", "tenant"),
+        ("t-foo", ""),
+        ("t-bar", "displayName"),
+    ],
+)
+def test_catalog_list_parameters(config: Config, tenant: str, sort_by: str):
+
+    params = {}
+
+    if tenant != "":
+        params["tenant"] = tenant
+    if sort_by != "":
+        params["sort_by"] = sort_by
+    responses.add(
+        responses.GET,
+        "https://syn.example.com/clusters/",
+        status=200,
+        body="[]",
+        match=[responses.matchers.query_param_matcher(params)],
+    )
+    catalog.catalog_list(config, "id", tenant=tenant, sort_by=sort_by)
+
+
+@responses.activate
 def test_catalog_list_error(config: Config):
     responses.add(
         responses.GET,
