@@ -41,6 +41,7 @@ def test_package_sync_cli(
         templater: Type,
         pr_batch_size: int,
         github_pause: int,
+        filter: str,
     ):
         assert config.github_token == ghtoken
         assert pkglist.absolute() == pkg_list.absolute()
@@ -51,6 +52,7 @@ def test_package_sync_cli(
         assert templater == PackageTemplater
         assert pr_batch_size == 10
         assert github_pause == timedelta(seconds=120)
+        assert filter == ""
 
     mock_sync_packages.side_effect = sync_pkgs
     result = cli_runner(["package", "sync", "pkgs.yaml"])
