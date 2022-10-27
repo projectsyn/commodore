@@ -347,6 +347,7 @@ def component_compile(
 @options.pr_label
 @options.pr_batch_size
 @options.github_pause
+@options.dependency_filter
 def component_sync(
     config: Config,
     verbose: int,
@@ -357,6 +358,7 @@ def component_sync(
     pr_label: Iterable[str],
     pr_batch_size: int,
     github_pause: int,
+    filter: str,
 ):
     """This command processes all components listed in the provided `COMPONENT_LIST`
     YAML file.
@@ -364,6 +366,10 @@ def component_sync(
     Currently, the command only supports updating components hosted on GitHub. The
     command expects that the YAML file contains a single document with a list of GitHub
     repositories in form `organization/repository-name`.
+
+    The command supports selectively updating components through parameter `--filter`.
+    This parameter enables callers to filter the list provided in the YAML file by an
+    arbitrary regex.
 
     The command clones each component and runs `component update` on the local copy. If
     there are any changes, the command creates a PR for the changes. For each component,
@@ -388,4 +394,5 @@ def component_sync(
         ComponentTemplater,
         pr_batch_size,
         timedelta(seconds=github_pause),
+        filter,
     )

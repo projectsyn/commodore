@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 
 from collections.abc import Iterable
@@ -34,13 +35,14 @@ def sync_dependencies(
     templater: Type[Templater],
     pr_batch_size: int = 10,
     pause: timedelta = timedelta(seconds=120),
+    depfilter: str = "",
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
 
     deptype_str = deptype.__name__.lower()
 
-    deps = read_dependency_list(dependency_list)
+    deps = read_dependency_list(dependency_list, depfilter)
     dep_count = len(deps)
 
     gh = github.Github(config.github_token)
@@ -83,11 +85,14 @@ def sync_dependencies(
             _maybe_pause(update_count, pr_batch_size, pause)
 
 
-def read_dependency_list(dependency_list: Path) -> list[str]:
+def read_dependency_list(dependency_list: Path, depfilter: str) -> list[str]:
     try:
         deps = yaml_load(dependency_list)
         if not isinstance(deps, list):
             raise ValueError(f"unexpected type: {type_name(deps)}")
+        if depfilter != "":
+            f = re.compile(depfilter)
+            deps = [d for d in deps if f.search(d)]
         return deps
     except ValueError as e:
         raise click.ClickException(
