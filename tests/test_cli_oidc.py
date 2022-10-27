@@ -9,7 +9,7 @@ from unittest import mock
 import pytest
 import yaml
 
-from commodore import cli
+from commodore.cli import oidc
 
 from conftest import RunnerFunc
 
@@ -29,7 +29,7 @@ from conftest import RunnerFunc
         ),
     ],
 )
-@mock.patch.object(cli, "fetch_token")
+@mock.patch.object(oidc, "fetch_token")
 def test_commodore_fetch_token(
     fetch_token,
     args: list[str],
