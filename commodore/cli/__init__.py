@@ -12,30 +12,29 @@ import yaml
 
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
-from .catalog import catalog_list
-from .config import Config, Migration, parse_dynamic_facts_from_cli
-from .helpers import clean_working_tree
-from .compile import compile as _compile
-from .component import Component
-from .component.compile import compile_component
-from .component.template import ComponentTemplater
-from .dependency_syncer import sync_dependencies
-from .inventory.render import extract_components, extract_packages, extract_parameters
-from .inventory.parameters import InventoryFacts
-from .inventory.lint import LINTERS
-from .login import login, fetch_token
-from .package import Package
-from .package.compile import compile_package
-from .package.template import PackageTemplater
+from commodore.catalog import catalog_list
+from commodore.config import Config, Migration, parse_dynamic_facts_from_cli
+from commodore.helpers import clean_working_tree
+from commodore.compile import compile as _compile
+from commodore.component import Component
+from commodore.component.compile import compile_component
+from commodore.component.template import ComponentTemplater
+from commodore.dependency_syncer import sync_dependencies
+from commodore.inventory.render import (
+    extract_components,
+    extract_packages,
+    extract_parameters,
+)
+from commodore.inventory.parameters import InventoryFacts
+from commodore.inventory.lint import LINTERS
+from commodore.login import login, fetch_token
+from commodore.package import Package
+from commodore.package.compile import compile_package
+from commodore.package.template import PackageTemplater
+
+import commodore.cli.options as options
 
 pass_config = click.make_pass_decorator(Config)
-
-verbosity = click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Control verbosity. Can be repeated for more verbose output.",
-)
 
 
 def _version():
@@ -49,7 +48,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(_version(), prog_name="commodore")
-@verbosity
+@options.verbosity
 @click.option(
     "-d",
     "--working-dir",
@@ -68,56 +67,29 @@ def commodore(ctx, working_dir, verbose):
 
 
 @commodore.group(short_help="Interact with a cluster catalog.")
-@verbosity
+@options.verbosity
 @pass_config
 def catalog(config: Config, verbose):
     config.update_verbosity(verbose)
 
 
 @catalog.command(short_help="Delete generated files.")
-@verbosity
+@options.verbosity
 @pass_config
 def clean(config: Config, verbose):
     config.update_verbosity(verbose)
     clean_working_tree(config)
 
 
-api_url_option = click.option(
-    "--api-url", envvar="COMMODORE_API_URL", help="Lieutenant API URL.", metavar="URL"
-)
-oidc_discovery_url_option = click.option(
-    "--oidc-discovery-url",
-    envvar="COMMODORE_OIDC_DISCOVERY_URL",
-    help="The discovery URL of the IdP.",
-    metavar="URL",
-)
-oidc_client_option = click.option(
-    "--oidc-client",
-    envvar="COMMODORE_OIDC_CLIENT",
-    help="The OIDC client name.",
-    metavar="TEXT",
-)
-
-
 @catalog.command(name="compile", short_help="Compile the catalog.")
 @click.argument("cluster")
-@api_url_option
-@click.option(
-    "--api-token",
-    envvar="COMMODORE_API_TOKEN",
-    help="Lieutenant API token.",
-    metavar="TOKEN",
-)
-@oidc_discovery_url_option
-@oidc_client_option
-@click.option(
-    "--local",
-    is_flag=True,
-    default=False,
-    help=(
-        "Run in local mode, local mode does not try to connect to "
-        + "the Lieutenant API or fetch/push Git repositories."
-    ),
+@options.api_url
+@options.api_token
+@options.oidc_discovery_url
+@options.oidc_client
+@options.local(
+    "Run in local mode, local mode does not try to connect to "
+    + "the Lieutenant API or fetch/push Git repositories."
 )
 @click.option(
     "--push", is_flag=True, default=False, help="Push catalog to remote repository."
@@ -202,7 +174,7 @@ oidc_client_option = click.option(
         + "prefixed with `json:` isn't valid JSON, it will be skipped."
     ),
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
@@ -258,16 +230,11 @@ def compile_catalog(
 
 
 @catalog.command(name="list", short_help="List available catalog cluster IDs")
-@api_url_option
-@click.option(
-    "--api-token",
-    envvar="COMMODORE_API_TOKEN",
-    help="Lieutenant API token.",
-    metavar="TOKEN",
-)
-@oidc_client_option
-@oidc_discovery_url_option
-@verbosity
+@options.api_url
+@options.api_token
+@options.oidc_client
+@options.oidc_discovery_url
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def clusters_list_command(
@@ -289,7 +256,7 @@ def clusters_list_command(
 
 
 @commodore.group(short_help="Interact with components.")
-@verbosity
+@options.verbosity
 @pass_config
 def component(config: Config, verbose):
     config.update_verbosity(verbose)
@@ -368,7 +335,7 @@ def component(config: Config, verbose):
     + "Test case `defaults` will always be generated."
     + "Commodore will deduplicate test cases by name.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_new(
@@ -467,7 +434,7 @@ def component_new(
     default=True,
     help="Whether to commit the rendered template changes.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 def component_update(
     config: Config,
@@ -524,7 +491,7 @@ def component_update(
     show_default=True,
     help="Don't prompt for user confirmation when deleting.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_delete(config: Config, slug, force, verbose):
@@ -580,7 +547,7 @@ def component_delete(config: Config, slug, force, verbose):
     help="Component name to use for Commodore. "
     + "If not provided, the name is inferred from the Git repository name.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_compile(
@@ -604,59 +571,17 @@ def component_compile(
 
 
 @component.command("sync", short_help="Synchronize components to template")
-@verbosity
+@options.verbosity
 @pass_config
 @click.argument(
     "component_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
 )
-@click.option(
-    "--github-token",
-    help="GitHub API token",
-    envvar="COMMODORE_GITHUB_TOKEN",
-    default="",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Don't commit rendered changes or create or update PRs",
-    default=False,
-)
-@click.option(
-    "--pr-branch",
-    "-b",
-    metavar="BRANCH",
-    default="template-sync",
-    show_default=True,
-    type=str,
-    help="Branch name to use for updates from template",
-)
-@click.option(
-    "--pr-label",
-    "-l",
-    metavar="LABEL",
-    default=[],
-    multiple=True,
-    help="Labels to set on the PR. Can be repeated",
-)
-@click.option(
-    "--pr-batch-size",
-    metavar="COUNT",
-    default=10,
-    type=int,
-    show_default=True,
-    help="Number of PRs to create before pausing"
-    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
-)
-@click.option(
-    "--github-pause",
-    metavar="DURATION",
-    default=120,
-    type=int,
-    show_default=True,
-    help="Duration for which to pause (in seconds) after creating a number PRs "
-    + "(according to --pr-batch-size). "
-    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
-)
+@options.dry_run("Don't commit rendered changes, or create or update PRs")
+@options.github_token
+@options.pr_branch
+@options.pr_label
+@options.pr_batch_size
+@options.github_pause
 def component_sync(
     config: Config,
     verbose: int,
@@ -702,7 +627,7 @@ def component_sync(
 
 
 @commodore.group(short_help="Interact with a Commodore config package")
-@verbosity
+@options.verbosity
 @pass_config
 def package(config: Config, verbose: int):
     config.update_verbosity(verbose)
@@ -763,7 +688,7 @@ def package(config: Config, verbose: int):
     + "Test case `defaults` will always be generated."
     + "Commodore will deduplicate test cases by name.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def package_new(
@@ -845,7 +770,7 @@ def package_new(
     default=True,
     help="Whether to commit the rendered template changes.",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def package_update(
@@ -898,14 +823,9 @@ def package_update(
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help="Specify additional inventory class in a YAML file (can specify multiple).",
 )
-@click.option(
-    "--local",
-    is_flag=True,
-    default=False,
-    help=(
-        "Run in local mode, local mode reuses the contents of the working directory. "
-        + "Local mode won't fetch missing components."
-    ),
+@options.local(
+    "Run in local mode, local mode reuses the contents of the working directory. "
+    + "Local mode won't fetch missing components."
 )
 @click.option(
     " / -F",
@@ -928,7 +848,7 @@ def package_update(
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
     help="Temp directory to use for compilation. Implies `--keep-dir`",
 )
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def package_compile(
@@ -949,59 +869,17 @@ def package_compile(
 
 
 @package.command("sync", short_help="Synchronize packages to template")
-@verbosity
+@options.verbosity
 @pass_config
 @click.argument(
     "package_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
 )
-@click.option(
-    "--github-token",
-    help="GitHub API token",
-    envvar="COMMODORE_GITHUB_TOKEN",
-    default="",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    help="Don't commit rendered changes, or create or update PRs",
-    default=False,
-)
-@click.option(
-    "--pr-branch",
-    "-b",
-    metavar="BRANCH",
-    default="template-sync",
-    show_default=True,
-    type=str,
-    help="Branch name to use for updates from template",
-)
-@click.option(
-    "--pr-label",
-    "-l",
-    metavar="LABEL",
-    default=[],
-    multiple=True,
-    help="Labels to set on the PR. Can be repeated",
-)
-@click.option(
-    "--pr-batch-size",
-    metavar="COUNT",
-    default=10,
-    type=int,
-    show_default=True,
-    help="Number of PRs to create before pausing"
-    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
-)
-@click.option(
-    "--github-pause",
-    metavar="DURATION",
-    default=120,
-    type=int,
-    show_default=True,
-    help="Duration for which to pause (in seconds) after creating a number PRs "
-    + "(according to --pr-batch-size). "
-    + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
-)
+@options.dry_run("Don't commit rendered changes, or create or update PRs")
+@options.github_token
+@options.pr_branch
+@options.pr_label
+@options.pr_batch_size
+@options.github_pause
 def package_sync(
     config: Config,
     verbose: int,
@@ -1046,49 +924,22 @@ def package_sync(
 
 
 @commodore.group(short_help="Interact with a Commodore inventory")
-@verbosity
+@options.verbosity
 @pass_config
 def inventory(config: Config, verbose):
     config.update_verbosity(verbose)
-
-
-inventory_output_format = click.option(
-    "-o",
-    "--output-format",
-    help="Output format",
-    type=click.Choice(["json", "yaml"]),
-    default="yaml",
-)
-inventory_values = click.option(
-    "-f",
-    "--values",
-    help=(
-        "Extra values file to use when rendering inventory. "
-        + "Used as additional reclass class. "
-        + "Use a values file to specify any cluster facts. "
-        + "Can be repeated."
-    ),
-    multiple=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
-)
-inventory_allow_missing_classes = click.option(
-    " / -A",
-    "--allow-missing-classes/--no-allow-missing-classes",
-    default=True,
-    help="Whether to allow missing classes when rendering the inventory. Defaults to true.",
-)
 
 
 @inventory.command(
     name="show",
     short_help="Returns the rendered inventory",
 )
-@inventory_output_format
-@inventory_values
-@inventory_allow_missing_classes
+@options.inventory_output_format
+@options.inventory_values
+@options.inventory_allow_missing_classes
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def inventory_show(
@@ -1126,12 +977,12 @@ def inventory_show(
     name="components",
     short_help="Extract component URLs and versions from the inventory",
 )
-@inventory_output_format
-@inventory_values
-@inventory_allow_missing_classes
+@options.inventory_output_format
+@options.inventory_values
+@options.inventory_allow_missing_classes
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def component_versions(
@@ -1169,12 +1020,12 @@ def component_versions(
     name="packages",
     short_help="Extract package URLs and versions from the inventory",
 )
-@inventory_output_format
-@inventory_values
-@inventory_allow_missing_classes
+@options.inventory_output_format
+@options.inventory_values
+@options.inventory_allow_missing_classes
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
-@verbosity
+@options.verbosity
 @pass_config
 # pylint: disable=too-many-arguments
 def package_versions(
@@ -1234,7 +1085,7 @@ def package_versions(
 @click.argument(
     "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
 )
-@verbosity
+@options.verbosity
 @pass_config
 def inventory_lint(
     config: Config,
@@ -1281,9 +1132,9 @@ def inventory_lint(
     name="login",
     short_help="Login to Lieutenant",
 )
-@api_url_option
-@oidc_discovery_url_option
-@oidc_client_option
+@options.api_url
+@options.oidc_discovery_url
+@options.oidc_client
 @pass_config
 def commodore_login(
     config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str
@@ -1300,11 +1151,11 @@ def commodore_login(
     name="fetch-token",
     short_help="Fetch Lieutenant token",
 )
-@api_url_option
-@oidc_discovery_url_option
-@oidc_client_option
+@options.api_url
+@options.oidc_discovery_url
+@options.oidc_client
 @pass_config
-@verbosity
+@options.verbosity
 def commodore_fetch_token(
     config: Config,
     oidc_discovery_url: str,
