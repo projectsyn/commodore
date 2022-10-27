@@ -655,3 +655,28 @@ def test_render_pr_comment(tmp_path: Path, config: Config):
         + " a\n"
         + "```\n"
     )
+
+
+@pytest.mark.parametrize(
+    "deps,filter,expected",
+    [
+        ([], "", []),
+        ([], "foo", []),
+        (["org/bar"], "foo", []),
+        (["org/foo"], "foo", ["org/foo"]),
+        (["org/foo", "org/bar"], "foo", ["org/foo"]),
+        (["org/foo", "org/bar"], "org", ["org/foo", "org/bar"]),
+        (["org/foo", "org/bar", "org2/foo"], "foo$", ["org/foo", "org2/foo"]),
+        (["org1/foo", "org2/bar", "org3/org1"], "^org1", ["org1/foo"]),
+    ],
+)
+def test_read_dependency_list(
+    tmp_path: Path, deps: list[str], filter: str, expected: list[str]
+):
+    listf = tmp_path / "deps.yaml"
+    with open(listf, "w", encoding="utf-8") as f:
+        yaml.safe_dump(deps, f)
+
+    computed = dependency_syncer.read_dependency_list(listf, filter)
+
+    assert computed == expected
