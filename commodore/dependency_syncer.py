@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import time
 
+from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Iterable, Union, Type
+from typing import Union, Type
 
 import click
 import git
 import github
 import yaml.parser
+import yaml.scanner
 
 from github.Repository import Repository
 
