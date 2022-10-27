@@ -282,6 +282,10 @@ However, labels added by previous runs can't be removed since we've got no easy 
   Can be repeated.
   If this parameter isn't specified, all known linters are enabled.
 
+*--ignore-patterns=GLOB*::
+  Glob pattern(s) indicating path(s) to ignore.
+  Can be repeated.
+
 == Login
 
 *--oidc-discovery-url* URL::
