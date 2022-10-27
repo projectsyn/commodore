@@ -276,6 +276,7 @@ def package_compile(
 @options.pr_label
 @options.pr_batch_size
 @options.github_pause
+@options.dependency_filter
 def package_sync(
     config: Config,
     verbose: int,
@@ -286,12 +287,17 @@ def package_sync(
     pr_label: Iterable[str],
     pr_batch_size: int,
     github_pause: int,
+    filter: str,
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
     Currently, the command only supports updating packages hosted on GitHub. The command
     expects that the YAML file contains a single document with a list of GitHub
     repositories in form `organization/repository-name`.
+
+    The command supports selectively updating components through parameter `--filter`.
+    This parameter enables callers to filter the list provided in the YAML file by an
+    arbitrary regex.
 
     The command clones each package and runs `package update` on the local copy. If
     there are any changes, the command creates a PR for the changes. For each package,
@@ -316,4 +322,5 @@ def package_sync(
         PackageTemplater,
         pr_batch_size,
         timedelta(seconds=github_pause),
+        filter,
     )

@@ -112,6 +112,9 @@ This command processes all components listed in the provided `COMPONENT_LIST` YA
 Currently, the command only supports updating components hosted on GitHub.
 The command expects that the YAML file contains a single document with a list of GitHub repositories in form `organization/repository-name`.
 
+The command supports selectively updating components through parameter `--filter`.
+This parameter enables callers to filter the list provided in the YAML file by an arbitrary regex.
+
 The command clones each component and runs `component update` on the local copy. If there are any changes, the command creates a PR for the changes.
 For each component, the command parses the component's `.cruft.json` to determine the template repository and template version for the component.
 The command bases each PR on the default branch of the corresponding component repository as reported by the GitHub API.
@@ -251,6 +254,9 @@ This command processes all packages listed in the provided `PACKAGE_LIST` YAML f
 
 Currently, the command only supports updating packages hosted on GitHub.
 The command expects that the YAML file contains a single document with a list of GitHub repositories in form `organization/repository-name`.
+
+The command supports selectively updating packages through parameter `--filter`.
+This parameter enables callers to filter the list provided in the YAML file by an arbitrary regex.
 
 The command clones each package and runs `package update` on the local copy.
 If there are any changes, the command creates a PR for the changes.

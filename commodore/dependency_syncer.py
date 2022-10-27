@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import re
 import time
 
+from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Iterable, Union, Type
+from typing import Union, Type
 
 import click
 import git
 import github
 import yaml.parser
+import yaml.scanner
 
 from github.Repository import Repository
 
@@ -32,25 +35,17 @@ def sync_dependencies(
     templater: Type[Templater],
     pr_batch_size: int = 10,
     pause: timedelta = timedelta(seconds=120),
+    depfilter: str = "",
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
 
     deptype_str = deptype.__name__.lower()
 
-    try:
-        deps = yaml_load(dependency_list)
-        if not isinstance(deps, list):
-            raise ValueError(f"unexpected type: {type_name(deps)}")
-    except ValueError as e:
-        raise click.ClickException(
-            f"Expected a list in '{dependency_list}', but got {e}"
-        )
-    except (yaml.parser.ParserError, yaml.scanner.ScannerError):
-        raise click.ClickException(f"Failed to parse YAML in '{dependency_list}'")
+    deps = read_dependency_list(dependency_list, depfilter)
+    dep_count = len(deps)
 
     gh = github.Github(config.github_token)
-    dep_count = len(deps)
     # Keep track of how many PRs we've created to better avoid running into rate limits
     update_count = 0
     for i, dn in enumerate(deps, start=1):
@@ -88,6 +83,23 @@ def sync_dependencies(
             # we're not in dry run mode, and we've not yet processed the last
             # dependency.
             _maybe_pause(update_count, pr_batch_size, pause)
+
+
+def read_dependency_list(dependency_list: Path, depfilter: str) -> list[str]:
+    try:
+        deps = yaml_load(dependency_list)
+        if not isinstance(deps, list):
+            raise ValueError(f"unexpected type: {type_name(deps)}")
+        if depfilter != "":
+            f = re.compile(depfilter)
+            deps = [d for d in deps if f.search(d)]
+        return deps
+    except ValueError as e:
+        raise click.ClickException(
+            f"Expected a list in '{dependency_list}', but got {e}"
+        )
+    except (yaml.parser.ParserError, yaml.scanner.ScannerError):
+        raise click.ClickException(f"Failed to parse YAML in '{dependency_list}'")
 
 
 def render_pr_comment(d: Union[Component, Package]):

@@ -112,6 +112,17 @@ github_pause = click.option(
     + "Tune this parameter if your sync job hits the GitHub secondary rate limit.",
 )
 
+dependency_filter = click.option(
+    "--filter",
+    metavar="REGEX",
+    default="",
+    type=str,
+    show_default=False,
+    help="Regex to select which dependencies to sync. "
+    + "If the option isn't given, all dependencies listed in the provided YAML "
+    + "are synced.",
+)
+
 
 def local(help: str):
     return click.option(
