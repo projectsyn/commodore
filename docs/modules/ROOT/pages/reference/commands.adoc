@@ -35,6 +35,16 @@ This command deletes all the data which is managed by Commodore, listed below.
 This command doesn't check whether any local modifications exist and doesn't
 check with the user whether they really want to remove the items listed above.
 
+
+== Catalog List
+
+  commodore catalog list
+
+This command lists the available catalog clusters.
+If not defined otherwise through the `out` flag, the command will return the list of clusters in a human-readable table.
+
+The command can also filter the output per tenant or sort the list by ID, tenant, or display name, using the `tenant` or `sort-by` flags.
+
 == Component New
 
   commodore component new SLUG

@@ -181,21 +181,15 @@ def compile_catalog(
 @options.api_token
 @options.oidc_client
 @options.oidc_discovery_url
+@click.option("-o", "--out", help="Output format. One of: (json, yaml, id)")
 @click.option(
-    "-o",
-    "--out",
-    envvar="COMMODORE_OUTPUT",
-    help="The output fromat.",
-)
-@click.option(
+    "-t",
     "--tenant",
-    envvar="COMMODORE_TENANT_ID",
-    help="The output fromat.",
+    help="If non-empty, only show clusters of the tenant with the provided ID",
 )
 @click.option(
     "--sort-by",
-    envvar="COMMODORE_SORT_BY",
-    help="The output fromat.",
+    help="If non-empty, sort list using this flag specification. One of: (id, tenant, displayName)",
 )
 @options.verbosity
 @options.pass_config
@@ -211,6 +205,15 @@ def clusters_list_command(
     tenant,
     sort_by,
 ):
+    """This command lists the available catalog clusters.
+
+    If not defined otherwise through the `out` flag, the command will return the list of
+    clusters in a human-readable table.
+
+    The command can also filter the output per tenant or sort the list by ID, tenant, or
+    display name, using the `tenant` or `sort-by` flags.
+    """
+
     config.update_verbosity(verbose)
     config.api_url = api_url
     config.api_token = api_token

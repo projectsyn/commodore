@@ -117,7 +117,14 @@ After that, all the symlinks and dependencies which are required to compile the 
 
 == Catalog List
 
-This command doesn't have any command line options.
+*-o, --out* TEXT::
+  Output format. One of: (json, yaml, id)
+
+*-t, --tenant* TEXT::
+  If non-empty, only show clusters of the tenant with the provided ID
+
+*--sort-by* TEXT::
+  If non-empty, sort list using this flag specification. One of: (id, tenant, displayName)
 
 == Component Compile
 
