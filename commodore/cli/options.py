@@ -119,7 +119,8 @@ dependency_filter = click.option(
     type=str,
     show_default=False,
     help="Regex to select which dependencies to sync. "
-    + "By default all dependencies listed in the provided YAML are synced.",
+    + "If the option isn't given, all dependencies listed in the provided YAML "
+    + "are synced.",
 )
 
 

@@ -263,6 +263,10 @@ However, labels added by previous runs can't be removed since we've got no easy 
   The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
   Tune this parameter if your sync job hits the GitHub secondary rate limit.
 
+*--filter* REGEX::
+    Regex to select which dependencies to sync.
+    If the option isn't given, all dependencies listed in the provided YAML are synced.
+
 == Inventory Components / Packages / Show
 
 *-f, --values*::
@@ -457,3 +461,7 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--github-pause* SECONDS::
   The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
   Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--filter* REGEX::
+    Regex to select which dependencies to sync.
+    If the option isn't given, all dependencies listed in the provided YAML are synced.
