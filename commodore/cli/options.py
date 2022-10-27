@@ -1,6 +1,10 @@
 """Click options which are reused for multiple commands"""
 import click
 
+from commodore.config import Config
+
+pass_config = click.make_pass_decorator(Config)
+
 verbosity = click.option(
     "-v",
     "--verbose",

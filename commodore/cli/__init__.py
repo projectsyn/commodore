@@ -34,8 +34,6 @@ from commodore.package.template import PackageTemplater
 
 import commodore.cli.options as options
 
-pass_config = click.make_pass_decorator(Config)
-
 
 def _version():
     if f"v{__version__}" != __git_version__:
@@ -68,14 +66,14 @@ def commodore(ctx, working_dir, verbose):
 
 @commodore.group(short_help="Interact with a cluster catalog.")
 @options.verbosity
-@pass_config
+@options.pass_config
 def catalog(config: Config, verbose):
     config.update_verbosity(verbose)
 
 
 @catalog.command(short_help="Delete generated files.")
 @options.verbosity
-@pass_config
+@options.pass_config
 def clean(config: Config, verbose):
     config.update_verbosity(verbose)
     clean_working_tree(config)
@@ -175,7 +173,7 @@ def clean(config: Config, verbose):
     ),
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-locals
 def compile_catalog(
@@ -235,7 +233,7 @@ def compile_catalog(
 @options.oidc_client
 @options.oidc_discovery_url
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def clusters_list_command(
     config: Config, api_url, api_token, oidc_client, oidc_discovery_url, verbose
@@ -257,7 +255,7 @@ def clusters_list_command(
 
 @commodore.group(short_help="Interact with components.")
 @options.verbosity
-@pass_config
+@options.pass_config
 def component(config: Config, verbose):
     config.update_verbosity(verbose)
 
@@ -336,7 +334,7 @@ def component(config: Config, verbose):
     + "Commodore will deduplicate test cases by name.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def component_new(
     config: Config,
@@ -435,7 +433,7 @@ def component_new(
     help="Whether to commit the rendered template changes.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 def component_update(
     config: Config,
     verbose: int,
@@ -492,7 +490,7 @@ def component_update(
     help="Don't prompt for user confirmation when deleting.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def component_delete(config: Config, slug, force, verbose):
     config.update_verbosity(verbose)
@@ -548,7 +546,7 @@ def component_delete(config: Config, slug, force, verbose):
     + "If not provided, the name is inferred from the Git repository name.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def component_compile(
     config: Config,
@@ -572,7 +570,7 @@ def component_compile(
 
 @component.command("sync", short_help="Synchronize components to template")
 @options.verbosity
-@pass_config
+@options.pass_config
 @click.argument(
     "component_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
 )
@@ -628,7 +626,7 @@ def component_sync(
 
 @commodore.group(short_help="Interact with a Commodore config package")
 @options.verbosity
-@pass_config
+@options.pass_config
 def package(config: Config, verbose: int):
     config.update_verbosity(verbose)
 
@@ -689,7 +687,7 @@ def package(config: Config, verbose: int):
     + "Commodore will deduplicate test cases by name.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def package_new(
     config: Config,
@@ -771,7 +769,7 @@ def package_new(
     help="Whether to commit the rendered template changes.",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def package_update(
     config: Config,
@@ -849,7 +847,7 @@ def package_update(
     help="Temp directory to use for compilation. Implies `--keep-dir`",
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def package_compile(
     config: Config,
@@ -870,7 +868,7 @@ def package_compile(
 
 @package.command("sync", short_help="Synchronize packages to template")
 @options.verbosity
-@pass_config
+@options.pass_config
 @click.argument(
     "package_list", type=click.Path(file_okay=True, dir_okay=False, exists=True)
 )
@@ -925,7 +923,7 @@ def package_sync(
 
 @commodore.group(short_help="Interact with a Commodore inventory")
 @options.verbosity
-@pass_config
+@options.pass_config
 def inventory(config: Config, verbose):
     config.update_verbosity(verbose)
 
@@ -940,7 +938,7 @@ def inventory(config: Config, verbose):
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def inventory_show(
     config: Config,
@@ -983,7 +981,7 @@ def inventory_show(
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def component_versions(
     config: Config,
@@ -1026,7 +1024,7 @@ def component_versions(
 @click.argument("global-config")
 @click.argument("tenant-config", required=False)
 @options.verbosity
-@pass_config
+@options.pass_config
 # pylint: disable=too-many-arguments
 def package_versions(
     config: Config,
@@ -1086,7 +1084,7 @@ def package_versions(
     "target", type=click.Path(file_okay=True, dir_okay=True, exists=True), nargs=-1
 )
 @options.verbosity
-@pass_config
+@options.pass_config
 def inventory_lint(
     config: Config,
     verbose: int,
@@ -1135,7 +1133,7 @@ def inventory_lint(
 @options.api_url
 @options.oidc_discovery_url
 @options.oidc_client
-@pass_config
+@options.pass_config
 def commodore_login(
     config: Config, oidc_discovery_url: str, oidc_client: str, api_url: str
 ):
@@ -1154,7 +1152,7 @@ def commodore_login(
 @options.api_url
 @options.oidc_discovery_url
 @options.oidc_client
-@pass_config
+@options.pass_config
 @options.verbosity
 def commodore_fetch_token(
     config: Config,
