@@ -205,13 +205,16 @@ def clusters_list_command(
     tenant,
     sort_by,
 ):
-    """This command lists the available catalog clusters.
+    """This command lists all cluster catalogs registered in the provided Lieutenant API.
 
-    If not defined otherwise through the `out` flag, the command will return the list of
-    clusters in a human-readable table.
+    By default, the command will return the list of clusters in a
+    human-readable table. Other output formats are available through parameter
+    `--out`.
 
-    The command can also filter the output per tenant or sort the list by ID, tenant, or
-    display name, using the `tenant` or `sort-by` flags.
+     Additionally, the command allows listing only the catalogs for a specific
+     tenant and to sort the output by cluster ID, tenant, or display name with
+     the `--tenant` and `--sort-by` flags.
+
     """
 
     config.update_verbosity(verbose)
