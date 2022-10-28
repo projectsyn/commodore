@@ -29,7 +29,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 ## System Requirements
 
-* Python 3.8 - 3.10 with `python3-dev` and `python3-venv` updated
+* Python 3.8 - 3.11 with `python3-dev` and `python3-venv` updated
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
 
 ## Getting started
