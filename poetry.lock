@@ -28,7 +28,10 @@ python-versions = ">=3.7.2"
 [package.dependencies]
 lazy-object-proxy = ">=1.4.0"
 typing-extensions = {version = ">=3.10", markers = "python_version < \"3.10\""}
-wrapt = {version = ">=1.11,<2", markers = "python_version < \"3.11\""}
+wrapt = [
+    {version = ">=1.11,<2", markers = "python_version < \"3.11\""},
+    {version = ">=1.14,<2", markers = "python_version >= \"3.11\""},
+]
 
 [[package]]
 name = "attrs"
@@ -1457,8 +1460,8 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.8, <3.11"
-content-hash = "ddde76786dea8d1e222ee8123d07e02f4798c08ecf59eb4eba76584af8412974"
+python-versions = ">=3.8, <3.12"
+content-hash = "b7182cec179c5a50a96194bd3e0e0663ca719863f5285f0bb7b5a6e6525bac78"
 
 [metadata.files]
 addict = [
