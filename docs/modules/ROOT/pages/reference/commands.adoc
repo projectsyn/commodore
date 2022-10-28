@@ -35,6 +35,18 @@ This command deletes all the data which is managed by Commodore, listed below.
 This command doesn't check whether any local modifications exist and doesn't
 check with the user whether they really want to remove the items listed above.
 
+
+== Catalog List
+
+  commodore catalog list
+
+This command lists all cluster catalogs registered in the provided Lieutenant API.
+
+By default, the command will return the list of clusters in a human-readable table.
+Other output formats are available through parameter `--out`.
+
+Additionally, the command allows listing only the catalogs for a specific tenant and to sort the output by cluster ID, tenant, or display name with the `--tenant` and `--sort-by` flags.
+
 == Component New
 
   commodore component new SLUG

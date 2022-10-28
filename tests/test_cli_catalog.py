@@ -32,6 +32,7 @@ def test_catalog_list_cli(cli_runner: RunnerFunc):
             # Provide fake token to avoid having to mock the OIDC login for this test
             "--api-token",
             "token",
+            "-oid",
         ]
     )
     print(result.stdout)

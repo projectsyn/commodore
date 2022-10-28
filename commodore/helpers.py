@@ -95,11 +95,12 @@ def yaml_dump_all(obj, file):
         yaml.dump_all(obj, outf)
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}):
     try:
         r = requests.get(
             url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
             headers={"Authorization": f"Bearer {api_token}"},
+            params=params,
         )
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e

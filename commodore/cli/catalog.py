@@ -181,12 +181,42 @@ def compile_catalog(
 @options.api_token
 @options.oidc_client
 @options.oidc_discovery_url
+@click.option("-o", "--out", help="Output format. One of: (json, yaml, id)")
+@click.option(
+    "-t",
+    "--tenant",
+    help="If non-empty, only show clusters of the tenant with the provided ID",
+)
+@click.option(
+    "--sort-by",
+    help="If non-empty, sort list using this flag specification. One of: (id, tenant, displayName)",
+)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
 def clusters_list_command(
-    config: Config, api_url, api_token, oidc_client, oidc_discovery_url, verbose
+    config: Config,
+    api_url,
+    api_token,
+    oidc_client,
+    oidc_discovery_url,
+    verbose,
+    out,
+    tenant,
+    sort_by,
 ):
+    """This command lists all cluster catalogs registered in the provided Lieutenant API.
+
+    By default, the command will return the list of clusters in a
+    human-readable table. Other output formats are available through parameter
+    `--out`.
+
+     Additionally, the command allows listing only the catalogs for a specific
+     tenant and to sort the output by cluster ID, tenant, or display name with
+     the `--tenant` and `--sort-by` flags.
+
+    """
+
     config.update_verbosity(verbose)
     config.api_url = api_url
     config.api_token = api_token
@@ -199,4 +229,4 @@ def clusters_list_command(
         except click.ClickException:
             pass
 
-    catalog_list(config)
+    catalog_list(config, out, tenant=tenant, sort_by=sort_by)
