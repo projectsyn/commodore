@@ -60,7 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+      /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
