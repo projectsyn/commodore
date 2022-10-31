@@ -11,7 +11,8 @@
     "enabled": true
   },
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "labels": ["ignore"]
   },
   "ignoreDeps": [
     "gitpython",
