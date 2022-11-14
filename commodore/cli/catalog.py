@@ -129,8 +129,11 @@ def clean(config: Config, verbose):
     "--force/--no-force",
     default=False,
     show_default=True,
-    help="Discard local changes in tenant or global repo. "
-    + "Has no effect if `--local` is given.",
+    help="With `--force` local changes in tenant, global, or dependency repos are discarded. "
+    + "In the global and tenant repo, untracked files, uncommitted changes in tracked files, "
+    + "local commits and local branches count as local changes. In dependency repos only "
+    + "uncommitted changes in tracked files count as local changes."
+    + "The parameter has no effect if `--local` is given.",
 )
 @options.verbosity
 @options.pass_config

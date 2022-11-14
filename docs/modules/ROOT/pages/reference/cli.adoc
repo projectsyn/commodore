@@ -117,6 +117,14 @@ After that, all the symlinks and dependencies which are required to compile the 
   Nested keys are ignored if any non-leaf level of the requested key already contains a non-dictionary value.
   If a value prefixed with `json:` isn't valid JSON, it will be skipped.
 
+*--force / --no-force*::
+  With `--force` local changes (uncommitted changes, untracked files, or commits or branches which haven't been pushed) in the global and tenant repo checkouts are discarded.
+  Additionally, uncommitted changes in tracked files in dependency repos (components or packages) are discarded.
++
+With `--no-force`, local changes in global, tenant, or dependency checkouts are preserved, and the catalog compilation will abort with an error if there's local changes present.
+Specifying `--force` has no effect if `--local` is given, and is silently ignored.
+Defaults to `--no-force`.
+
 *--help*::
   Show catalog clean usage and options then exit.
 
