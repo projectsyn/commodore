@@ -5,6 +5,7 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 from subprocess import call  # nosec
+from typing import Optional
 
 import click
 
@@ -65,7 +66,7 @@ def write_jsonnetfile(file: Path, deps: Iterable):
         f.write("\n")
 
 
-def fetch_jsonnet_libraries(cwd: Path, deps: Iterable = None):
+def fetch_jsonnet_libraries(cwd: Path, deps: Optional[Iterable] = None):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """

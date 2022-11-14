@@ -147,7 +147,7 @@ def clean_working_tree(config: Config):
 def kapitan_compile(
     config: Config,
     targets: Iterable[str],
-    output_dir: P = None,
+    output_dir: Optional[P] = None,
     search_paths=None,
     fake_refs=False,
     reveal=False,
