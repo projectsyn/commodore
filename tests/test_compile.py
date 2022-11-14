@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import click
 import pytest
+import responses
 
 from pathlib import Path as P
 from unittest.mock import patch
@@ -153,3 +154,21 @@ def test_check_parameters_component_versions(cluster_params: dict, raises: bool)
 
     else:
         compile.check_parameters_component_versions(cluster_params)
+
+
+@responses.activate
+def test_compile_raises_on_unknown_cluster(tmp_path: P, config: Config):
+    cluster_id = "t-cluster-id-1234"
+    responses.add(
+        responses.GET,
+        config.api_url + f"/clusters/{cluster_id}",
+        json={"reason": "Cluster not found"},
+        status=404,
+    )
+    with pytest.raises(click.ClickException) as excinfo:
+        compile.compile(config, cluster_id)
+
+    assert (
+        "While fetching cluster specification: API returned 404: Cluster not found"
+        in str(excinfo.value)
+    )
