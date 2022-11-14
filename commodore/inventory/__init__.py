@@ -1,6 +1,6 @@
 from os import makedirs
 from pathlib import Path as P
-from typing import Union
+from typing import Optional, Union
 
 from commodore.component import Component
 
@@ -8,7 +8,7 @@ from commodore.component import Component
 class Inventory:
     _work_dir: P
 
-    def __init__(self, work_dir: P = None):
+    def __init__(self, work_dir: Optional[P] = None):
         if work_dir:
             self._work_dir = work_dir
         else:

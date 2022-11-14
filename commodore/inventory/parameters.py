@@ -287,7 +287,9 @@ class InventoryFactory:
             )
         )
 
-    def _find_values(self, fact: DefaultsFact, cloud: str = None) -> Iterable[str]:
+    def _find_values(
+        self, fact: DefaultsFact, cloud: Optional[str] = None
+    ) -> Iterable[str]:
         values = []
         value_path = self.global_dir / fact.value
         if fact == DefaultsFact.REGION:
