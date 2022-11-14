@@ -10,6 +10,7 @@ from unittest.mock import patch
 from commodore import compile
 from commodore.config import Config
 from commodore.cluster import Cluster
+from commodore.gitrepo import GitRepo
 
 import mock_gitrepo
 
@@ -172,3 +173,127 @@ def test_compile_raises_on_unknown_cluster(tmp_path: P, config: Config):
         "While fetching cluster specification: API returned 404: Cluster not found"
         in str(excinfo.value)
     )
+
+
+def setup_remote(path: P) -> str:
+    r = GitRepo(None, path)
+    with open(r.working_tree_dir / "test.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    r.stage_all()
+    r.commit("Initial")
+
+    return f"file://{path.absolute()}"
+
+
+def test_abort_on_global_dirty_raises(tmp_path: P, config: Config):
+    config.force = False
+
+    remote_url = setup_remote(tmp_path / "remote")
+
+    gr = GitRepo.clone(remote_url, config.inventory.global_config_dir, config)
+    with open(gr.working_tree_dir / "test.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\nSome more text\n")
+
+    cluster = setup_cluster()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        compile._abort_on_local_changes(config, cluster)
+
+    assert "Global repo has local (uncommitted or unpushed) changes." in str(
+        excinfo.value
+    )
+
+
+def test_abort_on_global_untracked_raises(tmp_path: P, config: Config):
+    config.force = False
+
+    remote_url = setup_remote(tmp_path / "remote")
+
+    gr = GitRepo.clone(remote_url, config.inventory.global_config_dir, config)
+    with open(gr.working_tree_dir / "foo.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    cluster = setup_cluster()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        compile._abort_on_local_changes(config, cluster)
+
+    assert "Global repo has local (uncommitted or unpushed) changes." in str(
+        excinfo.value
+    )
+
+
+def test_abort_on_global_local_branch_raises(tmp_path: P, config: Config):
+    config.force = False
+
+    remote_url = setup_remote(tmp_path / "remote")
+
+    gr = GitRepo.clone(remote_url, config.inventory.global_config_dir, config)
+    b = gr.repo.create_head("local")
+    b.checkout()
+    with open(gr.working_tree_dir / "foo.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    gr.stage_all()
+    gr.commit("local")
+
+    cluster = setup_cluster()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        compile._abort_on_local_changes(config, cluster)
+
+    assert "Global repo has local (uncommitted or unpushed) changes." in str(
+        excinfo.value
+    )
+
+
+def test_abort_on_global_ahead_raises(tmp_path: P, config: Config):
+    config.force = False
+
+    remote_url = setup_remote(tmp_path / "remote")
+
+    gr = GitRepo.clone(remote_url, config.inventory.global_config_dir, config)
+    with open(gr.working_tree_dir / "foo.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    gr.stage_all()
+    gr.commit("local")
+
+    cluster = setup_cluster()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        compile._abort_on_local_changes(config, cluster)
+
+    assert "Global repo has local (uncommitted or unpushed) changes." in str(
+        excinfo.value
+    )
+
+
+def test_abort_on_tenant_changes_raises(tmp_path: P, config: Config):
+    config.force = False
+
+    cluster = setup_cluster()
+
+    tr = GitRepo(None, config.inventory.tenant_config_dir(cluster.tenant_id))
+    with open(tr.working_tree_dir / "test.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    with pytest.raises(click.ClickException) as excinfo:
+        compile._abort_on_local_changes(config, cluster)
+
+    assert "Tenant repo has local (uncommitted or unpushed) changes." in str(
+        excinfo.value
+    )
+
+
+def test_abort_on_local_changes_continues_with_force(tmp_path: P, config: Config):
+    config.force = True
+
+    gr = GitRepo(None, config.inventory.global_config_dir)
+    with open(gr.working_tree_dir / "test.txt", "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+
+    cluster = setup_cluster()
+
+    compile._abort_on_local_changes(config, cluster)
