@@ -331,6 +331,10 @@ class GitRepo:
         return self._repo.remote(remote).fetch(tags=tags, prune=prune)
 
     def has_local_branches(self) -> bool:
+        if len(self.repo.remotes) == 0:
+            # If we don't have a remote, the fact that we have local branches is
+            # useless to determine whether to abort or continue a compile.
+            return False
         local_heads = set(h.name for h in self.repo.heads)
         remote_prefix = self._remote_prefix()
         remote_heads = set(h.name.replace(remote_prefix, "", 1) for h in self.fetch())
