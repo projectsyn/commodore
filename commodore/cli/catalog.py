@@ -125,6 +125,13 @@ def clean(config: Config, verbose):
         + "prefixed with `json:` isn't valid JSON, it will be skipped."
     ),
 )
+@click.option(
+    "--force/--no-force",
+    default=False,
+    show_default=True,
+    help="Discard local changes in tenant or global repo. "
+    + "Has no effect if `--local` is given.",
+)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
@@ -147,6 +154,7 @@ def compile_catalog(
     fetch_dependencies,
     migration,
     dynamic_fact: str,
+    force: bool,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -163,6 +171,7 @@ def compile_catalog(
     config.oidc_discovery_url = oidc_discovery_url
     config.fetch_dependencies = fetch_dependencies
     config.dynamic_facts = parse_dynamic_facts_from_cli(dynamic_fact)
+    config.force = not config.local and force
 
     if config.push and (
         config.global_repo_revision_override or config.tenant_repo_revision_override

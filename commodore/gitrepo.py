@@ -343,6 +343,22 @@ class GitRepo:
     def has_local_changes(self) -> bool:
         return self._repo.is_dirty() or len(self._repo.untracked_files) > 0
 
+    def is_ahead_of_remote(self) -> bool:
+        if self.repo.head.is_detached:
+            # Always return False for repo which has a detached head checked out.
+            return False
+
+        active_branch = self.repo.active_branch
+        tracking_branch = active_branch.tracking_branch()
+        if not tracking_branch:
+            # If there's no tracking branch there's no point in reporting that we're
+            # ahead of anything.
+            return False
+
+        return (
+            len(list(self.repo.iter_commits(f"{tracking_branch}..{active_branch}"))) > 0
+        )
+
     def _create_worktree(self, worktree: Path, version: str):
         """Create worktree.
 

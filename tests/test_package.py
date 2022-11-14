@@ -3,6 +3,7 @@ from pathlib import Path
 import git
 import yaml
 
+from commodore.config import Config
 from commodore.multi_dependency import MultiDependency
 
 from commodore import package
@@ -58,3 +59,13 @@ def test_package_checkout(tmp_path: Path):
         params = fcontents["parameters"]
         assert "test" in params
         assert params["test"] == "testing"
+
+
+def test_package_checkout_is_dirty(tmp_path: Path, config: Config):
+    _setup_package_remote("test", tmp_path / "pkg.git")
+    clone_url = f"file://{tmp_path}/pkg.git"
+
+    p = package.Package.clone(config, clone_url, "test-component")
+    p.checkout()
+
+    assert not p.checkout_is_dirty()

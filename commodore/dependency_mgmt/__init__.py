@@ -81,6 +81,11 @@ def fetch_components(cfg: Config):
             version=cspec.version,
             sub_path=cspec.path,
         )
+        if c.checkout_is_dirty() and not cfg.force:
+            raise click.ClickException(
+                f"Component {cn} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
@@ -157,6 +162,11 @@ def fetch_packages(cfg: Config):
             version=pspec.version,
             sub_path=pspec.path,
         )
+        if pkg.checkout_is_dirty() and not cfg.force:
+            raise click.ClickException(
+                f"Package {p} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
         pkg.checkout()
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)

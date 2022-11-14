@@ -25,6 +25,7 @@ from pathlib import Path
 class RepoInfo:
     branches: Iterable[str]
     commit_shas: dict[str, str]
+    repo: git.Repo
 
 
 def setup_remote(tmp_path: Path):
@@ -47,12 +48,13 @@ def setup_remote(tmp_path: Path):
     b.checkout()
     bc = repo.index.commit("branch")
     repo.create_tag("v1.0.0", ref="master")
-    repo.head.set_reference("master")
-    repo.index.checkout()
+    m = [h for h in repo.heads if h.name == "master"][0]
+    m.checkout()
 
     ri = RepoInfo(
         ["master", "test-branch"],
         {"master": commit.hexsha, "test-branch": bc.hexsha},
+        repo,
     )
 
     return f"file://{remote.absolute()}", ri
@@ -692,3 +694,61 @@ def test_gitrepo_stage_all_ignore_patterns(tmp_path: Path):
     assert "foo.txt" in committed_paths
     assert "bar.txt" not in committed_paths
     assert "sub/bar.txt" not in committed_paths
+
+
+@pytest.mark.parametrize("version", ["master", "v1.0.0"])
+def test_gitrepo_is_ahead_of_remote_simple(tmp_path: Path, version: str):
+    repo_url, ri = setup_remote(tmp_path)
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout(version=version)
+
+    assert not r.is_ahead_of_remote()
+    assert r.repo.head.is_detached == (version == "v1.0.0")
+
+
+def test_gitrepo_is_ahead_of_remote_behind(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    remote = ri.repo
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout(version="master")
+
+    # create new commit in remote and fetch changes
+    (Path(remote.working_tree_dir) / "foo.txt").touch()
+    remote.index.add(["foo.txt"])
+    remote.index.commit("Add foo")
+
+    r.fetch()
+
+    assert not r.is_ahead_of_remote()
+    assert len(list(r.repo.iter_commits("master..origin/master"))) == 1
+
+
+def test_gitrepo_is_ahead_no_remote(tmp_path: Path):
+    r = gitrepo.GitRepo(None, tmp_path / "repo", force_init=True)
+    (Path(r.working_tree_dir) / "test.txt").touch()
+    r.stage_all()
+    r.commit("Initial")
+
+    assert len(r.repo.remotes) == 0
+    assert not r.is_ahead_of_remote()
+
+
+def test_gitrepo_is_ahead_of_remote_local_branch(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout()
+
+    b = r.repo.create_head("local")
+    b.checkout()
+
+    (Path(r.working_tree_dir) / "foo.txt").touch()
+    r.stage_all()
+    r.commit("Add foo.txt")
+
+    assert not r.is_ahead_of_remote()
+    # verify that our local branch is ahead of both local and remote tracking master
+    assert len(list(r.repo.iter_commits("master..local"))) == 1
+    assert len(list(r.repo.iter_commits("origin/master..local"))) == 1
