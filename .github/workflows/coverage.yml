@@ -15,7 +15,7 @@ jobs:
           echo ${{ github.event.action }}
   coverage:
     # Only run coverage (which includes the integration test) for PRs which don't originate from a fork
-    if: github.event.action == 'pull_request' && github.event.pull_request.head.repo.fork == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
