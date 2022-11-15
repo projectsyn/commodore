@@ -68,8 +68,8 @@ def _test_yaml_dump_fun(
             textwrap.dedent(
                 """
                 a:
-                - 1
-                - 2
+                  - 1
+                  - 2
                 b: test
                 """
             )[1:],
@@ -132,8 +132,8 @@ def test_yaml_dump(tmp_path: Path, input, expected):
             textwrap.dedent(
                 """
                 a:
-                - 1
-                - 2
+                  - 1
+                  - 2
                 ---
                 b: test
                 """
