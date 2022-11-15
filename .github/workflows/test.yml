@@ -111,6 +111,8 @@ jobs:
     - name: Run benchmarks on Python ${{ matrix.python-version }}
       run: make bench_py${PYVER}
   integration:
+    # Skip integration tests on PRs from forks
+    if: github.event.action == 'pull_request' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3

@@ -12,6 +12,8 @@ on:
 
 jobs:
   build-and-publish:
+    # Skip job on forks
+    if: github.event.action == 'pull_request' && github.event.pull_request.head.repo.fork == false
     name: Build and publish to PyPI
     runs-on: ubuntu-latest
 
