@@ -115,7 +115,7 @@ On Linux it's possible to use SSH agent and mounting the agents socket into the 
 commodore() {
   local pubring="${HOME}/.gnupg/pubring.kbx"
   if command -v gpgconf &>/dev/null && test -f "${pubring}"; then
-    gpg_opts=--volume="${pubring}:/app/.gnupg/pubring.kbx:ro"\ --volume="$(gpgconf --list-dir agent-extra-socket):/app/.gnupg/S.gpg-agent:ro"
+    gpg_opts=(--volume "${pubring}:/app/.gnupg/pubring.kbx:ro" --volume "$(gpgconf --list-dir agent-extra-socket):/app/.gnupg/S.gpg-agent:ro")
   else
     gpg_opts=
   fi
@@ -134,7 +134,7 @@ commodore() {
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    ${gpg_opts} \
+    ${gpg_opts[@]} \
     --volume "${PWD}:${PWD}" \
     --workdir "${PWD}" \
     projectsyn/commodore:${COMMODORE_VERSION:=latest} \
