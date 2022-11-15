@@ -8,6 +8,11 @@ on:
       - master
 
 jobs:
+  debugging:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo ${{ github.event.action }}
   coverage:
     # Only run coverage (which includes the integration test) for PRs which don't originate from a fork
     if: github.event.action == 'pull_request' && github.event.pull_request.head.repo.fork == false
