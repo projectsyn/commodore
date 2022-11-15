@@ -75,6 +75,11 @@ Additionally, having Jsonnet and Kapitan dependency fetching enabled in local mo
 When you want to test adding a new component in local mode, you *must* run local mode with dependency fetching enabled at least once.
 After that, all the symlinks and dependencies which are required to compile the component will be present and you can disable dependency fetching.
 
+*-m, --migration*::
+  Specify a migration that you expect to happen for the cluster catalog.
+  Currently known are the Kapitan 0.29 to 0.30 migration and a generic migration ignoring all non-functional YAML formatting changes.
+  When the Kapitan 0.29 to 0.30 migration is selected, Commodore will suppress noise (changing managed-by labels, and reordered objects) caused by the migration in the diff output.
+  When the ignore YAML formatting migration is selected, Commodore will suppress noise such as reordered objects, indentation and flow changes of lists or differences in string representation.
 
 *--push*::
   Push catalog to remote repository as discovered in the cluster configuration

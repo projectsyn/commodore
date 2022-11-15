@@ -94,10 +94,14 @@ def clean(config: Config, verbose):
     "--migration",
     help=(
         "Specify a migration that you expect to happen for the cluster catalog. "
-        + "Currently Commodore only knows the Kapitan 0.29 to 0.30 migration. "
+        + "Currently known are the Kapitan 0.29 to 0.30 migration and "
+        + "a generic migration ignoring all non-functional YAML formatting changes. "
         + "When the Kapitan 0.29 to 0.30 migration is selected, Commodore will suppress "
         + "noise (changing managed-by labels, and reordered objects) caused by the "
-        + "migration in the diff output."
+        + "migration in the diff output. "
+        + "When the ignore YAML formatting migration is selected, Commodore will suppress "
+        + "noise such as reordered objects, indentation and flow changes of lists or "
+        + "differences in string representation."
     ),
     type=click.Choice([m.value for m in Migration], case_sensitive=False),
 )

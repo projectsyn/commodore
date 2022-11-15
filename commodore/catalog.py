@@ -14,7 +14,13 @@ import json
 
 from .component import Component
 from .gitrepo import GitRepo, GitCommandError
-from .helpers import ApiError, rm_tree_contents, lieutenant_query, sliding_window
+from .helpers import (
+    ApiError,
+    rm_tree_contents,
+    lieutenant_query,
+    sliding_window,
+    IndentedListDumper,
+)
 from .cluster import Cluster
 from .config import Config, Migration
 from .k8sobject import K8sObject
@@ -175,11 +181,31 @@ def _kapitan_029_030_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> tuple[Iterable[str], bool]:
 
+    diff_lines, _ = _ignore_yaml_formatting_difffunc(
+        before_text, after_text, fromfile, tofile
+    )
+
+    suppress_diff = not any(
+        _is_semantic_diff_kapitan_029_030(win)
+        for win in sliding_window(diff_lines[2:], 2)
+    )
+
+    return diff_lines, suppress_diff
+
+
+def _ignore_yaml_formatting_difffunc(
+    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
+) -> tuple[list[str], bool]:
+
     before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
-    before_sorted_lines = yaml.dump_all(before_objs).split("\n")
+    before_sorted_lines = yaml.dump_all(before_objs, Dumper=IndentedListDumper).split(
+        "\n"
+    )
 
     after_objs = sorted(yaml.safe_load_all(after_text), key=K8sObject)
-    after_sorted_lines = yaml.dump_all(after_objs).split("\n")
+    after_sorted_lines = yaml.dump_all(after_objs, Dumper=IndentedListDumper).split(
+        "\n"
+    )
 
     diff = difflib.unified_diff(
         before_sorted_lines,
@@ -188,13 +214,9 @@ def _kapitan_029_030_difffunc(
         fromfile=fromfile,
         tofile=tofile,
     )
-    diff_lines = list(diff)
-    suppress_diff = not any(
-        _is_semantic_diff_kapitan_029_030(win)
-        for win in sliding_window(diff_lines[2:], 2)
-    )
 
-    return diff_lines, suppress_diff
+    diff_lines = list(diff)
+    return diff_lines, len(diff_lines) == 0
 
 
 def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
@@ -213,6 +235,9 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
     if cfg.migration == Migration.KAP_029_030:
         click.echo(" > Smart diffing started... (this can take a while)")
         difftext, changed = repo.stage_all(diff_func=_kapitan_029_030_difffunc)
+    elif cfg.migration == Migration.IGNORE_YAML_FORMATTING:
+        click.echo(" > Smart diffing started... (this can take a while)")
+        difftext, changed = repo.stage_all(diff_func=_ignore_yaml_formatting_difffunc)
     else:
         difftext, changed = repo.stage_all()
     elapsed = time.time() - start
