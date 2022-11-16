@@ -94,12 +94,7 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     cfg.register_config("customer", repo)
 
 
-def _regular_setup(config: Config, cluster_id):
-    try:
-        cluster = load_cluster_from_api(config, cluster_id)
-    except ApiError as e:
-        raise click.ClickException(f"While fetching cluster specification: {e}") from e
-
+def _regular_setup(config: Config, cluster: Cluster):
     update_target(config, config.inventory.bootstrap_target)
     update_params(config.inventory, cluster)
 
@@ -209,6 +204,26 @@ def check_parameters_component_versions(cluster_parameters):
         )
 
 
+def _abort_on_local_changes(cfg: Config, cluster: Cluster):
+    if cfg.force:
+        click.secho("Discarding local changes, if there are any", fg="yellow")
+        return
+
+    gr = GitRepo(None, cfg.inventory.global_config_dir)
+    if gr.has_local_changes() or gr.has_local_branches() or gr.is_ahead_of_remote():
+        raise click.ClickException(
+            "Global repo has local (uncommitted or unpushed) changes. "
+            + "Please specify `--force` to discard them."
+        )
+
+    tr = GitRepo(None, cfg.inventory.tenant_config_dir(cluster.tenant_id))
+    if tr.has_local_changes() or gr.has_local_branches() or gr.is_ahead_of_remote():
+        raise click.ClickException(
+            "Tenant repo has local (uncommitted or unpushed) changes. "
+            + "Please specify `--force` to discard them."
+        )
+
+
 def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[str]]:
     # Raise error if any enabled components use removed reclass variables
     check_removed_reclass_variables_components(config)
@@ -246,8 +261,15 @@ def compile(config, cluster_id):
     if config.local:
         catalog_repo = _local_setup(config, cluster_id)
     else:
+        try:
+            cluster = load_cluster_from_api(config, cluster_id)
+        except ApiError as e:
+            raise click.ClickException(
+                f"While fetching cluster specification: {e}"
+            ) from e
+        _abort_on_local_changes(config, cluster)
         clean_working_tree(config)
-        catalog_repo = _regular_setup(config, cluster_id)
+        catalog_repo = _regular_setup(config, cluster)
 
     inventory, targets = setup_compile_environment(config)
 

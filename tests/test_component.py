@@ -519,3 +519,14 @@ def test_component_clone(tmp_path: P, config: Config):
     assert c.target_directory == tmp_path / "dependencies" / "test-component"
     assert c.target_directory == c.target_dir
     assert c.dependency == config.register_dependency_repo(clone_url)
+
+
+def test_checkout_is_dirty(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+    c.checkout()
+    c._dependency = None
+
+    assert not c.checkout_is_dirty()

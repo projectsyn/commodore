@@ -169,6 +169,36 @@ def test_fetch_components(patch_discover, patch_read, config: Config, tmp_path: 
 
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components_raises(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
+    components = ["foo"]
+    patch_discover.return_value = (components, {})
+    patch_read.return_value = setup_components_upstream(tmp_path, components)
+
+    dependency_mgmt.fetch_components(config)
+
+    with open(
+        config.get_components()["foo"].target_dir / "class" / "defaults.yml",
+        "w",
+        encoding="utf-8",
+    ) as f:
+        f.write("foo: bar\n")
+
+    config._dependency_repos.clear()
+    config._components.clear()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        dependency_mgmt.fetch_components(config)
+
+    assert (
+        "Component foo has uncommitted changes. Please specify `--force` to discard them"
+        in str(excinfo.value)
+    )
+
+
+@patch("commodore.dependency_mgmt._read_components")
+@patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_is_minimal(
     patch_discover, patch_urls, config: Config, tmp_path: Path
 ):
@@ -512,6 +542,34 @@ def test_fetch_packages(
             params = fcontents["parameters"]
             assert p in params
             assert params[p] == "testing"
+
+
+@patch.object(dependency_mgmt, "_read_packages")
+@patch.object(dependency_mgmt, "_discover_packages")
+def test_fetch_packages_raises(
+    discover_pkgs, read_pkgs, tmp_path: Path, config: Config
+):
+    packages = ["foo"]
+    discover_pkgs.return_value = packages
+    read_pkgs.return_value = _setup_packages(tmp_path / "upstream", packages)
+
+    dependency_mgmt.fetch_packages(config)
+
+    with open(
+        config.get_packages()["foo"].repository_dir / "foo.yml", "w", encoding="utf-8"
+    ) as f:
+        f.write("foo: bar\n")
+
+    config._dependency_repos.clear()
+    config._packages.clear()
+
+    with pytest.raises(click.ClickException) as excinfo:
+        dependency_mgmt.fetch_packages(config)
+
+    assert (
+        "Package foo has uncommitted changes. Please specify `--force` to discard them"
+        in str(excinfo.value)
+    )
 
 
 @patch.object(dependency_mgmt, "_read_packages")

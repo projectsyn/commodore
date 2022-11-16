@@ -88,6 +88,20 @@ class Package:
     def checkout(self):
         self._dependency.checkout_package(self._name, self._version)
 
+    def checkout_is_dirty(self) -> bool:
+        dep_repo = self._dependency.bare_repo
+        author_name = dep_repo.author.name
+        author_email = dep_repo.author.email
+        worktree = self._dependency.get_package(self._name)
+
+        if worktree and worktree.is_dir():
+            r = GitRepo(
+                None, worktree, author_name=author_name, author_email=author_email
+            )
+            return r.repo.is_dirty()
+        else:
+            return False
+
 
 def package_dependency_dir(work_dir: Path, pname: str) -> Path:
     return work_dir / "dependencies" / f"pkg.{pname}"

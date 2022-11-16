@@ -171,6 +171,25 @@ class Component:
             )
         self._dependency.checkout_component(self.name, self.version)
 
+    def checkout_is_dirty(self) -> bool:
+        if self._dependency:
+            dep_repo = self._dependency.bare_repo
+            author_name = dep_repo.author.name
+            author_email = dep_repo.author.email
+            worktree = self._dependency.get_component(self.name)
+        else:
+            author_name = None
+            author_email = None
+            worktree = self.target_dir
+
+        if worktree and worktree.is_dir():
+            r = GitRepo(
+                None, worktree, author_name=author_name, author_email=author_email
+            )
+            return r.repo.is_dirty()
+        else:
+            return False
+
     def render_jsonnetfile_json(self, component_params):
         """
         Render jsonnetfile.json from jsonnetfile.jsonnet

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import difflib
 import hashlib
 import re
 import shutil
@@ -8,7 +7,7 @@ import shutil
 from collections import namedtuple
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Optional
 
 import click
 
@@ -17,6 +16,8 @@ from git.objects import Tree
 
 from url_normalize import url_normalize
 from url_normalize.tools import deconstruct_url, reconstruct_url
+
+from .diff import DiffFunc, default_difffunc, process_diff
 
 
 class RefError(ValueError):
@@ -28,13 +29,6 @@ class MergeConflict(ValueError):
 
 
 CommitInfo = namedtuple("CommitInfo", ["commit", "branch", "tag"])
-
-
-class DiffFunc(Protocol):
-    def __call__(
-        self, before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-    ) -> tuple[Iterable[str], bool]:
-        ...
 
 
 def _normalize_git_ssh(url: str) -> str:
@@ -73,73 +67,6 @@ def normalize_git_url(url: str) -> str:
     elif url.startswith("http://") or url.startswith("https://"):
         url = url_normalize(url)
     return url
-
-
-def _colorize_diff(line: str) -> str:
-    if line.startswith("--- ") or line.startswith("+++ ") or line.startswith("@@ "):
-        return click.style(line, fg="yellow")
-    if line.startswith("+"):
-        return click.style(line, fg="green")
-    if line.startswith("-"):
-        return click.style(line, fg="red")
-    return line
-
-
-def _compute_similarity(change):
-    before = change.b_blob.data_stream.read().decode("utf-8").split("\n")
-    after = change.a_blob.data_stream.read().decode("utf-8").split("\n")
-    r = difflib.SequenceMatcher(a=before, b=after).ratio()
-    similarity_diff = []
-    similarity_diff.append(click.style(f"--- {change.b_path}", fg="yellow"))
-    similarity_diff.append(click.style(f"+++ {change.a_path}", fg="yellow"))
-    similarity_diff.append(f"Renamed file, similarity index {r * 100:.2f}%")
-    return similarity_diff
-
-
-def default_difffunc(
-    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-) -> tuple[Iterable[str], bool]:
-    before_lines = before_text.split("\n")
-    after_lines = after_text.split("\n")
-    diff_lines = difflib.unified_diff(
-        before_lines, after_lines, lineterm="", fromfile=fromfile, tofile=tofile
-    )
-    # never suppress diffs in default difffunc
-    return diff_lines, False
-
-
-def _process_diff(change_type: str, change, diff_func: DiffFunc) -> Iterable[str]:
-    difftext = []
-    # Because we're diffing the staged changes, the diff objects
-    # are backwards, and "added" files are actually being deleted
-    # and vice versa for "deleted" files.
-    if change_type == "A":
-        difftext.append(click.style(f"Deleted file {change.b_path}", fg="red"))
-    elif change_type == "D":
-        difftext.append(click.style(f"Added file {change.b_path}", fg="green"))
-    elif change_type == "R":
-        difftext.append(
-            click.style(f"Renamed file {change.b_path} => {change.a_path}", fg="yellow")
-        )
-    else:
-        # Other changes should produce a usable diff
-        # The diff objects are backwards, so use b_blob as before
-        # and a_blob as after.
-        before = change.b_blob.data_stream.read().decode("utf-8")
-        after = change.a_blob.data_stream.read().decode("utf-8")
-        diff_lines, suppress_diff = diff_func(
-            before, after, fromfile=change.b_path, tofile=change.a_path
-        )
-        if not suppress_diff:
-            if change.renamed_file:
-                # Just compute similarity ratio for renamed files
-                # similar to git's diffing
-                difftext.append("\n".join(_compute_similarity(change)).strip())
-            else:
-                diff_lines = [_colorize_diff(line) for line in diff_lines]
-                difftext.append("\n".join(diff_lines).strip())
-
-    return difftext
 
 
 class GitRepo:
@@ -331,6 +258,10 @@ class GitRepo:
         return self._repo.remote(remote).fetch(tags=tags, prune=prune)
 
     def has_local_branches(self) -> bool:
+        if len(self.repo.remotes) == 0:
+            # If we don't have a remote, the fact that we have local branches is
+            # useless to determine whether to abort or continue a compile.
+            return False
         local_heads = set(h.name for h in self.repo.heads)
         remote_prefix = self._remote_prefix()
         remote_heads = set(h.name.replace(remote_prefix, "", 1) for h in self.fetch())
@@ -338,6 +269,22 @@ class GitRepo:
 
     def has_local_changes(self) -> bool:
         return self._repo.is_dirty() or len(self._repo.untracked_files) > 0
+
+    def is_ahead_of_remote(self) -> bool:
+        if self.repo.head.is_detached:
+            # Always return False for repo which has a detached head checked out.
+            return False
+
+        active_branch = self.repo.active_branch
+        tracking_branch = active_branch.tracking_branch()
+        if not tracking_branch:
+            # If there's no tracking branch there's no point in reporting that we're
+            # ahead of anything.
+            return False
+
+        return (
+            len(list(self.repo.iter_commits(f"{tracking_branch}..{active_branch}"))) > 0
+        )
 
     def _create_worktree(self, worktree: Path, version: str):
         """Create worktree.
@@ -610,7 +557,7 @@ class GitRepo:
                 # of type `Lit_change_type` in iter_change_type() but returns plain
                 # strings in `diff.change_type`.
                 for c in diff.iter_change_type(ct):  # type: ignore[arg-type]
-                    difftext.extend(_process_diff(ct, c, diff_func))
+                    difftext.extend(process_diff(ct, c, diff_func))
 
         return "\n".join(difftext), changed
 
