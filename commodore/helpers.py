@@ -44,6 +44,15 @@ class ApiError(Exception):
     pass
 
 
+class IndentedListDumper(yaml.Dumper):
+    """
+    Dumper which preserves indentation of list items by overriding indentless.
+    """
+
+    def increase_indent(self, flow=False, *args, **kwargs):
+        return super().increase_indent(flow=flow, indentless=False)
+
+
 def yaml_load(file):
     """
     Load single-document YAML and return document
@@ -83,7 +92,7 @@ def yaml_dump(obj, file):
     """
     yaml.add_representer(str, _represent_str)
     with open(file, "w", encoding="utf-8") as outf:
-        yaml.dump(obj, outf)
+        yaml.dump(obj, outf, Dumper=IndentedListDumper)
 
 
 def yaml_dump_all(obj, file):
@@ -92,7 +101,7 @@ def yaml_dump_all(obj, file):
     """
     yaml.add_representer(str, _represent_str)
     with open(file, "w", encoding="utf-8") as outf:
-        yaml.dump_all(obj, outf)
+        yaml.dump_all(obj, outf, Dumper=IndentedListDumper)
 
 
 def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}):

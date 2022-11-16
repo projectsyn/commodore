@@ -13,6 +13,7 @@ import git
 import pytest
 import responses
 import yaml
+import textwrap
 
 from commodore import catalog
 from commodore.config import Config
@@ -265,7 +266,9 @@ def write_target_file_2(target: Path, name="test.txt", change=True):
         )
 
 
-@pytest.mark.parametrize("migration", ["", "kapitan-0.29-to-0.30"])
+@pytest.mark.parametrize(
+    "migration", ["", "kapitan-0.29-to-0.30", "ignore-yaml-formatting"]
+)
 def test_update_catalog(
     capsys, tmp_path: Path, config: Config, fresh_cluster: Cluster, migration: str
 ):
@@ -302,6 +305,12 @@ def test_update_catalog(
     config.migration = migration
     catalog.update_catalog(config, ["test"], repo)
 
+    addl_indent = ""
+    # Diff with real changes is shown with correct additional
+    # indent if ignore-yaml-formatting is used
+    if migration != "":
+        addl_indent = 2 * " "
+
     expected_diff = (
         "     --- manifests/a.yaml\n"
         + "     +++ manifests/a.yaml\n"
@@ -313,10 +322,10 @@ def test_update_catalog(
         + "        namespace: test\n"
         + "     @@ -7,6 +5,6 @@\n"
         + "        data:\n"
-        + "        - a\n"
-        + "        - b\n"
-        + "     -  - c\n"
-        + "     +  - d\n"
+        + f"      {addl_indent}  - a\n"
+        + f"      {addl_indent}  - b\n"
+        + f"     -{addl_indent}  - c\n"
+        + f"     +{addl_indent}  - d\n"
         + "        key: value\n"
     )
 
@@ -378,7 +387,7 @@ def test_kapitan_029_030_difffunc_sorts_by_k8s_kind():
         + "   namespace: test\n"
         + "+spec:\n"
         + "+  data:\n"
-        + "+  - a\n"
+        + "+    - a\n"
         + " ---\n"
         + " kind: BBB\n"
         + " ---"
@@ -429,6 +438,66 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
     )
 
     diffs, suppressed = catalog._kapitan_029_030_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    print("\n".join(diffs))
+
+    assert suppressed
+
+
+def test_ignore_yaml_formatting_difffunc_keep_semantic_whitespace():
+    before_text = textwrap.dedent(
+        """
+        a:
+        b: b
+        """
+    )
+    after_text = textwrap.dedent(
+        """
+        a:
+          b: b
+        """
+    )
+
+    diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    expected_diff = (
+        "--- test\n"
+        + "+++ test\n"
+        + "@@ -1,3 +1,3 @@\n"
+        + "-a: null\n"
+        + "-b: b\n"
+        + "+a:\n"
+        + "+  b: b\n"
+        + " "
+    )
+
+    assert not suppressed
+    assert "\n".join(diffs) == expected_diff
+
+
+def test_ignore_yaml_formatting_difffunc_suppresses_noise():
+    before_text = textwrap.dedent(
+        """
+        a:
+        - a
+        - b
+        b: b
+        """
+    )
+    after_text = textwrap.dedent(
+        """
+        a:
+          - a
+          - b
+        b: b
+        """
+    )
+
+    diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
         before_text, after_text, fromfile="test", tofile="test"
     )
 

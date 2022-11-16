@@ -24,6 +24,7 @@ from . import tokencache
 
 class Migration(Enum):
     KAP_029_030 = "kapitan-0.29-to-0.30"
+    IGNORE_YAML_FORMATTING = "ignore-yaml-formatting"
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
