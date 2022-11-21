@@ -55,6 +55,10 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
                     kind: "Namespace",
                     metadata: {
                         name: params.namespace,
+                        // Annotations and labels are added to be consistent with the built in helm_namespace filter
+                        // which uses kube.libsonnet to create the namespace.
+                        annotations: { },
+                        labels: { name: params.namespace },
                     }
                 }
             }
@@ -114,22 +118,6 @@ def _setup(tmp_path, f, alias="test-component"):
 
     libdir = tmp_path / "vendor" / "lib"
     os.makedirs(libdir, exist_ok=True)
-
-    with open(libdir / "kube.libjsonnet", "w") as kf:
-        kf.write(
-            dedent(
-                """
-                {
-                    Namespace(name): {
-                        apiVersion: "v1",
-                        kind: "Namespace",
-                        metadata: {
-                            name: name,
-                        },
-                    }
-                }"""
-            )
-        )
 
     testf = targetdir / "object.yaml"
     with open(testf, "w") as objf:
@@ -240,7 +228,11 @@ def test_postprocess_components(
                 assert obj == {
                     "apiVersion": "v1",
                     "kind": "Namespace",
-                    "metadata": {"name": expected_ns},
+                    "metadata": {
+                        "annotations": {},
+                        "labels": {"name": expected_ns},
+                        "name": expected_ns,
+                    },
                 }
 
     if enabled is not None and not enabled:
