@@ -12,6 +12,9 @@ packages = [
 ]
 include = [
     "commodore/lib/commodore.libjsonnet",
+    "commodore/lib/kube.libsonnet",
+    "commodore/lib/kube.libjsonnet",
+    "commodore/lib/kube-libsonnet/kube.libsonnet",
     "commodore/filters/helm_namespace.jsonnet",
     "commodore/scripts/run-kustomize",
 ]

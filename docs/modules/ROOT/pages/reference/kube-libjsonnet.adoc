@@ -1,0 +1,16 @@
+= `kube.lib(j)sonnet`
+
+Commodore ensures that the https://github.com/bitnami-labs/kube-libsonnet/blob/master/kube.libsonnet[`bitnami-labs/kube-libsonnet/kube.libsonnet`] file is available as `lib/kube.libjsonnet`.
+
+As the upstream project isn't actively maintained, the Commodore maintainers update the file to keep it compatible with the latest Kubernetes versions.
+The file was originally imported from release https://github.com/bitnami-labs/kube-libsonnet/releases/tag/v1.19.0[`v1.19.0`].
+
+It's planned to switch to https://github.com/jsonnet-libs/k8s-libsonnet[`jsonnet-libs/k8s-libsonnet`] in the future.
+A migration guide will be provided.
+
+[IMPORTANT]
+It's not possible to override the provided `kube.libsonnet` using a component provided Jsonnet Bundler file.
+
+== Changes to the original `kube.libsonnet`
+
+TBD

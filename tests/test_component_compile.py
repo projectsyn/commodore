@@ -149,12 +149,6 @@ def test_run_component_compile_command(tmp_path: P, cli_runner: RunnerFunc):
 
     assert list(component_repo.remote().urls) == orig_remote_urls
 
-    jfpath = P(component_repo.working_tree_dir, "jsonnetfile.json")
-    assert jfpath.exists()
-    with open(jfpath) as jf:
-        jfstring = jf.read()
-        assert jfstring[-1] == "\n"
-
 
 def test_run_component_compile_command_postprocess(tmp_path: P, cli_runner: RunnerFunc):
     """
