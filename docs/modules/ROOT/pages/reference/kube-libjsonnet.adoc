@@ -13,4 +13,10 @@ It's not possible to override the provided `kube.libsonnet` using a component pr
 
 == Changes to the original `kube.libsonnet`
 
-TBD
+=== CronJob
+
+`apiVersion` is updated to `batch/v1` from `batch/v1beta1`.
+
+=== PodDisruptionBudget
+
+`apiVersion` is updated to `policy/v1` from `policy/v1beta1`.
