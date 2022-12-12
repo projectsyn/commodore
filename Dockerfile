@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
- && curl -sSL https://install.python-poetry.org | python - --version 1.1.13 \
+ && curl -sSL https://install.python-poetry.org | python - --version 1.3.1 \
  && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./
