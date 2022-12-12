@@ -72,7 +72,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 ### Additional System Requirements
 
-* [Poetry](https://github.com/python-poetry/poetry) 1.1.0+
+* [Poetry](https://github.com/python-poetry/poetry) 1.3.0+
 * Docker
 
 
