@@ -32,7 +32,7 @@ gitpython = "3.1.24"
 requests = {version = "2.26.0", extras = ["use_chardet_on_py3"]}
 url-normalize = "1.4.3"
 python-dotenv = "0.21.0"
-importlib-metadata = "5.2.0"
+importlib-metadata = "6.0.0"
 pyxdg = "0.28"
 # Reenable dependency cruft once our patches are merged.
 # In the meantime we add typer as a top-level dependency since Cruft depends
