@@ -1,10 +1,12 @@
 """Commands which interact with cluster catalogs"""
 import click
 
+from pathlib import Path
+
 from commodore.catalog import catalog_list, Migration
 from commodore.compile import compile as _compile
 from commodore.config import Config, parse_dynamic_facts_from_cli
-from commodore.helpers import clean_working_tree
+from commodore.helpers import clean_working_tree, lieutenant_query, ApiError
 from commodore.login import login
 
 import commodore.cli.options as options
@@ -28,8 +30,26 @@ def clean(config: Config, verbose):
     clean_working_tree(config)
 
 
+def _complete_clusters(ctx, param, incomplete):
+    config = Config(Path("."))
+    config.api_url = ctx.params["api_url"]
+    config.api_token = ctx.params["api_token"]
+    config.oidc_client = ctx.params["oidc_client"]
+    config.oidc_discovery_url = ctx.params["oidc_discovery_url"]
+
+    try:
+        if config.api_token is None:
+            login(config)
+        clusters = lieutenant_query(config.api_url, config.api_token, "clusters", "")
+    except (click.ClickException, ApiError):
+        # If we encounter any errors, ignore them.
+        # We shouldn't print errors during completion
+        return []
+    return [c["id"] for c in clusters if c["id"].startswith(incomplete)]
+
+
 @catalog_group.command(name="compile", short_help="Compile the catalog.")
-@click.argument("cluster")
+@click.argument("cluster", shell_complete=_complete_clusters)
 @options.api_url
 @options.api_token
 @options.oidc_discovery_url
