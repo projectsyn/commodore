@@ -64,7 +64,7 @@ parameters:
 ----
 parameters:
   component_name:
-    kubernetes_version: '${dynamic_facts:kubernetesVersion:major}.${dynamic_factskubernetesVersion:minor}' <1>
+    kubernetes_version: '${dynamic_facts:kubernetesVersion:major}.${dynamic_facts:kubernetesVersion:minor}' <1>
 ----
 <1> The parameter is overwritten using dynamic facts in the Project Syn installation's global configuration repository.
 ====
