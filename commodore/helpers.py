@@ -28,7 +28,14 @@ from commodore import __install_dir__
 from commodore.config import Config
 
 
-ArgumentCache = collections.namedtuple("ArgumentCache", ["inventory_path"])
+ArgumentCache = collections.namedtuple(
+    "ArgumentCache",
+    [
+        "inventory_path",
+        "yaml_multiline_string_style",
+        "yaml_dump_null_as_empty",
+    ],
+)
 
 
 class FakeVaultBackend(VaultBackend):
@@ -176,7 +183,9 @@ def kapitan_compile(
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
     cached.args["compile"] = ArgumentCache(
-        inventory_path=config.inventory.inventory_dir
+        inventory_path=config.inventory.inventory_dir,
+        yaml_multiline_string_style="double-quotes",
+        yaml_dump_null_as_empty=False,
     )
     kapitan_targets.compile_targets(
         inventory_path=config.inventory.inventory_dir,
