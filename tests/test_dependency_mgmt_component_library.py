@@ -137,6 +137,8 @@ def test_create_component_library_aliases_multiple_component(
     c2 = setup_mock_component(tmp_path, name="tc2")
     c3 = setup_mock_component(tmp_path, name="tc3")
 
+    config.inventory.ensure_dirs()
+
     config.register_component(c1)
     config.register_component(c2)
     config.register_component(c3)
@@ -172,3 +174,6 @@ def test_create_component_library_aliases_multiple_component(
             component_library.create_component_library_aliases(config, cluster_params)
 
         assert err in str(e.value)
+
+    else:
+        component_library.create_component_library_aliases(config, cluster_params)
