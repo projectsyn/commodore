@@ -90,35 +90,35 @@ def test_create_component_library_aliases_single_component(
 
 
 @pytest.mark.parametrize(
-    "tc1_libalias,tc2_libalias,tc3_libalias,err",
+    "tc1_meta,tc2_meta,tc3_meta,err",
     [
         ({}, {}, {}, None),
         (
-            {"foo.libsonnet": "tc1.libjsonnet"},
+            {"library_aliases": {"foo.libsonnet": "tc1.libjsonnet"}},
             {},
             {},
             None,
         ),
         (
             {},
-            {"foo.libsonnet": "tc2.libjsonnet"},
+            {"library_aliases": {"foo.libsonnet": "tc2.libjsonnet"}},
             {},
             None,
         ),
         (
-            {"foo.libsonnet": "tc1.libjsonnet"},
-            {"foo.libsonnet": "tc2.libjsonnet"},
+            {"library_aliases": {"foo.libsonnet": "tc1.libjsonnet"}},
+            {"library_aliases": {"foo.libsonnet": "tc2.libjsonnet"}},
             {},
             "Components 'tc1' and 'tc2' both define component library alias 'foo.libsonnet'",
         ),
         (
-            {"foo.libsonnet": "tc1.libjsonnet"},
-            {"foo.libsonnet": "tc2.libjsonnet"},
-            {"foo.libsonnet": "tc3.libjsonnet"},
+            {"library_aliases": {"foo.libsonnet": "tc1.libjsonnet"}},
+            {"library_aliases": {"foo.libsonnet": "tc2.libjsonnet"}},
+            {"library_aliases": {"foo.libsonnet": "tc3.libjsonnet"}},
             "Components 'tc1', 'tc2', and 'tc3' all define component library alias 'foo.libsonnet'",
         ),
         (
-            {"tc2-fake.libsonnet": "tc1.libjsonnet"},
+            {"library_aliases": {"tc2-fake.libsonnet": "tc1.libjsonnet"}},
             {},
             {},
             "Invalid alias prefix 'tc2' for template library alias of component 'tc1'",
@@ -128,9 +128,9 @@ def test_create_component_library_aliases_single_component(
 def test_create_component_library_aliases_multiple_component(
     tmp_path: Path,
     config: Config,
-    tc1_libalias: dict[str, str],
-    tc2_libalias: dict[str, str],
-    tc3_libalias: dict[str, str],
+    tc1_meta: dict[str, str],
+    tc2_meta: dict[str, str],
+    tc3_meta: dict[str, str],
     err: Optional[str],
 ):
     c1 = setup_mock_component(tmp_path, name="tc1")
@@ -145,13 +145,13 @@ def test_create_component_library_aliases_multiple_component(
 
     cluster_params = {
         c1.parameters_key: {
-            "_metadata": {"library_aliases": tc1_libalias},
+            "_metadata": tc1_meta,
         },
         c2.parameters_key: {
-            "_metadata": {"library_aliases": tc2_libalias},
+            "_metadata": tc2_meta,
         },
         c3.parameters_key: {
-            "_metadata": {"library_aliases": tc3_libalias},
+            "_metadata": tc3_meta,
         },
         "components": {
             "tc1": {
