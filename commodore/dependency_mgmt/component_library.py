@@ -121,6 +121,7 @@ def _check_library_alias_collisions(cfg: Config, cluster_params: dict[str, Any])
 
 
 def create_component_library_aliases(cfg: Config, cluster_params: dict[str, Any]):
+    click.secho("Installing component library aliases", bold=True)
     _check_library_alias_collisions(cfg, cluster_params)
 
     components = cfg.get_components()
