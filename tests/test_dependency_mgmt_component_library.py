@@ -123,6 +123,36 @@ def test_create_component_library_aliases_single_component(
             {},
             "Invalid alias prefix 'tc2' for template library alias of component 'tc1'",
         ),
+        # NOTE: we don't test the informational messages printed out when additional
+        # library prefixes are allowed or denied, we only test that there is an error
+        # message or not.
+        (
+            {
+                "library_aliases": {"tc2-fake.libsonnet": "tc1.libjsonnet"},
+                "replaces": "tc2",
+            },
+            {"deprecated": True, "replaced_by": "tc1"},
+            {},
+            None,
+        ),
+        (
+            {
+                "library_aliases": {"tc2-fake.libsonnet": "tc1.libjsonnet"},
+                "replaces": "tc2",
+            },
+            {"deprecated": True, "replaced_by": "tc3"},
+            {},
+            "Invalid alias prefix 'tc2' for template library alias of component 'tc1'",
+        ),
+        (
+            {
+                "library_aliases": {"tc2-fake.libsonnet": "tc1.libjsonnet"},
+                "replaces": "tc2",
+            },
+            {"deprecated": False, "replaced_by": "tc2"},
+            {},
+            "Invalid alias prefix 'tc2' for template library alias of component 'tc1'",
+        ),
     ],
 )
 def test_create_component_library_aliases_multiple_component(
