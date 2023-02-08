@@ -255,7 +255,11 @@ This allows components to provide implementations for generic library interfaces
 For example, cluster monitoring components for different Kubernetes distributions could provide libraries which implement the same interface.
 In this example, the interface would define functions which other components can use to ensure their alerts are picked up correctly by the cluster's monitoring stack.
 
-If multiple components advertise the same component alias or if a component advertises an alias which is prefixed with the name of another known component (the list of known components is extracted from `parameters.components`), Commodore aborts the compilation with an error.
+If multiple components advertise the same component alias or if a component advertises an alias which is prefixed with the name of another component deployed on the cluster (the list of deployed components is extracted from `applications`), Commodore aborts the compilation with an error.
+
+Commodore allows a component `c2` which replaces a deprecated component `c1` to take over its predecessor's library prefix if certain conditions are met:
+In order to be allowed to use its predecessor's prefix, component `c2` needs to explicitly specify that it replaces `c1` by setting `_metadata.replaces: c1`.
+Additionally, component `c1` must either not be deployed on the same cluster, or must be marked as deprecated via `_metadata.deprecated: true` and must nominate `c2` as their replacement by setting `_metadata.replaced_by: c2`.
 
 Below, a hypothetical example showing component `rancher-monitoring` advertising library alias `alerts.libsonnet` is given.
 
