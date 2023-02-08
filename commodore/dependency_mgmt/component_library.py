@@ -41,9 +41,9 @@ def _check_library_alias_prefixes(
 
 def _read_additional_prefix(
     cn: str,
-    cmeta: dict,
+    cmeta: dict[str, Any],
     components: dict[str, Component],
-    cluster_params: dict[str, dict],
+    cluster_params: dict[str, Any],
 ) -> str:
     """Extract additional allowed library prefixes from component metadata.
 
