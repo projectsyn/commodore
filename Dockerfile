@@ -41,7 +41,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
  && ./get_helm.sh \
  && mv /usr/local/bin/helm /usr/local/bin/helm2
 
-ARG KUSTOMIZE_VERSION=4.5.7
+ARG KUSTOMIZE_VERSION=5.0.0
 
 RUN ./tools/install-jb.sh v0.4.0 \
  && curl -fsSLO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
