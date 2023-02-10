@@ -12,7 +12,10 @@
   },
   "lockFileMaintenance": {
     "enabled": true,
-    "labels": ["ignore"]
+    "labels": ["ignore"],
+    "automerge": true,
+    "automergeType": "pr",
+    "platformAutomerge": true
   },
   "ignoreDeps": [
     "gitpython",
