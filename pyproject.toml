@@ -31,7 +31,7 @@ gitpython = "3.1.24"
 # chartdet to v5.
 requests = {version = "2.26.0", extras = ["use_chardet_on_py3"]}
 url-normalize = "1.4.3"
-python-dotenv = "0.21.1"
+python-dotenv = "1.0.0"
 importlib-metadata = "6.0.0"
 pyxdg = "0.28"
 # Reenable dependency cruft once our patches are merged.
