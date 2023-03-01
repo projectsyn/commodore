@@ -21,7 +21,10 @@
     "gitpython",
     "oauthlib",
     "pyjwt",
-    "requests"
+    "requests",
+    "black",
+    "pylint",
+    "PyGithub"
   ],
   "labels": [
     "dependency"

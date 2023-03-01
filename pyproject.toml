@@ -43,6 +43,7 @@ typer = "0.7.0"
 oauthlib = "3.2.1"
 # Kapitan requires exactly 2.1.0
 pyjwt = "2.1.0"
+# We can't update to 1.58+ due to the hard dependency on pyjwt 2.1.0
 PyGithub = "1.56"
 
 [tool.poetry.dev-dependencies]
@@ -51,9 +52,13 @@ pytest = "7.2.1"
 pytest-xdist = "3.2.0"
 pytest-benchmark = "4.0.0"
 responses = "0.22.0"
+# Kapitan requires packaging 0.21 which isn't compatible with black >=v23
 black = "22.12.0"
 pyfakefs = "5.1.0"
 pytest-cov = "4.0.0"
+# Kapitan requires exactly typing-extensions 3.10.0.0, which isn't compatible
+# with any astroid version supported by pylint >= 2.16.0 (2.14.2 --
+# 2.16.0-dev0).
 pylint = "2.15.10"
 types-toml = "0.10.8.5"
 examples = "1.0.2"
