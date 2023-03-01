@@ -184,7 +184,7 @@ def kapitan_compile(
     click.secho("Compiling catalog...", bold=True)
     cached.args["compile"] = ArgumentCache(
         inventory_path=config.inventory.inventory_dir,
-        yaml_multiline_string_style="double-quotes",
+        yaml_multiline_string_style="literal",
         yaml_dump_null_as_empty=False,
     )
     kapitan_targets.compile_targets(
