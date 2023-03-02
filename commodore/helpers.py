@@ -28,7 +28,14 @@ from commodore import __install_dir__
 from commodore.config import Config
 
 
-ArgumentCache = collections.namedtuple("ArgumentCache", ["inventory_path"])
+ArgumentCache = collections.namedtuple(
+    "ArgumentCache",
+    [
+        "inventory_path",
+        "yaml_multiline_string_style",
+        "yaml_dump_null_as_empty",
+    ],
+)
 
 
 class FakeVaultBackend(VaultBackend):
@@ -176,7 +183,9 @@ def kapitan_compile(
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
     cached.args["compile"] = ArgumentCache(
-        inventory_path=config.inventory.inventory_dir
+        inventory_path=config.inventory.inventory_dir,
+        yaml_multiline_string_style="double-quotes",
+        yaml_dump_null_as_empty=False,
     )
     kapitan_targets.compile_targets(
         inventory_path=config.inventory.inventory_dir,
@@ -192,8 +201,9 @@ def kapitan_compile(
         reveal=reveal,
         cache=False,
         cache_paths=None,
-        fetch_dependencies=config.fetch_dependencies,
-        force_fetch=True,
+        fetch=config.fetch_dependencies,
+        # We always want to force-fetch when we want to fetch dependencies
+        force_fetch=config.fetch_dependencies,
         validate=False,
         schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
