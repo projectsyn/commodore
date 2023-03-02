@@ -1,4 +1,6 @@
 """Commands which interact with cluster catalogs"""
+from __future__ import annotations
+
 import click
 
 from pathlib import Path
@@ -30,7 +32,7 @@ def clean(config: Config, verbose):
     clean_working_tree(config)
 
 
-def _complete_clusters(ctx, param, incomplete):
+def _complete_clusters(ctx: click.Context, _, incomplete: str) -> list[str]:
     config = Config(Path("."))
     config.api_url = ctx.params["api_url"]
     config.api_token = ctx.params["api_token"]
