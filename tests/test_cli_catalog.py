@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+
 from pathlib import Path
 from typing import Any
 from unittest import mock
 
+import click
 import pytest
 import responses
 
@@ -144,3 +147,54 @@ def test_catalog_compile_cli(
         )
     if expected.get("login", False):
         mock_login.assert_called()
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "prefix,api_resp,expected",
+    [
+        # Empty API response -> no completions regardless of prefix
+        ("", [], []),
+        # No completions because no entries in api response match prefix
+        ("bar", [{"id": "c-foo"}, {"id": "c-bar"}], []),
+        # Empty prefix -> all responses match
+        ("", [{"id": "c-foo"}, {"id": "c-bar"}], ["c-foo", "c-bar"]),
+        # All responses match the provided prefix
+        ("c-", [{"id": "c-foo"}, {"id": "c-bar"}], ["c-foo", "c-bar"]),
+        ("c-f", [{"id": "c-foo"}, {"id": "c-bar"}], ["c-foo"]),
+        # Broken API response is skipped
+        ("c-f", [{"id": "c-foo"}, {}, {"id": "c-bar"}], ["c-foo"]),
+    ],
+)
+def test_cluster_complete_func(prefix: str, api_resp: list[dict], expected: list[str]):
+    ctx = click.Context(catalog.compile_catalog)
+    ctx.params["api_url"] = "https://syn.example.com"
+    ctx.params["api_token"] = "token"
+    ctx.params["oidc_client"] = None
+    ctx.params["oidc_discovery_url"] = None
+
+    responses.add(
+        responses.GET, "https://syn.example.com/clusters/", json.dumps(api_resp)
+    )
+
+    completions = catalog._complete_clusters(ctx, None, prefix)
+
+    assert set(completions) == set(expected)
+
+    assert len(responses.calls) == 1
+    call = responses.calls[0]
+    assert "Authorization" in call.request.headers
+    assert call.request.headers["Authorization"] == "Bearer token"
+    assert call.request.url == "https://syn.example.com/clusters/"
+
+
+@responses.activate
+def test_cluster_complete_func_api_error():
+    """Verify that errors in completion func are ignored"""
+    ctx = click.Context(catalog.compile_catalog)
+    ctx.params["api_url"] = "https://syn.example.com"
+    ctx.params["api_token"] = "abcdef"
+    ctx.params["oidc_client"] = None
+    ctx.params["oidc_discovery_url"] = None
+    completions = catalog._complete_clusters(ctx, None, "")
+    assert completions == []
