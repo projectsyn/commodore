@@ -47,7 +47,7 @@ def _complete_clusters(ctx: click.Context, _, incomplete: str) -> list[str]:
         # If we encounter any errors, ignore them.
         # We shouldn't print errors during completion
         return []
-    return [c["id"] for c in clusters if c["id"].startswith(incomplete)]
+    return [c["id"] for c in clusters if "id" in c and c["id"].startswith(incomplete)]
 
 
 @catalog_group.command(name="compile", short_help="Compile the catalog.")
