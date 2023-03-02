@@ -1,0 +1,47 @@
+= Shell autocompletion
+
+Commodore supports command and cluster autocompletion.
+Command autocompletion shows possible completion for partially typed Commodore subcommands and command-line flags.
+Command autocompletion is provided by the Click Python library.
+Cluster autocompletion is enabled for `commodore catalog compile`.
+This relies on a custom completion implementation in Commodore which fetches the list of known clusters from the provided Lieutenant API to show possible completions.
+
+This only works when Commodore is installed locally due to limitations on how shell completion is implemented in the Click Python library.
+See xref:explanation/running-commodore.adoc#_pypi[Running Commodore] for details on how to install Commodore locally.
+
+Click supports autocompletion for the `bash`, `zsh` and `fish` shells.
+
+To enable autocompletion for your local Commodore installation, follow the steps below.
+
+. Add the following snippet in your shell's configuration
++
+.*bash* (`~/.bashrc`)
+[%collapsible]
+====
+[source,bash]
+----
+source <(_COMMODORE_COMPLETE=bash_source commodore)
+----
+====
++
+.*zsh* (`~/.zshrc`)
+[%collapsible]
+====
+[source,zsh]
+----
+source <(_COMMODORE_COMPLETE=zsh_source commodore)
+----
+====
++
+.*fish* (`~/.config/fish/completions/commodore.fish`)
+[%collapsible]
+====
+[source,fish]
+----
+source <(_COMMODORE_COMPLETE=fish_source commodore)
+----
+====
+
+. Reload your shell's configuration or start a new shell in order for the changes to be loaded
+
+See https://click.palletsprojects.com/en/8.1.x/shell-completion/#enabling-completion[the Click documentation] for more details on how-to setup autocompletion.
