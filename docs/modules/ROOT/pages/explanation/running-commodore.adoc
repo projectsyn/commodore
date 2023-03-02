@@ -83,7 +83,30 @@ commodore --version
 
 === Usage
 
-If you've installed Commodore into a virtualenv, you need to activate the virtualenv whenever you want to run Commodore.
+If you've installed Commodore into a virtualenv, you either need to activate the virtualenv whenever you want to run Commodore, or you can create a symlink to the `commodore` entrypoint script in a directory which is part of your `$PATH`.
+
+==== Creating a symlink
+
+This section assumes that you've added `~/.local/bin` to your `$PATH`.
+If you use another directory, you can adjust the commands in this section as needed.
+
+Create a symlink to the `commodore` entrypoint script in `~/.local/bin`.
+
+[source,bash]
+----
+ln -s ~/.local/commodore-venv/bin/commodore ~/.local/bin/
+----
+
+After that, you can run Commodore with
+
+[source,bash]
+----
+commodore --help
+----
+
+TIP: We recommend this approach, especially if you're interested in xref:how-to/shell-completion.adoc[using shell completion] for Commodore.
+
+==== Activating the virtualenv
 
 [source,bash]
 ----
