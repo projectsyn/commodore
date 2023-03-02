@@ -294,11 +294,12 @@ def login(config: Config):
         redirect_uri="http://localhost:18000",
         scope=["openid", "email", "profile"],
     )
-    print(
-        f"Follow this link if it doesn't open automatically \n\n{request_uri}\n",
-        file=sys.stderr,
-    )
-    webbrowser.open(request_uri)
+    opened = webbrowser.open(request_uri)
+    if not opened:
+        print(
+            f"Failed to open browser, follow this link to login\n\n{request_uri}\n",
+            file=sys.stderr,
+        )
 
     server.join()
 
