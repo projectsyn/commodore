@@ -142,11 +142,50 @@ def read_cluster_and_tenant(inv: Inventory) -> tuple[str, str]:
     )
 
 
+def generate_target(
+    inv: Inventory,
+    target: str,
+    components: dict[str, Component],
+    classes: list[str],
+    component: str,
+):
+    """This function generates an object which is suitable to be marshalled into YAML as
+    a Kapitan target. In contrast to `render_target`, this function doesn't try to infer
+    the contents of field `classes`, but instead allows the caller to provide a list of
+    classes to include. Note that the contents of `classes` aren't validated by this
+    function."""
+    bootstrap = target == inv.bootstrap_target
+
+    parameters: dict[str, Union[dict, str]] = {
+        "_instance": target,
+    }
+    if not bootstrap:
+        parameters["_base_directory"] = str(components[component].target_directory)
+        parameters["_kustomize_wrapper"] = str(__kustomize_wrapper__)
+        parameters["kapitan"] = {
+            "vars": {
+                "target": target,
+            },
+        }
+
+    # When component != target we're rendering a target for an aliased
+    # component. This needs some extra work.
+    if component != target:
+        ckey = component_parameters_key(component)
+        tkey = component_parameters_key(target)
+        parameters[tkey] = {}
+        parameters[ckey] = f"${{{tkey}}}"
+
+    return {
+        "classes": classes,
+        "parameters": parameters,
+    }
+
+
 def render_target(
     inv: Inventory,
     target: str,
     components: dict[str, Component],
-    # pylint: disable=unsubscriptable-object
     component: Optional[str] = None,
 ):
     if not component:
@@ -156,12 +195,6 @@ def render_target(
         raise click.ClickException(f"Target {target} is not a component")
 
     classes = [f"params.{inv.bootstrap_target}"]
-    parameters: dict[str, Union[dict, str]] = {
-        "_instance": target,
-    }
-    if not bootstrap:
-        parameters["_base_directory"] = str(components[component].target_directory)
-        parameters["_kustomize_wrapper"] = str(__kustomize_wrapper__)
 
     for c in components:
         if inv.defaults_file(c).is_file():
@@ -177,24 +210,8 @@ def render_target(
                 f"Target rendering failed for {target}: component class is missing"
             )
         classes.append(f"components.{component}")
-        parameters["kapitan"] = {
-            "vars": {
-                "target": target,
-            },
-        }
 
-        # When component != target we're rendering a target for an aliased
-        # component. This needs some extra work.
-        if component != target:
-            ckey = component_parameters_key(component)
-            tkey = component_parameters_key(target)
-            parameters[tkey] = {}
-            parameters[ckey] = f"${{{tkey}}}"
-
-    return {
-        "classes": classes,
-        "parameters": parameters,
-    }
+    return generate_target(inv, target, components, classes, component)
 
 
 # pylint: disable=unsubscriptable-object
