@@ -223,7 +223,7 @@ def _prepare_kapitan_inventory(
                 },
                 "components": {
                     component.name: {
-                        "url": "https://example.com/{component.name}.git",
+                        "url": f"https://example.com/{component.name}.git",
                         "version": "master",
                     }
                 },
