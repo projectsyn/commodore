@@ -12,7 +12,7 @@ import click
 import git
 from kapitan.resources import inventory_reclass
 
-from commodore import __kustomize_wrapper__
+from commodore.cluster import generate_target
 from commodore.config import Config
 from commodore.component import Component
 from commodore.dependency_mgmt.component_library import (
@@ -223,7 +223,7 @@ def _prepare_kapitan_inventory(
                 },
                 "components": {
                     component.name: {
-                        "url": "https://example.com/{component.name}.git",
+                        "url": f"https://example.com/{component.name}.git",
                         "version": "master",
                     }
                 },
@@ -240,20 +240,15 @@ def _prepare_kapitan_inventory(
 
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
+    classes = [
+        f"params.{inv.bootstrap_target}",
+        f"defaults.{component.name}",
+        f"components.{component.name}",
+    ] + value_classes
     yaml_dump(
-        {
-            "classes": [
-                f"params.{inv.bootstrap_target}",
-                f"defaults.{component.name}",
-                f"components.{component.name}",
-            ]
-            + value_classes,
-            "parameters": {
-                "_instance": instance_name,
-                "_base_directory": str(component.target_directory),
-                "_kustomize_wrapper": str(__kustomize_wrapper__),
-            },
-        },
+        generate_target(
+            inv, instance_name, {component.name: component}, classes, component.name
+        ),
         inv.target_file(instance_name),
     )
 

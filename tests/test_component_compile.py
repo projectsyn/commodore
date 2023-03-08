@@ -48,6 +48,9 @@ def _prepare_component(
               "test_service_account": kube.ServiceAccount('test') {
                 metadata+: {
                   namespace: params.namespace,
+                  annotations: {
+                    foo: std.get(params, "foo", "default"),
+                  },
                 },
               },
             }"""
@@ -198,11 +201,18 @@ def test_run_component_compile_command_instance(
     component_name = "test-component"
     instance_name = "test-instance"
     _prepare_component(tmp_path, cli_runner, component_name)
+    values_file = tmp_path / "values.yml"
+    values = {"parameters": {component_parameters_key(component_name): {"foo": "foo"}}}
     if instance_aware:
         _make_instance_aware(tmp_path, component_name)
+        values["parameters"][component_parameters_key(instance_name)] = {"foo": "bar"}
+
+    with open(values_file, "w", encoding="utf-8") as vf:
+        yaml.safe_dump(values, vf)
 
     result = run(
-        _cli_command_string(tmp_path, component_name, instance_name),
+        _cli_command_string(tmp_path, component_name, instance_name)
+        + f" -f {values_file}",
         shell=True,
         capture_output=True,
     )
@@ -238,6 +248,7 @@ def test_run_component_compile_command_instance(
             target = yaml.safe_load(file)
             assert target["kind"] == "ServiceAccount"
             assert target["metadata"]["namespace"] == f"syn-{component_name}"
+            assert target["metadata"]["annotations"]["foo"] == "bar"
 
 
 def test_component_compile_subpath(tmp_path: P, cli_runner: RunnerFunc):
