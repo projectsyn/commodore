@@ -114,6 +114,7 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
             raise click.ClickException(
                 "Failed to push to the catalog repository: "
                 + f"Git exited with status code {e.status}"
+                + f"\nThe error reported was: {e.stderr}"
             ) from e
         for pi in pushinfos:
             # Any error has pi.ERROR set in the `flags` bitmask
