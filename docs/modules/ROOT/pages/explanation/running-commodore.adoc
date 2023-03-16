@@ -74,6 +74,12 @@ source ~/.local/commodore-venv/bin/activate
 pip install syn-commodore
 ----
 
+. On MacOS you'll also need libmagic via brew
+[source,bash]
+----
+brew install libmagic
+----
+
 . Check that `commodore` was installed correctly
 +
 [source,bash]
@@ -84,6 +90,8 @@ commodore --version
 === Usage
 
 If you've installed Commodore into a virtualenv, you either need to activate the virtualenv whenever you want to run Commodore, or you can create a symlink to the `commodore` entrypoint script in a directory which is part of your `$PATH`.
+
+NOTE: You might need to change your git configuration so that the `.git/config.lock` file gets created with the correct permissions: `git config --global core.filemode false`
 
 ==== Creating a symlink
 
