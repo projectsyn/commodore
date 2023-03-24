@@ -31,6 +31,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 * Python 3.8 - 3.11 with `python3-dev` and `python3-venv` updated
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
+* `libmagic` (install with `brew install libmagic` on macOS)
 
 ## Getting started
 
