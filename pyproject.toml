@@ -60,7 +60,7 @@ pytest-cov = "4.0.0"
 # with any astroid version supported by pylint >= 2.16.0 (2.14.2 --
 # 2.16.0-dev0).
 pylint = "2.15.10"
-types-toml = "0.10.8.5"
+types-toml = "0.10.8.6"
 examples = "1.0.2"
 pytest-mock = "^3.8.2"
 
