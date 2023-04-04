@@ -447,6 +447,27 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
+name = "cruft"
+version = "2.14.0"
+description = "Allows you to maintain all the necessary cruft for packaging and building projects separate from the code you intentionally write. Built on-top of CookieCutter."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cruft-2.14.0-py3-none-any.whl", hash = "sha256:c3888897f38b91938509b74446e902ba6cd38169138ff2516fb04b0f01e6386f"},
+    {file = "cruft-2.14.0.tar.gz", hash = "sha256:ba3d976de1cad437b6a92239b6ec844ea8547e09de796ef505d320c356c45de5"},
+]
+
+[package.dependencies]
+click = ">=7.1.2"
+cookiecutter = ">=1.7"
+gitpython = ">=3.0"
+typer = ">=0.4.0"
+
+[package.extras]
+pyproject = ["toml (>=0.10)"]
+
+[[package]]
 name = "cryptography"
 version = "3.4.7"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -2420,4 +2441,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "473f590726b82c92fcf7cb3d544a78f781a66088dc40ae05c1b509d21fa6cfbc"
+content-hash = "6cc6ab912f64bbb81cba41c153fd3c2c67374046e422cf6ba4e1cea889a947fe"

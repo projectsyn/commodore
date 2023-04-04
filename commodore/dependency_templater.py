@@ -14,8 +14,9 @@ from typing import Optional
 
 import click
 
+from cruft import create as cruft_create, update as cruft_update
+
 from commodore.config import Config
-from commodore.cruft import create as cruft_create, update as cruft_update
 from commodore.gitrepo import GitRepo, MergeConflict, default_difffunc
 from commodore.multi_dependency import MultiDependency
 

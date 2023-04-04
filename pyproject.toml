@@ -23,7 +23,6 @@ include = [
 python = ">=3.8, <3.12"
 kapitan = "0.31.0"
 click = "8.1.3"
-cookiecutter = "2.1.1"
 # Kapitan requires exactly 3.1.30
 gitpython = "3.1.30"
 # Kapitan requires exactly 2.26.0
@@ -34,11 +33,7 @@ url-normalize = "1.4.3"
 python-dotenv = "1.0.0"
 importlib-metadata = "6.1.0"
 pyxdg = "0.28"
-# Reenable dependency cruft once our patches are merged.
-# In the meantime we add typer as a top-level dependency since Cruft depends
-# on it.
-# cruft = {branch="patched-update", git="https://github.com/projectsyn/cruft.git"}
-typer = "0.7.0"
+cruft = "2.14.0"
 # Kapitan requires exactly 3.2.1
 oauthlib = "3.2.1"
 # Kapitan requires exactly 2.1.0
