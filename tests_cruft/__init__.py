@@ -1,1 +1,0 @@
-"""Cruft test package"""
