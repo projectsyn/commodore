@@ -59,6 +59,11 @@ def sync_dependencies(
         except github.UnknownObjectException:
             click.secho(f" > Repository {dn} doesn't exist, skipping...", fg="yellow")
             continue
+
+        if gr.archived:
+            click.secho(f" > Repository {dn} is archived, skipping...", fg="yellow")
+            continue
+
         d = deptype.clone(config, gr.clone_url, dname, version=gr.default_branch)
 
         if not (d.target_dir / ".cruft.json").is_file():

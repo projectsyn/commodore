@@ -527,15 +527,34 @@ def test_sync_packages_skip(tmp_path: Path, config: Config, capsys):
 
 
 @responses.activate
-def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
+@pytest.mark.parametrize(
+    "resp_code,expected_out",
+    [
+        (404, " > Repository projectsyn/package-foo doesn't exist, skipping..."),
+        (200, " > Repository projectsyn/package-foo is archived, skipping..."),
+    ],
+)
+def test_sync_packages_skip_github(
+    capsys, tmp_path: Path, config: Config, resp_code, expected_out
+):
     config.github_token = "ghp_fake-token"
     pkg_list = create_pkg_list(tmp_path)
+
+    if resp_code == 404:
+        resp = GH_404_RESP
+    elif resp_code == 200:
+        with open(
+            DATA_DIR / "projectsyn-package-foo-archived-response.json", encoding="utf-8"
+        ) as f:
+            resp = json.load(f)
+    else:
+        raise NotImplementedError(f"case {resp_code} not implemented")
 
     responses.add(
         responses.GET,
         "https://api.github.com:443/repos/projectsyn/package-foo",
-        json=GH_404_RESP,
-        status=404,
+        json=resp,
+        status=resp_code,
     )
 
     dependency_syncer.sync_dependencies(
@@ -544,10 +563,7 @@ def test_sync_packages_skip_missing(capsys, tmp_path: Path, config: Config):
 
     captured = capsys.readouterr()
 
-    assert (
-        " > Repository projectsyn/package-foo doesn't exist, skipping..."
-        in captured.out
-    )
+    assert expected_out in captured.out
 
 
 @pytest.mark.parametrize(
