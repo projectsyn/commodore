@@ -43,7 +43,7 @@ PyGithub = "1.56"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
-pytest = "7.3.0"
+pytest = "7.3.1"
 pytest-xdist = "3.2.1"
 pytest-benchmark = "4.0.0"
 responses = "0.23.1"
