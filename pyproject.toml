@@ -49,7 +49,7 @@ pytest-benchmark = "4.0.0"
 responses = "0.23.1"
 # Kapitan requires packaging 0.21 which isn't compatible with black >=v23
 black = "22.12.0"
-pyfakefs = "5.2.1"
+pyfakefs = "5.2.2"
 pytest-cov = "4.0.0"
 # Kapitan requires exactly typing-extensions 3.10.0.0, which isn't compatible
 # with any astroid version supported by pylint >= 2.16.0 (2.14.2 --
