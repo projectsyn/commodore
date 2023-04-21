@@ -8,12 +8,13 @@ FROM base AS builder
 
 ENV PATH=${PATH}:${HOME}/.local/bin
 
+ARG POETRY_VERSION=1.3.1
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
- && curl -sSL https://install.python-poetry.org | python - --version 1.3.1 \
+ && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
  && mkdir -p /app/.config
 
 COPY pyproject.toml poetry.lock ./

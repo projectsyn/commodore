@@ -36,6 +36,12 @@
       "extractVersionTemplate": "^kustomize/v(?<version>.*)$",
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "kubernetes-sigs/kustomize"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG POETRY_VERSION=(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "python-poetry/poetry"
     }
   ]
 }
