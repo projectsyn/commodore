@@ -76,6 +76,7 @@ pip install syn-commodore
 ----
 
 . On MacOS you'll also need libmagic via brew
++
 [source,bash]
 ----
 brew install libmagic
