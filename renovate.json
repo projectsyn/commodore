@@ -17,15 +17,6 @@
     "automergeType": "pr",
     "platformAutomerge": true
   },
-  "ignoreDeps": [
-    "gitpython",
-    "oauthlib",
-    "pyjwt",
-    "requests",
-    "black",
-    "pylint",
-    "PyGithub"
-  ],
   "labels": [
     "dependency"
   ],
