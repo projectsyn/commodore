@@ -41,6 +41,7 @@ def inventory():
                 "enabled": True,
                 "thesecret": "?{vaultkv:t-tenant/c-cluster/other-component/thesecret}",
                 "users": ["user1", "user2"],
+                "multiref": "?{vaultkv:t-tenant/c-cluster/foo/bar}-?{vaultkv:t-tenant/c-cluster/foo/baz}",
             },
             "kapitan": {
                 "secrets": {
@@ -89,6 +90,8 @@ def test_update_refs(tmp_path: Path, config: Config, inventory):
         Path("test/test-b-accesskey"),
         Path("test/test-b-secretkey"),
         Path("global/password"),
+        Path("foo/bar"),
+        Path("foo/baz"),
     ]
     for ref in expected_refs:
         refpath = ref_prefix / ref
