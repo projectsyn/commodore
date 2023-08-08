@@ -211,7 +211,9 @@ def _prepare_kapitan_inventory(
                 "cluster": {
                     "catalog_url": "ssh://git@git.example.com/org/repo.git",
                     "name": "c-green-test-1234",
+                    "display_name": "Test Cluster 1234",
                     "tenant": "t-silent-test-1234",
+                    "tenant_display_name": "Test Tenant 1234",
                 },
                 "facts": {
                     "distribution": "test-distribution",
