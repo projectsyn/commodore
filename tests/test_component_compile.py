@@ -51,6 +51,12 @@ def _prepare_component(
                   annotations: {
                     foo: std.get(params, "foo", "default"),
                   },
+                  labels+: {
+                    cluster_id: inv.parameters.cluster.name,
+                    cluster_name: inv.parameters.cluster.display_name,
+                    tenant_id: inv.parameters.cluster.tenant,
+                    tenant_name: inv.parameters.cluster.tenant_display_name,
+                  },
                 },
               },
             }"""
@@ -149,6 +155,11 @@ def test_run_component_compile_command(tmp_path: P, cli_runner: RunnerFunc):
         target = yaml.safe_load(file)
         assert target["kind"] == "ServiceAccount"
         assert target["metadata"]["namespace"] == f"syn-{component_name}"
+        # Verify that cluster metadata is provided correctly to `component compile`
+        assert target["metadata"]["labels"]["cluster_id"] == "c-green-test-1234"
+        assert target["metadata"]["labels"]["cluster_name"] == "Test Cluster 1234"
+        assert target["metadata"]["labels"]["tenant_id"] == "t-silent-test-1234"
+        assert target["metadata"]["labels"]["tenant_name"] == "Test Tenant 1234"
 
     assert list(component_repo.remote().urls) == orig_remote_urls
 
