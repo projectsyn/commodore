@@ -4,9 +4,6 @@
     ":gitSignOff",
     ":disableDependencyDashboard"
   ],
-  "python": {
-    "enabled": false
-  },
   "poetry": {
     "enabled": true
   },
