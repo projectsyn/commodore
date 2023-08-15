@@ -17,6 +17,10 @@
   "labels": [
     "dependency"
   ],
+  "ignoreDeps": [
+    "boto3",
+    "botocore"
+  ],
   "regexManagers": [
     {
       "fileMatch": ["^Dockerfile$"],
