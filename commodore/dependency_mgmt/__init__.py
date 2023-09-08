@@ -174,6 +174,7 @@ def fetch_packages(cfg: Config):
     pkgs = _discover_packages(cfg)
     pspecs = _read_packages(cfg, pkgs)
 
+    deps: dict[str, list] = {}
     for p in pkgs:
         pspec = pspecs[p]
         pdep = cfg.register_dependency_repo(pspec.url)
@@ -189,6 +190,15 @@ def fetch_packages(cfg: Config):
                 f"Package {p} has uncommitted changes. "
                 + "Please specify `--force` to discard them"
             )
+        deps.setdefault(pdep.url, []).append((p, pkg))
+    fetch_parallel(fetch_package, cfg, deps.values())
+
+
+def fetch_package(cfg, dependencies):
+    """
+    Fetch all package dependencies of a MultiDependency object.
+    """
+    for p, pkg in dependencies:
         pkg.checkout()
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)
