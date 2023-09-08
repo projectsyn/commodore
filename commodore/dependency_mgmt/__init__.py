@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import itertools
+from concurrent.futures import ThreadPoolExecutor
+
 import click
 
 from commodore.config import Config
@@ -69,6 +72,8 @@ def fetch_components(cfg: Config):
     cfg.register_component_aliases(component_aliases)
     cspecs = _read_components(cfg, component_names)
     click.secho("Fetching components...", bold=True)
+
+    deps: dict[str, list] = {}
     for cn in component_names:
         cspec = cspecs[cn]
         if cfg.debug:
@@ -86,9 +91,26 @@ def fetch_components(cfg: Config):
                 f"Component {cn} has uncommitted changes. "
                 + "Please specify `--force` to discard them"
             )
+        deps.setdefault(cdep.url, []).append(c)
+    fetch_parallel(fetch_component, cfg, deps.values())
+
+
+def fetch_component(cfg, dependencies):
+    """
+    Fetch all components of a MultiDependency object.
+    """
+    for c in dependencies:
         c.checkout()
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
+
+
+def fetch_parallel(fetch_fun, cfg, to_fetch):
+    """
+    Fetch dependencies in parallel threads with ThreadPoolExecutor.
+    """
+    with ThreadPoolExecutor() as exe:
+        exe.map(fetch_fun, itertools.repeat(cfg), to_fetch)
 
 
 def register_components(cfg: Config):
