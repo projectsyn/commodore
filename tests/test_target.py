@@ -53,8 +53,8 @@ def test_render_bootstrap_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo",
         "defaults.bar",
+        "defaults.foo",
         "global.commodore",
     ]
     assert target != ""
@@ -83,8 +83,8 @@ def test_render_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo",
         "defaults.bar",
+        "defaults.foo",
         "global.commodore",
         "components.foo",
     ]
@@ -115,8 +115,8 @@ def test_render_aliased_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo",
         "defaults.bar",
+        "defaults.foo",
         "global.commodore",
         "components.foo",
     ]
@@ -148,8 +148,8 @@ def test_render_aliased_target_with_dash(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo-comp",
         "defaults.bar",
+        "defaults.foo-comp",
         "global.commodore",
         "components.foo-comp",
     ]
