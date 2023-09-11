@@ -196,7 +196,7 @@ def render_target(
 
     classes = [f"params.{inv.bootstrap_target}"]
 
-    for c in components:
+    for c in sorted(components):
         if inv.defaults_file(c).is_file():
             classes.append(f"defaults.{c}")
         else:
