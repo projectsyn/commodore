@@ -89,6 +89,30 @@ brew install libmagic
 commodore --version
 ----
 
+. Finally, patch Kapitan to use `reclass-rs` over the bundled Python implementation.
+This significantly improves compilation times of Commodore cluster catalogs.
++
+[source,bash]
+----
+KAPITAN_PATH=$(python -c 'import kapitan; print(kapitan.__path__[0])')
+curl -L \
+  https://raw.githubusercontent.com/projectsyn/reclass-rs/main/hack/kapitan_0.32_reclass_rs.patch \
+  | patch -p1 -d "${KAPITAN_PATH}"
+----
++
+[NOTE]
+====
+The `reclass-rs` Python package is installed automatically as a dependency of Commodore.
+For officially supported platforms (Linux, macOS), prebuilt wheels are available on PyPI.
+====
++
+[TIP]
+====
+This step is optional, but we highly recommend using `reclass-rs` over Kapitan's bundled Reclass implementation.
+
+We're actively working with Kapitan to upstream support for `reclass-rs`, so this step may disappear again in future versions of this page.
+====
+
 === Usage
 
 If you've installed Commodore into a virtualenv, you either need to activate the virtualenv whenever you want to run Commodore, or you can create a symlink to the `commodore` entrypoint script in a directory which is part of your `$PATH`.
