@@ -199,6 +199,23 @@ def test_fetch_components_raises(
 
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components_raises_giterror(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
+    components = ["foo"]
+    patch_discover.return_value = (components, {})
+    read_retval = setup_components_upstream(tmp_path, components)
+    read_retval["foo"].version = "nonexistent"
+    patch_read.return_value = read_retval
+
+    with pytest.raises(Exception) as excinfo:
+        dependency_mgmt.fetch_components(config)
+
+    assert "Failed to checkout revision 'nonexistent'" in str(excinfo.value)
+
+
+@patch("commodore.dependency_mgmt._read_components")
+@patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_is_minimal(
     patch_discover, patch_urls, config: Config, tmp_path: Path
 ):
