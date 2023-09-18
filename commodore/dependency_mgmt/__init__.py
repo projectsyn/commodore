@@ -110,7 +110,11 @@ def fetch_parallel(fetch_fun, cfg, to_fetch):
     Fetch dependencies in parallel threads with ThreadPoolExecutor.
     """
     with ThreadPoolExecutor() as exe:
-        exe.map(fetch_fun, itertools.repeat(cfg), to_fetch)
+        # We need to collect the results from the iterator produced by exe.map to ensure
+        # that any exceptions raised in `fetch_fun` are propagated, cf.
+        # https://docs.python.org/3/library/concurrent.futures.html#executor-objects. We
+        # do so by simply materializing the iterator into a list.
+        list(exe.map(fetch_fun, itertools.repeat(cfg), to_fetch))
 
 
 def register_components(cfg: Config):
