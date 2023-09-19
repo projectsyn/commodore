@@ -20,7 +20,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml poetry.lock ./
 
 RUN poetry config virtualenvs.create false \
- && poetry install --no-dev --no-root
+ && poetry install --no-dev --no-root \
+ && curl -L \
+ https://raw.githubusercontent.com/projectsyn/reclass-rs/main/hack/kapitan_0.32_reclass_rs.patch \
+ | patch -p1 -d /usr/local/lib/python3.11/site-packages/kapitan
 
 COPY . ./
 

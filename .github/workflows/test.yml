@@ -74,6 +74,32 @@ jobs:
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - name: Run tests on Python ${{ matrix.python-version }}
       run: make test_py${PYVER}
+  tests_reclass_rs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - uses: Gr1N/setup-poetry@v8
+    - name: Install tox
+      run: |
+        pip install tox
+    - uses: actions/cache@v3
+      with:
+        path: |
+          .tox
+          ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-test-py3.11-reclass-rs-${{ hashFiles('poetry.lock', 'tox.ini') }}
+    - name: Install jsonnet-bundler
+      run: |
+        mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
+          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          && chmod +x /opt/bin/jb
+    - name: Update PATH
+      run: echo "/opt/bin" >> $GITHUB_PATH
+    - name: Run tests on Python 3.11 with reclass-rs
+      run: make test_py3.11_reclass_rs
   benchs:
     runs-on: ubuntu-latest
     strategy:
