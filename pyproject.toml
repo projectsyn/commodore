@@ -43,7 +43,7 @@ cruft = "2.15.0"
 oauthlib = "3.2.2"
 pyjwt = "2.8.0"
 PyGithub = "1.59.1"
-reclass-rs = "0.1.0"
+reclass-rs = "0.1.1"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
