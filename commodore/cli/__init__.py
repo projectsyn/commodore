@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import multiprocessing
+
 from pathlib import Path
 
 import click
@@ -55,6 +57,8 @@ commodore.add_command(commodore_fetch_token)
 
 
 def main():
+    multiprocessing.set_start_method("spawn")
+
     load_dotenv(dotenv_path=find_dotenv(usecwd=True))
     commodore.main(
         prog_name="commodore", auto_envvar_prefix="COMMODORE", max_content_width=100
