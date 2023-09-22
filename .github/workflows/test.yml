@@ -66,7 +66,7 @@ jobs:
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          https://github.com/projectsyn/jsonnet-bundler/releases/download/v0.6.1/jb_linux_amd64 \
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
@@ -94,7 +94,7 @@ jobs:
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          https://github.com/projectsyn/jsonnet-bundler/releases/download/v0.6.1/jb_linux_amd64 \
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
@@ -127,7 +127,7 @@ jobs:
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          https://github.com/projectsyn/jsonnet-bundler/releases/download/v0.6.1/jb_linux_amd64 \
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
@@ -156,7 +156,7 @@ jobs:
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          https://github.com/projectsyn/jsonnet-bundler/releases/download/v0.6.1/jb_linux_amd64 \
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
