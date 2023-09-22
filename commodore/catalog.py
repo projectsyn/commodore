@@ -51,7 +51,8 @@ def _render_catalog_commit_msg(cfg) -> str:
     now = datetime.datetime.now().isoformat(timespec="milliseconds")
 
     component_commits = [
-        _pretty_print_component_commit(cn, c) for cn, c in cfg.get_components().items()
+        _pretty_print_component_commit(cn, c)
+        for cn, c in sorted(cfg.get_components().items())
     ]
     component_commits_str = "\n".join(component_commits)
 

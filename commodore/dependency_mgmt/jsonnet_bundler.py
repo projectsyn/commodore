@@ -18,7 +18,7 @@ def jsonnet_dependencies(config: Config) -> Iterable:
     """
     dependencies = []
 
-    for component in config.get_components().values():
+    for (_, component) in sorted(config.get_components().items()):
         dependencies.append(
             {
                 "source": {
