@@ -248,7 +248,7 @@ def test_ensure_pr(tmp_path: Path, config: Config, pr_exists: bool):
     pname = "projectsyn/package-foo"
     dependency_syncer.ensure_branch(p, "template-sync")
 
-    gh = github.Github(config.github_token)
+    gh = github.Github(auth=github.Auth.Token(config.github_token))
     gr = gh.get_repo(pname)
 
     msg = dependency_syncer.ensure_pr(
@@ -286,7 +286,7 @@ def test_ensure_pr_no_permission(tmp_path: Path, config: Config, pr_exists: bool
     pname = "projectsyn/package-foo"
     dependency_syncer.ensure_branch(p, "template-sync")
 
-    gh = github.Github(config.github_token)
+    gh = github.Github(auth=github.Auth.Token(config.github_token))
     gr = gh.get_repo(pname)
 
     msg = dependency_syncer.ensure_pr(p, pname, gr, "template-sync", [], "")
@@ -323,7 +323,7 @@ def test_ensure_pr_comment(tmp_path: Path, config: Config):
     pname = "projectsyn/package-foo"
     dependency_syncer.ensure_branch(p, "template-sync")
 
-    gh = github.Github(config.github_token)
+    gh = github.Github(auth=github.Auth.Token(config.github_token))
     gr = gh.get_repo(pname)
 
     msg = dependency_syncer.ensure_pr(

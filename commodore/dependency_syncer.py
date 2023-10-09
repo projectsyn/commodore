@@ -45,7 +45,7 @@ def sync_dependencies(
     deps = read_dependency_list(dependency_list, depfilter)
     dep_count = len(deps)
 
-    gh = github.Github(config.github_token)
+    gh = github.Github(auth=github.Auth.Token(config.github_token))
     # Keep track of how many PRs we've created to better avoid running into rate limits
     update_count = 0
     for i, dn in enumerate(deps, start=1):
