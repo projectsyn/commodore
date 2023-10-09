@@ -167,7 +167,6 @@ def _setup_gh_pr_response(method, pr_body=""):
             {
                 "title": "Update from package template",
                 "body": pr_body,
-                "draft": False,
                 "base": "master",
                 "head": "template-sync",
             }

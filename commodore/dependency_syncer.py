@@ -218,10 +218,10 @@ def ensure_pr(
     try:
         if not has_sync_pr:
             sync_pr = gr.create_pull(
-                f"Update from {deptype} template",
-                pr_body,
                 gr.default_branch,
                 branch_name,
+                title=f"Update from {deptype} template",
+                body=pr_body,
             )
         else:
             sync_pr = [pr for pr in prs if pr.head.ref == branch_name][0]
