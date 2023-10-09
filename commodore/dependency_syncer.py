@@ -45,7 +45,7 @@ def sync_dependencies(
     deps = read_dependency_list(dependency_list, depfilter)
     dep_count = len(deps)
 
-    gh = github.Github(config.github_token)
+    gh = github.Github(auth=github.Auth.Token(config.github_token))
     # Keep track of how many PRs we've created to better avoid running into rate limits
     update_count = 0
     for i, dn in enumerate(deps, start=1):
@@ -218,10 +218,10 @@ def ensure_pr(
     try:
         if not has_sync_pr:
             sync_pr = gr.create_pull(
-                f"Update from {deptype} template",
-                pr_body,
                 gr.default_branch,
                 branch_name,
+                title=f"Update from {deptype} template",
+                body=pr_body,
             )
         else:
             sync_pr = [pr for pr in prs if pr.head.ref == branch_name][0]
