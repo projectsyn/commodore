@@ -46,9 +46,16 @@ jobs:
         run: poetry build
       - name: Publish to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          # increase connection timeout to PyPI to 60s
+          # NOTE(sg): This is probably not required
+          POETRY_REQUESTS_TIMEOUT: "60"
         run: poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
       - name: Publish to TestPyPI
         if: "!startsWith(github.ref, 'refs/tags/v')"
+        env:
+          # increase connection timeout to TestPyPI to 60s
+          POETRY_REQUESTS_TIMEOUT: "60"
         run: |
           poetry config repositories.test-pypi https://test.pypi.org/legacy/
           poetry publish -r test-pypi -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }}
