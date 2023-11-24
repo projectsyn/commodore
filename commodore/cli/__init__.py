@@ -43,9 +43,19 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
         "inventory and catalog, and store intermediate outputs"
     ),
 )
+@click.option(
+    "--request-timeout",
+    default=5,
+    show_default=True,
+    type=click.INT,
+    envvar="COMMODORE_REQUEST_TIMEOUT",
+    help="Timeout in seconds for HTTP requests",
+)
 @click.pass_context
-def commodore(ctx, working_dir, verbose):
-    ctx.obj = Config(Path(working_dir), verbose=verbose)
+def commodore(ctx, working_dir, verbose, request_timeout):
+    cfg = Config(Path(working_dir), verbose=verbose)
+    cfg.request_timeout = request_timeout
+    ctx.obj = cfg
 
 
 commodore.add_command(catalog_group)

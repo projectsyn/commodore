@@ -10,6 +10,10 @@ provided to any command instead.
   By default, this happens in the current working directory of the environment in which Commodore is executed.
   If this option is provided, Commodore will create its directories and files in the provided location.
 
+*--request-timeout*::
+  Commodore allows users to customize the HTTP request timeout.
+  If this option isn't provided, Commodore uses a request timeout of 5 seconds.
+
 *--version*::
   Show the version and exit.
 
