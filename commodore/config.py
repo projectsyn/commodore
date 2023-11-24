@@ -328,7 +328,9 @@ class Config:
             and self.api_url is not None
         ):
             try:
-                r = requests.get(url_normalize(self.api_url))
+                r = requests.get(
+                    url_normalize(self.api_url), timeout=self.request_timeout
+                )
                 api_cfg = json.loads(r.text)
                 if "oidc" in api_cfg:
                     self.oidc_client = api_cfg["oidc"].get("clientId")

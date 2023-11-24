@@ -35,7 +35,7 @@ def mock_open_browser(authorization_endpoint: str, code="foobar"):
         if code is not None:
             params = f"?code={code}"
 
-        r = requests.get(f"http://localhost:18000/{params}")
+        r = requests.get(f"http://localhost:18000/{params}", timeout=5)
 
         print(r.text)
         r.raise_for_status()
@@ -330,6 +330,7 @@ def test_callback_get(
         WebApplicationClient(config.oidc_client),
         token_url,
         config.api_url,
+        5,
         done_queue,
     )
     # Let Python pick a port
@@ -356,7 +357,7 @@ def test_callback_get(
         status=resp_status,
     )
 
-    resp = requests.get(f"http://localhost:{port}{path}")
+    resp = requests.get(f"http://localhost:{port}{path}", timeout=5)
     if resp.status_code != expected_status:
         print(resp.text)
 
@@ -375,16 +376,16 @@ def test_run_callback_server(config, tmp_path):
     config.oidc_client = "test-client"
     token_url = "https://idp.example.com/token"
     c = WebApplicationClient(config.oidc_client)
-    s = login.OIDCCallbackServer(c, token_url, config.api_url, 19000)
+    s = login.OIDCCallbackServer(c, token_url, config.api_url, 5, port=19000)
 
     s.start()
 
-    resp = requests.get("http://localhost:19000/healthz")
+    resp = requests.get("http://localhost:19000/healthz", timeout=5)
     assert resp.status_code == 200
     assert resp.text == "ok"
 
     # calls to /healthz don't close the server, so we make a second request
-    resp = requests.get("http://localhost:19000/?foo=bar")
+    resp = requests.get("http://localhost:19000/?foo=bar", timeout=5)
     assert resp.status_code == 422
     assert resp.text == "invalid callback: no code provided"
 
