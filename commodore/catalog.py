@@ -269,7 +269,12 @@ def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):
         params["tenant"] = tenant
     try:
         clusters = lieutenant_query(
-            cfg.api_url, cfg.api_token, "clusters", "", params=params
+            cfg.api_url,
+            cfg.api_token,
+            "clusters",
+            "",
+            params=params,
+            timeout=cfg.request_timeout,
         )
     except ApiError as e:
         raise click.ClickException(f"While listing clusters on Lieutenant: {e}") from e

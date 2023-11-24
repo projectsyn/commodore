@@ -42,7 +42,13 @@ def _complete_clusters(ctx: click.Context, _, incomplete: str) -> list[str]:
     try:
         if config.api_token is None:
             login(config)
-        clusters = lieutenant_query(config.api_url, config.api_token, "clusters", "")
+        clusters = lieutenant_query(
+            config.api_url,
+            config.api_token,
+            "clusters",
+            "",
+            timeout=config.request_timeout,
+        )
     except (click.ClickException, ApiError):
         # If we encounter any errors, ignore them.
         # We shouldn't print errors during completion
