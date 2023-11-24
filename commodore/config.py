@@ -39,6 +39,7 @@ class Config:
     _migration: Optional[Migration]
     _dynamic_facts: dict[str, Any]
     _github_token: Optional[str]
+    _request_timeout: int
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -78,6 +79,7 @@ class Config:
         self._migration = None
         self._dynamic_facts = {}
         self._github_token = None
+        self._request_timeout = 5
 
     @property
     def verbose(self):
@@ -214,6 +216,14 @@ class Config:
     @github_token.setter
     def github_token(self, github_token: str):
         self._github_token = github_token
+
+    @property
+    def request_timeout(self) -> int:
+        return self._request_timeout
+
+    @request_timeout.setter
+    def request_timeout(self, timeout: int):
+        self._request_timeout = timeout
 
     @property
     def inventory(self):
