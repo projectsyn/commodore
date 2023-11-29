@@ -116,12 +116,16 @@ class Cluster:
 
 def load_cluster_from_api(cfg: Config, cluster_id: str) -> Cluster:
     cluster_response = lieutenant_query(
-        cfg.api_url, cfg.api_token, "clusters", cluster_id
+        cfg.api_url, cfg.api_token, "clusters", cluster_id, timeout=cfg.request_timeout
     )
     if "tenant" not in cluster_response:
         raise click.ClickException("cluster does not have a tenant reference")
     tenant_response = lieutenant_query(
-        cfg.api_url, cfg.api_token, "tenants", cluster_response["tenant"]
+        cfg.api_url,
+        cfg.api_token,
+        "tenants",
+        cluster_response["tenant"],
+        timeout=cfg.request_timeout,
     )
     return Cluster(cluster_response, tenant_response, cfg.dynamic_facts)
 

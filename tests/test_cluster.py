@@ -10,7 +10,7 @@ from commodore import compile
 from commodore.cluster import Cluster
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeout=5):
     if api_endpoint == "clusters":
         return {"id": api_id}
 

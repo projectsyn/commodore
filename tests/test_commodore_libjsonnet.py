@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import json
-import os
 
 from pathlib import Path
 from typing import Any
@@ -10,7 +9,6 @@ from typing import Any
 from commodore.postprocess.jsonnet import _import_cb, _native_callbacks
 
 import _jsonnet
-import requests
 import pytest
 import yaml
 
@@ -172,12 +170,6 @@ def test_jsonnet(tmp_path: Path, tc: str):
       value: aaa
     """
     inputf, invf, expectedf = tc_files(tc)
-    os.makedirs(tmp_path / "lib")
-    resp = requests.get(
-        "https://raw.githubusercontent.com/bitnami-labs/kube-libsonnet/v1.19.0/kube.libsonnet"
-    )
-    with open(tmp_path / "lib" / "kube.libjsonnet", "w") as f:
-        f.write(resp.text)
     write_testdata(tmp_path)
     result = render_jsonnet(tmp_path, inputf, invf, work_dir=str(tmp_path))
     with open(expectedf) as e:

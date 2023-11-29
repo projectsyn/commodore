@@ -39,6 +39,7 @@ class Config:
     _migration: Optional[Migration]
     _dynamic_facts: dict[str, Any]
     _github_token: Optional[str]
+    _request_timeout: int
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -78,6 +79,7 @@ class Config:
         self._migration = None
         self._dynamic_facts = {}
         self._github_token = None
+        self._request_timeout = 5
 
     @property
     def verbose(self):
@@ -216,6 +218,14 @@ class Config:
         self._github_token = github_token
 
     @property
+    def request_timeout(self) -> int:
+        return self._request_timeout
+
+    @request_timeout.setter
+    def request_timeout(self, timeout: int):
+        self._request_timeout = timeout
+
+    @property
     def inventory(self):
         return self._inventory
 
@@ -318,7 +328,9 @@ class Config:
             and self.api_url is not None
         ):
             try:
-                r = requests.get(url_normalize(self.api_url))
+                r = requests.get(
+                    url_normalize(self.api_url), timeout=self.request_timeout
+                )
                 api_cfg = json.loads(r.text)
                 if "oidc" in api_cfg:
                     self.oidc_client = api_cfg["oidc"].get("clientId")

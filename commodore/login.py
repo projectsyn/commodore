@@ -40,6 +40,7 @@ class OIDCCallbackServer:
         client: WebApplicationClient,
         token_url: str,
         lieutenant_url: Optional[str],
+        request_timeout: int,
         port: int = 18000,
     ):
         self.client = client
@@ -47,7 +48,12 @@ class OIDCCallbackServer:
         self.lieutenant_url = lieutenant_url
 
         handler = partial(
-            OIDCCallbackHandler, client, token_url, lieutenant_url, self.done_queue
+            OIDCCallbackHandler,
+            client,
+            token_url,
+            lieutenant_url,
+            request_timeout,
+            self.done_queue,
         )
 
         self.server = HTTPServer(("", port), handler)
@@ -72,11 +78,14 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
 
     lieutenant_url: Optional[str]
 
+    request_timeout: int
+
     def __init__(
         self,
         client: WebApplicationClient,
         token_url: str,
         lieutenant_url: Optional[str],
+        request_timeout: int,
         done_queue: Queue,
         *args,
         **kwargs,
@@ -86,6 +95,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         self.lieutenant_url = lieutenant_url
         self.token_url = token_url
         self.redirect_url = "http://localhost:18000"
+        self.request_timeout = request_timeout
         super().__init__(*args, **kwargs)
 
     # pylint: disable=unused-argument
@@ -138,9 +148,7 @@ class OIDCCallbackHandler(BaseHTTPRequestHandler):
         )
 
         token_response = requests.post(
-            token_url,
-            headers=headers,
-            data=body,
+            token_url, headers=headers, data=body, timeout=self.request_timeout
         )
         token_response.raise_for_status()
 
@@ -188,9 +196,9 @@ success_page = """
 """
 
 
-def get_idp_cfg(discovery_url: str) -> Any:
+def get_idp_cfg(discovery_url: str, timeout: int) -> Any:
     try:
-        r = requests.get(discovery_url)
+        r = requests.get(discovery_url, timeout=timeout)
     except ConnectionError as e:
         raise OIDCError(f"Unable to connect to IDP at {discovery_url}") from e
     try:
@@ -242,7 +250,9 @@ def refresh_tokens(
             client_id=config.oidc_client,
         )
         try:
-            token_response = requests.post(token_url, headers=headers, data=body)
+            token_response = requests.post(
+                token_url, headers=headers, data=body, timeout=config.request_timeout
+            )
             token_response.raise_for_status()
         except (ConnectionError, HTTPError) as e:
             click.echo(f" > Failed to refresh OIDC token with {e}")
@@ -270,14 +280,16 @@ def login(config: Config):
         return
 
     client = WebApplicationClient(config.oidc_client)
-    idp_cfg = get_idp_cfg(config.oidc_discovery_url)
+    idp_cfg = get_idp_cfg(config.oidc_discovery_url, config.request_timeout)
     if refresh_tokens(config, client, idp_cfg["token_endpoint"]):
         # Short-circuit if refreshing the token was successful.
         return
 
     # Request new token through login flow if we weren't able to refresh the existing
     # token.
-    server = OIDCCallbackServer(client, idp_cfg["token_endpoint"], config.api_url)
+    server = OIDCCallbackServer(
+        client, idp_cfg["token_endpoint"], config.api_url, config.request_timeout
+    )
     server.start()
 
     # Wait for server to run
@@ -285,7 +297,9 @@ def login(config: Config):
     r.status_code = 500
     while r.status_code != 200:
         try:
-            r = requests.get("http://localhost:18000/healthz")
+            r = requests.get(
+                "http://localhost:18000/healthz", timeout=config.request_timeout
+            )
         except ConnectionError:
             pass
 
