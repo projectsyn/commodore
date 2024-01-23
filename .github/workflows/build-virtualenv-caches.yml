@@ -29,7 +29,7 @@ jobs:
     - name: Install tox
       run: |
         pip install tox
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: |
           .tox
@@ -55,7 +55,7 @@ jobs:
     - name: Install tox
       run: |
         pip install tox
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: |
           .tox
@@ -76,7 +76,7 @@ jobs:
     - name: Install tox
       run: |
         pip install tox
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: |
           .tox
@@ -103,7 +103,7 @@ jobs:
     - name: Install tox
       run: |
         pip install tox
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: |
           .tox
@@ -122,7 +122,7 @@ jobs:
       with:
         python-version: '3.9'
     - uses: Gr1N/setup-poetry@v8
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
