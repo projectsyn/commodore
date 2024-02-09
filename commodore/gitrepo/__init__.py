@@ -115,7 +115,7 @@ class GitRepo:
         if not force_init and targetdir.exists():
             self._repo = Repo(targetdir)
         else:
-            self._repo = Repo.init(targetdir, bare=bare)
+            self._repo = Repo.init(targetdir, bare=bare, initial_branch="master")
 
         if remote:
             self.remote = remote
