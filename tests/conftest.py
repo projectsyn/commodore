@@ -5,6 +5,8 @@ https://docs.pytest.org/en/latest/how-to/fixtures.html#scope-sharing-fixtures-ac
 """
 from __future__ import annotations
 
+import os
+
 from pathlib import Path
 from typing import Protocol
 
@@ -21,6 +23,23 @@ from commodore.gitrepo import GitRepo
 class RunnerFunc(Protocol):
     def __call__(self, args: list[str]) -> Result:
         ...
+
+
+@pytest.fixture(autouse=True)
+def gitconfig(tmp_path: Path) -> Path:
+    """Ensure that tests have a predictable empty gitconfig.
+
+    We set autouse=True, so that the fixture is automatically used for all
+    tests.  Tests that want to access the mock gitconfig can explicitly specify
+    the fixutre, so they get the path to the mock gitconfig.
+    """
+    os.environ["GIT_CONFIG_NOSYSTEM"] = "true"
+    os.environ["HOME"] = str(tmp_path)
+    os.environ["XDG_CONFIG_HOME"] = str(tmp_path / ".config")
+    gitconfig = tmp_path / ".config" / "git" / "config"
+    os.makedirs(gitconfig.parent, exist_ok=True)
+
+    return gitconfig
 
 
 @pytest.fixture

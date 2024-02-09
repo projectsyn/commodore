@@ -752,3 +752,14 @@ def test_gitrepo_is_ahead_of_remote_local_branch(tmp_path: Path):
     # verify that our local branch is ahead of both local and remote tracking master
     assert len(list(r.repo.iter_commits("master..local"))) == 1
     assert len(list(r.repo.iter_commits("origin/master..local"))) == 1
+
+
+def test_gitrepo_init_always_master(gitconfig: Path, tmp_path: Path):
+    cfg = git.config.GitConfigParser(file_or_files=gitconfig, read_only=False)
+    cfg.add_value("init", "defaultBranch", "main").write()
+
+    r = gitrepo.GitRepo(None, tmp_path / "repo.git")
+    r.commit("Initial commit")
+
+    assert len(r._repo.heads) == 1
+    assert r._repo.heads[0].name == "master"
