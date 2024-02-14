@@ -42,7 +42,7 @@ pyxdg = "0.28"
 cruft = "2.15.0"
 oauthlib = "3.2.2"
 pyjwt = "2.8.0"
-PyGithub = "2.1.1"
+PyGithub = "2.2.0"
 reclass-rs = "0.2.0"
 
 [tool.poetry.dev-dependencies]
