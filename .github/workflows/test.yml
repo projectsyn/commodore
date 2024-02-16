@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - uses: Gr1N/setup-poetry@v9
     - name: Install tox
       run: |
@@ -44,8 +44,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.8'
-          - '3.9'
           - '3.10'
           - '3.11'
     steps:
@@ -105,8 +103,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.8'
-          - '3.9'
           - '3.10'
           - '3.11'
     steps:
@@ -143,7 +139,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: '3.11'
     - uses: Gr1N/setup-poetry@v9
     - uses: actions/cache@v4
       with:
@@ -151,7 +147,7 @@ jobs:
         key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry, setup Poetry virtualenv, and build Kapitan helm bindings
       run: |
-        poetry env use python3.9
+        poetry env use python3.11
         poetry install
     - name: Install jsonnet-bundler
       run: |
