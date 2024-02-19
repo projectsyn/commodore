@@ -47,7 +47,7 @@ reclass-rs = "0.2.0"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
-pytest = "8.0.0"
+pytest = "8.0.1"
 pytest-xdist = "3.5.0"
 pytest-benchmark = "4.0.0"
 responses = "0.25.0"
