@@ -8,7 +8,7 @@ FROM base AS builder
 
 ENV PATH=${PATH}:${HOME}/.local/bin
 
-ARG POETRY_VERSION=1.8.0
+ARG POETRY_VERSION=1.8.1
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
