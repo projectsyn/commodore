@@ -1483,13 +1483,13 @@ email = ["email-validator (>=1.0.3)"]
 
 [[package]]
 name = "pyfakefs"
-version = "5.3.5"
+version = "5.4.0"
 description = "pyfakefs implements a fake file system that mocks the Python file system modules."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyfakefs-5.3.5-py3-none-any.whl", hash = "sha256:751015c1de94e1390128c82b48cdedc3f088bbdbe4bc713c79d02a27f0f61e69"},
-    {file = "pyfakefs-5.3.5.tar.gz", hash = "sha256:7cdc500b35a214cb7a614e1940543acc6650e69a94ac76e30f33c9373bd9cf90"},
+    {file = "pyfakefs-5.4.0-py3-none-any.whl", hash = "sha256:96e52554621a3af7b8171f8660debb65781bcd0cb0bdddea8b12e1b7871c33f3"},
+    {file = "pyfakefs-5.4.0.tar.gz", hash = "sha256:969096d84b5b986f4f84399d03f4900381a3880d03adcdbd609566a4baf39bf9"},
 ]
 
 [[package]]
@@ -2559,4 +2559,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "9ce08499e9d7d9160860d24c651865fa508dea44ead5e14b8be952a9a3f7c5b4"
+content-hash = "24b8c0e110f9b35592b948e0aeb516f3017dbd7687f12d844fa04f871f5b7a45"
