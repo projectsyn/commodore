@@ -1694,18 +1694,18 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "pytest-xdist"
-version = "3.5.0"
+version = "3.6.0"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-xdist-3.5.0.tar.gz", hash = "sha256:cbb36f3d67e0c478baa57fa4edc8843887e0f6cfc42d677530a36d7472b32d8a"},
-    {file = "pytest_xdist-3.5.0-py3-none-any.whl", hash = "sha256:d075629c7e00b611df89f490a5063944bee7a4362a5ff11c7cc7824a03dfce24"},
+    {file = "pytest_xdist-3.6.0-py3-none-any.whl", hash = "sha256:958e08f38472e1b3a83450d8d3e682e90fdbffee39a97dd0f27185a3bd9074d1"},
+    {file = "pytest_xdist-3.6.0.tar.gz", hash = "sha256:2bf346fb1f1481c8d255750f80bc1dfb9fb18b9ad5286ead0b741b6fd56d15b7"},
 ]
 
 [package.dependencies]
-execnet = ">=1.1"
-pytest = ">=6.2.0"
+execnet = ">=2.1"
+pytest = ">=7.0.0"
 
 [package.extras]
 psutil = ["psutil (>=3.0)"]
@@ -2559,4 +2559,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "29fca16728fb3bddbff2d592465b8c489f2c81a3c63502c092c841171e1c3f55"
+content-hash = "02788878d8b2c5d29d67c2ef8864fc5c3ae052867367d6fd2976314941af5d0d"
