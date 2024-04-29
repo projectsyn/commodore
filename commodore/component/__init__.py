@@ -140,14 +140,16 @@ class Component:
 
     @property
     def lib_files(self) -> Iterable[P]:
+        # NOTE(sg): Usage of yield makes the whole function return a generator.
+        # So if the top-level condition is false, this should immediately raise
+        # a StopIteration exception. Mypy has started to complain about the
+        # `return []` that was previously part of this function.
         lib_dir = self.target_directory / "lib"
         if lib_dir.exists():
             for e in lib_dir.iterdir():
                 # Skip hidden files in lib directory
                 if not e.name.startswith("."):
                     yield e
-
-        return []
 
     def get_library(self, libname: str) -> Optional[P]:
         lib_dir = self.target_directory / "lib"
