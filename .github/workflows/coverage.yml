@@ -46,7 +46,7 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
     - name: Upload code coverage report to Code Climate
-      uses: paambaati/codeclimate-action@v5.0.0
+      uses: paambaati/codeclimate-action@v6.0.0
       env:
         CC_TEST_REPORTER_ID: f9c194f25b65bf9c9413d736386e70d32c128516218768333cd7205e79076506
       with:
