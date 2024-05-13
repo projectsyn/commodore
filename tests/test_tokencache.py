@@ -1,6 +1,7 @@
 """
 Unit-tests for tokencache
 """
+
 import json
 
 from xdg.BaseDirectory import xdg_cache_home

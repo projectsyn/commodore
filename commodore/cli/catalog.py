@@ -1,4 +1,5 @@
 """Commands which interact with cluster catalogs"""
+
 from __future__ import annotations
 
 import click

@@ -182,7 +182,6 @@ def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
 def _kapitan_029_030_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> tuple[Iterable[str], bool]:
-
     diff_lines, _ = _ignore_yaml_formatting_difffunc(
         before_text, after_text, fromfile, tofile
     )
@@ -198,7 +197,6 @@ def _kapitan_029_030_difffunc(
 def _ignore_yaml_formatting_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> tuple[list[str], bool]:
-
     before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
     before_sorted_lines = yaml.dump_all(before_objs, Dumper=IndentedListDumper).split(
         "\n"

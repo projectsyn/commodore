@@ -5,6 +5,7 @@ We test most cases in `_read_versions()` through `_read_components()` tests, as 
 functionality of `_read_versions()` was originally implemented directly in
 `_read_components()`.
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch

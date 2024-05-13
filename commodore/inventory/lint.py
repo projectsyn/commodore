@@ -19,16 +19,14 @@ from .lint_deprecated_parameters import lint_deprecated_parameters
 
 
 class LintFunc(Protocol):
-    def __call__(self, file: Path, filecontents: dict[str, Any]) -> int:
-        ...
+    def __call__(self, file: Path, filecontents: dict[str, Any]) -> int: ...
 
 
 class Linter:
     @abc.abstractmethod
     def __call__(
         self, config: Config, path: Path, ignore_patterns: tuple[str, ...] = ()
-    ) -> int:
-        ...
+    ) -> int: ...
 
 
 class ComponentSpecLinter(Linter):

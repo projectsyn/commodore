@@ -1,6 +1,7 @@
 """
 Unit-tests for git
 """
+
 from __future__ import annotations
 
 import re

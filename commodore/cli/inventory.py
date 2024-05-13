@@ -1,4 +1,5 @@
 """Commands which interact with a Commodore (reclass) inventory"""
+
 from __future__ import annotations
 
 import json

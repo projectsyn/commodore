@@ -1,6 +1,7 @@
 """
 Tests for command line interface (CLI)
 """
+
 from subprocess import call
 
 

@@ -1,4 +1,5 @@
 """Click options which are reused for multiple commands"""
+
 import click
 
 from commodore.config import Config

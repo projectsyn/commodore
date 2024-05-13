@@ -91,7 +91,6 @@ API_TOKEN_MATCHER = responses.matchers.header_matcher(
 
 
 def _setup_gh_get_responses(has_open_pr: bool, clone_url: str = ""):
-
     with open(DATA_DIR / "projectsyn-package-foo-response.json", encoding="utf-8") as f:
         resp = json.load(f)
         if clone_url:
@@ -582,8 +581,7 @@ def test_message_body(tmp_path: Path, raw_message: Union[str, bytes], expected: 
     assert dependency_syncer.message_body(c) == expected
 
 
-class Foo:
-    ...
+class Foo: ...
 
 
 @pytest.mark.parametrize(
@@ -617,7 +615,6 @@ def test_maybe_pause(
     pause_seconds: int,
     expected_pause: bool,
 ):
-
     start = datetime.datetime.now()
     dependency_syncer._maybe_pause(
         update_count, pr_batch_size, datetime.timedelta(seconds=pause_seconds)

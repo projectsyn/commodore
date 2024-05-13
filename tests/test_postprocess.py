@@ -1,6 +1,7 @@
 """
 Tests for postprocessing
 """
+
 import os
 
 import click
