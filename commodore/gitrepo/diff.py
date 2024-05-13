@@ -11,8 +11,7 @@ import click
 class DiffFunc(Protocol):
     def __call__(
         self, before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
-    ) -> tuple[Iterable[str], bool]:
-        ...
+    ) -> tuple[Iterable[str], bool]: ...
 
 
 def _colorize_diff(line: str) -> str:

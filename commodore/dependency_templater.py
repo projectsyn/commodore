@@ -100,8 +100,7 @@ class Templater(ABC):
 
     @classmethod
     @abstractmethod
-    def from_existing(cls, config: Config, path: Path):
-        ...
+    def from_existing(cls, config: Config, path: Path): ...
 
     @classmethod
     def _base_from_existing(cls, config: Config, path: Path, deptype: str):

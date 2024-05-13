@@ -1,6 +1,7 @@
 """
 Unit-tests for dependency management
 """
+
 from __future__ import annotations
 
 import os
@@ -519,7 +520,6 @@ def test_verify_component_version_overrides(cluster_params: dict, expected: str)
 def _setup_packages(
     upstream_path: Path, packages: list[str]
 ) -> dict[str, DependencySpec]:
-
     package_specs = {}
 
     for p in packages:

@@ -1,4 +1,5 @@
 """Commands which expose Commodore's OIDC login support"""
+
 import click
 
 from commodore.config import Config

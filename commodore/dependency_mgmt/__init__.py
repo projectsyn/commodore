@@ -57,7 +57,6 @@ def create_package_symlink(cfg, pname: str, package: Package):
 
 
 def fetch_components(cfg: Config):
-
     """
     Download all components required by target.
 

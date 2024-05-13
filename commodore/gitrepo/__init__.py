@@ -482,7 +482,7 @@ class GitRepo:
     def _check_conflicts(self):
         """Check for conflicts in index. Raise `MergeConflict` for the first conflict
         found."""
-        for (path, blobs) in self.repo.index.unmerged_blobs().items():
+        for path, blobs in self.repo.index.unmerged_blobs().items():
             for stage, b in blobs:
                 if stage != 0:
                     raise MergeConflict(path)

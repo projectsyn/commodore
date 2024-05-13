@@ -1,6 +1,7 @@
 """
 Tests for catalog internals
 """
+
 from __future__ import annotations
 
 import os
@@ -603,7 +604,6 @@ def test_catalog_list(
     ],
 )
 def test_catalog_list_parameters(config: Config, tenant: str, sort_by: str):
-
     params = {}
 
     if tenant != "":

@@ -3,6 +3,7 @@ Shared test fixtures for all tests
 See the pytest docs for more details:
 https://docs.pytest.org/en/latest/how-to/fixtures.html#scope-sharing-fixtures-across-classes-modules-packages-or-session
 """
+
 from __future__ import annotations
 
 import os
@@ -21,8 +22,7 @@ from commodore.gitrepo import GitRepo
 
 
 class RunnerFunc(Protocol):
-    def __call__(self, args: list[str]) -> Result:
-        ...
+    def __call__(self, args: list[str]) -> Result: ...
 
 
 @pytest.fixture(autouse=True)

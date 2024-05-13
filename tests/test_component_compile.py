@@ -1,6 +1,7 @@
 """
 Tests for component compile command
 """
+
 import shutil
 import os
 

@@ -1,6 +1,7 @@
 """
 Commodore. Build dynamic inventories and compile catalogs with Kapitan
 """
+
 from pathlib import Path as P
 from importlib_metadata import version
 

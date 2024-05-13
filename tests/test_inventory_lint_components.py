@@ -207,14 +207,14 @@ def _setup_directory(tmp_path: Path):
     assert len(skip_direntries) == len(SKIP_FILECONTENTS)
 
     expected_errcount = 0
-    for (idx, (filecontents, eec)) in enumerate(LINT_FILECONTENTS):
+    for idx, (filecontents, eec) in enumerate(LINT_FILECONTENTS):
         dentry = lint_direntries[idx]
         os.makedirs(dentry.parent, exist_ok=True)
         yaml_dump(filecontents, dentry)
         # these should be skipped
         yaml_dump(filecontents, tmp_path / f".{idx}.yml")
         expected_errcount += eec
-    for (idx, (filecontents, _)) in enumerate(SKIP_FILECONTENTS):
+    for idx, (filecontents, _) in enumerate(SKIP_FILECONTENTS):
         dentry = skip_direntries[idx]
         os.makedirs(dentry.parent, exist_ok=True)
         _dump_skip_file(filecontents, dentry)
