@@ -34,7 +34,7 @@ kapitan = "0.32.0"
 click = "8.1.7"
 # Kapitan requires exactly 3.1.30
 gitpython = "3.1.43"
-requests = "2.31.0"
+requests = "2.32.1"
 url-normalize = "1.4.3"
 python-dotenv = "1.0.1"
 importlib-metadata = "7.1.0"
