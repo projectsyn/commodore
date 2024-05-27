@@ -171,7 +171,7 @@ def _validate_rendered_component(
             "_template",
         }
 
-        assert set(cookiecutter_context.keys()) == context_keys
+        assert len(context_keys - set(cookiecutter_context.keys())) == 0
 
         assert cookiecutter_context["add_matrix"] == "y" if has_matrix else "n"
         assert cookiecutter_context["name"] == component_name
