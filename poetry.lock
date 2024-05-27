@@ -1548,17 +1548,17 @@ tests = ["coverage[toml] (==5.0.4)", "pytest (>=6.0.0,<7.0.0)"]
 
 [[package]]
 name = "pylint"
-version = "3.2.0"
+version = "3.2.2"
 description = "python code static checker"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "pylint-3.2.0-py3-none-any.whl", hash = "sha256:9f20c05398520474dac03d7abb21ab93181f91d4c110e1e0b32bc0d016c34fa4"},
-    {file = "pylint-3.2.0.tar.gz", hash = "sha256:ad8baf17c8ea5502f23ae38d7c1b7ec78bd865ce34af9a0b986282e2611a8ff2"},
+    {file = "pylint-3.2.2-py3-none-any.whl", hash = "sha256:3f8788ab20bb8383e06dd2233e50f8e08949cfd9574804564803441a4946eab4"},
+    {file = "pylint-3.2.2.tar.gz", hash = "sha256:d068ca1dfd735fb92a07d33cb8f288adc0f6bc1287a139ca2425366f7cbe38f8"},
 ]
 
 [package.dependencies]
-astroid = ">=3.2.0,<=3.3.0-dev0"
+astroid = ">=3.2.2,<=3.3.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
@@ -2559,4 +2559,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "021427f4986f0d8855a4a1ddb5f8bfdcb56ce7a157a6db01f930e93d24eef46d"
+content-hash = "f38e4a4355193144b3ca0600e05ed8dbbc47acafc311f8a3b8c3f65e99d3060a"
