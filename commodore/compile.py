@@ -11,6 +11,7 @@ from .cluster import (
     Cluster,
     load_cluster_from_api,
     read_cluster_and_tenant,
+    report_compile_metadata,
     update_params,
     update_target,
 )
@@ -279,7 +280,8 @@ def compile(config, cluster_id):
 
     postprocess_components(config, inventory, config.get_components())
 
-    update_catalog(config, targets, catalog_repo)
+    push_done = update_catalog(config, targets, catalog_repo)
+    report_compile_metadata(config, cluster_id, report=push_done)
 
     click.secho("Catalog compiled! 🎉", bold=True)
 

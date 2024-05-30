@@ -27,6 +27,41 @@ class Migration(Enum):
     IGNORE_YAML_FORMATTING = "ignore-yaml-formatting"
 
 
+class VersionInfo:
+    def __init__(self, url, version, git_sha, path=None):
+        self.url = url
+        self.version = version
+        self.path = path
+        self.git_sha = git_sha
+
+    def as_dict(self):
+        info = {
+            "gitSha": self.git_sha,
+            "url": self.url,
+            "version": self.version,
+        }
+        if self.path:
+            info["path"] = self.path
+
+        return info
+
+
+class InstanceVersionInfo(VersionInfo):
+    def __init__(self, component: Component):
+        super().__init__(
+            component.repo_url,
+            component.version or component.repo.default_version,
+            component.repo.head_sha,
+            path=component.sub_path,
+        )
+        self.component = component.name
+
+    def as_dict(self):
+        info = super().as_dict()
+        info["component"] = self.component
+        return info
+
+
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
 class Config:
     _inventory: Inventory
@@ -184,12 +219,30 @@ class Config:
         self._global_repo_revision_override = rev
 
     @property
+    def global_version_info(self) -> VersionInfo:
+        repo = self._config_repos["global"]
+        return VersionInfo(
+            repo.remote,
+            self.global_repo_revision_override or repo.default_version,
+            repo.head_sha,
+        )
+
+    @property
     def tenant_repo_revision_override(self):
         return self._tenant_repo_revision_override
 
     @tenant_repo_revision_override.setter
     def tenant_repo_revision_override(self, rev):
         self._tenant_repo_revision_override = rev
+
+    @property
+    def tenant_version_info(self) -> VersionInfo:
+        repo = self._config_repos["customer"]
+        return VersionInfo(
+            repo.remote,
+            self.tenant_repo_revision_override or repo.default_version,
+            repo.head_sha,
+        )
 
     @property
     def migration(self):
@@ -253,6 +306,17 @@ class Config:
     def register_package(self, pkg_name: str, pkg: Package):
         self._packages[pkg_name] = pkg
 
+    def get_package_versioninfos(self) -> dict[str, VersionInfo]:
+        return {
+            p: VersionInfo(
+                pkg.url,
+                pkg.version or pkg.repo.default_version,
+                pkg.repo.head_sha,
+                path=pkg.sub_path,
+            )
+            for p, pkg in self._packages.items()
+        }
+
     def register_dependency_repo(self, repo_url: str) -> MultiDependency:
         """Register dependency repository, if it isn't registered yet.
 
@@ -284,6 +348,12 @@ class Config:
                 raise click.ClickException(
                     f"Component {cn} with alias {alias} does not support instantiation."
                 )
+
+    def get_component_alias_versioninfos(self) -> dict[str, InstanceVersionInfo]:
+        return {
+            a: InstanceVersionInfo(self._components[cn])
+            for a, cn in self._component_aliases.items()
+        }
 
     def register_deprecation_notice(self, notice: str):
         self._deprecation_notices.append(notice)

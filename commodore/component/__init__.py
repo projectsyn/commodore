@@ -119,6 +119,10 @@ class Component:
         self._version = version
 
     @property
+    def sub_path(self) -> str:
+        return self._sub_path
+
+    @property
     def repo_directory(self) -> P:
         return self._dir
 

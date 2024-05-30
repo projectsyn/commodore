@@ -65,13 +65,17 @@ class Package:
                 dep_repo = self._dependency.bare_repo
                 author_name = dep_repo.author.name
                 author_email = dep_repo.author.email
+                repo_dir = self.repository_dir
             else:
                 # Fall back to author detection if we don't have a dependency
+                # NOTE(sg): This assumes that we never have a subpath if we don't have a
+                # dependency.
                 author_name = None
                 author_email = None
+                repo_dir = self.target_dir
             self._gitrepo = GitRepo(
                 None,
-                self.target_dir,
+                repo_dir,
                 author_name=author_name,
                 author_email=author_email,
             )

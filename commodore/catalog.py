@@ -96,6 +96,8 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
     * User has requested pushing with `--push`
 
     Ask user to confirm push if `--interactive` is specified
+
+    Returns True if the push was actually done and successful. False otherwise.
     """
     if cfg.local:
         repo.reset(working_tree=False)
@@ -126,10 +128,13 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
                 raise click.ClickException(
                     f"Failed to push to the catalog repository: {summary}"
                 )
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
-        click.echo(" > Use flag --push to commit and push the catalog repo")
-        click.echo(" > Add flag --interactive to show the diff and decide on the push")
+
+        return True
+
+    click.echo(" > Skipping commit+push to catalog...")
+    click.echo(" > Use flag --push to commit and push the catalog repo")
+    click.echo(" > Add flag --interactive to show the diff and decide on the push")
+    return False
 
 
 def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
@@ -220,6 +225,13 @@ def _ignore_yaml_formatting_difffunc(
 
 
 def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
+    """Updates cluster catalog repo if there are any changes
+
+    Prints diff of changes (with smart diffing if requested), and calls _push_catalog()
+    which will determine if the changes should actually be committed and pushed.
+
+    Returns True if a commit was successfully pushed. False otherwise.
+    """
     if repo.working_tree_dir is None:
         raise click.ClickException("Catalog repo has no working tree")
 
@@ -255,10 +267,12 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
     if cfg.debug:
         click.echo(" > Commit message will be")
         click.echo(textwrap.indent(commit_message, "   "))
+
     if changed:
-        _push_catalog(cfg, repo, commit_message)
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
+        return _push_catalog(cfg, repo, commit_message)
+
+    click.echo(" > Skipping commit+push to catalog...")
+    return False
 
 
 def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):
