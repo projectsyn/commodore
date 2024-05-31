@@ -180,7 +180,7 @@ def ensure_branch(d: Union[Component, Package], branch_name: str):
     commit."""
     deptype = type_name(d)
 
-    if not d.repo:
+    if not d.is_checked_out():
         raise ValueError(f"{deptype} repo not initialized")
     r = d.repo.repo
     has_sync_branch = any(h.name == branch_name for h in r.heads)
@@ -204,7 +204,7 @@ def ensure_pr(
     """Create or update template sync PR."""
     deptype = type_name(d)
 
-    if not d.repo:
+    if not d.is_checked_out():
         raise ValueError(f"{deptype} repo not initialized")
 
     prs = gr.get_pulls(state="open")

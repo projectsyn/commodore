@@ -177,6 +177,9 @@ class Component:
             )
         self._dependency.checkout_component(self.name, self.version)
 
+    def is_checked_out(self) -> bool:
+        return self.target_dir is not None and self.target_dir.is_dir()
+
     def checkout_is_dirty(self) -> bool:
         if self._dependency:
             dep_repo = self._dependency.bare_repo

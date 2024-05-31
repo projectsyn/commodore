@@ -40,6 +40,7 @@ class Package:
         self._sub_path = sub_path
         self._dependency = dependency
         self._dependency.register_package(name, target_dir)
+        self._dir = target_dir
         self._gitrepo = None
 
     @property
@@ -59,23 +60,19 @@ class Package:
         return self._dependency.get_package(self._name)
 
     @property
-    def repo(self) -> Optional[GitRepo]:
-        if not self._gitrepo and self.target_dir and self.target_dir.is_dir():
+    def repo(self) -> GitRepo:
+        if not self._gitrepo:
             if self._dependency:
                 dep_repo = self._dependency.bare_repo
                 author_name = dep_repo.author.name
                 author_email = dep_repo.author.email
-                repo_dir = self.repository_dir
             else:
                 # Fall back to author detection if we don't have a dependency
-                # NOTE(sg): This assumes that we never have a subpath if we don't have a
-                # dependency.
                 author_name = None
                 author_email = None
-                repo_dir = self.target_dir
             self._gitrepo = GitRepo(
                 None,
-                repo_dir,
+                self._dir,
                 author_name=author_name,
                 author_email=author_email,
             )
@@ -91,6 +88,9 @@ class Package:
 
     def checkout(self):
         self._dependency.checkout_package(self._name, self._version)
+
+    def is_checked_out(self) -> bool:
+        return self.target_dir is not None and self.target_dir.is_dir()
 
     def checkout_is_dirty(self) -> bool:
         dep_repo = self._dependency.bare_repo
