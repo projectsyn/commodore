@@ -9,6 +9,7 @@ import click
 from .catalog import fetch_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
+    CompileMeta,
     load_cluster_from_api,
     read_cluster_and_tenant,
     report_compile_metadata,
@@ -280,8 +281,10 @@ def compile(config, cluster_id):
 
     postprocess_components(config, inventory, config.get_components())
 
-    push_done = update_catalog(config, targets, catalog_repo)
-    report_compile_metadata(config, cluster_id, report=push_done)
+    compile_meta = CompileMeta(config)
+
+    push_done = update_catalog(config, targets, catalog_repo, compile_meta)
+    report_compile_metadata(config, compile_meta, cluster_id, report=push_done)
 
     click.secho("Catalog compiled! 🎉", bold=True)
 

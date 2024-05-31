@@ -44,7 +44,7 @@ class Package:
         self._gitrepo = None
 
     @property
-    def url(self) -> Optional[str]:
+    def url(self) -> str:
         return self._dependency.url
 
     @property

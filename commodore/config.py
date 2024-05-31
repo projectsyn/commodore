@@ -28,11 +28,19 @@ class Migration(Enum):
 
 
 class VersionInfo:
-    def __init__(self, url, version, git_sha, path=None):
+    def __init__(
+        self,
+        url: str,
+        version: str,
+        git_sha: str,
+        short_sha: str,
+        path: Optional[str] = None,
+    ):
         self.url = url
         self.version = version
         self.path = path
         self.git_sha = git_sha
+        self.short_sha = short_sha
 
     def as_dict(self):
         info = {
@@ -45,6 +53,15 @@ class VersionInfo:
 
         return info
 
+    def pretty_print(self, name: str) -> str:
+        path = ""
+        if self.path:
+            path = f"\n   path: {self.path}"
+        return (
+            f" * {name}: {self.version} ({self.short_sha})\n"
+            + f"   url: {self.url}{path}"
+        )
+
 
 class InstanceVersionInfo(VersionInfo):
     def __init__(self, component: Component):
@@ -52,6 +69,7 @@ class InstanceVersionInfo(VersionInfo):
             component.repo_url,
             component.version or component.repo.default_version,
             component.repo.head_sha,
+            component.repo.head_short_sha,
             path=component.sub_path,
         )
         self.component = component.name
@@ -60,6 +78,12 @@ class InstanceVersionInfo(VersionInfo):
         info = super().as_dict()
         info["component"] = self.component
         return info
+
+    def pretty_print(self, name: str) -> str:
+        pretty_name = name
+        if self.component != name:
+            pretty_name = f"{name} ({self.component})"
+        return super().pretty_print(pretty_name)
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -225,6 +249,7 @@ class Config:
             repo.remote,
             self.global_repo_revision_override or repo.default_version,
             repo.head_sha,
+            repo.head_short_sha,
         )
 
     @property
@@ -242,6 +267,7 @@ class Config:
             repo.remote,
             self.tenant_repo_revision_override or repo.default_version,
             repo.head_sha,
+            repo.head_short_sha,
         )
 
     @property
@@ -312,6 +338,7 @@ class Config:
                 pkg.url,
                 pkg.version or pkg.repo.default_version,
                 pkg.repo.head_sha,
+                pkg.repo.head_short_sha,
                 path=pkg.sub_path,
             )
             for p, pkg in self._packages.items()

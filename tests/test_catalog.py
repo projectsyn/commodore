@@ -18,7 +18,9 @@ import textwrap
 
 from commodore import catalog
 from commodore.config import Config
-from commodore.cluster import Cluster
+from commodore.cluster import Cluster, CompileMeta
+
+from test_compile_meta import _setup_config_repos
 
 cluster_resp = {
     "id": "c-test",
@@ -84,18 +86,6 @@ def fresh_cluster(tmp_path: Path) -> Cluster:
         cr,
         tenant_resp,
     )
-
-
-def test_catalog_commit_message(tmp_path: Path):
-    config = Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-    commit_message = catalog._render_catalog_commit_msg(config)
-    assert not commit_message.startswith("\n")
-    assert commit_message.startswith("Automated catalog update from Commodore\n\n")
 
 
 def test_fetch_catalog_inexistent(
@@ -271,12 +261,18 @@ def write_target_file_2(target: Path, name="test.txt", change=True):
     "migration", ["", "kapitan-0.29-to-0.30", "ignore-yaml-formatting"]
 )
 def test_update_catalog(
-    capsys, tmp_path: Path, config: Config, fresh_cluster: Cluster, migration: str
+    capsys,
+    tmp_path: Path,
+    config: Config,
+    fresh_cluster: Cluster,
+    migration: str,
 ):
     repo = catalog.fetch_catalog(config, fresh_cluster)
     upstream = git.Repo(tmp_path / "repo.git")
 
     config.push = True
+    _setup_config_repos(config)
+    compile_meta = CompileMeta(config)
 
     target = tmp_path / "compiled" / "test"
     target.mkdir(parents=True, exist_ok=True)
@@ -285,7 +281,7 @@ def test_update_catalog(
 
     write_target_file_1(target, name="a.yaml")
     write_target_file_1(target, name="b.yaml")
-    catalog.update_catalog(config, ["test"], repo)
+    catalog.update_catalog(config, ["test"], repo, compile_meta)
 
     captured = capsys.readouterr()
     assert upstream.active_branch.commit.message.startswith(
@@ -304,7 +300,7 @@ def test_update_catalog(
     write_target_file_2(target, name="a.yaml")
     write_target_file_2(target, name="b.yaml", change=False)
     config.migration = migration
-    catalog.update_catalog(config, ["test"], repo)
+    catalog.update_catalog(config, ["test"], repo, compile_meta)
 
     addl_indent = ""
     # Diff with real changes is shown with correct additional

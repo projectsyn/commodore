@@ -277,15 +277,51 @@ class CompileMeta:
         return {
             "commodoreBuildInfo": self.build_info,
             "global": self.global_repo.as_dict(),
-            "instances": {a: info.as_dict() for a, info in self.instances.items()},
+            "instances": {
+                a: info.as_dict() for a, info in sorted(self.instances.items())
+            },
             "lastCompile": self.timestamp.isoformat(timespec="milliseconds"),
-            "packages": {p: info.as_dict() for p, info in self.packages.items()},
+            "packages": {
+                p: info.as_dict() for p, info in sorted(self.packages.items())
+            },
             "tenant": self.tenant_repo.as_dict(),
         }
 
+    def render_catalog_commit_message(self) -> str:
+        component_commits = [
+            info.pretty_print(i) for i, info in sorted(self.instances.items())
+        ]
+        component_commits_str = "\n".join(component_commits)
 
-def report_compile_metadata(cfg: Config, cluster_id: str, report=False):
-    compile_meta = CompileMeta(cfg)
+        package_commits = [
+            info.pretty_print(p) for p, info in sorted(self.packages.items())
+        ]
+        package_commits_str = "\n".join(package_commits)
+
+        config_commits = [
+            self.global_repo.pretty_print("global"),
+            self.tenant_repo.pretty_print("tenant"),
+        ]
+        config_commits_str = "\n".join(config_commits)
+
+        return f"""Automated catalog update from Commodore
+
+Component instance commits:
+{component_commits_str}
+
+Package commits:
+{package_commits_str}
+
+Configuration commits:
+{config_commits_str}
+
+Compilation timestamp: {self.timestamp.isoformat(timespec="milliseconds")}
+"""
+
+
+def report_compile_metadata(
+    cfg: Config, compile_meta: CompileMeta, cluster_id: str, report=False
+):
     if cfg.verbose:
         if report:
             action = "will be reported to Lieutenant"

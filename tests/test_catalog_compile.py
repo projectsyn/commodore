@@ -326,6 +326,5 @@ def test_catalog_compile_local(capsys, tmp_path: Path, config: Config):
     print(captured.out)
     assert captured.out.startswith("Running in local mode\n")
     assert "Updating catalog repository...\n > No changes." in captured.out
-    assert captured.out.endswith(
-        " > Skipping commit+push to catalog...\nCatalog compiled! 🎉\n"
-    )
+    assert " > Skipping commit+push to catalog...\n" in captured.out
+    assert captured.out.endswith("Catalog compiled! 🎉\n")

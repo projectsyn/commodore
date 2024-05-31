@@ -12,7 +12,6 @@ import click
 import yaml
 import json
 
-from .component import Component
 from .gitrepo import GitRepo, GitCommandError
 from .helpers import (
     ApiError,
@@ -21,7 +20,7 @@ from .helpers import (
     sliding_window,
     IndentedListDumper,
 )
-from .cluster import Cluster
+from .cluster import Cluster, CompileMeta
 from .config import Config, Migration
 from .k8sobject import K8sObject
 
@@ -32,45 +31,6 @@ def fetch_catalog(config: Config, cluster: Cluster) -> GitRepo:
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
     return GitRepo.clone(repo_url, config.catalog_dir, config)
-
-
-def _pretty_print_component_commit(name, component: Component) -> str:
-    short_sha = component.repo.head_short_sha
-    return f" * {name}: {component.version} ({short_sha})"
-
-
-def _pretty_print_config_commit(name, repo: GitRepo) -> str:
-    short_sha = repo.head_short_sha
-    return f" * {name}: {short_sha}"
-
-
-def _render_catalog_commit_msg(cfg) -> str:
-    # pylint: disable=import-outside-toplevel
-    import datetime
-
-    now = datetime.datetime.now().isoformat(timespec="milliseconds")
-
-    component_commits = [
-        _pretty_print_component_commit(cn, c)
-        for cn, c in sorted(cfg.get_components().items())
-    ]
-    component_commits_str = "\n".join(component_commits)
-
-    config_commits = [
-        _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()
-    ]
-    config_commits_str = "\n".join(config_commits)
-
-    return f"""Automated catalog update from Commodore
-
-Component commits:
-{component_commits_str}
-
-Configuration commits:
-{config_commits_str}
-
-Compilation timestamp: {now}
-"""
 
 
 def clean_catalog(repo: GitRepo):
@@ -224,7 +184,9 @@ def _ignore_yaml_formatting_difffunc(
     return diff_lines, len(diff_lines) == 0
 
 
-def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
+def update_catalog(
+    cfg: Config, targets: Iterable[str], repo: GitRepo, compile_meta: CompileMeta
+):
     """Updates cluster catalog repo if there are any changes
 
     Prints diff of changes (with smart diffing if requested), and calls _push_catalog()
@@ -263,7 +225,7 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
         message = " > No changes."
     click.echo(message)
 
-    commit_message = _render_catalog_commit_msg(cfg)
+    commit_message = compile_meta.render_catalog_commit_message()
     if cfg.debug:
         click.echo(" > Commit message will be")
         click.echo(textwrap.indent(commit_message, "   "))
