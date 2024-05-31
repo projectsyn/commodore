@@ -149,6 +149,11 @@ def _lieutenant_request(
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
     except NotImplementedError as e:
         raise e
+
+    return _handle_lieutenant_response(r)
+
+
+def _handle_lieutenant_response(r: requests.Response):
     try:
         if r.text:
             resp = json.loads(r.text)
