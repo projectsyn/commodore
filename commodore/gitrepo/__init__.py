@@ -164,8 +164,12 @@ class GitRepo:
 
     @property
     def head_short_sha(self) -> str:
-        sha = self._repo.head.commit.hexsha
+        sha = self.head_sha
         return self._repo.git.rev_parse(sha, short=6)
+
+    @property
+    def head_sha(self) -> str:
+        return self._repo.head.commit.hexsha
 
     @property
     def _author_env(self) -> dict[str, str]:
@@ -203,6 +207,10 @@ class GitRepo:
                     )
                     self._author = Actor("Commodore", "commodore@syn.tools")
         return self._author
+
+    @property
+    def default_version(self) -> str:
+        return self._default_version()
 
     def _remote_prefix(self) -> str:
         """
