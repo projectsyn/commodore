@@ -5,6 +5,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 import git
+import pytest
+import responses
+
+from responses import matchers
 
 from commodore.config import Config
 from commodore.dependency_mgmt import fetch_components, fetch_packages
@@ -13,6 +17,7 @@ from commodore.gitrepo import GitRepo
 from test_dependency_mgmt import setup_components_upstream, _setup_packages
 
 from commodore.catalog import CompileMeta
+from commodore.cluster import report_compile_metadata
 
 
 def _setup_config_repos(cfg: Config, tenant="t-test-tenant"):
@@ -188,3 +193,31 @@ def test_compile_meta_config_overrides(tmp_path: Path, config: Config):
     assert compile_meta.global_repo.git_sha == global_sha
     assert compile_meta.tenant_repo.version == "feat/test"
     assert compile_meta.tenant_repo.git_sha == tenant_sha
+
+
+@pytest.mark.parametrize("report", [False, True])
+@responses.activate
+def test_report_compile_meta(tmp_path: Path, config: Config, capsys, report):
+    _setup_config_repos(config, "t-tenant-1234")
+    config.update_verbosity(1)
+
+    compile_meta = CompileMeta(config)
+    responses.add(
+        responses.POST,
+        f"{config.api_url}/clusters/c-cluster-1234/compileMeta",
+        content_type="application/json",
+        status=204,
+        body=None,
+        match=[matchers.json_params_matcher(compile_meta.as_dict())],
+    )
+    report_compile_metadata(config, compile_meta, "c-cluster-1234", report)
+
+    captured = capsys.readouterr()
+    if report:
+        assert captured.out.startswith(
+            " > The following compile metadata will be reported to Lieutenant:\n"
+        )
+    else:
+        assert captured.out.startswith(
+            " > The following compile metadata would be reported to Lieutenant on a successful catalog push:\n"
+        )
