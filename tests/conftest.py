@@ -30,8 +30,8 @@ def gitconfig(tmp_path: Path) -> Path:
     """Ensure that tests have a predictable empty gitconfig.
 
     We set autouse=True, so that the fixture is automatically used for all
-    tests.  Tests that want to access the mock gitconfig can explicitly specify
-    the fixutre, so they get the path to the mock gitconfig.
+    tests. Tests that want to access the mock gitconfig can explicitly specify
+    the fixture, so they get the path to the mock gitconfig.
     """
     os.environ["GIT_CONFIG_NOSYSTEM"] = "true"
     os.environ["HOME"] = str(tmp_path)

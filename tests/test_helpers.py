@@ -13,6 +13,7 @@ import textwrap
 import click
 import pytest
 import responses
+from responses import matchers
 from url_normalize import url_normalize
 
 import commodore.helpers as helpers
@@ -176,11 +177,11 @@ def test_sliding_window(sequence, winsize, expected):
     assert windows == expected
 
 
-def _verify_call_status(query_url):
+def _verify_call_status(query_url, token="token"):
     assert len(responses.calls) == 1
     call = responses.calls[0]
     assert "Authorization" in call.request.headers
-    assert call.request.headers["Authorization"] == "Bearer token"
+    assert call.request.headers["Authorization"] == f"Bearer {token}"
     assert call.request.url == query_url
 
 
@@ -260,6 +261,91 @@ def test_lieutenant_query_response_errors(response, expected):
         helpers.lieutenant_query(base_url, "token", "clusters", "")
 
     _verify_call_status(query_url)
+
+
+@pytest.mark.parametrize(
+    "request_data,response,expected",
+    [
+        (
+            {
+                "token": "token",
+                "payload": {"some": "data", "other": "data"},
+            },
+            {
+                "status": 204,
+            },
+            "",
+        ),
+        (
+            {
+                "token": "",
+                "payload": {"some": "data", "other": "data"},
+            },
+            {
+                "status": 400,
+                "json": {"reason": "missing or malformed jwt"},
+            },
+            "API returned 400: missing or malformed jwt",
+        ),
+    ],
+)
+@responses.activate
+def test_lieutenant_post(request_data, response, expected):
+    base_url = "https://syn.example.com/"
+
+    post_url = url_normalize(f"{base_url}/clusters/c-cluster-1234/compileMeta")
+
+    if response["status"] == 204:
+        # successful post response from Lieutenant API has no body
+        responses.add(
+            responses.POST,
+            post_url,
+            content_type="application/json",
+            status=204,
+            body=None,
+            match=[matchers.json_params_matcher(request_data["payload"])],
+        )
+    else:
+        responses.add(
+            responses.POST,
+            post_url,
+            content_type="application/json",
+            status=response["status"],
+            json=response["json"],
+            match=[matchers.json_params_matcher(request_data["payload"])],
+        )
+
+    if response["status"] == 204:
+        resp = helpers.lieutenant_post(
+            base_url,
+            request_data["token"],
+            "clusters/c-cluster-1234",
+            "compileMeta",
+            post_data=request_data["payload"],
+        )
+        assert resp == {}
+    else:
+        with pytest.raises(helpers.ApiError, match=expected):
+            helpers.lieutenant_post(
+                base_url,
+                request_data["token"],
+                "clusters/c-cluster-1234",
+                "compileMeta",
+                post_data=request_data["payload"],
+            )
+
+    _verify_call_status(post_url, token=request_data["token"])
+
+
+def test_unimplemented_query_method():
+    with pytest.raises(NotImplementedError, match="QueryType PATCH not implemented"):
+        helpers._lieutenant_request(
+            "PATCH",
+            "https://api.example.com",
+            "token",
+            "clusters",
+            "",
+        )
 
 
 def test_relsymlink(tmp_path: Path):

@@ -12,7 +12,6 @@ import click
 import yaml
 import json
 
-from .component import Component
 from .gitrepo import GitRepo, GitCommandError
 from .helpers import (
     ApiError,
@@ -21,7 +20,7 @@ from .helpers import (
     sliding_window,
     IndentedListDumper,
 )
-from .cluster import Cluster
+from .cluster import Cluster, CompileMeta
 from .config import Config, Migration
 from .k8sobject import K8sObject
 
@@ -32,45 +31,6 @@ def fetch_catalog(config: Config, cluster: Cluster) -> GitRepo:
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
     return GitRepo.clone(repo_url, config.catalog_dir, config)
-
-
-def _pretty_print_component_commit(name, component: Component) -> str:
-    short_sha = component.repo.head_short_sha
-    return f" * {name}: {component.version} ({short_sha})"
-
-
-def _pretty_print_config_commit(name, repo: GitRepo) -> str:
-    short_sha = repo.head_short_sha
-    return f" * {name}: {short_sha}"
-
-
-def _render_catalog_commit_msg(cfg) -> str:
-    # pylint: disable=import-outside-toplevel
-    import datetime
-
-    now = datetime.datetime.now().isoformat(timespec="milliseconds")
-
-    component_commits = [
-        _pretty_print_component_commit(cn, c)
-        for cn, c in sorted(cfg.get_components().items())
-    ]
-    component_commits_str = "\n".join(component_commits)
-
-    config_commits = [
-        _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()
-    ]
-    config_commits_str = "\n".join(config_commits)
-
-    return f"""Automated catalog update from Commodore
-
-Component commits:
-{component_commits_str}
-
-Configuration commits:
-{config_commits_str}
-
-Compilation timestamp: {now}
-"""
 
 
 def clean_catalog(repo: GitRepo):
@@ -96,6 +56,8 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
     * User has requested pushing with `--push`
 
     Ask user to confirm push if `--interactive` is specified
+
+    Returns True if the push was actually done and successful. False otherwise.
     """
     if cfg.local:
         repo.reset(working_tree=False)
@@ -126,10 +88,13 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
                 raise click.ClickException(
                     f"Failed to push to the catalog repository: {summary}"
                 )
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
-        click.echo(" > Use flag --push to commit and push the catalog repo")
-        click.echo(" > Add flag --interactive to show the diff and decide on the push")
+
+        return True
+
+    click.echo(" > Skipping commit+push to catalog...")
+    click.echo(" > Use flag --push to commit and push the catalog repo")
+    click.echo(" > Add flag --interactive to show the diff and decide on the push")
+    return False
 
 
 def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
@@ -219,7 +184,16 @@ def _ignore_yaml_formatting_difffunc(
     return diff_lines, len(diff_lines) == 0
 
 
-def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
+def update_catalog(
+    cfg: Config, targets: Iterable[str], repo: GitRepo, compile_meta: CompileMeta
+):
+    """Updates cluster catalog repo if there are any changes
+
+    Prints diff of changes (with smart diffing if requested), and calls _push_catalog()
+    which will determine if the changes should actually be committed and pushed.
+
+    Returns True if a commit was successfully pushed. False otherwise.
+    """
     if repo.working_tree_dir is None:
         raise click.ClickException("Catalog repo has no working tree")
 
@@ -251,14 +225,16 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
         message = " > No changes."
     click.echo(message)
 
-    commit_message = _render_catalog_commit_msg(cfg)
+    commit_message = compile_meta.render_catalog_commit_message()
     if cfg.debug:
         click.echo(" > Commit message will be")
         click.echo(textwrap.indent(commit_message, "   "))
+
     if changed:
-        _push_catalog(cfg, repo, commit_message)
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
+        return _push_catalog(cfg, repo, commit_message)
+
+    click.echo(" > Skipping commit+push to catalog...")
+    return False
 
 
 def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):

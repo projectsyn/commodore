@@ -13,6 +13,8 @@ import click
 import requests
 import yaml
 
+from enum import Enum
+
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
 from url_normalize import url_normalize
@@ -111,18 +113,52 @@ def yaml_dump_all(obj, file):
         yaml.dump_all(obj, outf, Dumper=IndentedListDumper)
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeout=5):
+class RequestMethod(Enum):
+    GET = "GET"
+    POST = "POST"
+
+
+def _lieutenant_request(
+    method: RequestMethod,
+    api_url: str,
+    api_token: str,
+    api_endpoint: str,
+    api_id: str,
+    params={},
+    timeout=5,
+    **kwargs,
+):
+    url = url_normalize(f"{api_url}/{api_endpoint}/{api_id}")
+    headers = {"Authorization": f"Bearer {api_token}"}
     try:
-        r = requests.get(
-            url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
-            headers={"Authorization": f"Bearer {api_token}"},
-            params=params,
-            timeout=timeout,
-        )
+        if method == RequestMethod.GET:
+            r = requests.get(url, headers=headers, params=params, timeout=timeout)
+        elif method == RequestMethod.POST:
+            headers["Content-Type"] = "application/json"
+            data = kwargs.get("post_data", {})
+            r = requests.post(
+                url,
+                json.dumps(data),
+                headers=headers,
+                params=params,
+                timeout=timeout,
+            )
+        else:
+            raise NotImplementedError(f"QueryType {method} not implemented")
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
+    except NotImplementedError as e:
+        raise e
+
+    return _handle_lieutenant_response(r)
+
+
+def _handle_lieutenant_response(r: requests.Response):
     try:
-        resp = json.loads(r.text)
+        if r.text:
+            resp = json.loads(r.text)
+        else:
+            resp = {}
     except json.JSONDecodeError as e:
         raise ApiError("Client error: Unable to parse JSON") from e
     try:
@@ -137,6 +173,27 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeou
         raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp
+
+
+def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeout=5):
+    return _lieutenant_request(
+        RequestMethod.GET, api_url, api_token, api_endpoint, api_id, params, timeout
+    )
+
+
+def lieutenant_post(
+    api_url, api_token, api_endpoint, api_id, post_data, params={}, timeout=5
+):
+    return _lieutenant_request(
+        RequestMethod.POST,
+        api_url,
+        api_token,
+        api_endpoint,
+        api_id,
+        params,
+        timeout,
+        post_data=post_data,
+    )
 
 
 def _verbose_rmtree(tree, *args, **kwargs):

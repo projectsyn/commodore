@@ -2,3 +2,4 @@
 * xref:commodore:ROOT:explanation/dependencies.adoc[Manage Dependencies]
 * xref:commodore:ROOT:explanation/running-commodore.adoc[Running Commodore]
 * xref:commodore:ROOT:explanation/migrate-kapitan-0.29-0.30.adoc[Migrating from Kapitan 0.29 to 0.30]
+* xref:commodore:ROOT:explanation/compilation-metadata.adoc[]

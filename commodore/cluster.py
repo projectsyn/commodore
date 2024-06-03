@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
 import os
+import textwrap
 
+from datetime import datetime
 from typing import Any, Optional, Union
 
 import click
 
-from . import __kustomize_wrapper__
+from . import __kustomize_wrapper__, __git_version__, __version__
 from .helpers import (
+    lieutenant_post,
     lieutenant_query,
     yaml_dump,
     yaml_load,
@@ -258,3 +262,81 @@ def update_params(inv: Inventory, cluster: Cluster):
     file = inv.params_file
     os.makedirs(file.parent, exist_ok=True)
     yaml_dump(render_params(inv, cluster), file)
+
+
+class CompileMeta:
+    def __init__(self, cfg: Config):
+        self.build_info = {"version": __version__, "gitVersion": __git_version__}
+        self.instances = cfg.get_component_alias_versioninfos()
+        self.packages = cfg.get_package_versioninfos()
+        self.global_repo = cfg.global_version_info
+        self.tenant_repo = cfg.tenant_version_info
+        self.timestamp = datetime.now().astimezone(None)
+
+    def as_dict(self):
+        return {
+            "commodoreBuildInfo": self.build_info,
+            "global": self.global_repo.as_dict(),
+            "instances": {
+                a: info.as_dict() for a, info in sorted(self.instances.items())
+            },
+            "lastCompile": self.timestamp.isoformat(timespec="milliseconds"),
+            "packages": {
+                p: info.as_dict() for p, info in sorted(self.packages.items())
+            },
+            "tenant": self.tenant_repo.as_dict(),
+        }
+
+    def render_catalog_commit_message(self) -> str:
+        component_commits = [
+            info.pretty_print(i) for i, info in sorted(self.instances.items())
+        ]
+        component_commits_str = "\n".join(component_commits)
+
+        package_commits = [
+            info.pretty_print(p) for p, info in sorted(self.packages.items())
+        ]
+        package_commits_str = "\n".join(package_commits)
+
+        config_commits = [
+            self.global_repo.pretty_print("global"),
+            self.tenant_repo.pretty_print("tenant"),
+        ]
+        config_commits_str = "\n".join(config_commits)
+
+        return f"""Automated catalog update from Commodore
+
+Component instance commits:
+{component_commits_str}
+
+Package commits:
+{package_commits_str}
+
+Configuration commits:
+{config_commits_str}
+
+Compilation timestamp: {self.timestamp.isoformat(timespec="milliseconds")}
+"""
+
+
+def report_compile_metadata(
+    cfg: Config, compile_meta: CompileMeta, cluster_id: str, report=False
+):
+    if cfg.verbose:
+        if report:
+            action = "will be reported to Lieutenant"
+        else:
+            action = "would be reported to Lieutenant on a successful catalog push"
+        click.echo(
+            f" > The following compile metadata {action}:\n"
+            + textwrap.indent(json.dumps(compile_meta.as_dict(), indent=2), "    "),
+        )
+
+    if report:
+        lieutenant_post(
+            cfg.api_url,
+            cfg.api_token,
+            f"clusters/{cluster_id}",
+            "compileMeta",
+            post_data=compile_meta.as_dict(),
+        )

@@ -119,6 +119,10 @@ class Component:
         self._version = version
 
     @property
+    def sub_path(self) -> str:
+        return self._sub_path
+
+    @property
     def repo_directory(self) -> P:
         return self._dir
 
@@ -172,6 +176,9 @@ class Component:
                 f"Dependency for component {self._name} hasn't been initialized"
             )
         self._dependency.checkout_component(self.name, self.version)
+
+    def is_checked_out(self) -> bool:
+        return self.target_dir is not None and self.target_dir.is_dir()
 
     def checkout_is_dirty(self) -> bool:
         if self._dependency:
