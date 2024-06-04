@@ -41,6 +41,19 @@ def new_update_options(new_cmd: bool):
                 + "Commodore will deduplicate test cases by name."
             )
         click.option(
+            "--automerge-patch-v0 / --no-automerge-patch-v0",
+            is_flag=True,
+            default=False if new_cmd else None,
+            help="Enable automerging of patch-level dependency PRs "
+            + "for v0.x dependencies.",
+        )(cmd)
+        click.option(
+            "--automerge-patch / --no-automerge-patch",
+            is_flag=True,
+            default=True if new_cmd else None,
+            help="Enable automerging of patch-level dependency PRs.",
+        )(cmd)
+        click.option(
             "--additional-test-case",
             "-t",
             metavar="CASE",
@@ -147,6 +160,8 @@ def component_new(
     template_url: str,
     template_version: str,
     additional_test_case: Iterable[str],
+    automerge_patch: bool,
+    automerge_patch_v0: bool,
 ):
     config.update_verbosity(verbose)
     t = ComponentTemplater(
@@ -159,6 +174,8 @@ def component_new(
     t.golden_tests = golden_tests
     t.matrix_tests = matrix_tests
     t.test_cases = ["defaults"] + list(additional_test_case)
+    t.automerge_patch = automerge_patch
+    t.automerge_patch_v0 = automerge_patch_v0
     t.create()
 
 
@@ -204,6 +221,8 @@ def component_update(
     additional_test_case: Iterable[str],
     remove_test_case: Iterable[str],
     commit: bool,
+    automerge_patch: Optional[bool],
+    automerge_patch_v0: Optional[bool],
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -230,6 +249,10 @@ def component_update(
         t.library = lib
     if pp is not None:
         t.post_process = pp
+    if automerge_patch is not None:
+        t.automerge_patch = automerge_patch
+    if automerge_patch_v0 is not None:
+        t.automerge_patch_v0 = automerge_patch_v0
 
     test_cases = t.test_cases
     test_cases.extend(additional_test_case)

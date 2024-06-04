@@ -687,6 +687,8 @@ def test_cookiecutter_args_no_cruft_json(tmp_path: P, config: Config):
     t.post_process = False
     t.copyright_holder = ""
     t.github_owner = "projectsyn"
+    t.automerge_patch = True
+    t.automerge_patch_v0 = False
 
     templater_cookiecutter_args = t.cookiecutter_args
 
