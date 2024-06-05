@@ -32,13 +32,17 @@ def call_component_new(
     pp="--no-pp",
     golden="--no-golden-tests",
     matrix="--no-matrix-tests",
+    automerge_patch="--no-automerge-patch",
+    automerge_patch_v0="--no-automerge-patch-v0",
     output_dir="",
     extra_args: list[str] = [],
 ):
     args = ["-d", str(tmp_path), "component", "new"]
     if output_dir:
         args.extend(["--output-dir", str(output_dir)])
-    args.extend([component_name, lib, pp, golden, matrix])
+    args.extend(
+        [component_name, lib, pp, golden, matrix, automerge_patch, automerge_patch_v0]
+    )
     args.extend(extra_args)
     result = cli_runner(args)
     assert result.exit_code == 0
@@ -52,6 +56,8 @@ def _validate_rendered_component(
     has_pp: bool,
     has_golden: bool,
     has_matrix: bool,
+    has_automerge_patch: bool,
+    has_automerge_patch_v0: bool,
     test_cases: list[str] = ["defaults"],
 ):
     expected_files = [
@@ -188,6 +194,29 @@ def _validate_rendered_component(
             cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
             expected_cmd = "make gen-golden-all" if has_matrix else "make gen-golden"
             assert cmd == expected_cmd
+        assert "packageRules" in renovateconfig
+        package_rules = renovateconfig["packageRules"]
+        assert (len(package_rules) == 1) == (
+            has_automerge_patch or has_automerge_patch_v0
+        )
+        if has_automerge_patch or has_automerge_patch_v0:
+            patch_rule = package_rules[0]
+            expected_keys = {
+                "matchUpdateTypes",
+                "automerge",
+                "platformAutomerge",
+                "labels",
+            }
+            if not has_automerge_patch_v0 and has_automerge_patch:
+                expected_keys.add("matchCurrentVersion")
+
+            assert set(patch_rule.keys()) == expected_keys
+            assert patch_rule["matchUpdateTypes"] == ["patch"]
+            assert patch_rule["automerge"] is True
+            assert patch_rule["platformAutomerge"] is False
+            assert patch_rule["labels"] == ["dependency", "automerge"]
+            if "matchCurrentVersion" in patch_rule:
+                assert patch_rule["matchCurrentVersion"] == "!/^v?0\\./"
 
 
 def _format_test_case_args(flag: str, test_cases: list[str]) -> list[str]:
@@ -233,7 +262,14 @@ def test_run_component_new_command(
     )
 
     _validate_rendered_component(
-        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+        tmp_path,
+        component_name,
+        has_lib,
+        has_pp,
+        has_golden,
+        has_matrix,
+        False,
+        False,
     )
 
 
@@ -264,7 +300,15 @@ def test_run_component_new_with_additional_test_cases(
         not in result.stdout
     )
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, ["defaults"] + test_cases
+        tmp_path,
+        component_name,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        ["defaults"] + test_cases,
     )
 
 
@@ -284,7 +328,15 @@ def test_run_component_new_force_matrix_additional_test_cases(
 
     assert " > Forcing matrix tests when multiple test cases requested" in result.stdout
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, ["defaults", "foo"]
+        tmp_path,
+        component_name,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        ["defaults", "foo"],
     )
 
 
@@ -333,6 +385,54 @@ def test_run_component_new_command_with_name(tmp_path: P):
     with open(cruftjson_path, "r") as file:
         cruftjson = json.load(file)
         assert cruftjson["context"]["cookiecutter"]["name"] == component_name
+
+
+@pytest.mark.parametrize(
+    "automerge_patch",
+    [
+        "--automerge-patch",
+        "--no-automerge-patch",
+    ],
+)
+@pytest.mark.parametrize(
+    "automerge_patch_v0",
+    [
+        "--automerge-patch-v0",
+        "--no-automerge-patch-v0",
+    ],
+)
+def test_run_component_new_automerge_options(
+    tmp_path: P, cli_runner: RunnerFunc, automerge_patch, automerge_patch_v0
+):
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch=automerge_patch,
+        automerge_patch_v0=automerge_patch_v0,
+    )
+
+    has_automerge_patch_v0 = automerge_patch_v0 == "--automerge-patch-v0"
+    has_automerge_patch = (
+        automerge_patch == "--automerge-patch" or has_automerge_patch_v0
+    )
+    if automerge_patch == "--no-automerge-patch" and has_automerge_patch_v0:
+        assert (
+            " > Forcing automerging of patch dependencies to be enabled "
+            + "when automerging of v0.x patch dependencies is requested"
+        ) in result.stdout
+
+    _validate_rendered_component(
+        tmp_path,
+        "test-component",
+        False,
+        False,
+        True,
+        True,
+        has_automerge_patch,
+        has_automerge_patch_v0,
+    )
 
 
 @pytest.mark.parametrize(
@@ -440,6 +540,14 @@ def test_check_golden_diff(tmp_path: P):
         ([], ["--matrix-tests"]),
         (["--matrix-tests"], ["--no-matrix-tests"]),
         ([], ["--golden-tests", "--matrix-tests"]),
+        ([], ["--automerge-patch"]),
+        ([], ["--automerge-patch-v0"]),
+        ([], ["--automerge-patch", "--automerge-patch-v0"]),
+        (["--automerge-patch"], ["--no-automerge-patch"]),
+        (["--automerge-patch-v0"], ["--no-automerge-patch-v0"]),
+        (["--no-automerge-patch"], ["--automerge-patch-v0"]),
+        (["--automerge-patch-v0"], ["--no-automerge-patch"]),
+        (["--automerge-patch-v0"], ["--no-automerge-patch-v0"]),
     ],
 )
 def test_component_update_bool_flags(
@@ -455,6 +563,8 @@ def test_component_update_bool_flags(
         "--no-pp",
         "--no-golden-tests",
         "--no-matrix-tests",
+        "--no-automerge-patch",
+        "--no-automerge-patch-v0",
         component_name,
     ]
 
@@ -462,12 +572,23 @@ def test_component_update_bool_flags(
     has_pp = "--pp" in new_args
     has_golden = "--golden-tests" in new_args
     has_matrix = "--matrix-tests" in new_args
+    has_automerge_patch = (
+        "--automerge-patch" in new_args or "--automerge-patch-v0" in new_args
+    )
+    has_automerge_patch_v0 = "--automerge-patch-v0" in new_args
 
     result = cli_runner(new_cmd + new_args)
     assert result.exit_code == 0
 
     _validate_rendered_component(
-        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+        tmp_path,
+        component_name,
+        has_lib,
+        has_pp,
+        has_golden,
+        has_matrix,
+        has_automerge_patch,
+        has_automerge_patch_v0,
     )
 
     update_cmd = [
@@ -481,12 +602,32 @@ def test_component_update_bool_flags(
     has_pp = "--pp" in update_args
     has_golden = "--golden-tests" in update_args
     has_matrix = "--matrix-tests" in update_args
+    # updated component has automerge_patch_v0 if we enable it in the update call or if
+    # it was enabled originally, and we haven't explicitly disabled it.
+    has_automerge_patch_v0_update = "--automerge-patch-v0" in update_args or (
+        has_automerge_patch_v0 and "--no-automerge-patch-v0" not in update_args
+    )
+    # updated component has automerge_patch if we enable it in the update call, the
+    # component had automerge_patch originally, and we haven't disabled it explicitly,
+    # or if the updated component has automerge_patch_v0 enabled.
+    has_automerge_patch_update = (
+        "--automerge-patch" in update_args
+        or (has_automerge_patch and "--no-automerge-patch" not in update_args)
+        or has_automerge_patch_v0_update
+    )
 
     result = cli_runner(update_cmd + update_args)
     assert result.exit_code == 0
 
     _validate_rendered_component(
-        tmp_path, component_name, has_lib, has_pp, has_golden, has_matrix
+        tmp_path,
+        component_name,
+        has_lib,
+        has_pp,
+        has_golden,
+        has_matrix,
+        has_automerge_patch_update,
+        has_automerge_patch_v0_update,
     )
 
 
@@ -615,7 +756,7 @@ def test_component_update_test_cases(
     orig_cases = ["defaults"] + initial_cases
 
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, orig_cases
+        tmp_path, component_name, False, False, True, True, False, False, orig_cases
     )
 
     update_args = _format_test_case_args("--additional-test-case", additional_cases)
@@ -639,7 +780,7 @@ def test_component_update_test_cases(
         final_cases = updated_cases
 
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, final_cases
+        tmp_path, component_name, False, False, True, True, False, False, final_cases
     )
 
 
