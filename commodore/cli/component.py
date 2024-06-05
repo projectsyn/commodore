@@ -18,6 +18,75 @@ from commodore.dependency_syncer import sync_dependencies
 import commodore.cli.options as options
 
 
+def new_update_options(new_cmd: bool):
+    """Shared command options for component new and component update.
+
+    Options will appear in `--help` in reverse order of the click.option() calls in this
+    function.
+
+    If flag `new_cmd` is set, default values will be set for options that are left
+    unchanged by default by `component update`.
+    """
+
+    def decorator(cmd):
+        if new_cmd:
+            test_case_help = (
+                "Additional test cases to generate in the new component. "
+                + "Can be repeated. Test case `defaults` will always be generated. "
+                + "Commodore will deduplicate test cases by name."
+            )
+        else:
+            test_case_help = (
+                "Additional test cases to add to the component. Can be repeated. "
+                + "Commodore will deduplicate test cases by name."
+            )
+        click.option(
+            "--additional-test-case",
+            "-t",
+            metavar="CASE",
+            default=[],
+            show_default=True,
+            multiple=True,
+            help=test_case_help,
+        )(cmd)
+        add_text = "Add" if new_cmd else "Add or remove"
+        click.option(
+            "--matrix-tests/--no-matrix-tests",
+            default=True if new_cmd else None,
+            show_default=True,
+            help=f"{add_text} test matrix for compile/golden tests.",
+        )(cmd)
+        click.option(
+            "--golden-tests/--no-golden-tests",
+            default=True if new_cmd else None,
+            show_default=True,
+            help=f"{add_text} golden tests.",
+        )(cmd)
+        click.option(
+            "--pp/--no-pp",
+            default=False if new_cmd else None,
+            show_default=True,
+            help=f"{add_text} postprocessing filter configuration.",
+        )(cmd)
+        click.option(
+            "--lib/--no-lib",
+            default=False if new_cmd else None,
+            show_default=True,
+            help=f"{add_text} the component library template.",
+        )(cmd)
+        click.option(
+            "--copyright",
+            "copyright_holder",
+            default="VSHN AG <info@vshn.ch>" if new_cmd else "",
+            show_default=True,
+            help="The copyright holder added to the license file.",
+        )(cmd)
+
+        return cmd
+
+    return decorator
+
+
 @click.group(
     name="component",
     short_help="Interact with components.",
@@ -35,48 +104,17 @@ def component_group(config: Config, verbose):
     help="The component's name as it will be written in the documentation. Defaults to the slug.",
 )
 @click.option(
-    "--lib/--no-lib",
-    default=False,
+    "--output-dir",
+    default="",
     show_default=True,
-    help="Add a component library template.",
-)
-@click.option(
-    "--pp/--no-pp",
-    default=False,
-    show_default=True,
-    help="Add a component postprocessing template.",
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="The directory in which to place the new component.",
 )
 @click.option(
     "--owner",
     default="projectsyn",
     show_default=True,
     help="The GitHub user or project name where the component will be hosted.",
-)
-@click.option(
-    "--copyright",
-    "copyright_holder",
-    default="VSHN AG <info@vshn.ch>",
-    show_default=True,
-    help="The copyright holder added to the license file.",
-)
-@click.option(
-    "--golden-tests/--no-golden-tests",
-    default=True,
-    show_default=True,
-    help="Add golden tests to the component.",
-)
-@click.option(
-    "--matrix-tests/--no-matrix-tests",
-    default=True,
-    show_default=True,
-    help="Enable test matrix for compile/golden tests.",
-)
-@click.option(
-    "--output-dir",
-    default="",
-    show_default=True,
-    type=click.Path(file_okay=False, dir_okay=True),
-    help="The directory in which to place the new component.",
 )
 @click.option(
     "--template-url",
@@ -90,17 +128,7 @@ def component_group(config: Config, verbose):
     show_default=True,
     help="The component template version (Git tree-ish) to use.",
 )
-@click.option(
-    "--additional-test-case",
-    "-t",
-    metavar="CASE",
-    default=[],
-    show_default=True,
-    multiple=True,
-    help="Additional test cases to generate in the new component. Can be repeated. "
-    + "Test case `defaults` will always be generated."
-    + "Commodore will deduplicate test cases by name.",
-)
+@new_update_options(new_cmd=True)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
@@ -141,58 +169,19 @@ def component_new(
     "component_path", type=click.Path(exists=True, dir_okay=True, file_okay=False)
 )
 @click.option(
-    "--copyright",
-    "copyright_holder",
-    show_default=True,
-    help="Update the copyright holder in the license file.",
-)
-@click.option(
     "--update-copyright-year/--no-update-copyright-year",
     default=False,
     show_default=True,
     help="Update year in copyright notice.",
 )
-@click.option(
-    "--golden-tests/--no-golden-tests",
-    default=None,
-    show_default=True,
-    help="Add or remove golden tests.",
-)
-@click.option(
-    "--matrix-tests/--no-matrix-tests",
-    default=None,
-    show_default=True,
-    help="Add or remove matrix tests.",
-)
-@click.option(
-    "--lib/--no-lib",
-    default=None,
-    show_default=True,
-    help="Add or remove the component library.",
-)
-@click.option(
-    "--pp/--no-pp",
-    default=None,
-    show_default=True,
-    help="Add or remove the postprocessing filter configuration.",
-)
-@click.option(
-    "--additional-test-case",
-    "-t",
-    metavar="CASE",
-    default=[],
-    show_default=True,
-    multiple=True,
-    help="Additional test cases to add to the component. Can be repeated. "
-    + "Commodore will deduplicate test cases by name.",
-)
+@new_update_options(new_cmd=False)
 @click.option(
     "--remove-test-case",
     metavar="CASE",
     default=[],
     show_default=True,
     multiple=True,
-    help="Test cases to remove from the package. Can be repeated.",
+    help="Test cases to remove from the component. Can be repeated.",
 )
 @click.option(
     "--commit / --no-commit",
@@ -259,7 +248,6 @@ def component_update(
 )
 @options.verbosity
 @options.pass_config
-# pylint: disable=too-many-arguments
 def component_delete(config: Config, slug, force, verbose):
     config.update_verbosity(verbose)
     config.force = force
