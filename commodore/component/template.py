@@ -16,6 +16,8 @@ from commodore.multi_dependency import MultiDependency
 class ComponentTemplater(Templater):
     library: bool
     post_process: bool
+    _automerge_patch: bool
+    automerge_patch_v0: bool
     _matrix_tests: bool
 
     @classmethod
@@ -79,6 +81,8 @@ class ComponentTemplater(Templater):
         self.library = cookiecutter_args["add_lib"] == "y"
         self.post_process = cookiecutter_args["add_pp"] == "y"
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
+        self.automerge_patch = cookiecutter_args["automerge_patch"] == "y"
+        self.automerge_patch_v0 = cookiecutter_args["automerge_patch_v0"] == "y"
 
         return update_cruft_json
 
@@ -88,7 +92,23 @@ class ComponentTemplater(Templater):
         args["add_lib"] = "y" if self.library else "n"
         args["add_pp"] = "y" if self.post_process else "n"
         args["add_matrix"] = "y" if self.matrix_tests else "n"
+        args["automerge_patch"] = "y" if self.automerge_patch else "n"
+        args["automerge_patch_v0"] = "y" if self.automerge_patch_v0 else "n"
         return args
+
+    @property
+    def automerge_patch(self) -> bool:
+        if self.automerge_patch_v0:
+            click.echo(
+                " > Forcing automerging of patch dependencies to be enabled "
+                + "when automerging of v0.x patch dependencies is requested"
+            )
+            return True
+        return self._automerge_patch
+
+    @automerge_patch.setter
+    def automerge_patch(self, automerge_patch: bool) -> None:
+        self._automerge_patch = automerge_patch
 
     @property
     def matrix_tests(self) -> bool:

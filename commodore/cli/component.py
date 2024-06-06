@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 
@@ -18,6 +18,23 @@ from commodore.dependency_syncer import sync_dependencies
 import commodore.cli.options as options
 
 
+def _generate_option_text_snippets(new_cmd: bool) -> Tuple[str, str]:
+    if new_cmd:
+        test_case_help = (
+            "Additional test cases to generate in the new component. "
+            + "Can be repeated. Test case `defaults` will always be generated. "
+            + "Commodore will deduplicate test cases by name."
+        )
+    else:
+        test_case_help = (
+            "Additional test cases to add to the component. Can be repeated. "
+            + "Commodore will deduplicate test cases by name."
+        )
+    add_text = "Add" if new_cmd else "Add or remove"
+
+    return add_text, test_case_help
+
+
 def new_update_options(new_cmd: bool):
     """Shared command options for component new and component update.
 
@@ -28,18 +45,22 @@ def new_update_options(new_cmd: bool):
     unchanged by default by `component update`.
     """
 
+    add_text, test_case_help = _generate_option_text_snippets(new_cmd)
+
     def decorator(cmd):
-        if new_cmd:
-            test_case_help = (
-                "Additional test cases to generate in the new component. "
-                + "Can be repeated. Test case `defaults` will always be generated. "
-                + "Commodore will deduplicate test cases by name."
-            )
-        else:
-            test_case_help = (
-                "Additional test cases to add to the component. Can be repeated. "
-                + "Commodore will deduplicate test cases by name."
-            )
+        click.option(
+            "--automerge-patch-v0 / --no-automerge-patch-v0",
+            is_flag=True,
+            default=False if new_cmd else None,
+            help="Enable automerging of patch-level dependency PRs "
+            + "for v0.x dependencies.",
+        )(cmd)
+        click.option(
+            "--automerge-patch / --no-automerge-patch",
+            is_flag=True,
+            default=True if new_cmd else None,
+            help="Enable automerging of patch-level dependency PRs.",
+        )(cmd)
         click.option(
             "--additional-test-case",
             "-t",
@@ -49,7 +70,6 @@ def new_update_options(new_cmd: bool):
             multiple=True,
             help=test_case_help,
         )(cmd)
-        add_text = "Add" if new_cmd else "Add or remove"
         click.option(
             "--matrix-tests/--no-matrix-tests",
             default=True if new_cmd else None,
@@ -147,6 +167,8 @@ def component_new(
     template_url: str,
     template_version: str,
     additional_test_case: Iterable[str],
+    automerge_patch: bool,
+    automerge_patch_v0: bool,
 ):
     config.update_verbosity(verbose)
     t = ComponentTemplater(
@@ -159,6 +181,8 @@ def component_new(
     t.golden_tests = golden_tests
     t.matrix_tests = matrix_tests
     t.test_cases = ["defaults"] + list(additional_test_case)
+    t.automerge_patch = automerge_patch
+    t.automerge_patch_v0 = automerge_patch_v0
     t.create()
 
 
@@ -204,6 +228,8 @@ def component_update(
     additional_test_case: Iterable[str],
     remove_test_case: Iterable[str],
     commit: bool,
+    automerge_patch: Optional[bool],
+    automerge_patch_v0: Optional[bool],
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -230,6 +256,10 @@ def component_update(
         t.library = lib
     if pp is not None:
         t.post_process = pp
+    if automerge_patch is not None:
+        t.automerge_patch = automerge_patch
+    if automerge_patch_v0 is not None:
+        t.automerge_patch_v0 = automerge_patch_v0
 
     test_cases = t.test_cases
     test_cases.extend(additional_test_case)
