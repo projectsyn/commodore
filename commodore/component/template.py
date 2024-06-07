@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from shutil import rmtree
+from typing import Optional
 
 import click
 import git
@@ -19,6 +20,30 @@ class ComponentTemplater(Templater):
     _automerge_patch: bool
     automerge_patch_v0: bool
     _matrix_tests: bool
+    _automerge_patch_blocklist: set[str]
+    _automerge_patch_v0_allowlist: set[str]
+    _automerge_minor_allowlist: set[str]
+
+    def __init__(
+        self,
+        config: Config,
+        template_url: str,
+        template_version: Optional[str],
+        slug: str,
+        name: Optional[str] = None,
+        output_dir: str = "",
+    ):
+        super().__init__(
+            config,
+            template_url,
+            template_version,
+            slug,
+            name=name,
+            output_dir=output_dir,
+        )
+        self._automerge_patch_blocklist = set()
+        self._automerge_patch_v0_allowlist = set()
+        self._automerge_minor_allowlist = set()
 
     @classmethod
     def from_existing(cls, config: Config, path: Path):
@@ -83,6 +108,27 @@ class ComponentTemplater(Templater):
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
         self.automerge_patch = cookiecutter_args["automerge_patch"] == "y"
         self.automerge_patch_v0 = cookiecutter_args["automerge_patch_v0"] == "y"
+        args_patch_blocklist = cookiecutter_args.get(
+            "automerge_patch_regexp_blocklist", ""
+        )
+        if args_patch_blocklist:
+            self._automerge_patch_blocklist = set(args_patch_blocklist.split(";"))
+        else:
+            self._automerge_patch_blocklist = set()
+        args_patch_v0_allowlist = cookiecutter_args.get(
+            "automerge_patch_v0_regexp_allowlist", ""
+        )
+        if args_patch_v0_allowlist:
+            self._automerge_patch_v0_allowlist = set(args_patch_v0_allowlist.split(";"))
+        else:
+            self._automerge_patch_v0_allowlist = set()
+        args_minor_allowlist = cookiecutter_args.get(
+            "automerge_minor_regexp_allowlist", ""
+        )
+        if args_minor_allowlist:
+            self._automerge_minor_allowlist = set(args_minor_allowlist.split(";"))
+        else:
+            self._automerge_minor_allowlist = set()
 
         return update_cruft_json
 
@@ -94,6 +140,15 @@ class ComponentTemplater(Templater):
         args["add_matrix"] = "y" if self.matrix_tests else "n"
         args["automerge_patch"] = "y" if self.automerge_patch else "n"
         args["automerge_patch_v0"] = "y" if self.automerge_patch_v0 else "n"
+        args["automerge_patch_regexp_blocklist"] = ";".join(
+            sorted(self._automerge_patch_blocklist)
+        )
+        args["automerge_patch_v0_regexp_allowlist"] = ";".join(
+            sorted(self._automerge_patch_v0_allowlist)
+        )
+        args["automerge_minor_regexp_allowlist"] = ";".join(
+            sorted(self._automerge_minor_allowlist)
+        )
         return args
 
     @property
@@ -121,6 +176,144 @@ class ComponentTemplater(Templater):
     @matrix_tests.setter
     def matrix_tests(self, matrix_tests: bool) -> None:
         self._matrix_tests = matrix_tests
+
+    def add_automerge_patch_block_pattern(self, pattern: str):
+        """Add pattern to the patch automerge blocklist.
+
+        `pattern` is expected to be a valid regex pattern.
+
+        See `add_automerge_patch_block_depname()` for a variant of this method which
+        will generate an anchored regex pattern for a particular dependency name.
+        """
+        self._automerge_patch_blocklist.add(pattern)
+
+    def remove_automerge_patch_block_pattern(self, pattern: str):
+        """Remove the given pattern from the patch blocklist."""
+        try:
+            self._automerge_patch_blocklist.remove(pattern)
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Pattern '{pattern}' isn't present in the automerge "
+                    + "patch blocklist"
+                )
+
+    def add_automerge_patch_block_depname(self, name: str):
+        """Add dependency to the patch automerge blocklist.
+
+        This method generates an anchored regex pattern for the provided name and adds
+        that pattern to the block list. See `add_automerge_patch_block_pattern()` for a
+        variant which allows providing regex patterns directly.
+        """
+        self._automerge_patch_blocklist.add(f"^{name}$")
+
+    def remove_automerge_patch_block_depname(self, name: str):
+        """Remove the given dependency name from the patch blocklist.
+
+        The function converts the dependency name into an anchored pattern to match the
+        pattern that's added `add_automerge_patch_block_depname()` for the same value of
+        `name`.
+        """
+        try:
+            self._automerge_patch_blocklist.remove(f"^{name}$")
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Dependency name '{name}' isn't present in the automerge "
+                    + "patch blocklist"
+                )
+
+    def add_automerge_patch_v0_allow_pattern(self, pattern: str):
+        """Add pattern to the patch v0 automerge allowlist.
+
+        `pattern` is expected to be a valid regex pattern.
+
+        See `add_automerge_patch_v0_allow_depname()` for a variant of this method which
+        will generate an anchored regex pattern for a particular dependency name.
+        """
+        self._automerge_patch_v0_allowlist.add(pattern)
+
+    def remove_automerge_patch_v0_allow_pattern(self, pattern: str):
+        """Remove the given pattern from the patch v0 allowlist."""
+        try:
+            self._automerge_patch_v0_allowlist.remove(pattern)
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Pattern '{pattern}' isn't present in the automerge "
+                    + "patch v0 allowlist"
+                )
+
+    def add_automerge_patch_v0_allow_depname(self, name: str):
+        """Add dependency to the patch v0 automerge allowlist.
+
+        This method generates an anchored regex pattern for the provided name and adds
+        that pattern to the allow list. See `add_automerge_patch_v0_allow_pattern()` for
+        a variant which allows providing regex patterns directly.
+        """
+        self._automerge_patch_v0_allowlist.add(f"^{name}$")
+
+    def remove_automerge_patch_v0_allow_depname(self, name: str):
+        """Remove the given dependency name from the patch v0 allowlist.
+
+        The function converts the dependency name into an anchored pattern to match the
+        pattern that's added `add_automerge_patch_v0_allow_depname()` for the same value
+        of `name`.
+        """
+        try:
+            self._automerge_patch_v0_allowlist.remove(f"^{name}$")
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Dependency name '{name}' isn't present in the automerge "
+                    + "patch v0 allowlist"
+                )
+
+    def add_automerge_minor_allow_pattern(self, pattern: str):
+        """Add pattern to the minor automerge allowlist.
+
+        `pattern` is expected to be a valid regex pattern.
+
+        See `add_automerge_minor_allow_depname()` for a variant of this method which
+        will generate an anchored regex pattern for a particular dependency name.
+        """
+        self._automerge_minor_allowlist.add(pattern)
+
+    def remove_automerge_minor_allow_pattern(self, pattern: str):
+        """Remove the given pattern from the minor allowlist."""
+        try:
+            self._automerge_minor_allowlist.remove(pattern)
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Pattern '{pattern}' isn't present in the automerge "
+                    + "minor allowlist"
+                )
+
+    def add_automerge_minor_allow_depname(self, name: str):
+        """Add dependency to the minor automerge allowlist.
+
+        This method generates an anchored regex pattern for the provided name and adds
+        that pattern to the allow list. See `add_automerge_minor_allow_pattern()` for a
+        variant which allows providing regex patterns directly.
+        """
+        self._automerge_minor_allowlist.add(f"^{name}$")
+
+    def remove_automerge_minor_allow_depname(self, name: str):
+        """Remove the given dependency name from the minor allowlist.
+
+        The function converts the dependency name into an anchored pattern to match the
+        pattern that's added `add_automerge_minor_allow_depname()` for the same value of
+        `name`.
+        """
+        try:
+            self._automerge_minor_allowlist.remove(f"^{name}$")
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Dependency name '{name}' isn't present in the automerge "
+                    + "minor allowlist"
+                )
 
     @property
     def deptype(self) -> str:
