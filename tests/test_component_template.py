@@ -49,6 +49,81 @@ def call_component_new(
     return result
 
 
+def _validate_renovatejson(
+    component_path: P,
+    has_golden: bool,
+    has_matrix: bool,
+    has_automerge_patch: bool,
+    has_automerge_patch_v0: bool,
+):
+    with open(component_path / "renovate.json") as renovatejson:
+        renovateconfig = json.load(renovatejson)
+        assert ("postUpgradeTasks" in renovateconfig) == has_golden
+        if has_golden:
+            assert len(renovateconfig["postUpgradeTasks"]["commands"]) == 1
+            cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
+            expected_cmd = "make gen-golden-all" if has_matrix else "make gen-golden"
+            assert cmd == expected_cmd
+
+        assert "packageRules" in renovateconfig
+        # do inexact validation of package rules for general renovate.json validation
+        _validate_renovatejson_packagerules(
+            component_path, has_automerge_patch, has_automerge_patch_v0
+        )
+
+
+def _validate_renovatejson_packagerules(
+    component_path: P,
+    has_automerge_patch,
+    has_automerge_patch_v0,
+    check_patterns: bool = False,
+    package_rules_count: int = 0,
+    patch_blocklist: list[str] = [],
+):
+    with open(component_path / "renovate.json") as renovatejson:
+        renovateconfig = json.load(renovatejson)
+    package_rules = renovateconfig["packageRules"]
+    expected_keys = {
+        "matchUpdateTypes",
+        "automerge",
+        "platformAutomerge",
+        "labels",
+    }
+    if not has_automerge_patch_v0 and has_automerge_patch:
+        expected_keys.add("matchCurrentVersion")
+
+    if not check_patterns:
+        assert (len(package_rules) >= 1) == (
+            has_automerge_patch or has_automerge_patch_v0
+        )
+        if has_automerge_patch or has_automerge_patch_v0:
+            patch_rule = package_rules[0]
+            assert expected_keys - set(patch_rule.keys()) == set()
+        return
+
+    # from here: exact rules validation when check_patterns == True
+
+    assert len(package_rules) == package_rules_count
+
+    if has_automerge_patch or has_automerge_patch_v0:
+        patch_rule = package_rules[0]
+
+        if has_automerge_patch and len(patch_blocklist) > 0:
+            expected_keys.add("excludePackagePatterns")
+
+        assert set(patch_rule.keys()) == expected_keys
+        assert patch_rule["matchUpdateTypes"] == ["patch"]
+        assert patch_rule["automerge"] is True
+        assert patch_rule["platformAutomerge"] is False
+        assert patch_rule["labels"] == ["dependency", "automerge", "bump:patch"]
+        if not has_automerge_patch_v0:
+            assert "matchCurrentVersion" in patch_rule
+            assert patch_rule["matchCurrentVersion"] == "!/^v?0\\./"
+        if len(patch_blocklist) > 0:
+            assert "excludePackagePatterns" in patch_rule
+            assert patch_rule["excludePackagePatterns"] == patch_blocklist
+
+
 def _validate_rendered_component(
     tmp_path: P,
     component_name: str,
@@ -184,39 +259,13 @@ def _validate_rendered_component(
         assert cookiecutter_context["add_golden"] == "y" if has_golden else "n"
         assert cookiecutter_context["test_cases"] == " ".join(test_cases)
 
-    with open(
-        tmp_path / "dependencies" / component_name / "renovate.json"
-    ) as renovatejson:
-        renovateconfig = json.load(renovatejson)
-        assert ("postUpgradeTasks" in renovateconfig) == has_golden
-        if has_golden:
-            assert len(renovateconfig["postUpgradeTasks"]["commands"]) == 1
-            cmd = renovateconfig["postUpgradeTasks"]["commands"][0]
-            expected_cmd = "make gen-golden-all" if has_matrix else "make gen-golden"
-            assert cmd == expected_cmd
-        assert "packageRules" in renovateconfig
-        package_rules = renovateconfig["packageRules"]
-        assert (len(package_rules) == 1) == (
-            has_automerge_patch or has_automerge_patch_v0
-        )
-        if has_automerge_patch or has_automerge_patch_v0:
-            patch_rule = package_rules[0]
-            expected_keys = {
-                "matchUpdateTypes",
-                "automerge",
-                "platformAutomerge",
-                "labels",
-            }
-            if not has_automerge_patch_v0 and has_automerge_patch:
-                expected_keys.add("matchCurrentVersion")
-
-            assert set(patch_rule.keys()) == expected_keys
-            assert patch_rule["matchUpdateTypes"] == ["patch"]
-            assert patch_rule["automerge"] is True
-            assert patch_rule["platformAutomerge"] is False
-            assert patch_rule["labels"] == ["dependency", "automerge", "bump:patch"]
-            if "matchCurrentVersion" in patch_rule:
-                assert patch_rule["matchCurrentVersion"] == "!/^v?0\\./"
+    _validate_renovatejson(
+        tmp_path / "dependencies" / component_name,
+        has_golden,
+        has_matrix,
+        has_automerge_patch,
+        has_automerge_patch_v0,
+    )
 
 
 def _format_test_case_args(flag: str, test_cases: list[str]) -> list[str]:
@@ -401,8 +450,11 @@ def test_run_component_new_command_with_name(tmp_path: P):
         "--no-automerge-patch-v0",
     ],
 )
-def test_run_component_new_automerge_options(
-    tmp_path: P, cli_runner: RunnerFunc, automerge_patch, automerge_patch_v0
+def test_run_component_new_automerge_patch_options(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    automerge_patch,
+    automerge_patch_v0,
 ):
     result = call_component_new(
         tmp_path,
@@ -432,6 +484,55 @@ def test_run_component_new_automerge_options(
         True,
         has_automerge_patch,
         has_automerge_patch_v0,
+    )
+
+
+@pytest.mark.parametrize(
+    "automerge_patch_blocklist,expected_patch_blocklist",
+    [
+        (["--add-automerge-patch-block-pattern=^bar"], ["^bar"]),
+        (["--add-automerge-patch-block-depname=foo"], ["^foo$"]),
+        (
+            [
+                "--add-automerge-patch-block-depname=foo",
+                "--add-automerge-patch-block-pattern=^bar",
+            ],
+            ["^bar", "^foo$"],
+        ),
+    ],
+)
+def test_run_component_new_automerge_patch_blocklist(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    automerge_patch_blocklist: list[str],
+    expected_patch_blocklist: list[str],
+):
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+        extra_args=automerge_patch_blocklist,
+    )
+
+    _validate_rendered_component(
+        tmp_path,
+        "test-component",
+        False,
+        False,
+        True,
+        True,
+        True,
+        False,
+    )
+    _validate_renovatejson_packagerules(
+        tmp_path / "dependencies" / "test-component",
+        True,
+        False,
+        package_rules_count=1,
+        patch_blocklist=expected_patch_blocklist,
+        check_patterns=True,
     )
 
 
@@ -782,6 +883,152 @@ def test_component_update_test_cases(
     _validate_rendered_component(
         tmp_path, component_name, False, False, True, True, False, False, final_cases
     )
+
+
+@pytest.mark.parametrize(
+    "initial_args,expected_initial,update_args,expected_update",
+    [
+        ([], [], [], []),
+        (["--add-automerge-patch-block-depname=foo"], ["^foo$"], [], ["^foo$"]),
+        (
+            ["--add-automerge-patch-block-depname=foo"],
+            ["^foo$"],
+            ["--add-automerge-patch-block-pattern=^foo"],
+            ["^foo", "^foo$"],
+        ),
+        (
+            ["--add-automerge-patch-block-depname=foo"],
+            ["^foo$"],
+            ["--add-automerge-patch-block-pattern=^foo$"],
+            ["^foo$"],
+        ),
+        (
+            ["--add-automerge-patch-block-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-patch-block-depname=foo"],
+            [],
+        ),
+        (
+            ["--add-automerge-patch-block-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-patch-block-pattern=^foo"],
+            ["^foo$"],
+        ),
+        (
+            ["--add-automerge-patch-block-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-patch-block-pattern=^foo$"],
+            [],
+        ),
+        (
+            [],
+            [],
+            ["--remove-automerge-patch-block-pattern=^foo$"],
+            [],
+        ),
+        (
+            [],
+            [],
+            [
+                "--remove-automerge-patch-block-pattern=^foo$",
+                "--add-automerge-patch-block-depname=foo",
+            ],
+            [],
+        ),
+        (
+            [],
+            [],
+            [
+                "--add-automerge-patch-block-pattern=^foo$",
+                "--remove-automerge-patch-block-depname=foo",
+            ],
+            [],
+        ),
+    ],
+)
+def test_component_update_patch_automerge_blocklist(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    initial_args: list[str],
+    expected_initial: list[str],
+    update_args: list[str],
+    expected_update: list[str],
+):
+    component_name = "test-component"
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+        extra_args=initial_args,
+    )
+    assert result.exit_code == 0
+
+    component_path = tmp_path / "dependencies" / component_name
+
+    _validate_renovatejson_packagerules(
+        component_path,
+        True,
+        False,
+        check_patterns=True,
+        package_rules_count=1,
+        patch_blocklist=expected_initial,
+    )
+
+    result = cli_runner(["component", "update", str(component_path)] + update_args)
+
+    assert result.exit_code == 0
+
+    _validate_renovatejson_packagerules(
+        component_path,
+        True,
+        False,
+        check_patterns=True,
+        package_rules_count=1,
+        patch_blocklist=expected_update,
+    )
+
+
+@pytest.mark.parametrize(
+    "remove_args,expected",
+    [
+        (
+            ["--remove-automerge-patch-block-depname=foo"],
+            "Dependency name 'foo' isn't present in the automerge patch blocklist",
+        ),
+        (
+            ["--remove-automerge-patch-block-pattern=^foo"],
+            "Pattern '^foo' isn't present in the automerge patch blocklist",
+        ),
+    ],
+)
+def test_component_update_remove_patch_automerge_pattern_verbose(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    remove_args: list[str],
+    expected: str,
+):
+    component_name = "test-component"
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+    )
+    assert result.exit_code == 0
+
+    component_path = tmp_path / "dependencies" / component_name
+
+    result = cli_runner(
+        ["component", "update", str(component_path), "-v"] + remove_args
+    )
+
+    assert result.exit_code == 0
+    assert expected in result.stdout
 
 
 def test_cookiecutter_args_fallback(
