@@ -21,6 +21,7 @@ class ComponentTemplater(Templater):
     automerge_patch_v0: bool
     _matrix_tests: bool
     _automerge_patch_blocklist: set[str]
+    _automerge_patch_v0_allowlist: set[str]
 
     def __init__(
         self,
@@ -40,6 +41,7 @@ class ComponentTemplater(Templater):
             output_dir=output_dir,
         )
         self._automerge_patch_blocklist = set()
+        self._automerge_patch_v0_allowlist = set()
 
     @classmethod
     def from_existing(cls, config: Config, path: Path):
@@ -111,6 +113,13 @@ class ComponentTemplater(Templater):
             self._automerge_patch_blocklist = set(args_patch_blocklist.split(";"))
         else:
             self._automerge_patch_blocklist = set()
+        args_patch_v0_allowlist = cookiecutter_args.get(
+            "automerge_patch_v0_regexp_allowlist", ""
+        )
+        if args_patch_v0_allowlist:
+            self._automerge_patch_v0_allowlist = set(args_patch_v0_allowlist.split(";"))
+        else:
+            self._automerge_patch_v0_allowlist = set()
 
         return update_cruft_json
 
@@ -124,6 +133,9 @@ class ComponentTemplater(Templater):
         args["automerge_patch_v0"] = "y" if self.automerge_patch_v0 else "n"
         args["automerge_patch_regexp_blocklist"] = ";".join(
             sorted(self._automerge_patch_blocklist)
+        )
+        args["automerge_patch_v0_regexp_allowlist"] = ";".join(
+            sorted(self._automerge_patch_v0_allowlist)
         )
         return args
 
@@ -197,6 +209,52 @@ class ComponentTemplater(Templater):
                 click.echo(
                     f" > Dependency name '{name}' isn't present in the automerge "
                     + "patch blocklist"
+                )
+
+    def add_automerge_patch_v0_allow_pattern(self, pattern: str):
+        """Add pattern to the patch v0 automerge allowlist.
+
+        `pattern` is expected to be a valid regex pattern.
+
+        See `add_automerge_patch_v0_allow_depname()` for a variant of this method which
+        will generate an anchored regex pattern for a particular dependency name.
+        """
+        self._automerge_patch_v0_allowlist.add(pattern)
+
+    def remove_automerge_patch_v0_allow_pattern(self, pattern: str):
+        """Remove the given pattern from the patch v0 allowlist."""
+        try:
+            self._automerge_patch_v0_allowlist.remove(pattern)
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Pattern '{pattern}' isn't present in the automerge "
+                    + "patch v0 allowlist"
+                )
+
+    def add_automerge_patch_v0_allow_depname(self, name: str):
+        """Add dependency to the patch v0 automerge allowlist.
+
+        This method generates an anchored regex pattern for the provided name and adds
+        that pattern to the allow list. See `add_automerge_patch_v0_allow_pattern()` for
+        a variant which allows providing regex patterns directly.
+        """
+        self._automerge_patch_v0_allowlist.add(f"^{name}$")
+
+    def remove_automerge_patch_v0_allow_depname(self, name: str):
+        """Remove the given dependency name from the patch v0 allowlist.
+
+        The function converts the dependency name into an anchored pattern to match the
+        pattern that's added `add_automerge_patch_v0_allow_depname()` for the same value
+        of `name`.
+        """
+        try:
+            self._automerge_patch_v0_allowlist.remove(f"^{name}$")
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Dependency name '{name}' isn't present in the automerge "
+                    + "patch v0 allowlist"
                 )
 
     @property
