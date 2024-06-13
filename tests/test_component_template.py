@@ -214,7 +214,7 @@ def _validate_rendered_component(
             assert patch_rule["matchUpdateTypes"] == ["patch"]
             assert patch_rule["automerge"] is True
             assert patch_rule["platformAutomerge"] is False
-            assert patch_rule["labels"] == ["dependency", "automerge"]
+            assert patch_rule["labels"] == ["dependency", "automerge", "bump:patch"]
             if "matchCurrentVersion" in patch_rule:
                 assert patch_rule["matchCurrentVersion"] == "!/^v?0\\./"
 
