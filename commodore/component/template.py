@@ -22,6 +22,7 @@ class ComponentTemplater(Templater):
     _matrix_tests: bool
     _automerge_patch_blocklist: set[str]
     _automerge_patch_v0_allowlist: set[str]
+    _automerge_minor_allowlist: set[str]
 
     def __init__(
         self,
@@ -42,6 +43,7 @@ class ComponentTemplater(Templater):
         )
         self._automerge_patch_blocklist = set()
         self._automerge_patch_v0_allowlist = set()
+        self._automerge_minor_allowlist = set()
 
     @classmethod
     def from_existing(cls, config: Config, path: Path):
@@ -120,6 +122,13 @@ class ComponentTemplater(Templater):
             self._automerge_patch_v0_allowlist = set(args_patch_v0_allowlist.split(";"))
         else:
             self._automerge_patch_v0_allowlist = set()
+        args_minor_allowlist = cookiecutter_args.get(
+            "automerge_minor_regexp_allowlist", ""
+        )
+        if args_minor_allowlist:
+            self._automerge_minor_allowlist = set(args_minor_allowlist.split(";"))
+        else:
+            self._automerge_minor_allowlist = set()
 
         return update_cruft_json
 
@@ -136,6 +145,9 @@ class ComponentTemplater(Templater):
         )
         args["automerge_patch_v0_regexp_allowlist"] = ";".join(
             sorted(self._automerge_patch_v0_allowlist)
+        )
+        args["automerge_minor_regexp_allowlist"] = ";".join(
+            sorted(self._automerge_minor_allowlist)
         )
         return args
 
@@ -255,6 +267,52 @@ class ComponentTemplater(Templater):
                 click.echo(
                     f" > Dependency name '{name}' isn't present in the automerge "
                     + "patch v0 allowlist"
+                )
+
+    def add_automerge_minor_allow_pattern(self, pattern: str):
+        """Add pattern to the minor automerge allowlist.
+
+        `pattern` is expected to be a valid regex pattern.
+
+        See `add_automerge_minor_allow_depname()` for a variant of this method which
+        will generate an anchored regex pattern for a particular dependency name.
+        """
+        self._automerge_minor_allowlist.add(pattern)
+
+    def remove_automerge_minor_allow_pattern(self, pattern: str):
+        """Remove the given pattern from the minor allowlist."""
+        try:
+            self._automerge_minor_allowlist.remove(pattern)
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Pattern '{pattern}' isn't present in the automerge "
+                    + "minor allowlist"
+                )
+
+    def add_automerge_minor_allow_depname(self, name: str):
+        """Add dependency to the minor automerge allowlist.
+
+        This method generates an anchored regex pattern for the provided name and adds
+        that pattern to the allow list. See `add_automerge_minor_allow_pattern()` for a
+        variant which allows providing regex patterns directly.
+        """
+        self._automerge_minor_allowlist.add(f"^{name}$")
+
+    def remove_automerge_minor_allow_depname(self, name: str):
+        """Remove the given dependency name from the minor allowlist.
+
+        The function converts the dependency name into an anchored pattern to match the
+        pattern that's added `add_automerge_minor_allow_depname()` for the same value of
+        `name`.
+        """
+        try:
+            self._automerge_minor_allowlist.remove(f"^{name}$")
+        except KeyError:
+            if self.config.verbose:
+                click.echo(
+                    f" > Dependency name '{name}' isn't present in the automerge "
+                    + "minor allowlist"
                 )
 
     @property
