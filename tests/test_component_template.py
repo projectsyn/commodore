@@ -79,8 +79,10 @@ def _validate_renovatejson_packagerules(
     check_patterns: bool = False,
     package_rules_count: int = 0,
     patch_v0_allowlist_ruleidx: int = -1,
+    minor_allowlist_ruleidx: int = -1,
     patch_blocklist: list[str] = [],
     patch_v0_allowlist: list[str] = [],
+    minor_allowlist: list[str] = [],
 ):
     with open(component_path / "renovate.json") as renovatejson:
         renovateconfig = json.load(renovatejson)
@@ -142,6 +144,22 @@ def _validate_renovatejson_packagerules(
         assert patch_v0_rule["labels"] == ["dependency", "automerge", "bump:patch"]
         assert patch_v0_rule["matchCurrentVersion"] == "/^v?0\\./"
         assert patch_v0_rule["matchPackagePatterns"] == patch_v0_allowlist
+
+    if minor_allowlist_ruleidx >= 0:
+        minor_rule = package_rules[minor_allowlist_ruleidx]
+        expected_keys = {
+            "matchUpdateTypes",
+            "matchPackagePatterns",
+            "automerge",
+            "platformAutomerge",
+            "labels",
+        }
+        assert set(minor_rule.keys()) == expected_keys
+        assert minor_rule["matchUpdateTypes"] == ["minor"]
+        assert minor_rule["automerge"] is True
+        assert minor_rule["platformAutomerge"] is False
+        assert minor_rule["labels"] == ["dependency", "automerge", "bump:minor"]
+        assert minor_rule["matchPackagePatterns"] == minor_allowlist
 
 
 def _validate_rendered_component(
@@ -660,6 +678,103 @@ def test_run_component_new_automerge_patch_v0_selective_only(
         package_rules_count=1,
         patch_v0_allowlist_ruleidx=0,
         patch_v0_allowlist=["^bar", "^foo$"],
+    )
+
+
+@pytest.mark.parametrize(
+    "automerge_minor_allowlist,expected_minor_allowlist",
+    [
+        (
+            ["--add-automerge-minor-allow-pattern=^bar"],
+            ["^bar"],
+        ),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+        ),
+        (
+            [
+                "--add-automerge-minor-allow-depname=foo",
+                "--add-automerge-minor-allow-pattern=^bar",
+            ],
+            ["^bar", "^foo$"],
+        ),
+    ],
+)
+def test_run_component_new_automerge_minor_allowlist(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    automerge_minor_allowlist: list[str],
+    expected_minor_allowlist: list[str],
+):
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+        extra_args=automerge_minor_allowlist,
+    )
+
+    _validate_rendered_component(
+        tmp_path,
+        "test-component",
+        False,
+        False,
+        True,
+        True,
+        True,
+        False,
+    )
+    _validate_renovatejson_packagerules(
+        tmp_path / "dependencies" / "test-component",
+        True,
+        False,
+        check_patterns=True,
+        package_rules_count=2 if len(expected_minor_allowlist) > 0 else 1,
+        minor_allowlist_ruleidx=1,
+        minor_allowlist=expected_minor_allowlist,
+    )
+
+
+def test_run_component_new_automerge_all_options(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+):
+    call_component_new(
+        tmp_path,
+        cli_runner,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+        extra_args=[
+            "--add-automerge-patch-block-depname=foo",
+            "--add-automerge-patch-v0-allow-pattern=^bar",
+            "--add-automerge-minor-allow-depname=baz",
+        ],
+    )
+
+    _validate_rendered_component(
+        tmp_path,
+        "test-component",
+        False,
+        False,
+        True,
+        True,
+        True,
+        False,
+    )
+    _validate_renovatejson_packagerules(
+        tmp_path / "dependencies" / "test-component",
+        True,
+        False,
+        check_patterns=True,
+        package_rules_count=3,
+        patch_v0_allowlist_ruleidx=1,
+        minor_allowlist_ruleidx=2,
+        patch_blocklist=["^foo$"],
+        patch_v0_allowlist=["^bar"],
+        minor_allowlist=["^baz$"],
     )
 
 
@@ -1228,6 +1343,124 @@ def test_component_update_patch_v0_automerge_allowlist(
 
 
 @pytest.mark.parametrize(
+    "initial_args,expected_initial,update_args,expected_update",
+    [
+        ([], [], [], []),
+        (["--add-automerge-minor-allow-depname=foo"], ["^foo$"], [], ["^foo$"]),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+            ["--add-automerge-minor-allow-pattern=^foo"],
+            ["^foo", "^foo$"],
+        ),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+            ["--add-automerge-minor-allow-pattern=^foo$"],
+            ["^foo$"],
+        ),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-minor-allow-depname=foo"],
+            [],
+        ),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-minor-allow-pattern=^foo"],
+            ["^foo$"],
+        ),
+        (
+            ["--add-automerge-minor-allow-depname=foo"],
+            ["^foo$"],
+            ["--remove-automerge-minor-allow-pattern=^foo$"],
+            [],
+        ),
+        (
+            [],
+            [],
+            ["--remove-automerge-minor-allow-pattern=^foo$"],
+            [],
+        ),
+        (
+            [],
+            [],
+            [
+                "--remove-automerge-minor-allow-pattern=^foo$",
+                "--add-automerge-minor-allow-depname=foo",
+            ],
+            [],
+        ),
+        # validate that minor rule is still created even if patch automerge is disabled
+        (
+            [],
+            [],
+            [
+                "--no-automerge-patch",
+                "--add-automerge-minor-allow-depname=foo",
+            ],
+            ["^foo$"],
+        ),
+    ],
+)
+def test_component_update_minor_automerge_allowlist(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    initial_args: list[str],
+    expected_initial: list[str],
+    update_args: list[str],
+    expected_update: list[str],
+):
+    component_name = "test-component"
+    result = call_component_new(
+        tmp_path,
+        cli_runner,
+        component_name,
+        golden="--golden-tests",
+        matrix="--matrix-tests",
+        automerge_patch="--automerge-patch",
+        extra_args=initial_args,
+    )
+    assert result.exit_code == 0
+
+    component_path = tmp_path / "dependencies" / component_name
+
+    _validate_renovatejson_packagerules(
+        component_path,
+        True,
+        False,
+        check_patterns=True,
+        package_rules_count=2 if len(expected_initial) > 0 else 1,
+        minor_allowlist_ruleidx=1 if len(expected_initial) > 0 else -1,
+        minor_allowlist=expected_initial,
+    )
+
+    result = cli_runner(["component", "update", str(component_path)] + update_args)
+
+    assert result.exit_code == 0
+
+    has_automerge_patch = "--no-automerge-patch" not in update_args
+    if has_automerge_patch and len(expected_update) > 0:
+        minor_allowlist_ruleidx = 1
+    elif not has_automerge_patch and len(expected_update) > 0:
+        minor_allowlist_ruleidx = 0
+    else:
+        minor_allowlist_ruleidx = -1
+    _validate_renovatejson_packagerules(
+        component_path,
+        has_automerge_patch,
+        False,
+        check_patterns=True,
+        package_rules_count=(
+            2 if has_automerge_patch and len(expected_update) > 0 else 1
+        ),
+        minor_allowlist_ruleidx=minor_allowlist_ruleidx,
+        minor_allowlist=expected_update,
+    )
+
+
+@pytest.mark.parametrize(
     "remove_args,expected",
     [
         (
@@ -1245,6 +1478,14 @@ def test_component_update_patch_v0_automerge_allowlist(
         (
             ["--remove-automerge-patch-v0-allow-pattern=^foo"],
             "Pattern '^foo' isn't present in the automerge patch v0 allowlist",
+        ),
+        (
+            ["--remove-automerge-minor-allow-depname=foo"],
+            "Dependency name 'foo' isn't present in the automerge minor allowlist",
+        ),
+        (
+            ["--remove-automerge-minor-allow-pattern=^foo"],
+            "Pattern '^foo' isn't present in the automerge minor allowlist",
         ),
     ],
 )
