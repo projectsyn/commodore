@@ -108,6 +108,16 @@ class ComponentTemplater(Templater):
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
         self.automerge_patch = cookiecutter_args["automerge_patch"] == "y"
         self.automerge_patch_v0 = cookiecutter_args["automerge_patch_v0"] == "y"
+
+        self._initialize_automerge_pattern_lists_from_cookiecutter_args(
+            cookiecutter_args
+        )
+
+        return update_cruft_json
+
+    def _initialize_automerge_pattern_lists_from_cookiecutter_args(
+        self, cookiecutter_args: dict[str, str]
+    ):
         args_patch_blocklist = cookiecutter_args.get(
             "automerge_patch_regexp_blocklist", ""
         )
@@ -129,8 +139,6 @@ class ComponentTemplater(Templater):
             self._automerge_minor_allowlist = set(args_minor_allowlist.split(";"))
         else:
             self._automerge_minor_allowlist = set()
-
-        return update_cruft_json
 
     @property
     def cookiecutter_args(self) -> dict[str, str]:
