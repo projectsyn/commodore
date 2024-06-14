@@ -190,6 +190,14 @@ def new_update_options(new_cmd: bool):
             help=_generate_automerge_depname_help(level="patch"),
         )(cmd)
         click.option(
+            "--autorelease / --no-autorelease",
+            is_flag=True,
+            default=True if new_cmd else None,
+            help="Enable autorelease GitHub action. "
+            + "When autorelease is enabled, new releases will be generated "
+            + "for automerged dependency PRs.",
+        )(cmd)
+        click.option(
             "--automerge-patch-v0 / --no-automerge-patch-v0",
             is_flag=True,
             default=False if new_cmd else None,
@@ -310,6 +318,7 @@ def component_new(
     additional_test_case: Iterable[str],
     automerge_patch: bool,
     automerge_patch_v0: bool,
+    autorelease: bool,
     add_automerge_patch_block_depname: Iterable[str],
     add_automerge_patch_block_pattern: Iterable[str],
     add_automerge_patch_v0_allow_depname: Iterable[str],
@@ -330,6 +339,7 @@ def component_new(
     t.test_cases = ["defaults"] + list(additional_test_case)
     t.automerge_patch = automerge_patch
     t.automerge_patch_v0 = automerge_patch_v0
+    t.autorelease = autorelease
     for name in add_automerge_patch_block_depname:
         t.add_automerge_patch_block_depname(name)
     for pattern in add_automerge_patch_block_pattern:
@@ -437,6 +447,7 @@ def component_update(
     commit: bool,
     automerge_patch: Optional[bool],
     automerge_patch_v0: Optional[bool],
+    autorelease: Optional[bool],
     add_automerge_patch_block_depname: Iterable[str],
     add_automerge_patch_block_pattern: Iterable[str],
     add_automerge_patch_v0_allow_depname: Iterable[str],
@@ -479,6 +490,8 @@ def component_update(
         t.automerge_patch = automerge_patch
     if automerge_patch_v0 is not None:
         t.automerge_patch_v0 = automerge_patch_v0
+    if autorelease is not None:
+        t.autorelease = autorelease
 
     test_cases = t.test_cases
     test_cases.extend(additional_test_case)
