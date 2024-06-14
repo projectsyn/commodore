@@ -216,6 +216,11 @@ Defaults to `--no-force`.
 +
 NOTE: Enabling automerging of patch-level dependency PRs for v0.x dependencies implicitly enables automerging of all patch-level dependency PRs.
 
+*--autorelease / --no-autorelease*::
+  Enable autorelease GitHub action
++
+NOTE: If autorelease is enabled, new releases will be generated for automerged dependency PRs.
+
 *--add-automerge-patch-block-depname* NAME::
   Add dependency name that should be excluded from automerging of patch updates.
   Can be repeated.
