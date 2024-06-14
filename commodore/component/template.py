@@ -19,6 +19,7 @@ class ComponentTemplater(Templater):
     post_process: bool
     _automerge_patch: bool
     automerge_patch_v0: bool
+    autorelease: bool
     _matrix_tests: bool
     _automerge_patch_blocklist: set[str]
     _automerge_patch_v0_allowlist: set[str]
@@ -108,6 +109,7 @@ class ComponentTemplater(Templater):
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
         self.automerge_patch = cookiecutter_args["automerge_patch"] == "y"
         self.automerge_patch_v0 = cookiecutter_args["automerge_patch_v0"] == "y"
+        self.autorelease = cookiecutter_args["auto_release"] == "y"
 
         self._initialize_automerge_pattern_lists_from_cookiecutter_args(
             cookiecutter_args
@@ -148,6 +150,7 @@ class ComponentTemplater(Templater):
         args["add_matrix"] = "y" if self.matrix_tests else "n"
         args["automerge_patch"] = "y" if self.automerge_patch else "n"
         args["automerge_patch_v0"] = "y" if self.automerge_patch_v0 else "n"
+        args["auto_release"] = "y" if self.autorelease else "n"
         args["automerge_patch_regexp_blocklist"] = ";".join(
             sorted(self._automerge_patch_blocklist)
         )
