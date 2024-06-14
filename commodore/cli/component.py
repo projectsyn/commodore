@@ -65,6 +65,14 @@ def _generate_automerge_pattern_help(level: str, remove: bool = False) -> str:
             + f"See '--{op}-automerge-patch-v0-allow-depname' for a variant of "
             + "this flag which allows specifying dependency names."
         )
+    if level == "minor":
+        return (
+            f"{opc} regex pattern for dependencies for which minor updates should be "
+            + "automerged. Can be repeated. Commodore will deduplicate patterns. "
+            + removenote
+            + f"See '--{op}-automerge-minor-allow-depname' for a variant of "
+            + "this flag which allows specifying dependency names."
+        )
 
     raise ValueError(
         f"Expected 'level' to be one of ['patch', 'patch_v0', 'minor'], got {level}"
@@ -105,6 +113,15 @@ def _generate_automerge_depname_help(level: str, remove: bool = False) -> str:
             + "flag which allows specifying regex patterns. "
             + implnote
         )
+    if level == "minor":
+        return (
+            f"{opc} dependency name for which minor updates should be automerged. "
+            + "Can be repeated. Commodore will deduplicate dependency names. "
+            + removenote
+            + f"See '--{op}-automerge-minor-allow-pattern' for a variant of "
+            + "this flag which allows specifying regex patterns. "
+            + implnote
+        )
 
     raise ValueError(
         f"Expected 'level' to be one of ['patch', 'patch_v0', 'minor'], got {level}"
@@ -124,6 +141,22 @@ def new_update_options(new_cmd: bool):
     add_text, test_case_help = _generate_option_text_snippets(new_cmd)
 
     def decorator(cmd):
+        click.option(
+            "--add-automerge-minor-allow-pattern",
+            metavar="PATTERN",
+            default=[],
+            show_default=True,
+            multiple=True,
+            help=_generate_automerge_pattern_help(level="minor"),
+        )(cmd)
+        click.option(
+            "--add-automerge-minor-allow-depname",
+            metavar="NAME",
+            default=[],
+            show_default=True,
+            multiple=True,
+            help=_generate_automerge_depname_help(level="minor"),
+        )(cmd)
         click.option(
             "--add-automerge-patch-v0-allow-pattern",
             metavar="PATTERN",
@@ -281,6 +314,8 @@ def component_new(
     add_automerge_patch_block_pattern: Iterable[str],
     add_automerge_patch_v0_allow_depname: Iterable[str],
     add_automerge_patch_v0_allow_pattern: Iterable[str],
+    add_automerge_minor_allow_depname: Iterable[str],
+    add_automerge_minor_allow_pattern: Iterable[str],
 ):
     config.update_verbosity(verbose)
     t = ComponentTemplater(
@@ -303,6 +338,10 @@ def component_new(
         t.add_automerge_patch_v0_allow_depname(name)
     for pattern in add_automerge_patch_v0_allow_pattern:
         t.add_automerge_patch_v0_allow_pattern(pattern)
+    for name in add_automerge_minor_allow_depname:
+        t.add_automerge_minor_allow_depname(name)
+    for pattern in add_automerge_minor_allow_pattern:
+        t.add_automerge_minor_allow_pattern(pattern)
     t.create()
 
 
@@ -360,6 +399,22 @@ def component_new(
     help=_generate_automerge_pattern_help(level="patch_v0", remove=True),
 )
 @click.option(
+    "--remove-automerge-minor-allow-depname",
+    metavar="NAME",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help=_generate_automerge_depname_help(level="minor", remove=True),
+)
+@click.option(
+    "--remove-automerge-minor-allow-pattern",
+    metavar="PATTERN",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help=_generate_automerge_pattern_help(level="minor", remove=True),
+)
+@click.option(
     "--commit / --no-commit",
     is_flag=True,
     default=True,
@@ -386,10 +441,14 @@ def component_update(
     add_automerge_patch_block_pattern: Iterable[str],
     add_automerge_patch_v0_allow_depname: Iterable[str],
     add_automerge_patch_v0_allow_pattern: Iterable[str],
+    add_automerge_minor_allow_depname: Iterable[str],
+    add_automerge_minor_allow_pattern: Iterable[str],
     remove_automerge_patch_block_depname: Iterable[str],
     remove_automerge_patch_block_pattern: Iterable[str],
     remove_automerge_patch_v0_allow_depname: Iterable[str],
     remove_automerge_patch_v0_allow_pattern: Iterable[str],
+    remove_automerge_minor_allow_depname: Iterable[str],
+    remove_automerge_minor_allow_pattern: Iterable[str],
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -433,6 +492,10 @@ def component_update(
         t.add_automerge_patch_v0_allow_depname(name)
     for pattern in add_automerge_patch_v0_allow_pattern:
         t.add_automerge_patch_v0_allow_pattern(pattern)
+    for name in add_automerge_minor_allow_depname:
+        t.add_automerge_minor_allow_depname(name)
+    for pattern in add_automerge_minor_allow_pattern:
+        t.add_automerge_minor_allow_pattern(pattern)
 
     for name in remove_automerge_patch_block_depname:
         t.remove_automerge_patch_block_depname(name)
@@ -442,6 +505,10 @@ def component_update(
         t.remove_automerge_patch_v0_allow_depname(name)
     for pattern in remove_automerge_patch_v0_allow_pattern:
         t.remove_automerge_patch_v0_allow_pattern(pattern)
+    for name in remove_automerge_minor_allow_depname:
+        t.remove_automerge_minor_allow_depname(name)
+    for pattern in remove_automerge_minor_allow_pattern:
+        t.remove_automerge_minor_allow_pattern(pattern)
 
     t.update(commit=commit)
 
