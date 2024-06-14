@@ -54,6 +54,17 @@ def _generate_automerge_pattern_help(level: str, remove: bool = False) -> str:
             + f"See '--{op}-automerge-patch-block-depname' for a variant of this flag "
             + "which allows specifying dependency names."
         )
+    if level == "patch_v0":
+        return (
+            f"{opc} regex pattern for dependencies with current version v0.x for which "
+            + "patch updates should be automerged. This flag has no effect if "
+            + "automerging for patch updates for v0.x dependencies is enabled via "
+            + "'--automerge-patch-v0'. Can be repeated. Commodore will deduplicate "
+            + "patterns. "
+            + removenote
+            + f"See '--{op}-automerge-patch-v0-allow-depname' for a variant of "
+            + "this flag which allows specifying dependency names."
+        )
 
     raise ValueError(
         f"Expected 'level' to be one of ['patch', 'patch_v0', 'minor'], got {level}"
@@ -83,6 +94,17 @@ def _generate_automerge_depname_help(level: str, remove: bool = False) -> str:
             + "which allows specifying regex patterns. "
             + implnote
         )
+    if level == "patch_v0":
+        return (
+            f"{opc} name of dependency with current version v0.x for which patch updates "
+            + "should be automerged. This flag has no effect if automerging for patch "
+            + "updates for v0.x dependencies is enabled via '--automerge-patch-v0'. "
+            + "Can be repeated. Commodore will deduplicate dependency names. "
+            + removenote
+            + f"See '--{op}-automerge-patch-v0-allow-pattern' for a variant of this "
+            + "flag which allows specifying regex patterns. "
+            + implnote
+        )
 
     raise ValueError(
         f"Expected 'level' to be one of ['patch', 'patch_v0', 'minor'], got {level}"
@@ -102,6 +124,22 @@ def new_update_options(new_cmd: bool):
     add_text, test_case_help = _generate_option_text_snippets(new_cmd)
 
     def decorator(cmd):
+        click.option(
+            "--add-automerge-patch-v0-allow-pattern",
+            metavar="PATTERN",
+            default=[],
+            show_default=True,
+            multiple=True,
+            help=_generate_automerge_pattern_help(level="patch_v0"),
+        )(cmd)
+        click.option(
+            "--add-automerge-patch-v0-allow-depname",
+            metavar="NAME",
+            default=[],
+            show_default=True,
+            multiple=True,
+            help=_generate_automerge_depname_help(level="patch_v0"),
+        )(cmd)
         click.option(
             "--add-automerge-patch-block-pattern",
             metavar="PATTERN",
@@ -241,6 +279,8 @@ def component_new(
     automerge_patch_v0: bool,
     add_automerge_patch_block_depname: Iterable[str],
     add_automerge_patch_block_pattern: Iterable[str],
+    add_automerge_patch_v0_allow_depname: Iterable[str],
+    add_automerge_patch_v0_allow_pattern: Iterable[str],
 ):
     config.update_verbosity(verbose)
     t = ComponentTemplater(
@@ -259,6 +299,10 @@ def component_new(
         t.add_automerge_patch_block_depname(name)
     for pattern in add_automerge_patch_block_pattern:
         t.add_automerge_patch_block_pattern(pattern)
+    for name in add_automerge_patch_v0_allow_depname:
+        t.add_automerge_patch_v0_allow_depname(name)
+    for pattern in add_automerge_patch_v0_allow_pattern:
+        t.add_automerge_patch_v0_allow_pattern(pattern)
     t.create()
 
 
@@ -300,6 +344,22 @@ def component_new(
     help=_generate_automerge_pattern_help(level="patch", remove=True),
 )
 @click.option(
+    "--remove-automerge-patch-v0-allow-depname",
+    metavar="NAME",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help=_generate_automerge_depname_help(level="patch_v0", remove=True),
+)
+@click.option(
+    "--remove-automerge-patch-v0-allow-pattern",
+    metavar="PATTERN",
+    default=[],
+    show_default=True,
+    multiple=True,
+    help=_generate_automerge_pattern_help(level="patch_v0", remove=True),
+)
+@click.option(
     "--commit / --no-commit",
     is_flag=True,
     default=True,
@@ -324,8 +384,12 @@ def component_update(
     automerge_patch_v0: Optional[bool],
     add_automerge_patch_block_depname: Iterable[str],
     add_automerge_patch_block_pattern: Iterable[str],
+    add_automerge_patch_v0_allow_depname: Iterable[str],
+    add_automerge_patch_v0_allow_pattern: Iterable[str],
     remove_automerge_patch_block_depname: Iterable[str],
     remove_automerge_patch_block_pattern: Iterable[str],
+    remove_automerge_patch_v0_allow_depname: Iterable[str],
+    remove_automerge_patch_v0_allow_pattern: Iterable[str],
 ):
     """This command updates the component at COMPONENT_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -365,11 +429,19 @@ def component_update(
         t.add_automerge_patch_block_depname(name)
     for pattern in add_automerge_patch_block_pattern:
         t.add_automerge_patch_block_pattern(pattern)
+    for name in add_automerge_patch_v0_allow_depname:
+        t.add_automerge_patch_v0_allow_depname(name)
+    for pattern in add_automerge_patch_v0_allow_pattern:
+        t.add_automerge_patch_v0_allow_pattern(pattern)
 
     for name in remove_automerge_patch_block_depname:
         t.remove_automerge_patch_block_depname(name)
     for pattern in remove_automerge_patch_block_pattern:
         t.remove_automerge_patch_block_pattern(pattern)
+    for name in remove_automerge_patch_v0_allow_depname:
+        t.remove_automerge_patch_v0_allow_depname(name)
+    for pattern in remove_automerge_patch_v0_allow_pattern:
+        t.remove_automerge_patch_v0_allow_pattern(pattern)
 
     t.update(commit=commit)
 
