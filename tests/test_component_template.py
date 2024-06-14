@@ -34,6 +34,7 @@ def call_component_new(
     matrix="--no-matrix-tests",
     automerge_patch="--no-automerge-patch",
     automerge_patch_v0="--no-automerge-patch-v0",
+    autorelease="--no-autorelease",
     output_dir="",
     extra_args: list[str] = [],
 ):
@@ -41,7 +42,16 @@ def call_component_new(
     if output_dir:
         args.extend(["--output-dir", str(output_dir)])
     args.extend(
-        [component_name, lib, pp, golden, matrix, automerge_patch, automerge_patch_v0]
+        [
+            component_name,
+            lib,
+            pp,
+            golden,
+            matrix,
+            automerge_patch,
+            automerge_patch_v0,
+            autorelease,
+        ]
     )
     args.extend(extra_args)
     result = cli_runner(args)
@@ -171,6 +181,7 @@ def _validate_rendered_component(
     has_matrix: bool,
     has_automerge_patch: bool,
     has_automerge_patch_v0: bool,
+    has_autorelease: bool,
     test_cases: list[str] = ["defaults"],
 ):
     expected_files = [
@@ -206,6 +217,16 @@ def _validate_rendered_component(
                     f"{component_name}.yaml",
                 )
             )
+    autorelease_file = P(".github", "workflows", "auto-release.yaml")
+    if has_autorelease:
+        # we just check that the auto-release action only exists when the feature is
+        # enabled. The contents of the file are static, so we don't need to check them.
+        expected_files.append(autorelease_file)
+    else:
+        # if autorelease is not enabled, ensure the file doesn't exist
+        assert not (
+            tmp_path / "dependencies" / component_name / autorelease_file
+        ).exists()
     for file in expected_files:
         assert (tmp_path / "dependencies" / component_name / file).exists()
     # Check that we created a worktree
@@ -357,6 +378,7 @@ def test_run_component_new_command(
         has_matrix,
         False,
         False,
+        False,
     )
 
 
@@ -395,6 +417,7 @@ def test_run_component_new_with_additional_test_cases(
         True,
         False,
         False,
+        False,
         ["defaults"] + test_cases,
     )
 
@@ -421,6 +444,7 @@ def test_run_component_new_force_matrix_additional_test_cases(
         False,
         True,
         True,
+        False,
         False,
         False,
         ["defaults", "foo"],
@@ -488,11 +512,19 @@ def test_run_component_new_command_with_name(tmp_path: P):
         "--no-automerge-patch-v0",
     ],
 )
+@pytest.mark.parametrize(
+    "autorelease",
+    [
+        "--autorelease",
+        "--no-autorelease",
+    ],
+)
 def test_run_component_new_automerge_patch_options(
     tmp_path: P,
     cli_runner: RunnerFunc,
-    automerge_patch,
-    automerge_patch_v0,
+    automerge_patch: str,
+    automerge_patch_v0: str,
+    autorelease: str,
 ):
     result = call_component_new(
         tmp_path,
@@ -501,12 +533,14 @@ def test_run_component_new_automerge_patch_options(
         matrix="--matrix-tests",
         automerge_patch=automerge_patch,
         automerge_patch_v0=automerge_patch_v0,
+        autorelease=autorelease,
     )
 
     has_automerge_patch_v0 = automerge_patch_v0 == "--automerge-patch-v0"
     has_automerge_patch = (
         automerge_patch == "--automerge-patch" or has_automerge_patch_v0
     )
+    has_autorelease = autorelease == "--autorelease"
     if automerge_patch == "--no-automerge-patch" and has_automerge_patch_v0:
         assert (
             " > Forcing automerging of patch dependencies to be enabled "
@@ -522,6 +556,7 @@ def test_run_component_new_automerge_patch_options(
         True,
         has_automerge_patch,
         has_automerge_patch_v0,
+        has_autorelease,
     )
 
 
@@ -562,6 +597,7 @@ def test_run_component_new_automerge_patch_blocklist(
         True,
         True,
         True,
+        False,
         False,
     )
     _validate_renovatejson_packagerules(
@@ -627,6 +663,7 @@ def test_run_component_new_automerge_patch_v0_allowlist(
         True,
         True,
         has_automerge_patch_v0,
+        False,
     )
     _validate_renovatejson_packagerules(
         tmp_path / "dependencies" / "test-component",
@@ -669,6 +706,7 @@ def test_run_component_new_automerge_patch_v0_selective_only(
         # setting this to True since we end up having a package rule which otherwise confuses the
         # inexact validation.
         True,
+        False,
     )
     _validate_renovatejson_packagerules(
         tmp_path / "dependencies" / "test-component",
@@ -725,6 +763,7 @@ def test_run_component_new_automerge_minor_allowlist(
         True,
         True,
         False,
+        False,
     )
     _validate_renovatejson_packagerules(
         tmp_path / "dependencies" / "test-component",
@@ -762,6 +801,7 @@ def test_run_component_new_automerge_all_options(
         True,
         True,
         True,
+        False,
         False,
     )
     _validate_renovatejson_packagerules(
@@ -886,11 +926,13 @@ def test_check_golden_diff(tmp_path: P):
         ([], ["--automerge-patch"]),
         ([], ["--automerge-patch-v0"]),
         ([], ["--automerge-patch", "--automerge-patch-v0"]),
+        ([], ["--autorelease"]),
         (["--automerge-patch"], ["--no-automerge-patch"]),
         (["--automerge-patch-v0"], ["--no-automerge-patch-v0"]),
         (["--no-automerge-patch"], ["--automerge-patch-v0"]),
         (["--automerge-patch-v0"], ["--no-automerge-patch"]),
         (["--automerge-patch-v0"], ["--no-automerge-patch-v0"]),
+        (["--autorelease"], ["--no-autorelease"]),
     ],
 )
 def test_component_update_bool_flags(
@@ -908,6 +950,7 @@ def test_component_update_bool_flags(
         "--no-matrix-tests",
         "--no-automerge-patch",
         "--no-automerge-patch-v0",
+        "--no-autorelease",
         component_name,
     ]
 
@@ -919,6 +962,7 @@ def test_component_update_bool_flags(
         "--automerge-patch" in new_args or "--automerge-patch-v0" in new_args
     )
     has_automerge_patch_v0 = "--automerge-patch-v0" in new_args
+    has_autorelease = "--autorelease" in new_args
 
     result = cli_runner(new_cmd + new_args)
     assert result.exit_code == 0
@@ -932,6 +976,7 @@ def test_component_update_bool_flags(
         has_matrix,
         has_automerge_patch,
         has_automerge_patch_v0,
+        has_autorelease,
     )
 
     update_cmd = [
@@ -958,6 +1003,7 @@ def test_component_update_bool_flags(
         or (has_automerge_patch and "--no-automerge-patch" not in update_args)
         or has_automerge_patch_v0_update
     )
+    has_autorelease = "--autorelease" in update_args
 
     result = cli_runner(update_cmd + update_args)
     assert result.exit_code == 0
@@ -971,6 +1017,7 @@ def test_component_update_bool_flags(
         has_matrix,
         has_automerge_patch_update,
         has_automerge_patch_v0_update,
+        has_autorelease,
     )
 
 
@@ -1099,7 +1146,16 @@ def test_component_update_test_cases(
     orig_cases = ["defaults"] + initial_cases
 
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, False, False, orig_cases
+        tmp_path,
+        component_name,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        False,
+        orig_cases,
     )
 
     update_args = _format_test_case_args("--additional-test-case", additional_cases)
@@ -1123,7 +1179,16 @@ def test_component_update_test_cases(
         final_cases = updated_cases
 
     _validate_rendered_component(
-        tmp_path, component_name, False, False, True, True, False, False, final_cases
+        tmp_path,
+        component_name,
+        False,
+        False,
+        True,
+        True,
+        False,
+        False,
+        False,
+        final_cases,
     )
 
 
@@ -1562,6 +1627,7 @@ def test_cookiecutter_args_no_cruft_json(tmp_path: P, config: Config):
     t.github_owner = "projectsyn"
     t.automerge_patch = True
     t.automerge_patch_v0 = False
+    t.autorelease = False
 
     templater_cookiecutter_args = t.cookiecutter_args
 
