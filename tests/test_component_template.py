@@ -1896,3 +1896,41 @@ def test_component_templater_read_from_modulesync_config(
 
     assert t.cookiecutter_args["copyright_holder"] == expected_holder
     assert t.cookiecutter_args["copyright_year"] == expected_year
+
+
+def test_component_templater_read_from_old_cruft_json(
+    tmp_path: P,
+    cli_runner: RunnerFunc,
+    config: Config,
+):
+    component_name = "test-component"
+    call_component_new(tmp_path, cli_runner, component_name)
+    component_path = tmp_path / "dependencies" / component_name
+    r = Repo(component_path)
+
+    with open(component_path / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+
+    # remove all the automerge settings from the cruft json
+    del cruft_json["context"]["cookiecutter"]["automerge_patch"]
+    del cruft_json["context"]["cookiecutter"]["automerge_patch_v0"]
+    del cruft_json["context"]["cookiecutter"]["auto_release"]
+    del cruft_json["context"]["cookiecutter"]["automerge_patch_regexp_blocklist"]
+    del cruft_json["context"]["cookiecutter"]["automerge_patch_v0_regexp_allowlist"]
+    del cruft_json["context"]["cookiecutter"]["automerge_minor_regexp_allowlist"]
+
+    with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f, indent=2)
+        f.write("\n")
+    r.index.add([".cruft.json"])
+
+    r.index.commit("Update component template metadata")
+
+    t = template.ComponentTemplater.from_existing(config, component_path)
+
+    assert t.cookiecutter_args["automerge_patch"] == "y"
+    assert t.cookiecutter_args["automerge_patch_v0"] == "n"
+    assert t.cookiecutter_args["auto_release"] == "y"
+    assert t.cookiecutter_args["automerge_patch_regexp_blocklist"] == ""
+    assert t.cookiecutter_args["automerge_patch_v0_regexp_allowlist"] == ""
+    assert t.cookiecutter_args["automerge_minor_regexp_allowlist"] == ""
