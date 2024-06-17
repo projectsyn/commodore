@@ -107,9 +107,11 @@ class ComponentTemplater(Templater):
         self.library = cookiecutter_args["add_lib"] == "y"
         self.post_process = cookiecutter_args["add_pp"] == "y"
         self.matrix_tests = cookiecutter_args["add_matrix"] == "y"
-        self.automerge_patch = cookiecutter_args["automerge_patch"] == "y"
-        self.automerge_patch_v0 = cookiecutter_args["automerge_patch_v0"] == "y"
-        self.autorelease = cookiecutter_args["auto_release"] == "y"
+        self.automerge_patch = cookiecutter_args.get("automerge_patch", "y") == "y"
+        self.automerge_patch_v0 = (
+            cookiecutter_args.get("automerge_patch_v0", "n") == "y"
+        )
+        self.autorelease = cookiecutter_args.get("auto_release", "y") == "y"
 
         self._initialize_automerge_pattern_lists_from_cookiecutter_args(
             cookiecutter_args
