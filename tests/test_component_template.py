@@ -126,7 +126,7 @@ def _validate_renovatejson_packagerules(
             expected_keys.add("excludePackagePatterns")
 
         assert set(patch_rule.keys()) == expected_keys
-        assert patch_rule["matchUpdateTypes"] == ["patch"]
+        assert patch_rule["matchUpdateTypes"] == ["patch", "digest"]
         assert patch_rule["automerge"] is True
         assert patch_rule["platformAutomerge"] is False
         assert patch_rule["labels"] == ["dependency", "automerge", "bump:patch"]
