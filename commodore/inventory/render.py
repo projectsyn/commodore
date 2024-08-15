@@ -10,7 +10,6 @@ import click
 from commodore.config import Config
 
 from .parameters import (
-    ClassNotFound,
     InventoryFactory,
     InventoryFacts,
     InventoryParameters,
@@ -67,11 +66,11 @@ def _get_inventory(cfg: Config, invfacts: InventoryFacts) -> InventoryParameters
 
     try:
         inv = invfactory.reclass(invfacts)
-    except ClassNotFound as e:
+    except ValueError as e:
         _cleanup_work_dir(cfg, work_dir)
         raise ValueError(
             "Unable to render inventory with `--no-allow-missing-classes`. "
-            + f"Class '{e.name}' not found. "
+            + f"{e}. "
             + "Verify the provided values or allow missing classes."
         ) from e
 
