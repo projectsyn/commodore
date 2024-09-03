@@ -36,6 +36,7 @@ from commodore.config import Config
 ArgumentCache = collections.namedtuple(
     "ArgumentCache",
     [
+        "inventory_backend",
         "inventory_path",
         "multiline_string_style",
         "yaml_dump_null_as_empty",
@@ -244,6 +245,7 @@ def kapitan_compile(
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
     # workaround the non-modifiable Namespace() default value for cached.args
+    cached.args.inventory_backend = "reclass-rs"
     cached.args.inventory_path = str(config.inventory.inventory_dir)
     cached.args.multiline_string_style = "literal"
     cached.args.yaml_dump_null_as_empty = False
