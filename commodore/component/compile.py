@@ -10,7 +10,6 @@ from typing import Optional
 
 import click
 import git
-from kapitan.resources import inventory_reclass
 
 from commodore.cluster import generate_target
 from commodore.config import Config
@@ -20,7 +19,7 @@ from commodore.dependency_mgmt.component_library import (
     create_component_library_aliases,
 )
 from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
-from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
+from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
 from commodore.postprocess import postprocess_components
@@ -82,7 +81,7 @@ def compile_component(
         )
 
         # Verify component alias
-        nodes = inventory_reclass(inv.inventory_dir)["nodes"]
+        nodes = kapitan_inventory(config)
         config.verify_component_aliases(nodes[instance_name]["parameters"])
 
         cluster_params = nodes[instance_name]["parameters"]

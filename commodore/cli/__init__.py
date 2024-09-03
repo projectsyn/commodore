@@ -6,6 +6,8 @@ from pathlib import Path
 
 import click
 
+from reclass_rs import Reclass
+
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
 from commodore.config import Config
@@ -68,6 +70,7 @@ commodore.add_command(commodore_fetch_token)
 
 def main():
     multiprocessing.set_start_method("spawn")
+    Reclass.set_thread_count(0)
 
     load_dotenv(dotenv_path=find_dotenv(usecwd=True))
     commodore.main(
