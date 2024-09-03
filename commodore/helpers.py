@@ -37,7 +37,7 @@ ArgumentCache = collections.namedtuple(
     "ArgumentCache",
     [
         "inventory_path",
-        "yaml_multiline_string_style",
+        "multiline_string_style",
         "yaml_dump_null_as_empty",
     ],
 )
@@ -243,20 +243,19 @@ def kapitan_compile(
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
-    cached.args["compile"] = ArgumentCache(
-        inventory_path=config.inventory.inventory_dir,
-        yaml_multiline_string_style="literal",
-        yaml_dump_null_as_empty=False,
-    )
+    # workaround the non-modifiable Namespace() default value for cached.args
+    cached.args.inventory_path = str(config.inventory.inventory_dir)
+    cached.args.multiline_string_style = "literal"
+    cached.args.yaml_dump_null_as_empty = False
+    cached.args.verbose = config.trace
     kapitan_targets.compile_targets(
-        inventory_path=config.inventory.inventory_dir,
+        inventory_path=cached.args.inventory_path,
         search_paths=search_paths,
         output_path=output_dir,
-        targets=targets,
-        parallel=4,
+        desired_targets=targets,
+        parallelism=4,
         labels=None,
         ref_controller=refController,
-        verbose=config.trace,
         prune=False,
         indent=2,
         reveal=reveal,
