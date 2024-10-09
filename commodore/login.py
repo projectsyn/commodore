@@ -276,7 +276,7 @@ def login(config: Config):
         raise click.ClickException("Required OIDC discovery URL not set")
 
     if config.api_token:
-        # Short-circuit if we already have a valid API token
+        # Short-circuit if we have a valid API token
         return
 
     client = WebApplicationClient(config.oidc_client)
