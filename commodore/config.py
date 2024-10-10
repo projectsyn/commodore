@@ -202,18 +202,28 @@ class Config:
         if self._api_token is None and self.api_url:
             tokens = tokencache.get(self.api_url)
             token = tokens.get("id_token")
-            if token is not None:
-                # We don't verify the signature, we just want to know if the token is expired
-                # lieutenant will decide if it's valid
-                try:
-                    t = jwt.decode(
-                        token, algorithms=["RS256"], options={"verify_signature": False}
-                    )
-                    if "exp" in t and t["exp"] < time.time() + 10:
-                        return None
-                except jwt.exceptions.InvalidTokenError:
-                    return None
-                self._api_token = token
+            self._api_token = token
+
+        if self._api_token:
+            # Clear cached token if it's expired.
+            #
+            # NOTE(sg): This assumes that users of this property call `login.login()` if they see
+            # that the property is None. Callers that don't do so must expect failed API operations
+            # when Commodore is invoked with a short-lived OIDC token.
+            try:
+                # We don't verify the signature, we just want to know if the token is expired.
+                t = jwt.decode(
+                    self._api_token,
+                    algorithms=["RS256"],
+                    options={"verify_signature": False},
+                )
+                if "exp" in t and t["exp"] < time.time() + 10:
+                    self._api_token = None
+                # Here: tokens without 'exp' don't expire
+            except jwt.exceptions.InvalidTokenError:
+                # Assume that unparseable tokens are long-lived.
+                pass
+
         return self._api_token
 
     @api_token.setter

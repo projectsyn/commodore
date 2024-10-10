@@ -20,6 +20,7 @@ from .helpers import (
 from .component import component_parameters_key, Component
 from .config import Config
 from .inventory import Inventory
+from .login import login
 
 
 class Cluster:
@@ -333,6 +334,11 @@ def report_compile_metadata(
         )
 
     if report:
+        if cfg.api_token is None:
+            # Re-login to ensure we have a valid API token. This assumes that the only case where we
+            # call `report_compile_metadata()` and the api_token is None is when a short-lived OIDC
+            # token expired while we were compiling the catalog.
+            login(cfg)
         lieutenant_post(
             cfg.api_url,
             cfg.api_token,
