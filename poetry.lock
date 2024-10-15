@@ -875,21 +875,18 @@ pyparsing = {version = ">=2.4.2,<3.0.0 || >3.0.0,<3.0.1 || >3.0.1,<3.0.2 || >3.0
 
 [[package]]
 name = "hvac"
-version = "0.11.2"
+version = "1.2.1"
 description = "HashiCorp Vault API client"
 optional = false
-python-versions = ">=2.7"
+python-versions = ">=3.6.2,<4.0.0"
 files = [
-    {file = "hvac-0.11.2-py2.py3-none-any.whl", hash = "sha256:3e8a34804b1e20954a2b4991cc13ed9c09b32e50dadd9d3438224481150f6568"},
-    {file = "hvac-0.11.2.tar.gz", hash = "sha256:f905c59d32d88d3f67571fe5a8a78de4659e04798ad809de439f667247d13626"},
+    {file = "hvac-1.2.1-py3-none-any.whl", hash = "sha256:cb87f5724be8fd5f57507f5d5a94e6c42d2675128b460bf3186f966e07d4db78"},
+    {file = "hvac-1.2.1.tar.gz", hash = "sha256:c786e3dfa1f35239810e5317cccadbe358f49b8c9001a1f2f68b79a250b9f8a1"},
 ]
 
 [package.dependencies]
-requests = ">=2.21.0"
-six = ">=1.5.0"
-
-[package.extras]
-parser = ["pyhcl (>=0.3.10)"]
+pyhcl = ">=0.4.4,<0.5.0"
+requests = ">=2.27.1,<3.0.0"
 
 [[package]]
 name = "idna"
@@ -994,12 +991,12 @@ files = [
 
 [[package]]
 name = "jsonnet"
-version = "0.18.0"
+version = "0.20.0"
 description = "Python bindings for Jsonnet - The data templating language"
 optional = false
 python-versions = "*"
 files = [
-    {file = "jsonnet-0.18.0.tar.gz", hash = "sha256:4ccd13427e9097b6b7d6d38f78f638a55ab8b452a257639e8e9af2178ec235d4"},
+    {file = "jsonnet-0.20.0.tar.gz", hash = "sha256:7e770c7bf3a366b97b650a39430450f77612e74406731eb75c5bd59f3f104d4f"},
 ]
 
 [[package]]
@@ -1056,13 +1053,13 @@ typeguard = ">=2.12.1"
 
 [[package]]
 name = "kapitan"
-version = "0.32.0"
+version = "0.33.0"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
-python-versions = ">=3.8,<4.0"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "kapitan-0.32.0-py3-none-any.whl", hash = "sha256:68cb62506a13634d7a11dbce8b7b9d614a3277dc6ee0caaef3c56e2d95f284cf"},
-    {file = "kapitan-0.32.0.tar.gz", hash = "sha256:f26f8402d26083854c04cb4c3d6154759c02f979a7e9dcccf5dcbce975f74742"},
+    {file = "kapitan-0.33.0-py3-none-any.whl", hash = "sha256:14cb9c0ab58a5a90ec9de553d1517a56161b8423b57cc65a258854fc4faf5d22"},
+    {file = "kapitan-0.33.0.tar.gz", hash = "sha256:7b2e0545208aac552ca05f5a07d256fe075642f2053773cab01eed47391e0821"},
 ]
 
 [package.dependencies]
@@ -1071,17 +1068,17 @@ azure-identity = ">=1.12.0,<2.0.0"
 azure-keyvault-keys = ">=4.7.0,<5.0.0"
 boto3 = ">=1.18.17,<2.0.0"
 certifi = "*"
-cryptography = ">=3.4.7,<40.0.0"
+cryptography = ">=3.4.7,<42.0.0"
 gitdb = ">=4.0.10,<5.0.0"
 gitpython = ">=3.1.30,<4.0.0"
 google-api-python-client = ">=2.15.0,<3.0.0"
-hvac = ">=0.11.0,<0.12.0"
+hvac = "1.2.1"
 jinja2 = ">=3.0.1,<4.0.0"
-jsonnet = ">=0.18.0,<0.19.0"
+jsonnet = ">=0.20.0,<0.21.0"
 jsonschema = ">=4.17.3,<5.0.0"
 kadet = ">=0.2.2,<0.3.0"
 packaging = ">=23.0,<24.0"
-python-gnupg = ">=0.4.7,<0.5.0"
+python-gnupg = ">=0.4.7,<0.6.0"
 python-magic = ">=0.4.27,<0.5.0"
 pyyaml = ">=6.0,<7.0"
 requests = ">=2.28.2,<3.0.0"
@@ -1091,8 +1088,8 @@ typing-extensions = ">=4.0.0,<5.0.0"
 yamllint = ">=1.29.0,<2.0.0"
 
 [package.extras]
-gojsonnet = ["gojsonnet (>=0.17.0,<0.18.0)"]
-test = ["docker (>=5.0.0,<6.0.0)"]
+gojsonnet = ["gojsonnet (>=0.20.0,<0.21.0)"]
+test = ["docker (>=5,<7)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -1540,6 +1537,17 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pyhcl"
+version = "0.4.5"
+description = "HCL configuration parser for python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyhcl-0.4.5-py3-none-any.whl", hash = "sha256:30ee337d330d1f90c9f5ed8f49c468f66c8e6e43192bdc7c6ece1420beb3070c"},
+    {file = "pyhcl-0.4.5.tar.gz", hash = "sha256:c47293a51ccdd25e18bb5c8c0ab0ffe355b37c87f8d6f9d3280dc41efd4740bc"},
+]
 
 [[package]]
 name = "pyjwt"
@@ -2566,4 +2574,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.12"
-content-hash = "e706cfa652dd21fdeffc64ce9cf07bba7e7e16056fc43cb5ca961c7800672691"
+content-hash = "d3659410f545c9a751f8271c89db3f220006612d5db39dc15daddd9ee562d3b4"
