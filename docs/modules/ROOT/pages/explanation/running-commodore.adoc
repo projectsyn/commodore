@@ -17,7 +17,7 @@ We recommend that you use the Commodore Python package provided on PyPI to make 
 
 === Prerequisites
 
-* A Python version between 3.10 and 3.11 as `python3` and the Python `venv` module.
+* A Python version between 3.10 and 3.12 as `python3` and the Python `venv` module.
 We recommend that you install Python and the `venv` module with your preferred package manager.
 * Additionally, a few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
 On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
@@ -26,7 +26,7 @@ Please refer to your operating system's documentation for instructions to setup 
 * jsonnet-bundler from https://github.com/projectsyn/jsonnet-bundler/releases[projectsyn/jsonnet-bundler/releases] in your `$PATH` as `jb`.
 * Helm 3, https://helm.sh/docs/intro/install/[installation instructions]
 * `kustomize`, some components might require Kustomize.
-Versions >= 4 are recommended.
+Versions >= 5 are recommended.
 https://kubectl.docs.kubernetes.io/installation/kustomize/[Installation instructions]
 
 [IMPORTANT]
@@ -51,7 +51,7 @@ This command should report something like
 +
 [source]
 ----
-Python 3.11.9
+Python 3.12.7
 ----
 
 . Create a virtualenv in `~/.local/commodore-venv`
