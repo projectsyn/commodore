@@ -64,25 +64,6 @@ jobs:
       run: echo "PYVER=$(echo ${{ matrix.python-version}} |cut -d. -f1,2)" >> $GITHUB_ENV
     - run: |
         make testenv_py${PYVER}
-  build-test-reclass-rs-virtualenvs:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    - uses: Gr1N/setup-poetry@v9
-    - name: Install tox
-      run: |
-        pip install tox
-    - uses: actions/cache@v4
-      with:
-        path: |
-          .tox
-          ~/.cache/pypoetry/virtualenvs
-        key: ${{ runner.os }}-test-py3.11-reclass-rs-${{ hashFiles('poetry.lock', 'tox.ini') }}
-    - run: |
-        make testenv_py3.11_reclass_rs
 
   build-bench-virtualenvs:
     runs-on: ubuntu-latest
