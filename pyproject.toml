@@ -20,7 +20,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.12"
+python = ">=3.10, <3.13"
 # NOTE: We restrict boto3/botocore versions to reduce complexity of Poetry's
 # dependency resolution significantly, cf.
 # https://github.com/orgs/python-poetry/discussions/8165#discussioncomment-6387378
