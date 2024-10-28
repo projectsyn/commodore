@@ -5,7 +5,9 @@ import itertools
 import json
 import shutil
 import os
+import sys
 from collections.abc import Callable, Iterable
+from datetime import datetime
 from pathlib import Path as P
 from typing import Optional
 
@@ -24,7 +26,8 @@ from kapitan import defaults
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.refs.base import RefController, PlainRef
 from kapitan.refs.secrets.vaultkv import VaultBackend
-from kapitan.resources import inventory_reclass
+
+from reclass_rs import Reclass
 
 from commodore import __install_dir__
 from commodore.config import Config
@@ -33,8 +36,9 @@ from commodore.config import Config
 ArgumentCache = collections.namedtuple(
     "ArgumentCache",
     [
+        "inventory_backend",
         "inventory_path",
-        "yaml_multiline_string_style",
+        "multiline_string_style",
         "yaml_dump_null_as_empty",
     ],
 )
@@ -240,20 +244,20 @@ def kapitan_compile(
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
-    cached.args["compile"] = ArgumentCache(
-        inventory_path=config.inventory.inventory_dir,
-        yaml_multiline_string_style="literal",
-        yaml_dump_null_as_empty=False,
-    )
+    # workaround the non-modifiable Namespace() default value for cached.args
+    cached.args.inventory_backend = "reclass-rs"
+    cached.args.inventory_path = str(config.inventory.inventory_dir)
+    cached.args.multiline_string_style = "literal"
+    cached.args.yaml_dump_null_as_empty = False
+    cached.args.verbose = config.trace
     kapitan_targets.compile_targets(
-        inventory_path=config.inventory.inventory_dir,
+        inventory_path=cached.args.inventory_path,
         search_paths=search_paths,
         output_path=output_dir,
-        targets=targets,
-        parallel=4,
+        desired_targets=targets,
+        parallelism=4,
         labels=None,
         ref_controller=refController,
-        verbose=config.trace,
         prune=False,
         indent=2,
         reveal=reveal,
@@ -272,14 +276,23 @@ def kapitan_inventory(
     config: Config, key: str = "nodes", ignore_class_notfound: bool = False
 ) -> dict:
     """
-    Reset reclass cache and render inventory.
     Returns the top-level key according to the kwarg.
     """
-    reset_reclass_cache()
-    inv = inventory_reclass(
-        config.inventory.inventory_dir, ignore_class_notfound=ignore_class_notfound
+    r = Reclass(
+        nodes_path=str(config.inventory.targets_dir),
+        classes_path=str(config.inventory.classes_dir),
+        ignore_class_notfound=ignore_class_notfound,
     )
-    return inv[key]
+    print("running reclass_rs", file=sys.stderr)
+    start = datetime.now()
+    try:
+        inv = r.inventory()
+    except ValueError as e:
+        raise click.ClickException(f"While rendering inventory: {e}")
+    elapsed = datetime.now() - start
+    print(f"Inventory (reclass_rs) took {elapsed}", file=sys.stderr)
+
+    return inv.as_dict()[key]
 
 
 def rm_tree_contents(basedir):

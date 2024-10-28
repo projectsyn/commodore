@@ -39,7 +39,7 @@ lintenv_mypy:
 lintenv_black:
 	$(TOX_COMMAND) -e black --notest
 
-.PHONY: test_py3.10 test_py3.11 test_py3.11_reclass_rs
+.PHONY: test_py3.10 test_py3.11
 
 test_py3.10:
 	$(TOX_COMMAND) -e py310
@@ -47,18 +47,12 @@ test_py3.10:
 test_py3.11:
 	$(TOX_COMMAND) -e py311
 
-test_py3.11_reclass_rs:
-	$(TOX_COMMAND) -e py311-reclass-rs
-
-.PHONY: testenv_py3.10 testenv_py3.11 testenv_py3.11_reclass_rs
+.PHONY: testenv_py3.10 testenv_py3.11
 
 testenv_py3.10:
 	$(TOX_COMMAND) -e py310 --notest
 
 testenv_py3.11:
-	$(TOX_COMMAND) -e py311 --notest
-
-testenv_py3.11_reclass_rs:
 	$(TOX_COMMAND) -e py311 --notest
 
 .PHONY: bench_py3.10 bench_py3.11

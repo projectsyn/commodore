@@ -399,7 +399,7 @@ def test_postprocess_jsonnet_try_path(tmp_path, full_rel):
     path, contents = jsonnet_pp._try_path(tmp_path, rel)
 
     assert path == testf.name
-    assert contents == "Test"
+    assert contents == b"Test"
 
 
 @pytest.mark.parametrize(
@@ -430,7 +430,7 @@ def test_postprocess_jsonnet_import_cb(tmp_path, basedir, floc):
     path, contents = jsonnet_pp._import_cb(tmp_path, bdir, "test.txt")
 
     assert path == "test.txt"
-    assert contents == f"Test {tmp_path / floc}"
+    assert contents == f"Test {tmp_path / floc}".encode("utf-8")
 
 
 def test_postprocess_jsonnet_import_cb_notfound(tmp_path):

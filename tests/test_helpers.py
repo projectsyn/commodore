@@ -13,6 +13,7 @@ import textwrap
 import click
 import pytest
 import responses
+import yaml
 from responses import matchers
 from url_normalize import url_normalize
 
@@ -395,5 +396,23 @@ def test_relsymlink_invalid_src_exception(tmp_path: Path):
     print(str(e.value))
     assert (
         f"Can't link {src.name} to {tmp_path / 'dst.txt'}. Source does not exist."
+        in str(e.value)
+    )
+
+
+def test_kapitan_inventory(tmp_path: Path, config: Config):
+    config.inventory.targets_dir.mkdir(parents=True)
+    config.inventory.classes_dir.mkdir(parents=True)
+
+    test = {"parameters": {"foo": "${bar}"}}
+
+    with open(config.inventory.targets_dir / "test.yml", "w", encoding="utf-8") as f:
+        yaml.safe_dump(test, f)
+
+    with pytest.raises(click.ClickException) as e:
+        helpers.kapitan_inventory(config)
+    assert (
+        "While rendering inventory: Error while rendering inventory: Error rendering node test: "
+        + "While resolving references: lookup error for reference '${bar}' in parameter 'foo': key 'bar' not found"
         in str(e.value)
     )
