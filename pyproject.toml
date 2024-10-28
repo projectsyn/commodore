@@ -61,8 +61,7 @@ pytest-mock = "^3.8.2"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
-local_reveal = 'tools.tools:reveal'
-compile = 'tools.tools:compile'
+kapitan = 'kapitan.cli:main'
 
 [build-system]
 requires = ["poetry>=0.12"]
