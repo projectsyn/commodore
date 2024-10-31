@@ -1111,13 +1111,13 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.34.0"
+version = "0.34.1"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "kapitan-0.34.0-py3-none-any.whl", hash = "sha256:ec59bf36d8d2d39c0cbfe9bc0bc3d453d6cd92fb573f78e2822b79ba508453c8"},
-    {file = "kapitan-0.34.0.tar.gz", hash = "sha256:db10cb6b04533e16f614b7b5c8c05ee3a6438df8d40847ce4bb80bbcf61a494b"},
+    {file = "kapitan-0.34.1-py3-none-any.whl", hash = "sha256:66b527c9f03d3df1cbcf10f1170cc3f96baf044ee85dcb9efdc7a6539af9867c"},
+    {file = "kapitan-0.34.1.tar.gz", hash = "sha256:6b0a9783f744adb57601b8fb4a3e22c23fd4acdabf5f0eace30495327ceea05f"},
 ]
 
 [package.dependencies]
@@ -2833,4 +2833,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "11a236603f7079c05d04bfe7bf1e9b5e621896c52bb5a4f50c5e026d9d6073ef"
+content-hash = "cfa324b76e056780ffec82289efa603ed3d51ad1d500d3294f203bd75fd1a7b5"
