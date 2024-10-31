@@ -30,9 +30,9 @@ def _try_path(basedir: P, rel: str):
         raise RuntimeError("Attempted to import a directory")
 
     if not full_path.is_file():
-        return full_path.name, None
+        return str(full_path), None
     with open(full_path, encoding="utf-8") as f:
-        return full_path.name, f.read().encode("utf-8")
+        return str(full_path), f.read().encode("utf-8")
 
 
 def _import_callback_with_searchpath(search: Iterable[P], basedir: P, rel: str):

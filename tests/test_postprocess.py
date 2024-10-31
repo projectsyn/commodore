@@ -398,7 +398,7 @@ def test_postprocess_jsonnet_try_path(tmp_path, full_rel):
 
     path, contents = jsonnet_pp._try_path(tmp_path, rel)
 
-    assert path == testf.name
+    assert path == str(testf)
     assert contents == b"Test"
 
 
@@ -429,7 +429,7 @@ def test_postprocess_jsonnet_import_cb(tmp_path, basedir, floc):
     bdir = str((tmp_path / basedir).absolute())
     path, contents = jsonnet_pp._import_cb(tmp_path, bdir, "test.txt")
 
-    assert path == "test.txt"
+    assert path == str(testf)
     assert contents == f"Test {tmp_path / floc}".encode("utf-8")
 
 
