@@ -269,6 +269,7 @@ def kapitan_compile(
         validate=False,
         schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
+        use_go_jsonnet=True,
     )
 
 

@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 from pathlib import Path as P
 from typing import Any
 
-import _jsonnet
+import _gojsonnet
 
 from commodore.config import Config
 from commodore.component import Component
@@ -149,7 +149,7 @@ def run_jsonnet_filter(
         component.name,
         instance,
         path,
-        _jsonnet.evaluate_file,
+        _gojsonnet.evaluate_file,
         filterfile,
         **filterargs,
     )

@@ -8,7 +8,7 @@ from typing import Any
 
 from commodore.postprocess.jsonnet import _import_cb, _native_callbacks
 
-import _jsonnet
+import _gojsonnet
 import pytest
 import yaml
 
@@ -100,7 +100,7 @@ def render_jsonnet(tmp_path: Path, inputf: Path, invf: Path, **kwargs):
     _native_cb = _native_callbacks
     _native_cb["commodore_inventory"] = ((), _inventory)
 
-    resstr = _jsonnet.evaluate_file(
+    resstr = _gojsonnet.evaluate_file(
         str(inputf),
         import_callback=functools.partial(_import_cb, tmp_path),
         native_callbacks=_native_cb,

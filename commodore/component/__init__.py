@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path as P
 from typing import Optional
 
-import _jsonnet
+import _gojsonnet
 import click
 import git
 
@@ -216,7 +216,7 @@ class Component:
             except git.InvalidGitRepositoryError:
                 pass
             # pylint: disable=c-extension-no-member
-            output = _jsonnet.evaluate_file(
+            output = _gojsonnet.evaluate_file(
                 str(jsonnetfile_jsonnet),
                 ext_vars=component_params.get("jsonnetfile_parameters", {}),
             )

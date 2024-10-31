@@ -6,6 +6,7 @@ https://docs.pytest.org/en/latest/how-to/fixtures.html#scope-sharing-fixtures-ac
 
 from __future__ import annotations
 
+import multiprocessing
 import os
 
 from pathlib import Path
@@ -23,6 +24,14 @@ from commodore.gitrepo import GitRepo
 
 class RunnerFunc(Protocol):
     def __call__(self, args: list[str]) -> Result: ...
+
+
+# For gojsonnet we must use start_method "spawn" for multiprocessing so that the tests don't break
+# with pytest-xdist. Since we also use start_method "spawn" in Commodore, this should be fine. We
+# set this via a session-scoped autouse fixture, so it's set once when the PyTest session starts.
+@pytest.fixture(autouse=True, scope="session")
+def init_env():
+    multiprocessing.set_start_method("spawn")
 
 
 @pytest.fixture(autouse=True)
