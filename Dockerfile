@@ -1,12 +1,15 @@
 FROM docker.io/python:3.11.5-slim-bullseye AS base
 
+ARG TARGETARCH
+ENV TARGETARCH=${TARGETARCH:-amd64}
+
 ENV HOME=/app
 
 WORKDIR ${HOME}
 
 FROM base AS builder
 
-ENV PATH=${PATH}:${HOME}/.local/bin
+ENV PATH=${PATH}:${HOME}/.local/bin:/usr/local/go/bin
 
 ARG POETRY_VERSION=1.8.4
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,6 +19,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
  && mkdir -p /app/.config
+
+
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.23.2.linux-${TARGETARCH}.tar.gz \
+ && tar -C /usr/local -xzf go.tar.gz \
+ && rm go.tar.gz \
+ && go version
 
 COPY pyproject.toml poetry.lock ./
 

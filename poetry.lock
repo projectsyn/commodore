@@ -801,6 +801,16 @@ doc = ["sphinx (==4.3.2)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphi
 test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit", "pytest (>=7.3.1)", "pytest-cov", "pytest-instafail", "pytest-mock", "pytest-sugar", "typing-extensions"]
 
 [[package]]
+name = "gojsonnet"
+version = "0.20.0"
+description = "Python bindings for Jsonnet - The data templating language"
+optional = false
+python-versions = "*"
+files = [
+    {file = "gojsonnet-0.20.0.tar.gz", hash = "sha256:9aede3b5734dee1c99dbec75dee3b086baaae92bd262d93f9217e21bf19c9682"},
+]
+
+[[package]]
 name = "google-api-core"
 version = "2.22.0"
 description = "Google API client core library"
@@ -2820,4 +2830,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "3819bc428ebf44e6d915e687f57c16f5b7d063629d4fe9ccacef0f813579a884"
+content-hash = "338126c3d15c2138cf5d54c40cec50406a2ec5b147f2067e4af3ec66873e0ecd"
