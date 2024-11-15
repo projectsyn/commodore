@@ -255,7 +255,7 @@ def kapitan_compile(
         search_paths=search_paths,
         output_path=output_dir,
         desired_targets=targets,
-        parallelism=4,
+        parallelism=None,
         labels=None,
         ref_controller=refController,
         prune=False,
