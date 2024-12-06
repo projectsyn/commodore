@@ -1,6 +1,6 @@
 # Pushed to docker.io/projectsyn/kapitan:${KAPITAN_VERSION}
 
-FROM docker.io/alpine:3.20
+FROM docker.io/alpine:3.21
 
 ENV KAPITAN_VERSION=v0.29.5
 
