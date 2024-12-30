@@ -308,6 +308,10 @@ NOTE: If autorelease is enabled, new releases will be generated for automerged d
 *--commit / --no-commit*::
   Whether to commit the rendered template changes.
 
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
+
 *--automerge-patch / --no-automerge-patch*::
   Enable automerging of patch-level dependency PRs.
 
@@ -440,6 +444,10 @@ However, labels added by previous runs can't be removed since we've got no easy 
     Regex to select which dependencies to sync.
     If the option isn't given, all dependencies listed in the provided YAML are synced.
 
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
+
 == Inventory Components / Packages / Show
 
 *-f, --values*::
@@ -549,6 +557,10 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--commit / --no-commit*::
   Whether to commit the rendered template changes.
 
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
+
 == Package Compile
 
 *-f, --values* FILE::
@@ -638,3 +650,7 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--filter* REGEX::
     Regex to select which dependencies to sync.
     If the option isn't given, all dependencies listed in the provided YAML are synced.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
