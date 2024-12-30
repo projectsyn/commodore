@@ -61,12 +61,7 @@ def package_group(config: Config, verbose: int):
     show_default=True,
     help="The URL of the package cookiecutter template.",
 )
-@click.option(
-    "--template-version",
-    default="main",
-    show_default=True,
-    help="The package template version (Git tree-ish) to use.",
-)
+@options.template_version("main")
 @click.option(
     "--output-dir",
     default="",
@@ -167,6 +162,7 @@ def package_new(
     default=True,
     help="Whether to commit the rendered template changes.",
 )
+@options.template_version(None)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
@@ -180,6 +176,7 @@ def package_update(
     additional_test_case: Iterable[str],
     remove_test_case: Iterable[str],
     commit: bool,
+    template_version: Optional[str],
 ):
     """This command updates the package at PACKAGE_PATH to the latest version of the
     template which was originally used to create it, if the template version is given as
@@ -201,6 +198,9 @@ def package_update(
         t.golden_tests = golden_tests
     if update_copyright_year:
         t.copyright_year = None
+    if template_version is not None:
+        t.template_version = template_version
+
     test_cases = t.test_cases
     test_cases.extend(additional_test_case)
     t.test_cases = [tc for tc in test_cases if tc not in remove_test_case]
@@ -278,6 +278,7 @@ def package_compile(
 @options.pr_batch_size
 @options.github_pause
 @options.dependency_filter
+@options.template_version(None)
 def package_sync(
     config: Config,
     verbose: int,
@@ -289,6 +290,7 @@ def package_sync(
     pr_batch_size: int,
     github_pause: int,
     filter: str,
+    template_version: Optional[str],
 ):
     """This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
 
@@ -324,4 +326,5 @@ def package_sync(
         pr_batch_size,
         timedelta(seconds=github_pause),
         filter,
+        template_version,
     )

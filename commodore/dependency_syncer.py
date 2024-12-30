@@ -6,7 +6,7 @@ import time
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Union, Type
+from typing import Optional, Union, Type
 
 import click
 import git
@@ -36,9 +36,17 @@ def sync_dependencies(
     pr_batch_size: int = 10,
     pause: timedelta = timedelta(seconds=120),
     depfilter: str = "",
+    template_version: Optional[str] = None,
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
+
+    if template_version is not None and not dry_run:
+        click.secho(
+            " > Custom template version provided for sync, but dry run not active. Forcing dry run",
+            fg="yellow",
+        )
+        dry_run = True
 
     deptype_str = deptype.__name__.lower()
 
@@ -72,6 +80,8 @@ def sync_dependencies(
 
         # Update the dependency
         t = templater.from_existing(config, d.target_dir)
+        if template_version is not None:
+            t.template_version = template_version
         changed = t.update(
             print_completion_message=False,
             commit=not dry_run,
