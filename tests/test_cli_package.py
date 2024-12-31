@@ -5,7 +5,7 @@ import os
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Type
+from typing import Optional, Type
 from unittest import mock
 
 import pytest
@@ -15,13 +15,44 @@ from commodore.cli import package
 from commodore.package import Package
 from commodore.package.template import PackageTemplater
 
-from conftest import RunnerFunc
+from conftest import RunnerFunc, make_mock_templater
+
+
+@pytest.mark.parametrize("template_version", [None, "main^"])
+@mock.patch.object(package, "PackageTemplater")
+def test_update_package_cli(mock_templater, tmp_path, cli_runner, template_version):
+    ppath = tmp_path / "test-package"
+    ppath.mkdir()
+
+    mt = make_mock_templater(mock_templater, ppath)
+
+    template_arg = (
+        [f"--template-version={template_version}"]
+        if template_version is not None
+        else []
+    )
+
+    result = cli_runner(["package", "update", str(ppath)] + template_arg)
+
+    assert result.exit_code == 0
+    assert mt.template_version == template_version
 
 
 @mock.patch.object(package, "sync_dependencies")
-@pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
+@pytest.mark.parametrize(
+    "ghtoken,template_version",
+    [
+        (None, None),
+        ("ghp_fake-token", None),
+        ("ghp_fake-token", "custom-template-version"),
+    ],
+)
 def test_package_sync_cli(
-    mock_sync_packages, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
+    mock_sync_packages,
+    ghtoken,
+    template_version,
+    tmp_path: Path,
+    cli_runner: RunnerFunc,
 ):
     os.chdir(tmp_path)
     if ghtoken is not None:
@@ -42,6 +73,7 @@ def test_package_sync_cli(
         pr_batch_size: int,
         github_pause: int,
         filter: str,
+        tmpl_version: Optional[str],
     ):
         assert config.github_token == ghtoken
         assert pkglist.absolute() == pkg_list.absolute()
@@ -53,8 +85,14 @@ def test_package_sync_cli(
         assert pr_batch_size == 10
         assert github_pause == timedelta(seconds=120)
         assert filter == ""
+        assert tmpl_version == template_version
 
     mock_sync_packages.side_effect = sync_pkgs
-    result = cli_runner(["package", "sync", "pkgs.yaml"])
+    template_version_flag = (
+        [f"--template-version={template_version}"]
+        if template_version is not None
+        else []
+    )
+    result = cli_runner(["package", "sync", "pkgs.yaml"] + template_version_flag)
     print(result.stdout)
     assert result.exit_code == (1 if ghtoken is None else 0)

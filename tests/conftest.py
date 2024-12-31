@@ -141,3 +141,24 @@ class MockMultiDependency:
 @pytest.fixture
 def mockdep(tmp_path):
     return MockMultiDependency(Repo.init(tmp_path / "repo.git"))
+
+
+class MockTemplater:
+    def __init__(self):
+        self.template_version = None
+        self.test_cases = []
+
+    def update(self, *args, **kwargs):
+        pass
+
+
+def make_mock_templater(mock_templater, expected_path):
+    mt = MockTemplater()
+
+    def mock_from_existing(_config: Config, path: Path):
+        assert path == expected_path
+        return mt
+
+    mock_templater.from_existing = mock_from_existing
+
+    return mt

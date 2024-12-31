@@ -6,7 +6,7 @@ import time
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Union, Type
+from typing import Optional, Union, Type
 
 import click
 import git
@@ -36,11 +36,17 @@ def sync_dependencies(
     pr_batch_size: int = 10,
     pause: timedelta = timedelta(seconds=120),
     depfilter: str = "",
+    template_version: Optional[str] = None,
 ) -> None:
     if not config.github_token:
         raise click.ClickException("Can't continue, missing GitHub API token.")
 
-    deptype_str = deptype.__name__.lower()
+    if template_version is not None and not dry_run:
+        click.secho(
+            " > Custom template version provided for sync, but dry run not active. Forcing dry run",
+            fg="yellow",
+        )
+        dry_run = True
 
     deps = read_dependency_list(dependency_list, depfilter)
     dep_count = len(deps)
@@ -49,38 +55,17 @@ def sync_dependencies(
     # Keep track of how many PRs we've created to better avoid running into rate limits
     update_count = 0
     for i, dn in enumerate(deps, start=1):
-        click.secho(f"Synchronizing {dn}", bold=True)
-        _, dreponame = dn.split("/")
-        dname = dreponame.replace(f"{deptype_str}-", "", 1)
-
-        # Clone dependency
-        try:
-            gr = gh.get_repo(dn)
-        except github.UnknownObjectException:
-            click.secho(f" > Repository {dn} doesn't exist, skipping...", fg="yellow")
-            continue
-
-        if gr.archived:
-            click.secho(f" > Repository {dn} is archived, skipping...", fg="yellow")
-            continue
-
-        d = deptype.clone(config, gr.clone_url, dname, version=gr.default_branch)
-
-        if not (d.target_dir / ".cruft.json").is_file():
-            click.echo(f" > Skipping repo {dn} which doesn't have `.cruft.json`")
-            continue
-
-        # Update the dependency
-        t = templater.from_existing(config, d.target_dir)
-        changed = t.update(
-            print_completion_message=False,
-            commit=not dry_run,
-            ignore_template_commit=True,
+        changed = sync_dependency(
+            config,
+            gh,
+            dn,
+            deptype,
+            templater,
+            template_version,
+            dry_run,
+            pr_branch,
+            pr_label,
         )
-
-        # Create or update PR if there were updates
-        comment = render_pr_comment(d)
-        create_or_update_pr(d, dn, gr, changed, pr_branch, pr_label, dry_run, comment)
         if changed:
             update_count += 1
         if not dry_run and i < dep_count:
@@ -88,6 +73,56 @@ def sync_dependencies(
             # we're not in dry run mode, and we've not yet processed the last
             # dependency.
             _maybe_pause(update_count, pr_batch_size, pause)
+
+
+def sync_dependency(
+    config: Config,
+    gh: github.Github,
+    depname: str,
+    deptype: Type[Union[Component, Package]],
+    templater,
+    template_version: Optional[str],
+    dry_run: bool,
+    pr_branch: str,
+    pr_label: Iterable[str],
+):
+    deptype_str = deptype.__name__.lower()
+
+    click.secho(f"Synchronizing {depname}", bold=True)
+    _, dreponame = depname.split("/")
+    dname = dreponame.replace(f"{deptype_str}-", "", 1)
+
+    # Clone dependency
+    try:
+        gr = gh.get_repo(depname)
+    except github.UnknownObjectException:
+        click.secho(f" > Repository {depname} doesn't exist, skipping...", fg="yellow")
+        return
+
+    if gr.archived:
+        click.secho(f" > Repository {depname} is archived, skipping...", fg="yellow")
+        return
+
+    d = deptype.clone(config, gr.clone_url, dname, version=gr.default_branch)
+
+    if not (d.target_dir / ".cruft.json").is_file():
+        click.echo(f" > Skipping repo {depname} which doesn't have `.cruft.json`")
+        return
+
+    # Update the dependency
+    t = templater.from_existing(config, d.target_dir)
+    if template_version is not None:
+        t.template_version = template_version
+    changed = t.update(
+        print_completion_message=False,
+        commit=not dry_run,
+        ignore_template_commit=True,
+    )
+
+    # Create or update PR if there were updates
+    comment = render_pr_comment(d)
+    create_or_update_pr(d, depname, gr, changed, pr_branch, pr_label, dry_run, comment)
+    return changed
 
 
 def read_dependency_list(dependency_list: Path, depfilter: str) -> list[str]:

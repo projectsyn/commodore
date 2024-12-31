@@ -291,12 +291,7 @@ def component_group(config: Config, verbose):
     show_default=True,
     help="The URL of the component cookiecutter template.",
 )
-@click.option(
-    "--template-version",
-    default="main",
-    show_default=True,
-    help="The component template version (Git tree-ish) to use.",
-)
+@options.template_version("main")
 @new_update_options(new_cmd=True)
 @options.verbosity
 @options.pass_config
@@ -430,6 +425,7 @@ def component_new(
     default=True,
     help="Whether to commit the rendered template changes.",
 )
+@options.template_version(None)
 @options.verbosity
 @options.pass_config
 def component_update(
@@ -437,6 +433,7 @@ def component_update(
     verbose: int,
     component_path: str,
     copyright_holder: str,
+    template_version: Optional[str],
     golden_tests: Optional[bool],
     matrix_tests: Optional[bool],
     lib: Optional[bool],
@@ -492,6 +489,8 @@ def component_update(
         t.automerge_patch_v0 = automerge_patch_v0
     if autorelease is not None:
         t.autorelease = autorelease
+    if template_version is not None:
+        t.template_version = template_version
 
     test_cases = t.test_cases
     test_cases.extend(additional_test_case)
@@ -625,6 +624,7 @@ def component_compile(
 @options.pr_batch_size
 @options.github_pause
 @options.dependency_filter
+@options.template_version(None)
 def component_sync(
     config: Config,
     verbose: int,
@@ -636,6 +636,7 @@ def component_sync(
     pr_batch_size: int,
     github_pause: int,
     filter: str,
+    template_version: Optional[str],
 ):
     """This command processes all components listed in the provided `COMPONENT_LIST`
     YAML file.
@@ -672,4 +673,5 @@ def component_sync(
         pr_batch_size,
         timedelta(seconds=github_pause),
         filter,
+        template_version,
     )

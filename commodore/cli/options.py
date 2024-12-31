@@ -1,5 +1,7 @@
 """Click options which are reused for multiple commands"""
 
+from typing import Optional
+
 import click
 
 from commodore.config import Config
@@ -123,6 +125,22 @@ dependency_filter = click.option(
     + "If the option isn't given, all dependencies listed in the provided YAML "
     + "are synced.",
 )
+
+
+def template_version(default: Optional[str]):
+    help_str = "The component template version (Git tree-ish) to use."
+    if default is None:
+        help_str = (
+            help_str
+            + " If not provided, the currently active template version will be used."
+        )
+
+    return click.option(
+        "--template-version",
+        default=default,
+        show_default=default is not None,
+        help=help_str,
+    )
 
 
 def local(help: str):

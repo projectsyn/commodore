@@ -5,7 +5,7 @@ import difflib
 import json
 
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 from unittest.mock import patch, MagicMock
 
 import click
@@ -377,18 +377,21 @@ def test_sync_packages_package_list_parsing(
 
 
 @pytest.mark.parametrize(
-    "dry_run,second_pkg,needs_update",
+    "dry_run,second_pkg,needs_update,template_version",
     [
         # no dry-run, no 2nd package, update required
-        (False, False, True),
+        (False, False, True, None),
         # no dry-run, no 2nd package, no update required
-        (False, False, False),
+        (False, False, False, None),
         # no dry-run, 2nd package, update required
-        (False, True, True),
+        (False, True, True, None),
         # dry-run, no 2nd package, no update required
-        (True, False, False),
+        (True, False, False, None),
         # dry-run, no 2nd package, update required
-        (True, False, True),
+        (True, False, True, None),
+        # no dry-run, no 2nd package, don't force update, custom version -- should
+        # require update but will force dry-run
+        (False, False, False, "main"),
     ],
 )
 @responses.activate
@@ -401,6 +404,7 @@ def test_sync_packages(
     dry_run: bool,
     second_pkg: bool,
     needs_update: bool,
+    template_version: Optional[str],
 ):
     config.github_token = "ghp_fake-token"
     responses.add_passthru("https://github.com")
@@ -471,6 +475,7 @@ def test_sync_packages(
             PackageTemplater,
             1,
             datetime.timedelta(seconds=10),
+            template_version=template_version,
         )
 
     if needs_update and not dry_run and second_pkg:

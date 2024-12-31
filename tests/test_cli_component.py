@@ -5,7 +5,7 @@ import os
 from collections.abc import Iterable
 from datetime import timedelta
 from pathlib import Path
-from typing import Type
+from typing import Optional, Type
 from unittest import mock
 
 import pytest
@@ -16,7 +16,7 @@ from commodore.component.template import ComponentTemplater
 
 import commodore.cli.component as component
 
-from conftest import RunnerFunc
+from conftest import RunnerFunc, make_mock_templater
 
 
 @pytest.mark.parametrize("repo_dir", [False, True])
@@ -50,10 +50,41 @@ def test_compile_component_cli(mock_compile, tmp_path, repo_dir, cli_runner):
         )
 
 
+@pytest.mark.parametrize("template_version", [None, "main^"])
+@mock.patch.object(component, "ComponentTemplater")
+def test_update_component_cli(mock_templater, tmp_path, cli_runner, template_version):
+    cpath = tmp_path / "test-component"
+    cpath.mkdir()
+
+    mt = make_mock_templater(mock_templater, cpath)
+
+    template_arg = (
+        [f"--template-version={template_version}"]
+        if template_version is not None
+        else []
+    )
+
+    result = cli_runner(["component", "update", str(cpath)] + template_arg)
+
+    assert result.exit_code == 0
+    assert mt.template_version == template_version
+
+
 @mock.patch.object(component, "sync_dependencies")
-@pytest.mark.parametrize("ghtoken", [None, "ghp_fake-token"])
+@pytest.mark.parametrize(
+    "ghtoken,template_version",
+    [
+        (None, None),
+        ("ghp_fake-token", None),
+        ("ghp_fake-token", "custom-template-version"),
+    ],
+)
 def test_component_sync_cli(
-    mock_sync_dependencies, ghtoken, tmp_path: Path, cli_runner: RunnerFunc
+    mock_sync_dependencies,
+    ghtoken,
+    template_version,
+    tmp_path: Path,
+    cli_runner: RunnerFunc,
 ):
     os.chdir(tmp_path)
     if ghtoken is not None:
@@ -74,6 +105,7 @@ def test_component_sync_cli(
         pr_batch_size: int,
         github_pause: int,
         filter: str,
+        tmpl_version: Optional[str],
     ):
         assert config.github_token == ghtoken
         assert deplist.absolute() == dep_list.absolute()
@@ -85,7 +117,13 @@ def test_component_sync_cli(
         assert pr_batch_size == 10
         assert github_pause == timedelta(seconds=120)
         assert filter == ""
+        assert tmpl_version == template_version
 
     mock_sync_dependencies.side_effect = sync_deps
-    result = cli_runner(["component", "sync", "deps.yaml"])
+    template_version_flag = (
+        [f"--template-version={template_version}"]
+        if template_version is not None
+        else []
+    )
+    result = cli_runner(["component", "sync", "deps.yaml"] + template_version_flag)
     assert result.exit_code == (1 if ghtoken is None else 0)
