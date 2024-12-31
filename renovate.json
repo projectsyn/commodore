@@ -24,6 +24,13 @@
   "regexManagers": [
     {
       "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG GO_VERSION=(?<currentValue>.*?)\\n"],
+      "extractVersionTemplate": "^go(?<version>.*)$",
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "golang/go"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
       "matchStrings": ["ARG KUSTOMIZE_VERSION=(?<currentValue>.*?)\\n"],
       "extractVersionTemplate": "^kustomize/v(?<version>.*)$",
       "datasourceTemplate": "github-releases",

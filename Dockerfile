@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && mkdir -p /app/.config
 
 
-RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.23.2.linux-${TARGETARCH}.tar.gz \
+ARG GO_VERSION=1.23.2
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
  && tar -C /usr/local -xzf go.tar.gz \
  && rm go.tar.gz \
  && go version
