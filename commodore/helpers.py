@@ -146,7 +146,26 @@ def _lieutenant_request(
                 headers=headers,
                 params=params,
                 timeout=timeout,
+                # don't let requests handle redirects (usually if the API URL is given without
+                # https://), since requests will rewrite the method to GET for the redirect which
+                # makes no sense when we're trying to POST to a POST-only endpoint.
+                allow_redirects=False,
             )
+
+            if r.status_code in [301, 302, 307, 308]:
+                # Explicitly redo the POST if we get a 301, 302, 307 or 308 status code for the
+                # first call. We don't validate that the redirect location has the same domain as
+                # the original request, since we already unconditionally follow redirects  with the
+                # bearer token for GET requests.
+                # Note that this wouldn't be necessary if all Lieutenant APIs would redirect us with
+                # a 308 for POST requests.
+                r = requests.post(
+                    r.headers["location"],
+                    json.dumps(data),
+                    headers=headers,
+                    params=params,
+                    timeout=timeout,
+                )
         else:
             raise NotImplementedError(f"QueryType {method} not implemented")
     except ConnectionError as e:

@@ -338,6 +338,50 @@ def test_lieutenant_post(request_data, response, expected):
     _verify_call_status(post_url, token=request_data["token"])
 
 
+@responses.activate
+def test_lieutenant_post_redirect():
+    base_url = "http://syn.example.com/"
+    redir_url = "https://syn.example.com/"
+
+    post_url = url_normalize(f"{base_url}/clusters/c-cluster-1234/compileMeta")
+    real_post_url = url_normalize(f"{redir_url}/clusters/c-cluster-1234/compileMeta")
+    token = "token"
+    payload = {"some": "data", "other": "data"}
+
+    # successful post response from Lieutenant API has no body
+    responses.add(
+        responses.POST,
+        real_post_url,
+        content_type="application/json",
+        status=204,
+        body=None,
+        match=[matchers.json_params_matcher(payload)],
+    )
+    responses.add(
+        responses.POST,
+        post_url,
+        content_type="application/json",
+        headers={"location": real_post_url},
+        status=302,
+        body=None,
+        match=[matchers.json_params_matcher(payload)],
+    )
+
+    helpers.lieutenant_post(
+        base_url,
+        token,
+        "clusters/c-cluster-1234",
+        "compileMeta",
+        post_data=payload,
+    )
+
+    assert len(responses.calls) == 2
+    call_initial = responses.calls[0]
+    assert call_initial.request.url == post_url
+    call_redirected = responses.calls[1]
+    assert call_redirected.request.url == real_post_url
+
+
 def test_unimplemented_query_method():
     with pytest.raises(NotImplementedError, match="QueryType PATCH not implemented"):
         helpers._lieutenant_request(
