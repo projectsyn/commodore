@@ -564,23 +564,24 @@ toml = ["tomli"]
 
 [[package]]
 name = "cruft"
-version = "2.15.0"
+version = "2.16.0"
 description = "Allows you to maintain all the necessary cruft for packaging and building projects separate from the code you intentionally write. Built on-top of CookieCutter."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "cruft-2.15.0-py3-none-any.whl", hash = "sha256:2c1c6c7c512b8bc3afc66cefa829247dc067409a78ba2609d629d413444bc153"},
-    {file = "cruft-2.15.0.tar.gz", hash = "sha256:9802af66037418655e7e4b6f30b531591e0761939b3ff5dd45d27c3a3f588abe"},
+    {file = "cruft-2.16.0-py3-none-any.whl", hash = "sha256:96adb81f814300a9db0fca690eaa063547f5d3c25f486ac0a366cf8da5cdfb79"},
+    {file = "cruft-2.16.0.tar.gz", hash = "sha256:184662853fbc1c16c0137fe0e9444e0cbe95e40362f5ebb2d9fae33d9223e73f"},
 ]
 
 [package.dependencies]
 click = ">=7.1.2"
 cookiecutter = ">=1.7"
 gitpython = ">=3.0"
+toml = {version = ">=0.10", markers = "python_version < \"3.11\""}
 typer = ">=0.4.0"
 
 [package.extras]
-pyproject = ["toml (>=0.10)"]
+pyproject = ["toml"]
 
 [[package]]
 name = "cryptography"
@@ -2867,4 +2868,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "dac2fd4bb9da5269c6113251497ab37d62f0cceb342d776883417a8543e12e2c"
+content-hash = "2ada39055688d62df8155390507468f0b500fa130a69a57f5a639be2650184f5"
