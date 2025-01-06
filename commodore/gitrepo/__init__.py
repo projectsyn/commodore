@@ -507,16 +507,20 @@ class GitRepo:
         # `untracked_files` respects the repo's `.gitignore`.
         to_add = self._repo.untracked_files
         # We don't want to remove anything by default.
-        to_remove = []
+        to_remove: list[str] = []
 
         # Determine changes to stage, separated into removals and other changes
         changes = self._repo.index.diff(None)
         if changes:
             for c in changes:
-                if c.change_type == "D" or c.deleted_file:
+                if (c.change_type == "D" or c.deleted_file) and c.b_path:
+                    # NOTE(sg): c.b_path is never None for deletions, but mypy doesn't understand
+                    # that, so we make it explicit with `and c.b_path`.
                     # Track removed files for `index.remove()`
                     to_remove.append(c.b_path)
-                else:
+                elif c.a_path:
+                    # NOTE(sg): c.a_path is never None for changes that aren't deletions, but mypy
+                    # doesn't understand that, so we make it explicit with `elif c.a_path`.
                     # Track changes which aren't deletions for `index.add()`
                     to_add.append(c.a_path)
 
