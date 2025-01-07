@@ -408,6 +408,43 @@ local generateResources(resources, resourceFn) =
     ]
   );
 
+/**
+ *
+ * \brief Generate a kustomization overlay
+ *
+ * \arg base_url        The URL of the base kustomization
+ * \arg base_version    The version of the base kustomization
+ * \arg images          An object with keys referring to container image URIs
+ *                      used in the base and values providing `newTag` and
+ *                      `newName` to apply.
+ * \arg kustomize_input User-provided content to merge into the overlay
+ *
+ * \returns an object suitable as a Jsonnet output to generate a
+ *          `kustomization.yaml` to be passed to `kustomize build`
+ */
+local kustomization(base_url, base_version='', images={}, kustomize_input={}) = {
+  // Generate `kustomization.yaml` as output
+  kustomization: {
+    // Configure the provided kustomization as a base for our overlay
+    resources: [
+      if base_version != '' then
+        '%s?ref=%s' % [ base_url, base_version ]
+      else
+        base_url,
+    ],
+    // Render `images` from the provided parameter
+    images: [
+      {
+        name: img,
+        newTag: images[img].newTag,
+        newName: images[img].newName,
+      }
+      for img in std.objectFields(images)
+    ],
+    // Inject the kustomize input provided in the component parameters
+  } + makeMergeable(kustomize_input),
+};
+
 {
   inventory: inventory,
   list_dir: list_dir,
@@ -424,4 +461,5 @@ local generateResources(resources, resourceFn) =
   fixupDir: fixupDir,
   renderArray: renderArray,
   generateResources: generateResources,
+  Kustomization: kustomization,
 }

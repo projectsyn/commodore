@@ -1,6 +1,7 @@
 """
 Unit-tests for target generation
 """
+
 from __future__ import annotations
 
 import os
@@ -10,7 +11,7 @@ import pytest
 from pathlib import Path as P
 from textwrap import dedent
 
-from commodore import cluster
+from commodore import cluster, __kustomize_wrapper__
 from commodore.inventory import Inventory
 from commodore.config import Config
 
@@ -71,12 +72,11 @@ def test_render_bootstrap_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo",
         "defaults.bar",
+        "defaults.foo",
         "global.commodore",
     ]
     assert target != ""
-    print(target)
     assert len(target["classes"]) == len(
         classes
     ), "rendered target includes different amount of classes"
@@ -84,6 +84,7 @@ def test_render_bootstrap_target(tmp_path: P):
         assert target["classes"][i] == classes[i]
     assert target["parameters"]["_instance"] == "cluster"
     assert "_base_directory" not in target["parameters"]
+    assert "_kustomize_wrapper" not in target["parameters"]
 
 
 def test_render_target(tmp_path: P):
@@ -101,13 +102,12 @@ def test_render_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo",
         "defaults.bar",
+        "defaults.foo",
         "global.commodore",
         "components.foo",
     ]
     assert target != ""
-    print(target)
     assert len(target["classes"]) == len(
         classes
     ), "rendered target includes different amount of classes"
@@ -116,6 +116,7 @@ def test_render_target(tmp_path: P):
     assert target["parameters"]["kapitan"]["vars"]["target"] == "foo"
     assert target["parameters"]["_instance"] == "foo"
     assert target["parameters"]["_base_directory"] == str(tmp_path / "foo")
+    assert target["parameters"]["_kustomize_wrapper"] == str(__kustomize_wrapper__)
 
 
 def test_render_aliased_target(tmp_path: P):
@@ -134,8 +135,8 @@ def test_render_aliased_target(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.fooer",
         "defaults.bar",
+        "defaults.fooer",
         "global.commodore",
         "components.fooer",
     ]
@@ -169,8 +170,8 @@ def test_render_aliased_target_with_dash(tmp_path: P):
 
     classes = [
         "params.cluster",
-        "defaults.foo-1",
         "defaults.bar",
+        "defaults.foo-1",
         "global.commodore",
         "components.foo-1",
     ]

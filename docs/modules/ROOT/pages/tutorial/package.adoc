@@ -20,11 +20,11 @@ Switch to an exiting Commodore working directory or a new empty directory and ru
 commodore package new cert-manager --owner ${GITHUB_USERNAME}
 ----
 
-The new package is now located at `inventory/classes/cert-manager`.
+The new package is now located at `dependencies/pkg.cert-manager`.
 
 [source,bash]
 ----
-cd inventory/classes/cert-manager
+cd dependencies/pkg.cert-manager
 tree
 ----
 
@@ -84,6 +84,12 @@ This gives us access to the provided classes.
 <3> We can now import any of the classes in the package as if they're locally available or in the global defaults.
 
 This will add the component cert-manager to the cluster and configure the lestsencrypt mail to `cert@example.com`.
+
+[NOTE]
+====
+During catalog compilation, after the message `Discovering config packages...`, you'll see several warnings like `[WARNING] Reclass class not found: 'cert-manager.common'. Skipped!`.
+This is expected, as Commodore has to render the inventory in order to be able to read the package's Git repository URL and version, which are stored in the inventory.
+====
 
 == Conclusion
 

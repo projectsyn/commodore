@@ -11,6 +11,14 @@ class MockInventory:
     def inventory_dir(self):
         return self.invdir
 
+    @property
+    def targets_dir(self):
+        return self.invdir / "targets"
+
+    @property
+    def classes_dir(self):
+        return self.invdir / "classes"
+
 
 class MockConfig:
     def __init__(self, invdir: P):

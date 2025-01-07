@@ -9,8 +9,10 @@ import click
 from .catalog import fetch_catalog, clean_catalog, update_catalog
 from .cluster import (
     Cluster,
+    CompileMeta,
     load_cluster_from_api,
     read_cluster_and_tenant,
+    report_compile_metadata,
     update_params,
     update_target,
 )
@@ -63,7 +65,12 @@ def check_removed_reclass_variables_components(config: Config):
 
 def _fetch_global_config(cfg: Config, cluster: Cluster):
     click.secho("Updating global config...", bold=True)
-    repo = GitRepo(cluster.global_git_repo_url, cfg.inventory.global_config_dir)
+    repo = GitRepo(
+        cluster.global_git_repo_url,
+        cfg.inventory.global_config_dir,
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.global_git_repo_revision
     if cfg.global_repo_revision_override:
         rev = cfg.global_repo_revision_override
@@ -76,7 +83,12 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     repo_url = cluster.config_repo_url
     if cfg.debug:
         click.echo(f" > Cloning customer config {repo_url}")
-    repo = GitRepo(repo_url, cfg.inventory.tenant_config_dir(cluster.tenant_id))
+    repo = GitRepo(
+        repo_url,
+        cfg.inventory.tenant_config_dir(cluster.tenant_id),
+        author_name=cfg.username,
+        author_email=cfg.usermail,
+    )
     rev = cluster.config_git_repo_revision
     if cfg.tenant_repo_revision_override:
         rev = cfg.tenant_repo_revision_override
@@ -84,12 +96,7 @@ def _fetch_customer_config(cfg: Config, cluster: Cluster):
     cfg.register_config("customer", repo)
 
 
-def _regular_setup(config: Config, cluster_id):
-    try:
-        cluster = load_cluster_from_api(config, cluster_id)
-    except ApiError as e:
-        raise click.ClickException(f"While fetching cluster specification: {e}") from e
-
+def _regular_setup(config: Config, cluster: Cluster):
     update_target(config, config.inventory.bootstrap_target)
     update_params(config.inventory, cluster)
 
@@ -137,9 +144,23 @@ def _local_setup(config: Config, cluster_id):
         raise click.ClickException(error)
 
     click.secho("Registering config...", bold=True)
-    config.register_config("global", GitRepo(None, config.inventory.global_config_dir))
     config.register_config(
-        "customer", GitRepo(None, config.inventory.tenant_config_dir(tenant))
+        "global",
+        GitRepo(
+            None,
+            config.inventory.global_config_dir,
+            author_name=config.username,
+            author_email=config.usermail,
+        ),
+    )
+    config.register_config(
+        "customer",
+        GitRepo(
+            None,
+            config.inventory.tenant_config_dir(tenant),
+            author_name=config.username,
+            author_email=config.usermail,
+        ),
     )
 
     check_removed_reclass_variables_inventory(config, tenant)
@@ -162,7 +183,12 @@ def _local_setup(config: Config, cluster_id):
     update_target(config, config.inventory.bootstrap_target)
 
     click.secho("Configuring catalog repo...", bold=True)
-    return GitRepo(None, config.catalog_dir)
+    return GitRepo(
+        None,
+        config.catalog_dir,
+        author_name=config.username,
+        author_email=config.usermail,
+    )
 
 
 def check_parameters_component_versions(cluster_parameters):
@@ -177,6 +203,26 @@ def check_parameters_component_versions(cluster_parameters):
             "Specifying component versions in parameter `component_versions` "
             + "is no longer suppported. Please migrate your configuration to "
             + "parameter `components`."
+        )
+
+
+def _abort_on_local_changes(cfg: Config, cluster: Cluster):
+    if cfg.force:
+        click.secho("Discarding local changes, if there are any", fg="yellow")
+        return
+
+    gr = GitRepo(None, cfg.inventory.global_config_dir)
+    if gr.has_local_changes() or gr.has_local_branches() or gr.is_ahead_of_remote():
+        raise click.ClickException(
+            "Global repo has local (uncommitted or unpushed) changes. "
+            + "Please specify `--force` to discard them."
+        )
+
+    tr = GitRepo(None, cfg.inventory.tenant_config_dir(cluster.tenant_id))
+    if tr.has_local_changes() or gr.has_local_branches() or gr.is_ahead_of_remote():
+        raise click.ClickException(
+            "Tenant repo has local (uncommitted or unpushed) changes. "
+            + "Please specify `--force` to discard them."
         )
 
 
@@ -217,8 +263,15 @@ def compile(config, cluster_id):
     if config.local:
         catalog_repo = _local_setup(config, cluster_id)
     else:
+        try:
+            cluster = load_cluster_from_api(config, cluster_id)
+        except ApiError as e:
+            raise click.ClickException(
+                f"While fetching cluster specification: {e}"
+            ) from e
+        _abort_on_local_changes(config, cluster)
         clean_working_tree(config)
-        catalog_repo = _regular_setup(config, cluster_id)
+        catalog_repo = _regular_setup(config, cluster)
 
     inventory, targets = setup_compile_environment(config)
 
@@ -228,7 +281,10 @@ def compile(config, cluster_id):
 
     postprocess_components(config, inventory, config.get_components())
 
-    update_catalog(config, targets, catalog_repo)
+    compile_meta = CompileMeta(config)
+
+    push_done = update_catalog(config, targets, catalog_repo, compile_meta)
+    report_compile_metadata(config, compile_meta, cluster_id, report=push_done)
 
     click.secho("Catalog compiled! 🎉", bold=True)
 

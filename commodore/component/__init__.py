@@ -4,8 +4,9 @@ from collections.abc import Iterable
 from pathlib import Path as P
 from typing import Optional
 
-import _jsonnet
+import _gojsonnet
 import click
+import git
 
 from commodore.gitrepo import GitRepo
 from commodore.multi_dependency import MultiDependency
@@ -14,18 +15,30 @@ from commodore.multi_dependency import MultiDependency
 class Component:
     _name: str
     _repo: Optional[GitRepo]
-    _dependency: MultiDependency
+    _dependency: Optional[MultiDependency] = None
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
     _aliases: dict[str, str]
     _work_dir: Optional[P]
 
+    @classmethod
+    def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
+        cdep = cfg.register_dependency_repo(clone_url)
+        c = Component(
+            name,
+            cdep,
+            directory=component_dir(cfg.work_dir, name),
+            version=version,
+        )
+        c.checkout()
+        return c
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
         name: str,
-        dependency: MultiDependency,
+        dependency: Optional[MultiDependency],
         work_dir: Optional[P] = None,
         version: Optional[str] = None,
         directory: Optional[P] = None,
@@ -40,8 +53,9 @@ class Component:
             raise click.ClickException(
                 "Either `work_dir` or `directory` must be provided."
             )
-        self._dependency = dependency
-        self._dependency.register_component(self.name, self._dir)
+        if dependency:
+            self._dependency = dependency
+            self._dependency.register_component(self.name, self._dir)
         self.version = version
         self._sub_path = sub_path
         self._repo = None
@@ -55,18 +69,41 @@ class Component:
     @property
     def repo(self) -> GitRepo:
         if not self._repo:
-            self._repo = GitRepo(None, self._dir)
+            if self._dependency:
+                dep_repo = self._dependency.bare_repo
+                author_name = (
+                    dep_repo.author.name if hasattr(dep_repo, "author") else None
+                )
+                author_email = (
+                    dep_repo.author.email if hasattr(dep_repo, "author") else None
+                )
+            else:
+                # Fall back to author detection if we don't have a dependency
+                author_name = None
+                author_email = None
+            self._repo = GitRepo(
+                None,
+                self._dir,
+                author_name=author_name,
+                author_email=author_email,
+            )
         return self._repo
 
     @property
-    def dependency(self):
+    def dependency(self) -> MultiDependency:
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         return self._dependency
 
     @dependency.setter
-    def dependency(self, dependency: MultiDependency):
+    def dependency(self, dependency: Optional[MultiDependency]):
         """Update the GitRepo backing the component"""
-        self._dependency.deregister_component(self.name)
-        dependency.register_component(self.name, self._dir)
+        if self._dependency:
+            self._dependency.deregister_component(self.name)
+        if dependency:
+            dependency.register_component(self.name, self._dir)
         self._dependency = dependency
         # Clear worktree GitRepo wrapper when we update the component's backing
         # dependency. The new GitRepo wrapper will be created on the nex access of
@@ -75,6 +112,10 @@ class Component:
 
     @property
     def repo_url(self) -> str:
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         return self._dependency.url
 
     @property
@@ -86,16 +127,20 @@ class Component:
         self._version = version
 
     @property
-    def repo_directory(self) -> P:
-        return self._dir
-
-    @property
     def sub_path(self) -> str:
         return self._sub_path
 
     @property
+    def repo_directory(self) -> P:
+        return self._dir
+
+    @property
     def target_directory(self) -> P:
         return self.alias_directory(self.name)
+
+    @property
+    def target_dir(self) -> P:
+        return self.target_directory
 
     @property
     def class_file(self) -> P:
@@ -106,6 +151,8 @@ class Component:
         return self.alias_defaults_file(self.name)
 
     def alias_directory(self, alias: str) -> P:
+        if not self._dependency:
+            return self._dir / self._sub_path
         apath = self._dependency.get_component(alias)
         if not apath:
             raise ValueError(f"unknown alias {alias} for component {self.name}")
@@ -122,14 +169,16 @@ class Component:
 
     @property
     def lib_files(self) -> Iterable[P]:
+        # NOTE(sg): Usage of yield makes the whole function return a generator.
+        # So if the top-level condition is false, this should immediately raise
+        # a StopIteration exception. Mypy has started to complain about the
+        # `return []` that was previously part of this function.
         lib_dir = self.target_directory / "lib"
         if lib_dir.exists():
             for e in lib_dir.iterdir():
                 # Skip hidden files in lib directory
                 if not e.name.startswith("."):
                     yield e
-
-        return []
 
     def get_library(self, libname: str) -> Optional[P]:
         lib_dir = self.target_directory / "lib"
@@ -147,6 +196,10 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
+        if self._dependency is None:
+            raise ValueError(
+                f"Dependency for component {self._name} hasn't been initialized"
+            )
         self._dependency.checkout_component(self.name, self.version)
 
     def register_alias(self, alias: str, version: str):
@@ -160,14 +213,40 @@ class Component:
                 f"alias {alias} already registered on component {self.name}"
             )
         self._aliases[alias] = version
-        self._dependency.register_component(alias, component_dir(self._work_dir, alias))
+        if self._dependency:
+            self._dependency.register_component(
+                alias, component_dir(self._work_dir, alias)
+            )
 
     def checkout_alias(self, alias: str):
         if alias not in self._aliases:
             raise ValueError(
                 f"alias {alias} is not registered on component {self.name}"
             )
-        self._dependency.checkout_component(alias, self._aliases[alias])
+        if self._dependency:
+            self._dependency.checkout_component(alias, self._aliases[alias])
+
+    def is_checked_out(self) -> bool:
+        return self.target_dir is not None and self.target_dir.is_dir()
+
+    def checkout_is_dirty(self) -> bool:
+        if self._dependency:
+            dep_repo = self._dependency.bare_repo
+            author_name = dep_repo.author.name
+            author_email = dep_repo.author.email
+            worktree = self._dependency.get_component(self.name)
+        else:
+            author_name = None
+            author_email = None
+            worktree = self.target_dir
+
+        if worktree and worktree.is_dir():
+            r = GitRepo(
+                None, worktree, author_name=author_name, author_email=author_email
+            )
+            return r.repo.is_dirty()
+        else:
+            return False
 
     def render_jsonnetfile_json(self, component_params):
         """
@@ -176,14 +255,17 @@ class Component:
         jsonnetfile_jsonnet = self._dir / "jsonnetfile.jsonnet"
         jsonnetfile_json = self._dir / "jsonnetfile.json"
         if jsonnetfile_jsonnet.is_file():
-            if jsonnetfile_json.name in self.repo.repo.tree():
-                click.secho(
-                    f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
-                    + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",
-                    fg="yellow",
-                )
+            try:
+                if jsonnetfile_json.name in self.repo.repo.tree():
+                    click.secho(
+                        f" > [WARN] Component {self.name} repo contains both jsonnetfile.json "
+                        + "and jsonnetfile.jsonnet, continuing with jsonnetfile.jsonnet",
+                        fg="yellow",
+                    )
+            except git.InvalidGitRepositoryError:
+                pass
             # pylint: disable=c-extension-no-member
-            output = _jsonnet.evaluate_file(
+            output = _gojsonnet.evaluate_file(
                 str(jsonnetfile_jsonnet),
                 ext_vars=component_params.get("jsonnetfile_parameters", {}),
             )

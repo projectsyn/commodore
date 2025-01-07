@@ -4,22 +4,43 @@
     ":gitSignOff",
     ":disableDependencyDashboard"
   ],
-  "python": {
-    "enabled": false
-  },
   "poetry": {
     "enabled": true
   },
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "labels": ["ignore"],
+    "automerge": true,
+    "automergeType": "pr",
+    "platformAutomerge": true
   },
-  "ignoreDeps": [
-    "gitpython",
-    "oauthlib",
-    "pyjwt",
-    "requests"
-  ],
   "labels": [
     "dependency"
+  ],
+  "ignoreDeps": [
+    "boto3",
+    "botocore"
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG GO_VERSION=(?<currentValue>.*?)\\n"],
+      "extractVersionTemplate": "^go(?<version>.*)$",
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "golang/go"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG KUSTOMIZE_VERSION=(?<currentValue>.*?)\\n"],
+      "extractVersionTemplate": "^kustomize/v(?<version>.*)$",
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "kubernetes-sigs/kustomize"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG POETRY_VERSION=(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "python-poetry/poetry"
+    }
   ]
 }

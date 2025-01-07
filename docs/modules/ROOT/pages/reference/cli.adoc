@@ -10,6 +10,10 @@ provided to any command instead.
   By default, this happens in the current working directory of the environment in which Commodore is executed.
   If this option is provided, Commodore will create its directories and files in the provided location.
 
+*--request-timeout*::
+  Commodore allows users to customize the HTTP request timeout.
+  If this option isn't provided, Commodore uses a request timeout of 5 seconds.
+
 *--version*::
   Show the version and exit.
 
@@ -75,6 +79,11 @@ Additionally, having Jsonnet and Kapitan dependency fetching enabled in local mo
 When you want to test adding a new component in local mode, you *must* run local mode with dependency fetching enabled at least once.
 After that, all the symlinks and dependencies which are required to compile the component will be present and you can disable dependency fetching.
 
+*-m, --migration*::
+  Specify a migration that you expect to happen for the cluster catalog.
+  Currently known are the Kapitan 0.29 to 0.30 migration and a generic migration ignoring all non-functional YAML formatting changes.
+  When the Kapitan 0.29 to 0.30 migration is selected, Commodore will suppress noise (changing managed-by labels, and reordered objects) caused by the migration in the diff output.
+  When the ignore YAML formatting migration is selected, Commodore will suppress noise such as reordered objects, indentation and flow changes of lists or differences in string representation.
 
 *--push*::
   Push catalog to remote repository as discovered in the cluster configuration
@@ -100,12 +109,39 @@ After that, all the symlinks and dependencies which are required to compile the 
   This command line parameter overrides the tenant git repository revision configured on the cluster object in Lieutenant.
   When this option is provided, Commodore will abort without compiling the catalog if `--push` is also provided.
 
+*-d, --dynamic-fact* KEY=VALUE::
+  Fallback dynamic facts to use when compiling a cluster which hasn't reported its dynamic facts yet.
+  Commodore will never use values provided through this parameter if the cluster response from the API has a dynamic facts field.
+  Can be repeated.
+  Commodore expects each fact to be specified as `key=value`.
+  Nested keys can be provided as `path.to.key`.
+  Commodore will parse values as JSON if they're prefixed by `json:`.
+  If the same key is provided multiple times, the last occurrence overrides the previous values.
+  When providing a value for a key as JSON, previously specified subkeys of that key will be overwritten.
+  Nested keys are ignored if any non-leaf level of the requested key already contains a non-dictionary value.
+  If a value prefixed with `json:` isn't valid JSON, it will be skipped.
+
+*--force / --no-force*::
+  With `--force` local changes (uncommitted changes, untracked files, or commits or branches which haven't been pushed) in the global and tenant repo checkouts are discarded.
+  Additionally, uncommitted changes in tracked files in dependency repos (components or packages) are discarded.
++
+With `--no-force`, local changes in global, tenant, or dependency checkouts are preserved, and the catalog compilation will abort with an error if there's local changes present.
+Specifying `--force` has no effect if `--local` is given, and is silently ignored.
+Defaults to `--no-force`.
+
 *--help*::
   Show catalog clean usage and options then exit.
 
 == Catalog List
 
-This command doesn't have any command line options.
+*-o, --out* TEXT::
+  Output format. One of: (json, yaml, id)
+
+*-t, --tenant* TEXT::
+  If non-empty, only show clusters of the tenant with the provided ID
+
+*--sort-by* TEXT::
+  If non-empty, sort list using this flag specification. One of: (id, tenant, displayName)
 
 == Component Compile
 
@@ -113,6 +149,10 @@ This command doesn't have any command line options.
   Specify inventory class in a YAML file. This option can be repeated to
   provide multiple files. Files specified later win when resolving inventory
   values.
+
+*-n, --name* NAME::
+  Provide component name to use when compiling.
+  By default, the component name is derived from the directory which is being compiled.
 
 *-a, --alias* ALIAS::
   Provide component alias to use when compiling component.
@@ -150,16 +190,271 @@ This command doesn't have any command line options.
 *--matrix-tests / --no-matrix-tests*::
   Enable test matrix for the component compile and golden tests. Defaults to _yes_.
 
+*--output-dir* DIRECTORY::
+  The directory in which to place the new component.
+  If not provided, the component is placed into `dependencies/<component-slug>` in the Commodore working directory.
+
+*--template-url* TEXT::
+  The URL of the component cookiecutter template.
+  By default https://github.com/projectsyn/commodore-component-template.git is used.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  Defaults to `main`.
+
+*--additional-test-case, -t* CASE::
+  Additional test cases to generate in the new component.
+  Can be repeated.
+  Test case `defaults` will always be generated.
+  Commodore will deduplicate the provided test cases.
+
+*--automerge-patch / --no-automerge-patch*::
+  Enable automerging of patch-level dependency PRs.
+
+*--automerge-patch-v0 / --no-automerge-patch-v0*::
+  Enable automerging of patch-level dependency PRs for v0.x dependencies.
++
+NOTE: Enabling automerging of patch-level dependency PRs for v0.x dependencies implicitly enables automerging of all patch-level dependency PRs.
+
+*--autorelease / --no-autorelease*::
+  Enable autorelease GitHub action
++
+NOTE: If autorelease is enabled, new releases will be generated for automerged dependency PRs.
+
+*--add-automerge-patch-block-depname* NAME::
+  Add dependency name that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge-patch-block-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-patch-block-pattern* PATTERN::
+  Add regex pattern for dependencies that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-patch-block-depname` for a variant of this flag which allows specifying dependency names.
+
+*--add-automerge-patch-v0-allow-depname* NAME::
+  Add name of dependency with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge- patch-v0-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-patch-v0-allow-pattern* PATTERN::
+  Add regex pattern for dependencies with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-patch-v0-allow- depname` for a variant of this flag which allows specifying dependency names.
+
+*--add-automerge-minor-allow-depname* NAME::
+  Add dependency name for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge-minor-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-minor-allow-pattern* PATTERN::
+  Add regex pattern for dependencies for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-minor-allow-depname` for a variant of this flag which allows specifying dependency names.
+
 *--help*::
   Show component new usage and options then exit.
 
-== Inventory Components
+== Component Update
+
+*--lib / --no-lib*::
+  Add or remove the component library template.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--pp / --no-pp*::
+  Add or remove the component postprocessing config.
+  When neither is provided, the command will reuse the previous value for the flag.
+   Defaults to _unset_.
+
+*--golden-tests / --no-golden-tests*::
+  Enable or disable golden tests for the component.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--matrix-tests / --no-matrix-tests*::
+  Enable test matrix for the component compile and golden tests.
+  When neither is provided, the command will reuse the previous value for the flag.
+  Defaults to _unset_.
+
+*--copyright* TEXT::
+  Update the copyright holder in the license file.
+  When this flag isn't provided the copyright holder is left unchanged.
+  Defaults to _unset_.
+
+*--update-copyright-year / --no-update-copyright-year*::
+  Update the year in the copyright notice to the current year.
+  Defaults to _false_.
+
+*--additional-test-case, -t* CASE::
+  Additional test cases to add to the component.
+  Can be repeated.
+  Commodore will deduplicate the provided test cases.
+
+*--remove-test-case* CASE::
+  Test cases to remove from the component.
+  Can be repeated.
+
+*--commit / --no-commit*::
+  Whether to commit the rendered template changes.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
+
+*--automerge-patch / --no-automerge-patch*::
+  Enable automerging of patch-level dependency PRs.
+
+*--automerge-patch-v0 / --no-automerge-patch-v0*::
+  Enable automerging of patch-level dependency PRs for v0.x dependencies.
++
+NOTE: Enabling automerging of patch-level dependency PRs for v0.x dependencies implicitly enables automerging of all patch-level dependency PRs.
+
+*--add-automerge-patch-block-depname* NAME::
+  Add dependency name that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge-patch-block-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-patch-block-pattern* PATTERN::
+  Add regex pattern for dependencies that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-patch-block-depname` for a variant of this flag which allows specifying dependency names.
+
+*--remove-automerge-patch-block-depname* NAME::
+  Remove dependency name that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  This flag has no effect if the provided name isn't part of the currently configured dependency names.
+  See `--remove-automerge-patch-block-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--remove-automerge-patch-block-pattern* PATTERN::
+  Remove regex pattern for dependencies that should be excluded from automerging of patch updates.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  This flag has no effect if the provided pattern isn't part of the currently configured patterns.
+  See '--remove-automerge-patch-block-depname' for a variant of this flag which allows specifying dependency names.
+
+*--add-automerge-patch-v0-allow-depname* NAME::
+  Add name of dependency with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge- patch-v0-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-patch-v0-allow-pattern* PATTERN::
+  Add regex pattern for dependencies with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-patch-v0-allow- depname` for a variant of this flag which allows specifying dependency names.
+
+*--remove-automerge-patch-v0-allow-depname* NAME::
+  Remove name of dependency with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate dependency names. This flag has no effect if the provided name isn't part of the currently configured dependency names.
+  See `--remove-automerge-patch-v0-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--remove-automerge-patch-v0-allow-pattern* PATTERN::
+  Remove regex pattern for dependencies with current version v0.x for which patch updates should be automerged.
+  This flag has no effect if automerging for patch updates for v0.x dependencies is enabled via `--automerge-patch-v0`.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  This flag has no effect if the provided pattern isn't part of the currently configured patterns.
+  See `--remove-automerge-patch-v0-allow-depname` for a variant of this flag which allows specifying dependency names.
+
+*--add-automerge-minor-allow-depname* NAME::
+  Add dependency name for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  See `--add-automerge-minor-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--add-automerge-minor-allow-pattern* PATTERN::
+  Add regex pattern for dependencies for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  See `--add-automerge-minor-allow-depname` for a variant of this flag which allows specifying dependency names.
+
+*--remove-automerge-minor-allow-depname* NAME::
+  Remove dependency name for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate dependency names.
+  This flag has no effect if the provided name isn't part of the currently configured dependency names.
+  See `-- remove-automerge-minor-allow-pattern` for a variant of this flag which allows specifying regex patterns.
+  Commodore will convert the provided dependency names into a list of anchored regex patterns.
+
+*--remove-automerge-minor-allow-pattern* PATTERN::
+  Remove regex pattern for dependencies for which minor updates should be automerged.
+  Can be repeated.
+  Commodore will deduplicate patterns.
+  This flag has no effect if the provided pattern isn't part of the currently configured patterns.
+  See `--remove-automerge-minor-allow-depname` for a variant of this flag which allows specifying dependency names.
+
+*--help*::
+  Show component new usage and options then exit.
+
+== Component Sync
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+*--dry-run*::
+  If this flag is provided, the sync command doesn't commit the rendered changes, doesn't push the template branch to GitHub and doesn't create or update any PRs.
+
+*-b, --pr-branch* BRANCH::
+  The branch name to use when pushing updates to GitHub.
+  By default `template-sync` is used used as the branch name.
++
+NOTE: Changing this flag will orphan any open update PRs created with a different branch name.
+
+*-l, --pr-label* LABEL::
+  Labels to set on the PR.
+  Can be repeated.
++
+When changing the set of labels, new labels will be added to open PRs.
+However, labels added by previous runs can't be removed since we've got no easy way to distinguish between old labels and externally added labels.
+
+*--pr-batch-size* COUNT::
+    The number of PRs to create before pausing.
+    Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--github-pause* SECONDS::
+  The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
+  Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--filter* REGEX::
+    Regex to select which dependencies to sync.
+    If the option isn't given, all dependencies listed in the provided YAML are synced.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
+
+== Inventory Components / Packages / Show
 
 *-f, --values*::
   Specify an additional inventory class in a YAML file.
   This option can be repeated to provide multiple files.
   Files specified later win when resolving inventory values.
-  Use this mechanism to specify any facts (such as the cluster's distribution) that should be taken into account when extracting component versions.
+  Use this mechanism to specify any facts (such as the cluster's distribution) that should be taken into account when rendering the inventory.
 
 *-o, --output-format*::
   The output format for the command. Supported values are `json` and `yaml`. Defaults to `yaml`.
@@ -171,6 +466,10 @@ This command doesn't have any command line options.
   Supported values are `component-versions` and `deprecated-parameters`.
   Can be repeated.
   If this parameter isn't specified, all known linters are enabled.
+
+*--ignore-patterns=GLOB*::
+  Glob pattern(s) indicating path(s) to ignore.
+  Can be repeated.
 
 == Login
 
@@ -234,6 +533,7 @@ This command doesn't have any command line options.
   Additional test cases to generate in the new package.
   Can be repeated.
   Test case `defaults` will always be generated.
+  Commodore will deduplicate the provided test cases.
 
 == Package Update
 
@@ -248,10 +548,18 @@ This command doesn't have any command line options.
 *--additional-test-case, -t* CASE::
   Additional test cases to add to the package.
   Can be repeated.
+  Commodore will deduplicate the provided test cases.
 
 *--remove-test-case* CASE::
   Test cases to remove from the package.
   Can be repeated.
+
+*--commit / --no-commit*::
+  Whether to commit the rendered template changes.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.
 
 == Package Compile
 
@@ -308,3 +616,41 @@ When this flag is provided, Commodore will use the provided path as the director
 It's the users responsibility to clean up the temp directory when this flag is provided.
 +
 If the specified path doesn't exist, Commodore will create it as a directory.
+
+== Package Sync
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+*--dry-run*::
+  If this flag is provided, the sync command doesn't commit the rendered changes, doesn't push the template branch to GitHub and doesn't create or update any PRs.
+
+*-b, --pr-branch* BRANCH::
+  The branch name to use when pushing updates to GitHub.
+  By default `template-sync` is used used as the branch name.
++
+NOTE: Changing this flag will orphan any open update PRs created with a different branch name.
+
+*-l, --pr-label* LABEL::
+  Labels to set on the PR.
+  Can be repeated.
++
+When changing the set of labels, new labels will be added to open PRs.
+However, labels added by previous runs can't be removed since we've got no easy way to distinguish between old labels and externally added labels.
+
+*--pr-batch-size* COUNT::
+    The number of PRs to create before pausing.
+    Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--github-pause* SECONDS::
+  The duration for which to pause (in seconds) after creating a number of PRs according to `--pr-batch-size`.
+  Tune this parameter if your sync job hits the GitHub secondary rate limit.
+
+*--filter* REGEX::
+    Regex to select which dependencies to sync.
+    If the option isn't given, all dependencies listed in the provided YAML are synced.
+
+*--template-version* TEXT::
+  The component template version (Git tree-ish) to use.
+  If not provided, the currently active template version will be used.

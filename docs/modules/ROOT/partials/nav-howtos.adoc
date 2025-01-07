@@ -1,1 +1,2 @@
-
+* xref:commodore:ROOT:how-to/local-mode-component.adoc[]
+* xref:commodore:ROOT:how-to/shell-completion.adoc[]

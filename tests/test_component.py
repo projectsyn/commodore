@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+
 import pytest
 import yaml
 
@@ -15,6 +17,7 @@ from commodore.component import (
     component_dir,
     component_parameters_key,
 )
+from commodore.config import Config
 from commodore.gitrepo import RefError
 from commodore.inventory import Inventory
 from commodore.multi_dependency import MultiDependency
@@ -55,9 +58,10 @@ def _setup_component(
     )
 
 
-def _setup_existing_component(tmp_path: P):
+def _setup_existing_component(tmp_path: P, worktree=True):
     cr = Repo.init(tmp_path / ".repo", bare=True)
     upstream = tmp_path / "upstream"
+    cr
     u = cr.clone(upstream)
     with open(upstream / "README.md", "w") as f:
         f.write("# Dummy component\n")
@@ -67,9 +71,10 @@ def _setup_existing_component(tmp_path: P):
     u.remote().push()
 
     # Setup w
-    cr.git.execute(
-        ["git", "worktree", "add", "-f", str(tmp_path / "component"), "master"]
-    )
+    if worktree:
+        cr.git.execute(
+            ["git", "worktree", "add", "-f", str(tmp_path / "component"), "master"]
+        )
 
     return cr
 
@@ -333,19 +338,25 @@ def test_render_jsonnetfile_json(tmp_path: P, capsys):
         assert jsonnetfile_contents["dependencies"][0]["version"] == "1.18"
 
 
-def test_render_jsonnetfile_json_warning(tmp_path: P, capsys):
+@pytest.mark.parametrize("has_repo", [False, True])
+def test_render_jsonnetfile_json_warning(tmp_path: P, capsys, has_repo: bool):
     c = _setup_render_jsonnetfile_json(tmp_path)
+    if not has_repo:
+        shutil.rmtree(c.target_directory / ".git")
+
     with open(c.target_directory / "jsonnetfile.json", "w") as jf:
         jf.write("{}")
-    c.repo.repo.index.add("*")
-    c.repo.repo.index.commit("Add jsonnetfile.json")
+    if has_repo:
+        c.repo.repo.index.add("*")
+        c.repo.repo.index.commit("Add jsonnetfile.json")
 
     c.render_jsonnetfile_json(
         {"jsonnetfile_parameters": {"kube_prometheus_version": "1.18"}}
     )
 
-    stdout, _ = capsys.readouterr()
-    assert _render_jsonnetfile_json_error_string(c) in stdout
+    if has_repo:
+        stdout, _ = capsys.readouterr()
+        assert _render_jsonnetfile_json_error_string(c) in stdout
 
 
 @pytest.mark.parametrize(
@@ -404,3 +415,119 @@ def test_component_get_library(tmp_path: P, libfiles: Iterable[str]):
 
     for f in libfiles:
         assert c.get_library(f) == tmp_path / "tc1" / "lib" / f
+
+
+def test_component_no_dep_get_dependency(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        _ = c.dependency
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+def test_component_no_dep_get_url(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        _ = c.repo_url
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+def test_component_no_dep_checkout(tmp_path: P):
+    c = Component("test-component", None, directory=tmp_path)
+    with pytest.raises(ValueError) as e:
+        c.checkout()
+
+    assert (
+        str(e.value)
+        == "Dependency for component test-component hasn't been initialized"
+    )
+
+
+@pytest.mark.parametrize("init_dep", [False, True])
+@pytest.mark.parametrize("new_dep", [False, True])
+def test_component_update_dependency(tmp_path: P, init_dep: bool, new_dep: bool):
+    r1 = _setup_existing_component(tmp_path / "tc1")
+    r2 = _setup_existing_component(tmp_path / "tc2")
+
+    idep = None
+    if init_dep:
+        idep = MultiDependency(f"file://{r1.common_dir}", tmp_path / "dependencies")
+
+    c = Component("tc1", idep, tmp_path)
+
+    if init_dep:
+        c.checkout()
+        assert c.dependency == idep
+        assert c.repo_url == idep.url
+        assert c.repo.repo.head.commit.hexsha == r1.head.commit.hexsha
+    else:
+        with pytest.raises(ValueError) as exc:
+            _ = c.dependency
+        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+
+    ndep = None
+    if new_dep:
+        ndep = MultiDependency(f"file://{r2.common_dir}", tmp_path / "dependencies")
+
+    c.dependency = ndep
+
+    if ndep:
+        c.checkout()
+        assert c.dependency == ndep
+        assert c.repo_url == ndep.url
+        assert c.repo.repo.head.commit.hexsha == r2.head.commit.hexsha
+    else:
+        with pytest.raises(ValueError) as exc:
+            _ = c.dependency
+        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+
+
+@pytest.mark.parametrize("dep", [True, False])
+def test_component_repo(tmp_path: P, dep: bool):
+    u = Repo.init(tmp_path / "bare.git")
+    (tmp_path / "bare.git" / "x").touch()
+    u.index.add(["x"])
+    u.index.commit("Initial commit")
+
+    if dep:
+        md = MultiDependency(f"file://{tmp_path}/bare.git", tmp_path)
+    else:
+        md = None
+
+    c = Component(
+        "test-component", md, directory=tmp_path / "test-component", version="master"
+    )
+    if md:
+        c.checkout()
+
+    assert c.repo.working_tree_dir == tmp_path / "test-component"
+
+
+def test_component_clone(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+
+    assert c.repo.repo.head.commit.hexsha == rem.head.commit.hexsha
+    assert c.target_directory == tmp_path / "dependencies" / "test-component"
+    assert c.target_directory == c.target_dir
+    assert c.dependency == config.register_dependency_repo(clone_url)
+
+
+def test_checkout_is_dirty(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+    c.checkout()
+    c._dependency = None
+
+    assert not c.checkout_is_dirty()

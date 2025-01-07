@@ -1,12 +1,17 @@
 """
 Unit-tests for git
 """
+
 from __future__ import annotations
+
+import re
+import subprocess
 
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Optional
 
+import os
 import shutil
 
 import click
@@ -21,6 +26,7 @@ from pathlib import Path
 class RepoInfo:
     branches: Iterable[str]
     commit_shas: dict[str, str]
+    repo: git.Repo
 
 
 def setup_remote(tmp_path: Path):
@@ -30,7 +36,11 @@ def setup_remote(tmp_path: Path):
 
     (remote / "test.txt").touch(exist_ok=True)
 
-    repo.index.add(["test.txt"])
+    # setup .gitignore
+    with open(remote / ".gitignore", "w", encoding="utf-8") as f:
+        f.write("/ignored.txt\n")
+
+    repo.index.add(["test.txt", ".gitignore"])
     commit = repo.index.commit("initial commit")
 
     (remote / "branch.txt").touch(exist_ok=True)
@@ -39,12 +49,13 @@ def setup_remote(tmp_path: Path):
     b.checkout()
     bc = repo.index.commit("branch")
     repo.create_tag("v1.0.0", ref="master")
-    repo.head.set_reference("master")
-    repo.index.checkout()
+    m = [h for h in repo.heads if h.name == "master"][0]
+    m.checkout()
 
     ri = RepoInfo(
         ["master", "test-branch"],
         {"master": commit.hexsha, "test-branch": bc.hexsha},
+        repo,
     )
 
     return f"file://{remote.absolute()}", ri
@@ -559,3 +570,197 @@ def test_gitrepo_commit_amend(tmp_path: Path):
     assert r.repo.head.commit.author.email == "john.doe@example.com"
     assert r.repo.head.commit.committer.name == "John Doe"
     assert r.repo.head.commit.committer.email == "john.doe@example.com"
+
+
+def _setup_merge_conflict(tmp_path: Path):
+    r, _ = setup_repo(tmp_path)
+    test_txt_path = r.working_tree_dir / "test.txt"
+    with open(test_txt_path, "w", encoding="utf-8") as f:
+        f.write("Hello, world!\n")
+    r.stage_all()
+    r.commit("Add content to test.txt")
+    assert not r.repo.is_dirty()
+
+    diff = """diff --git a/test.txt b/test.txt
+new file mode 100644
+index 0000000..d56c457
+--- /dev/null
++++ b/test.txt
+@@ -0,0 +1 @@
++Yo World!
+"""
+
+    result = subprocess.run(
+        ["git", "apply", "-3"], input=diff.encode(), cwd=r.working_tree_dir
+    )
+    # patch should not apply
+    assert result.returncode == 1
+
+    return r
+
+
+def test_gitrepo_stage_all_raises_on_conflict(tmp_path: Path):
+    r = _setup_merge_conflict(tmp_path)
+
+    with pytest.raises(gitrepo.MergeConflict) as e:
+        r.stage_all()
+
+    assert str(e.value) == "test.txt"
+
+
+def test_gitrepo_stage_files_raises_on_conflict(tmp_path: Path):
+    r = _setup_merge_conflict(tmp_path)
+
+    with pytest.raises(gitrepo.MergeConflict) as e:
+        r.stage_files(["test.txt"])
+
+    assert str(e.value) == "test.txt"
+
+
+@pytest.mark.parametrize("add_file", [True, False])
+@pytest.mark.parametrize("add_ignored_file", [True, False])
+@pytest.mark.parametrize(
+    "copy_file,convert_to_symlink,remove_file",
+    [
+        (False, False, False),  # none
+        (True, False, False),  # copy test.txt to test2.txt
+        (True, True, False),  # change test.txt to a symlink to test2.txt
+        (True, False, True),  # copy test.txt to test2.txt and remove test.txt
+    ],
+)
+def test_gitrepo_stage_all(
+    tmp_path: Path,
+    add_file: bool,
+    add_ignored_file: bool,
+    copy_file: bool,
+    convert_to_symlink: bool,
+    remove_file: bool,
+):
+    r, _ = setup_repo(tmp_path)
+    # Initial state of repo: empty file test.txt 0664.
+
+    if add_file:
+        with open(r.working_tree_dir / "bar.txt", "w", encoding="utf-8") as f:
+            f.write("hello\n")
+
+    if add_file:
+        with open(r.working_tree_dir / "ignored.txt", "w", encoding="utf-8") as f:
+            f.write("foo\n")
+
+    if copy_file:
+        (r.working_tree_dir / "test2.txt").touch()
+
+    if convert_to_symlink:
+        assert copy_file
+        os.unlink(r.working_tree_dir / "test.txt")
+        os.symlink(r.working_tree_dir / "test2.txt", r.working_tree_dir / "test.txt")
+
+    if remove_file:
+        os.unlink(r.working_tree_dir / "test.txt")
+
+    diff, changed = r.stage_all()
+
+    assert "ignored.txt" not in diff
+
+    r.commit("Test")
+
+    assert not r.repo.untracked_files
+    assert not r.repo.is_dirty()
+
+    committed_paths = list(b[1].path for b in r.repo.index.iter_blobs())
+
+    assert "ignored.txt" not in committed_paths
+    assert ("bar.txt" in committed_paths) == add_file
+    assert ("test.txt" not in committed_paths) == remove_file
+    assert ("test2.txt" in committed_paths) == copy_file
+
+
+def test_gitrepo_stage_all_ignore_patterns(tmp_path: Path):
+    r, _ = setup_repo(tmp_path)
+
+    with open(r.working_tree_dir / "foo.txt", "w", encoding="utf-8") as f:
+        f.write("hello\n")
+
+    with open(r.working_tree_dir / "bar.txt", "w", encoding="utf-8") as f:
+        f.write("world\n")
+
+    (r.working_tree_dir / "sub").mkdir()
+    with open(r.working_tree_dir / "sub" / "bar.txt", "w", encoding="utf-8") as f:
+        f.write("world\n")
+
+    r.stage_all(ignore_pattern=re.compile("bar.txt$"))
+    r.commit("Update")
+
+    committed_paths = list(b[1].path for b in r.repo.index.iter_blobs())
+    assert "foo.txt" in committed_paths
+    assert "bar.txt" not in committed_paths
+    assert "sub/bar.txt" not in committed_paths
+
+
+@pytest.mark.parametrize("version", ["master", "v1.0.0"])
+def test_gitrepo_is_ahead_of_remote_simple(tmp_path: Path, version: str):
+    repo_url, ri = setup_remote(tmp_path)
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout(version=version)
+
+    assert not r.is_ahead_of_remote()
+    assert r.repo.head.is_detached == (version == "v1.0.0")
+
+
+def test_gitrepo_is_ahead_of_remote_behind(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+    remote = ri.repo
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout(version="master")
+
+    # create new commit in remote and fetch changes
+    (Path(remote.working_tree_dir) / "foo.txt").touch()
+    remote.index.add(["foo.txt"])
+    remote.index.commit("Add foo")
+
+    r.fetch()
+
+    assert not r.is_ahead_of_remote()
+    assert len(list(r.repo.iter_commits("master..origin/master"))) == 1
+
+
+def test_gitrepo_is_ahead_no_remote(tmp_path: Path):
+    r = gitrepo.GitRepo(None, tmp_path / "repo", force_init=True)
+    (Path(r.working_tree_dir) / "test.txt").touch()
+    r.stage_all()
+    r.commit("Initial")
+
+    assert len(r.repo.remotes) == 0
+    assert not r.is_ahead_of_remote()
+
+
+def test_gitrepo_is_ahead_of_remote_local_branch(tmp_path: Path):
+    repo_url, ri = setup_remote(tmp_path)
+
+    r = gitrepo.GitRepo(repo_url, tmp_path / "repo")
+    r.checkout()
+
+    b = r.repo.create_head("local")
+    b.checkout()
+
+    (Path(r.working_tree_dir) / "foo.txt").touch()
+    r.stage_all()
+    r.commit("Add foo.txt")
+
+    assert not r.is_ahead_of_remote()
+    # verify that our local branch is ahead of both local and remote tracking master
+    assert len(list(r.repo.iter_commits("master..local"))) == 1
+    assert len(list(r.repo.iter_commits("origin/master..local"))) == 1
+
+
+def test_gitrepo_init_always_master(gitconfig: Path, tmp_path: Path):
+    cfg = git.config.GitConfigParser(file_or_files=gitconfig, read_only=False)
+    cfg.add_value("init", "defaultBranch", "main").write()
+
+    r = gitrepo.GitRepo(None, tmp_path / "repo.git")
+    r.commit("Initial commit")
+
+    assert len(r._repo.heads) == 1
+    assert r._repo.heads[0].name == "master"

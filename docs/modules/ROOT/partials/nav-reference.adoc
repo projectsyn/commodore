@@ -11,3 +11,4 @@
 ** xref:commodore:ROOT:reference/deprecation-notices.adoc[Deprecation notices]
 ** xref:commodore:ROOT:reference/component-deprecation.adoc[Component deprecation]
 * xref:commodore:ROOT:reference/commodore-libjsonnet.adoc[`commodore.libjsonnet` API reference]
+* xref:commodore:ROOT:reference/kube-libjsonnet.adoc[`kube.libjsonnet`]

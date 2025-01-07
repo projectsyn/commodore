@@ -57,6 +57,7 @@ def call_package_new(
     [
         [],
         ["foo"],
+        ["foo", "foo"],
         ["foo", "bar"],
     ],
 )
@@ -103,10 +104,15 @@ def test_run_package_new_command(
     for f in expected_files:
         assert (pkg_dir / f).is_file()
 
+    expected_cases = ["defaults"]
+    for t in additional_test_cases:
+        if t not in expected_cases:
+            expected_cases.append(t)
+
     with open(pkg_dir / ".github" / "workflows" / "test.yaml") as gh_test:
         workflows = yaml.safe_load(gh_test)
         instances = workflows["jobs"]["test"]["strategy"]["matrix"]["instance"]
-        assert instances == list(["defaults"] + additional_test_cases)
+        assert instances == expected_cases
 
 
 @pytest.mark.parametrize(
@@ -131,7 +137,7 @@ def test_run_package_new_command(
 )
 def test_package_new_invalid_slug(config: Config, slug: str, expected: str):
     with pytest.raises(click.ClickException) as e:
-        _ = PackageTemplater(config, slug)
+        _ = PackageTemplater(config, "", None, slug)
 
     assert expected in str(e.value)
 
@@ -242,6 +248,7 @@ def test_package_update_copyright_holder(
 @pytest.mark.parametrize(
     "initial_test_cases,additional_test_cases,remove_test_cases",
     (
+        ([], [], []),
         ([], ["foo"], []),
         (["foo"], ["bar"], ["foo"]),
         (["foo", "bar"], ["baz"], ["foo", "bar"]),
@@ -285,7 +292,59 @@ def test_package_update_test_cases(
     r = GitRepo(None, pkg_dir)
     assert not r.repo.is_dirty()
     assert len(r.repo.untracked_files) == 0
-    assert r.repo.head.commit.message.startswith("Update from template\n\n")
+    if additional_test_cases == [] and remove_test_cases == []:
+        assert r.repo.head.commit.message.startswith("Initial commit")
+    else:
+        assert r.repo.head.commit.message.startswith("Update from template\n\n")
+
+
+def test_package_update_commit_message(
+    tmp_path: Path, config: Config, cli_runner: RunnerFunc
+):
+    pkg_dir = tmp_path / "test-package"
+
+    # Intentionally create package from old version
+    result = cli_runner(
+        [
+            "-d",
+            str(tmp_path),
+            "package",
+            "new",
+            "test-package",
+            "--output-dir",
+            str(tmp_path),
+            "--template-version",
+            "main^",
+        ]
+    )
+    assert result.exit_code == 0
+
+    # Adjust cruft config to use "main" branch of template
+    with open(pkg_dir / ".cruft.json", "r", encoding="utf-8") as f:
+        cruft_json = json.load(f)
+        cruft_json["checkout"] = "main"
+    with open(pkg_dir / ".cruft.json", "w", encoding="utf-8") as f:
+        json.dump(cruft_json, f)
+
+    r = GitRepo(None, pkg_dir)
+    r.stage_files([".cruft.json"])
+    r.commit("Initial commit", amend=True)
+
+    # Update package
+    result = cli_runner(["-d", str(tmp_path), "package", "update", str(pkg_dir)])
+    print(result.stdout)
+    assert result.exit_code == 0
+
+    with open(pkg_dir / ".cruft.json", "r") as f:
+        cruft_json = json.load(f)
+        template_version = cruft_json["checkout"]
+        template_sha = cruft_json["commit"]
+
+    assert (
+        r.repo.head.commit.message
+        == "Update from template\n\n"
+        + f"Template version: {template_version} ({template_sha[:7]})"
+    )
 
 
 def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Config):
@@ -293,3 +352,23 @@ def test_package_templater_from_existing_nonexistent(tmp_path: Path, config: Con
         _ = PackageTemplater.from_existing(config, tmp_path / "test-package")
 
     assert str(e.value) == "Provided package path isn't a directory"
+
+
+@pytest.mark.parametrize(
+    "test_cases,expected",
+    [
+        ([], []),
+        (["defaults"], ["defaults"]),
+        (["defaults", "foo"], ["defaults", "foo"]),
+        (["defaults", "foo", "foo"], ["defaults", "foo"]),
+        (["foo", "bar"], ["foo", "bar"]),
+        (["foo", "bar", "foo"], ["foo", "bar"]),
+    ],
+)
+def test_package_templater_test_cases(
+    tmp_path: Path, config: Config, test_cases: list[str], expected: list[str]
+):
+    p = PackageTemplater(config, "", None, "test-package")
+    p.test_cases = test_cases
+
+    assert p.test_cases == expected

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import itertools
+from concurrent.futures import ThreadPoolExecutor
+
 import click
 
 from commodore.config import Config
@@ -75,7 +78,6 @@ def create_package_symlink(cfg, pname: str, package: Package):
 
 
 def fetch_components(cfg: Config):
-
     """
     Download all components required by target.
 
@@ -90,6 +92,8 @@ def fetch_components(cfg: Config):
     cfg.register_component_aliases(component_aliases)
     cspecs = _read_components(cfg, component_aliases)
     click.secho("Fetching components...", bold=True)
+
+    deps: dict[str, list] = {}
     for cn in component_names:
         cspec = cspecs[cn]
         if cfg.debug:
@@ -102,9 +106,13 @@ def fetch_components(cfg: Config):
             version=cspec.version,
             sub_path=cspec.path,
         )
-        c.checkout()
-        cfg.register_component(c)
-        create_component_symlinks(cfg, c)
+        if c.checkout_is_dirty() and not cfg.force:
+            raise click.ClickException(
+                f"Component {cn} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
+        deps.setdefault(cdep.url, []).append(c)
+    fetch_parallel(fetch_component, cfg, deps.values())
 
     components = cfg.get_components()
 
@@ -125,6 +133,28 @@ def fetch_components(cfg: Config):
         c.checkout_alias(alias)
 
         create_alias_symlinks(cfg, c, alias)
+
+
+def fetch_component(cfg, dependencies):
+    """
+    Fetch all components of a MultiDependency object.
+    """
+    for c in dependencies:
+        c.checkout()
+        cfg.register_component(c)
+        create_component_symlinks(cfg, c)
+
+
+def fetch_parallel(fetch_fun, cfg, to_fetch):
+    """
+    Fetch dependencies in parallel threads with ThreadPoolExecutor.
+    """
+    with ThreadPoolExecutor() as exe:
+        # We need to collect the results from the iterator produced by exe.map to ensure
+        # that any exceptions raised in `fetch_fun` are propagated, cf.
+        # https://docs.python.org/3/library/concurrent.futures.html#executor-objects. We
+        # do so by simply materializing the iterator into a list.
+        list(exe.map(fetch_fun, itertools.repeat(cfg), to_fetch))
 
 
 def register_components(cfg: Config):
@@ -203,6 +233,7 @@ def fetch_packages(cfg: Config):
     pkgs = _discover_packages(cfg)
     pspecs = _read_packages(cfg, pkgs)
 
+    deps: dict[str, list] = {}
     for p in pkgs:
         pspec = pspecs[p]
         pdep = cfg.register_dependency_repo(pspec.url)
@@ -213,6 +244,20 @@ def fetch_packages(cfg: Config):
             version=pspec.version,
             sub_path=pspec.path,
         )
+        if pkg.checkout_is_dirty() and not cfg.force:
+            raise click.ClickException(
+                f"Package {p} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
+        deps.setdefault(pdep.url, []).append((p, pkg))
+    fetch_parallel(fetch_package, cfg, deps.values())
+
+
+def fetch_package(cfg, dependencies):
+    """
+    Fetch all package dependencies of a MultiDependency object.
+    """
+    for p, pkg in dependencies:
         pkg.checkout()
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)

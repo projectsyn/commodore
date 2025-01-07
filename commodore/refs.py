@@ -34,17 +34,15 @@ class SecretRef:
         return f"{self.type}:{self.ref}"
 
     @classmethod
-    def from_value(cls, key, value):
+    def from_value(cls, key, value) -> list[SecretRef]:
         """
-        Create SecretRef object from string `value`, if the string contains a
-        Kapitan secret reference. If no secret reference is contained in
-        `value` this method returns None.
+        Create a list of SecretRef objects from string `value`. All
+        non-overlapping Kapitan secret references in the string are returned
+        as `SecretRef` objects. If no secret reference is contained in `value`
+        this method returns an empty list.
         """
-        m = cls._SECRET_REF.search(value)
-        if m:
-            return SecretRef(key, m.group(1))
-
-        return None
+        matches = cls._SECRET_REF.finditer(value)
+        return [SecretRef(key, m.group(1)) for m in matches]
 
     def _mangle_ref(self):
         """
@@ -110,8 +108,7 @@ class RefBuilder:
         # Only consider leaves which are of type string, other types cannot
         # contain a secret reference.
         if isinstance(value, str):
-            r = SecretRef.from_value(key, value)
-            if r is not None:
+            for r in SecretRef.from_value(key, value):
                 if self.debug:
                     click.echo(f"    > Found secret ref {r.refstr} in {value}")
                 if r.refstr in self._refs:

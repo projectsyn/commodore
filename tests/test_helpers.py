@@ -1,6 +1,7 @@
 """
 Unit-tests for helpers
 """
+
 from __future__ import annotations
 
 import os
@@ -12,6 +13,8 @@ import textwrap
 import click
 import pytest
 import responses
+import yaml
+from responses import matchers
 from url_normalize import url_normalize
 
 import commodore.helpers as helpers
@@ -68,8 +71,8 @@ def _test_yaml_dump_fun(
             textwrap.dedent(
                 """
                 a:
-                - 1
-                - 2
+                  - 1
+                  - 2
                 b: test
                 """
             )[1:],
@@ -132,8 +135,8 @@ def test_yaml_dump(tmp_path: Path, input, expected):
             textwrap.dedent(
                 """
                 a:
-                - 1
-                - 2
+                  - 1
+                  - 2
                 ---
                 b: test
                 """
@@ -175,11 +178,11 @@ def test_sliding_window(sequence, winsize, expected):
     assert windows == expected
 
 
-def _verify_call_status(query_url):
+def _verify_call_status(query_url, token="token"):
     assert len(responses.calls) == 1
     call = responses.calls[0]
     assert "Authorization" in call.request.headers
-    assert call.request.headers["Authorization"] == "Bearer token"
+    assert call.request.headers["Authorization"] == f"Bearer {token}"
     assert call.request.url == query_url
 
 
@@ -261,6 +264,135 @@ def test_lieutenant_query_response_errors(response, expected):
     _verify_call_status(query_url)
 
 
+@pytest.mark.parametrize(
+    "request_data,response,expected",
+    [
+        (
+            {
+                "token": "token",
+                "payload": {"some": "data", "other": "data"},
+            },
+            {
+                "status": 204,
+            },
+            "",
+        ),
+        (
+            {
+                "token": "",
+                "payload": {"some": "data", "other": "data"},
+            },
+            {
+                "status": 400,
+                "json": {"reason": "missing or malformed jwt"},
+            },
+            "API returned 400: missing or malformed jwt",
+        ),
+    ],
+)
+@responses.activate
+def test_lieutenant_post(request_data, response, expected):
+    base_url = "https://syn.example.com/"
+
+    post_url = url_normalize(f"{base_url}/clusters/c-cluster-1234/compileMeta")
+
+    if response["status"] == 204:
+        # successful post response from Lieutenant API has no body
+        responses.add(
+            responses.POST,
+            post_url,
+            content_type="application/json",
+            status=204,
+            body=None,
+            match=[matchers.json_params_matcher(request_data["payload"])],
+        )
+    else:
+        responses.add(
+            responses.POST,
+            post_url,
+            content_type="application/json",
+            status=response["status"],
+            json=response["json"],
+            match=[matchers.json_params_matcher(request_data["payload"])],
+        )
+
+    if response["status"] == 204:
+        resp = helpers.lieutenant_post(
+            base_url,
+            request_data["token"],
+            "clusters/c-cluster-1234",
+            "compileMeta",
+            post_data=request_data["payload"],
+        )
+        assert resp == {}
+    else:
+        with pytest.raises(helpers.ApiError, match=expected):
+            helpers.lieutenant_post(
+                base_url,
+                request_data["token"],
+                "clusters/c-cluster-1234",
+                "compileMeta",
+                post_data=request_data["payload"],
+            )
+
+    _verify_call_status(post_url, token=request_data["token"])
+
+
+@responses.activate
+def test_lieutenant_post_redirect():
+    base_url = "http://syn.example.com/"
+    redir_url = "https://syn.example.com/"
+
+    post_url = url_normalize(f"{base_url}/clusters/c-cluster-1234/compileMeta")
+    real_post_url = url_normalize(f"{redir_url}/clusters/c-cluster-1234/compileMeta")
+    token = "token"
+    payload = {"some": "data", "other": "data"}
+
+    # successful post response from Lieutenant API has no body
+    responses.add(
+        responses.POST,
+        real_post_url,
+        content_type="application/json",
+        status=204,
+        body=None,
+        match=[matchers.json_params_matcher(payload)],
+    )
+    responses.add(
+        responses.POST,
+        post_url,
+        content_type="application/json",
+        headers={"location": real_post_url},
+        status=302,
+        body=None,
+        match=[matchers.json_params_matcher(payload)],
+    )
+
+    helpers.lieutenant_post(
+        base_url,
+        token,
+        "clusters/c-cluster-1234",
+        "compileMeta",
+        post_data=payload,
+    )
+
+    assert len(responses.calls) == 2
+    call_initial = responses.calls[0]
+    assert call_initial.request.url == post_url
+    call_redirected = responses.calls[1]
+    assert call_redirected.request.url == real_post_url
+
+
+def test_unimplemented_query_method():
+    with pytest.raises(NotImplementedError, match="QueryType PATCH not implemented"):
+        helpers._lieutenant_request(
+            "PATCH",
+            "https://api.example.com",
+            "token",
+            "clusters",
+            "",
+        )
+
+
 def test_relsymlink(tmp_path: Path):
     test_file = tmp_path / "src" / "test"
     test_file.parent.mkdir(parents=True, exist_ok=True)
@@ -308,5 +440,23 @@ def test_relsymlink_invalid_src_exception(tmp_path: Path):
     print(str(e.value))
     assert (
         f"Can't link {src.name} to {tmp_path / 'dst.txt'}. Source does not exist."
+        in str(e.value)
+    )
+
+
+def test_kapitan_inventory(tmp_path: Path, config: Config):
+    config.inventory.targets_dir.mkdir(parents=True)
+    config.inventory.classes_dir.mkdir(parents=True)
+
+    test = {"parameters": {"foo": "${bar}"}}
+
+    with open(config.inventory.targets_dir / "test.yml", "w", encoding="utf-8") as f:
+        yaml.safe_dump(test, f)
+
+    with pytest.raises(click.ClickException) as e:
+        helpers.kapitan_inventory(config)
+    assert (
+        "While rendering inventory: Error while rendering inventory: Error rendering node test: "
+        + "While resolving references: lookup error for reference '${bar}' in parameter 'foo': key 'bar' not found"
         in str(e.value)
     )

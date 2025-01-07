@@ -14,7 +14,7 @@ Remove items that do not apply. For completed items, change [ ] to [x].
 - [ ] Update the documentation.
 - [ ] Update tests.
 - [ ] Categorize the PR by setting a good title and adding one of the labels:
-      `bug`, `enhancement`, `documentation`, `change`, `breaking`, `dependency`
+      `bug`, `enhancement`, `documentation`, `change`, `breaking`, `dependency`, `internal`
       as they show up in the changelog
 - [ ] Link this PR to related issues.
 

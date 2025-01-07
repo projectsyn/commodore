@@ -57,19 +57,19 @@ def test_extract_components(
             lambda t, g: create_inventory_facts(
                 t, g, None, "x-invalid-dist", None, None, allow_missing_classes=False
             ),
-            "Class 'global.distribution.x-invalid-dist' not found.",
+            "Error while rendering global: Class global.distribution.x-invalid-dist not found.",
         ),
         (
             lambda t, g: create_inventory_facts(
                 t, g, None, "a", "x-invalid-cloud", None, allow_missing_classes=False
             ),
-            "Class 'global.cloud.x-invalid-cloud' not found.",
+            "Error while rendering global: Class global.cloud.x-invalid-cloud not found.",
         ),
         (
             lambda t, g: create_inventory_facts(
                 t, g, None, "a", "y", "x-invalid-region", allow_missing_classes=False
             ),
-            "Class 'global.cloud.y.x-invalid-region' not found.",
+            "Error while rendering global: Class global.cloud.y.x-invalid-region not found.",
         ),
     ],
 )

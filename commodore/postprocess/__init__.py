@@ -22,8 +22,7 @@ class FilterFunc(Protocol):
         filterid: str,
         path: P,
         **filterargs: str,
-    ):
-        ...
+    ): ...
 
 
 ValidateFunc = Callable[[Config, Component, str, dict], dict]

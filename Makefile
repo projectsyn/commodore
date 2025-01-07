@@ -9,8 +9,8 @@ else
 endif
 DOCKER_ARGS ?= --rm --tty --user "$$(id -u):$$(id -g)" --userns=$(DOCKER_USERNS)
 
-vale_cmd           ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages docker.io/vshn/vale:2.6.1 --minAlertLevel=error --config=/pages/.vale.ini /pages
-antora_preview_cmd ?= $(DOCKER_CMD) run --rm --publish 35729:35729 --publish 2020:2020 --volume "${PWD}/.git":/preview/antora/.git --volume "${PWD}/docs":/preview/antora/docs docker.io/vshn/antora-preview:3.0.1.1 --style=syn --antora=docs
+vale_cmd           ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages ghcr.io/vshn/vale:2.15.5 --minAlertLevel=error --config=/pages/.vale.ini /pages
+antora_preview_cmd ?= $(DOCKER_CMD) run --rm --publish 35729:35729 --publish 2020:2020 --volume "${PWD}/.git":/preview/antora/.git --volume "${PWD}/docs":/preview/antora/docs ghcr.io/vshn/antora-preview:3.1.2.3 --style=syn --antora=docs
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
@@ -73,8 +73,12 @@ inject-version:
 
 .PHONY: test_integration
 test_integration:
-	poetry run pytest -m integration -n auto
+	poetry run pytest -m integration -n auto ./tests
 
 .PHONY: test_coverage
 test_coverage:
 	poetry run pytest -m "not bench" -n auto --cov="commodore" --cov-report xml
+
+.PHONY: test_gen_golden
+test_gen_golden:
+	COMMODORE_TESTS_GEN_GOLDEN=true poetry run pytest ./tests/test_catalog.py

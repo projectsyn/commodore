@@ -24,3 +24,9 @@ insert_final_newline = false
 
 [Makefile]
 indent_style = tab
+
+[tests/testdata/**]
+trim_trailing_whitespace = false
+
+[commodore/lib/kube-libsonnet/**]
+indent_size = unset

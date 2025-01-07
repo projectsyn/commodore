@@ -13,7 +13,7 @@ jobs:
     env:
       IMAGE: docker.io/projectsyn/kapitan
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set image version
       run: |
         echo "VERSION=$(grep "KAPITAN_VERSION=" tools/Dockerfile.kapitan | cut -d= -f2)" >> ${GITHUB_ENV}

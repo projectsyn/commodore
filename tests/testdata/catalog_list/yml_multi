@@ -1,0 +1,25 @@
+- displayName: Bar
+  facts:
+    cloud: local
+    distribution: k3s
+  gitRepo:
+    url: ssh://git@github.com/projectsyn/test-cluster-catalog.git
+  id: c-bar
+  tenant: t-foo
+- displayName: Foo
+  facts:
+    cloud: local
+    distribution: k3s
+  gitRepo:
+    url: ssh://git@github.com/projectsyn/test-cluster-catalog.git
+  id: c-foo
+  tenant: t-foo
+- displayName: Test cluster
+  facts:
+    cloud: local
+    distribution: k3s
+  gitRepo:
+    url: ssh://git@github.com/projectsyn/test-cluster-catalog.git
+  id: c-test
+  tenant: t-test-tenant
+

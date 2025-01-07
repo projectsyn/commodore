@@ -16,6 +16,7 @@ from commodore.inventory import lint
 LINT_FILECONTENTS = [
     ({}, 0),
     ({"a": "b"}, 0),
+    ({"parameters": ["foo", "bar"]}, 1),
     (
         {
             "parameters": {
@@ -31,6 +32,7 @@ LINT_FILECONTENTS = [
                     "c3": {
                         "url": "https://example.com/syn/component-c3.git",
                         "version": "v1.0.0",
+                        "path": "subpath",
                     },
                 },
             }
@@ -193,6 +195,7 @@ def _setup_directory(tmp_path: Path):
         tmp_path / "d2" / "test3.yml",
         tmp_path / "d2" / "subd" / "test4.yml",
         tmp_path / "d3" / "test5.yml",
+        tmp_path / "test6.yml",
     ]
     assert len(lint_direntries) == len(LINT_FILECONTENTS)
     skip_direntries = [
@@ -204,14 +207,14 @@ def _setup_directory(tmp_path: Path):
     assert len(skip_direntries) == len(SKIP_FILECONTENTS)
 
     expected_errcount = 0
-    for (idx, (filecontents, eec)) in enumerate(LINT_FILECONTENTS):
+    for idx, (filecontents, eec) in enumerate(LINT_FILECONTENTS):
         dentry = lint_direntries[idx]
         os.makedirs(dentry.parent, exist_ok=True)
         yaml_dump(filecontents, dentry)
         # these should be skipped
         yaml_dump(filecontents, tmp_path / f".{idx}.yml")
         expected_errcount += eec
-    for (idx, (filecontents, _)) in enumerate(SKIP_FILECONTENTS):
+    for idx, (filecontents, _) in enumerate(SKIP_FILECONTENTS):
         dentry = skip_direntries[idx]
         os.makedirs(dentry.parent, exist_ok=True)
         _dump_skip_file(filecontents, dentry)
@@ -258,6 +261,73 @@ def test_lint_components_directory(tmp_path: Path, config: Config, capsys):
     expected_errcount = _setup_directory(tmp_path)
 
     ec = lint.ComponentSpecLinter()(config, tmp_path)
+
+    captured = capsys.readouterr()
+    _check_lint_result(ec, expected_errcount, captured)
+
+
+@pytest.mark.parametrize(
+    "ignore_patterns,file_paths,expected_errcount",
+    [
+        (("test.yml",), ["test.yml"], 0),
+        (("test.yml",), ["test.yml", "a/test.yml"], 0),
+        (("test.yml",), ["test.yml", "a/b/c/test.yml"], 0),
+        (("/test.yml",), ["test.yml", "a/test.yml"], 2),  # shouldn't match `a/test.yml`
+        (("/*.yml",), ["test.yml", "foo.yml"], 0),
+        (("/*.yml",), ["test.yml", "foo.yaml"], 2),  # shouldn't match `foo.yaml`
+        (
+            ("/tes?.yml",),
+            ["test.yml", "tesu.yml", "fest.yml"],
+            2,
+        ),  # shouldn't match `fest.yml`
+        (("[t-z]*",), ["test.yml", "uuu"], 0),
+        (("[t-z]*",), ["test.yml", "uuu", "fest.yml"], 2),  # shouldn't match `fest.yml`
+        (
+            ("/manifests",),
+            ["test.yml", "manifests/foo.yml", "manifests/bar.yml"],
+            2,
+        ),  # shouldn't match anything under `/manifests`
+        (
+            (
+                "test.yml",
+                "/manifests",
+            ),
+            ["test.yml", "manifests/foo.yml", "manifests/bar.yml"],
+            0,
+        ),  # shouldn't match anything
+    ],
+)
+def test_lint_components_ignored_path(
+    tmp_path: Path,
+    config: Config,
+    capsys,
+    ignore_patterns: tuple[str],
+    file_paths: list[str],
+    expected_errcount: int,
+):
+    """Each file gets the same contents which should cause 2 errors unless the file is
+    ignored."""
+    filecontents = {
+        "parameters": {
+            "components": {
+                "c1": {
+                    "url": "https://example.com/syn/component-c1.git",
+                },
+                "c2": {
+                    "url": "https://example.com/syn/component-c2.git",
+                },
+                "c3": {
+                    "version": "v1.0.0",
+                },
+            },
+        }
+    }
+    for f in file_paths:
+        testf = tmp_path / f
+        testf.parent.mkdir(parents=True, exist_ok=True)
+        yaml_dump(filecontents, testf)
+
+    ec = lint.ComponentSpecLinter()(config, tmp_path, ignore_patterns)
 
     captured = capsys.readouterr()
     _check_lint_result(ec, expected_errcount, captured)

@@ -10,7 +10,7 @@ from commodore import compile
 from commodore.cluster import Cluster
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeout=5):
     if api_endpoint == "clusters":
         return {"id": api_id}
 
@@ -151,6 +151,7 @@ def test_facts(api_data):
 @pytest.mark.parametrize(
     "dynamic_facts",
     [
+        {},
         {
             "kubernetes_version": {
                 "major": "1",
@@ -193,3 +194,29 @@ def test_dynamic_facts(api_data, dynamic_facts):
     api_data["cluster"]["dynamicFacts"] = dynamic_facts.copy()
     cluster = Cluster(api_data["cluster"], api_data["tenant"])
     assert dynamic_facts == cluster.dynamic_facts
+
+
+@pytest.mark.parametrize(
+    "dynfacts,fallback",
+    [
+        ({}, {}),
+        ({}, {"foo": "bar"}),
+        ({"foo": "bar"}, {"baz": "qux"}),
+        (None, {}),
+        (None, {"foo": "bar"}),
+    ],
+)
+def test_dynamic_facts_fallback(api_data, dynfacts, fallback):
+    # The `api_data` test fixture contains some dynamic facts by default. We clear those
+    # to ensure a clean base for testing the dynamic facts logic.
+    del api_data["cluster"]["dynamicFacts"]
+    cluster = Cluster(api_data["cluster"], api_data["tenant"])
+    assert {} == cluster.dynamic_facts
+
+    if dynfacts is not None:
+        api_data["cluster"]["dynamicFacts"] = dynfacts.copy()
+    cluster = Cluster(api_data["cluster"], api_data["tenant"], fallback)
+    if dynfacts is not None:
+        assert dynfacts == cluster.dynamic_facts
+    else:
+        assert fallback == cluster.dynamic_facts

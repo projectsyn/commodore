@@ -20,6 +20,6 @@ case $ARCH in
 esac
 
 curl -fsSLo /usr/local/bin/jb \
-	"https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/$VERSION/jb-linux-$ARCH"
+	"https://github.com/projectsyn/jsonnet-bundler/releases/download/$VERSION/jb_linux_$ARCH"
 
 chmod +x /usr/local/bin/jb

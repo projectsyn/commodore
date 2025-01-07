@@ -10,8 +10,8 @@ from typing import Optional
 
 import click
 import git
-from kapitan.resources import inventory_reclass
 
+from commodore.cluster import generate_target
 from commodore.config import Config
 from commodore.component import Component
 from commodore.dependency_mgmt.component_library import (
@@ -19,10 +19,9 @@ from commodore.dependency_mgmt.component_library import (
     create_component_library_aliases,
 )
 from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
-from commodore.helpers import kapitan_compile, relsymlink, yaml_dump
+from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
-from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
 
 
@@ -34,7 +33,6 @@ def compile_component(
     value_files_: Iterable[str],
     search_paths_: Iterable[str],
     output_path_: str,
-    repo_directory_: str,
     component_name: str,
 ):
     # Resolve all input to absolute paths to fix symlinks
@@ -43,18 +41,11 @@ def compile_component(
     search_paths = [P(d).resolve() for d in search_paths_]
     search_paths.append(component_path / "vendor")
     output_path = P(output_path_).resolve()
-    if repo_directory_:
-        repo_directory = P(repo_directory_).resolve()
-        sub_path = str(component_path.relative_to(repo_directory))
-    else:
-        # If no repo directory given, assume component path is repo root
-        repo_directory = component_path
-        sub_path = ""
 
     if not component_name:
         # Ignore 'component-' prefix in repo name, this assumes that the repo name
         # indicates the component name for components in subpaths.
-        component_name = repo_directory.stem.replace("component-", "")
+        component_name = component_path.stem.replace("component-", "")
 
     # Fall back to `component as component` when instance_name is empty
     if instance_name_ is None or instance_name_ == "":
@@ -78,8 +69,7 @@ def compile_component(
             config,
             component_name,
             instance_name,
-            repo_directory,
-            sub_path,
+            component_path,
         )
         _prepare_kapitan_inventory(inv, component, value_files, instance_name)
 
@@ -91,7 +81,7 @@ def compile_component(
         )
 
         # Verify component alias
-        nodes = inventory_reclass(inv.inventory_dir)["nodes"]
+        nodes = kapitan_inventory(config)
         config.verify_component_aliases(nodes[instance_name]["parameters"])
 
         cluster_params = nodes[instance_name]["parameters"]
@@ -135,17 +125,39 @@ def _setup_component(
     config: Config,
     component_name: str,
     instance_name: str,
-    repo_directory: P,
-    sub_path: str,
+    component_path: P,
 ) -> Component:
-    if not repo_directory.is_dir():
+    if not component_path.is_dir():
         raise click.ClickException(
-            f"Can't compile component, repository {repo_directory} doesn't exist"
+            f"Can't compile component, repository {component_path} doesn't exist"
         )
-    cr = git.Repo(repo_directory)
-    cdep = MultiDependency(cr.remote().url, config.inventory.dependencies_dir)
+    # Search for git repo in parents, this is necessary when compiling a component in a
+    # repo subdirectory.
+    try:
+        cr = git.Repo(component_path, search_parent_directories=True)
+        if not cr.working_tree_dir:
+            raise click.ClickException(
+                f"Can't compile component, repository {component_path} doesn't exist"
+            )
+        target_dir = P(cr.working_tree_dir)
+        # compute subpath from Repo working tree dir and component path
+        sub_path = str(component_path.absolute().relative_to(target_dir))
+    except git.InvalidGitRepositoryError:
+        click.echo(" > Couldn't determine Git repository for component")
+        # Just treat `component_path` as a directory holding a component, don't care
+        # about Git repo details here.
+        target_dir = component_path
+        sub_path = ""
+
     component = Component(
-        component_name, dependency=cdep, directory=repo_directory, sub_path=sub_path
+        component_name,
+        None,
+        # Use repo working tree as component "target directory", otherwise we get messy
+        # results with duplicate subpaths.
+        directory=target_dir,
+        # Use computed subpath to ensure we accurately replicate the environment in
+        # which the component will be compiled in a cluster catalog.
+        sub_path=sub_path,
     )
     config.register_component(component)
     config.register_component_aliases({instance_name: component_name})
@@ -198,7 +210,9 @@ def _prepare_kapitan_inventory(
                 "cluster": {
                     "catalog_url": "ssh://git@git.example.com/org/repo.git",
                     "name": "c-green-test-1234",
+                    "display_name": "Test Cluster 1234",
                     "tenant": "t-silent-test-1234",
+                    "tenant_display_name": "Test Tenant 1234",
                 },
                 "facts": {
                     "distribution": "test-distribution",
@@ -210,7 +224,7 @@ def _prepare_kapitan_inventory(
                 },
                 "components": {
                     component.name: {
-                        "url": "https://example.com/{component.name}.git",
+                        "url": f"https://example.com/{component.name}.git",
                         "version": "master",
                     }
                 },
@@ -227,19 +241,15 @@ def _prepare_kapitan_inventory(
 
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
+    classes = [
+        f"params.{inv.bootstrap_target}",
+        f"defaults.{component.name}",
+        f"components.{component.name}",
+    ] + value_classes
     yaml_dump(
-        {
-            "classes": [
-                f"params.{inv.bootstrap_target}",
-                f"defaults.{component.name}",
-                f"components.{component.name}",
-            ]
-            + value_classes,
-            "parameters": {
-                "_instance": instance_name,
-                "_base_directory": str(component.target_directory),
-            },
-        },
+        generate_target(
+            inv, instance_name, {component.name: component}, classes, component.name
+        ),
         inv.target_file(instance_name),
     )
 

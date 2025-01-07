@@ -269,3 +269,82 @@ stringData:
   secret: another
 type: Opaque
 ----
+
+== `Kustomization(base_url, base_version='', images={}, kustomize_input={})`
+
+This function generates a Kustomize overlay which uses the parameter `base_url` as a base resource.
+
+The parameters `base_url` and `base_version` are used to format an entry in the kustomization's https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/resource/[resources] field.
+
+=== Arguments
+
+`base_url`:: The URL of the base kustomization
+`base_version`:: The version of the base kustomization.
+The version can be any Git reference understood by `kustomize`.
+If version is the empty string, the base kustomization is added to `resources` without the `?ref=<version>` suffix
+`images`:: An object with keys referring to container image URIs used in the base and values providing `newTag` and `newName` to apply.
+The contents of parameter `images` are transformed into entries in the kustomization's https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/images/[`images`] field.
+`kustomize_input`:: User-provided content to merge into the overlay
+This variable is merged into the kustomization without further modifications.
+
+=== Return value
+
+An object suitable as a Jsonnet output to generate a `kustomization.yaml` to be passed to `kustomize build`.
+
+=== Example
+
+Let's look at what results from the following configuration, where `defaults.yml` is assumed to be a reclass class and `kustomization.jsonnet` a Commodore component Jsonnet script.
+
+.defaults.yml
+[source,yaml]
+----
+parameters:
+  <component-name>:
+    namespace: syn-example
+    images:
+      example:
+        registry: quay-mirror.syn.tools
+        repository: example
+        tag: v1.0.0
+    kustomize_input:
+      namespace: ${<component_name>:namespace}
+----
+
+.kustomization.jsonnet
+[source,jsonnet]
+----
+// Omitted `local params = ...` which reads the configuration
+// In the example the configuration has field `images` which specifies the
+// container images, and field `kustomize_input` which provides additional
+// kustomization configs.
+//local params = ...;
+
+// Render `kustomization.yaml`
+com.Kustomization(
+  'https://syn.example.com/example//config/default',
+  'v1.0.0',
+  {
+    // Assumes that `params.images.example` is formatted according to Commodore
+    // component best practices
+    'quay.io/syn/example': {
+      newTag: params.images.example.tag,
+      newName: '%(registry)s/%(repository)s' % params.images.example
+    }
+  },
+  params.kustomize_input,
+)
+----
+
+The rendered output will then be a single `kustomization.yaml` as shown below.
+
+.kustomization.yaml
+[source,yaml]
+----
+images:
+  - name: quay.io/syn/example
+    newName: quay-mirror.syn.tools/example
+    newTag: v1.0.0
+namespace: syn-example
+resources:
+  - https://syn.example.com/example//config/default?ref=v1.0.0
+----

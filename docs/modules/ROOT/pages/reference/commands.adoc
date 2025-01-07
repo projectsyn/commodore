@@ -35,6 +35,18 @@ This command deletes all the data which is managed by Commodore, listed below.
 This command doesn't check whether any local modifications exist and doesn't
 check with the user whether they really want to remove the items listed above.
 
+
+== Catalog List
+
+  commodore catalog list
+
+This command lists all cluster catalogs registered in the provided Lieutenant API.
+
+By default, the command will return the list of clusters in a human-readable table.
+Other output formats are available through parameter `--out`.
+
+Additionally, the command allows listing only the catalogs for a specific tenant and to sort the output by cluster ID, tenant, or display name with the `--tenant` and `--sort-by` flags.
+
 == Component New
 
   commodore component new SLUG
@@ -45,11 +57,29 @@ The component repository is created using a Cookiecutter template which provides
 The command requires the argument `SLUG` to match the regular expression `^[a-z][a-z0-9-]+[a-z0-9]$`.
 Optionally, the template can be used to add a component library and postprocessing filter configuration.
 
-The command expects to run in a directory which already holds a Commodore directory structure.
-The command makes sure to create symlinks for the new component's classes and creates a new Kapitan target for the component.
-The command also adds the new component as a dependency in `jsonnetfile.json` and runs jsonnet-bundler to symlink the new component into `vendor/`.
+The command allows users to define additional test cases to add to the component.
+Test case `defaults` is always generated.
+If multiple test cases are requested, matrix tests are rendered regardless of whether they were requested or not.
+
+If argument `--output-dir` isn't given, the command expects to run in a directory which already holds a Commodore directory structure.
 
 The template also provides many meta-files in the component repository, such as the readme and changelog, standardized license, contributing and code of conduct files, a documentation template, and GitHub issue templates and actions configuration.
+
+== Component Update
+
+  commodore component update PATH
+
+This command updates an existing component repository stored in `PATH`.
+The command will always update the component to the latest version of the template which was originally used to create the component.
+The command has a number of command line options to enable or disable component features, such as golden tests.
+
+The command will never commit `.rej` or `.orig` files which result from template updates which couldn't be applied cleanly.
+If there's changes which can't be applied cleanly, the command will add diagnostic output listing the diffs which don't apply.
+If that's the case, please review the output carefully and apply these changes manually if necessary.
+
+Additionally, the command allows users to add or remove test cases.
+Commodore will raise an error if the command would end up removing all test cases from the component, since the template currently doesn't render cleanly with no test cases specified.
+
 
 == Component Delete
 
@@ -68,29 +98,54 @@ The command also removes the deleted component as a dependency in `jsonnetfile.j
 
 This command compiles a single component.
 
-This is the main mode of operation for developing new components, as it allows
-fast iteration while working on a component.
+This is the main mode of operation for developing new components, as it allows fast iteration while working on a component.
 
-This command will create a fake inventory which mocks out all the
-infrastructure which a component would expect to be available when it's
-included in a cluster's configuration.
+This command will create a fake inventory which mocks out all the infrastructure which a component would expect to be available when it's included in a cluster's configuration.
 
-The command takes so called values files which provide custom configuration
-values for any configuration that could be provided from the hierarchical
-configuration repositories.
+The command takes so called values files which provide custom configuration values for any configuration that could be provided from the hierarchical configuration repositories.
+
+The command expects that the component is stored in a directory which matches the component's name.
+By default the component's name is derived from the leaf directory of `PATH`.
+This works reasonably well for components which are stored in the root of a Git repository, as generally component repositories are named `component-<name>`.
+If this isn't the case, the option `--name` (or `-n`) must be used to provide the component name to avoid compilation errors.
 
 The option `--alias` (or `-a`) can be used to compile an instance-aware component with a specific instance.
 
-== Inventory Components
+The command tries to discover whether the provided `PATH` is part of a Git repository.
+If a Git repository is found the command computes the path's subpath in the repository, and ensures that the component is handled as a component stored in a repo subdirectory internally.
+If no Git repository is found, the provided path is treated as if it were the root of a Git repository.
 
-  commodore inventory components GLOBAL_CONFIG [TENANT_CONFIG]
+== Component Sync
 
-This command lists all the components defined in `parameters.components` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
+  commodore component sync COMPONENT_LIST
+
+This command processes all components listed in the provided `COMPONENT_LIST` YAML file.
+
+Currently, the command only supports updating components hosted on GitHub.
+The command expects that the YAML file contains a single document with a list of GitHub repositories in form `organization/repository-name`.
+
+The command supports selectively updating components through parameter `--filter`.
+This parameter enables callers to filter the list provided in the YAML file by an arbitrary regex.
+
+The command clones each component and runs `component update` on the local copy. If there are any changes, the command creates a PR for the changes.
+For each component, the command parses the component's `.cruft.json` to determine the template repository and template version for the component.
+The command bases each PR on the default branch of the corresponding component repository as reported by the GitHub API.
+
+The command requires a GitHub Access token with the 'public_repo' permission, which is required to create PRs on public repositories.
+If you want to manage private repos, the access token may require additional permissions.
+
+== Inventory Show
+
+  commodore inventory show|components|packages GLOBAL_CONFIG [TENANT_CONFIG]
+
+The command `commodore inventory show` prints the `parameters` in the Commodore hierarchy in directory `GLOBAL_CONFIG`.
 If provided, the command also takes into account the tenant repo in directory `TENANT_CONFIG`.
 
-NOTE: The command doesn't currently support cloning either the global or tenant repository from a Git repo URL.
+The commands `commodore inventory components` and `commodore inventory packages` also render the inventory, but only print the list of all components and packages respectively.
 
-The component takes a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the contents of `parameters.components`.
+NOTE: The commands don't currently support cloning either the global or tenant repository from a Git repo URL.
+
+The commands take a repeatable argument `-f / --values` which allows the user to specify additional files that should be used as classes when rendering the inventory.
 
 When providing a tenant repo, users must specify the tenant ID and cluster ID for which the inventory should be rendered in a value class to obtain accurate results.
 See a sample `cluster-info.yaml` which can be used for this purpose below.
@@ -107,7 +162,7 @@ parameters:
 <2> Specify the tenant ID.
 This must match the tenant ID associated with the provided tenant repo for accurate results.
 
-The command supports both YAML and JSON output.
+The commands support both YAML and JSON output.
 
 == Inventory Lint
 
@@ -125,6 +180,18 @@ The command takes zero or more paths to files or directories to lint as command 
 It silently skips files which aren't valid YAML, as well as empty files and files containing multi-document YAML streams.
 All other files are assumed to be Commodore inventory classes.
 
+Individual files or whole directory trees can be ignored by providing glob patterns.
+Glob patterns can be provided in command line argument `--ignore-patterns` or in `.commodoreignore` in the provided path.
+Patterns provided in `--ignore-patterns` are applied in each target path.
+In contrast, `.commodoreignore` files are only applied to the target path in which they're saved.
+
+The provided patterns are expanded recursively using Python's `glob` library.
+You can use `*`, `?`, and character ranges expressed as `[]` with the usual semantics of shell globbing.
+Additionally, you can use `**` to indicate an arbitrary amount of subdirectories.
+Patterns which start with `/` are treated as anchored in the target path.
+All other patterns are treated as matching any subpath in the target path.
+
+
 When linting directories, any hidden files (prefixed with a dot) are ignored.
 Directories are linted recursively and the same skipping logic as for individual files is applied.
 
@@ -138,7 +205,10 @@ If any errors are found the command exits with return value 1.
 
 This command allows you to authenticate yourself to Lieutenant using OIDC, if OIDC integrations is enabled for your Lieutenant instance.
 
-The command will open a web-browser where you can authenticate yourself to the configured IdP.
+The command will try to refresh expired access tokens if a still valid refresh token is found locally.
+
+If no valid tokens are found locally, the command will open a web-browser where you can authenticate yourself to the configured IdP.
+
 Commodore will use the returned token for future commands if no other token is explicitly provided.
 
 == Fetch Token
@@ -169,6 +239,12 @@ This command updates an existing config package repository stored in `PATH`.
 The command will always update the package to the latest version of the template which was originally used to create the package.
 The command has a number of command line options to modify the package's test cases and selected meta-information.
 
+The command will never commit `.rej` or `.orig` files which result from template updates which couldn't be applied cleanly.
+If there's changes which can't be applied cleanly, the command will add diagnostic output listing the diffs which don't apply.
+If that's the case, please review the output carefully and apply these changes manually if necessary.
+
+Commodore will raise an error if the command would end up removing all test cases from the package, since the template currently doesn't render cleanly with no test cases specified.
+
 == Package Compile
 
   package compile PATH TEST_CLASS
@@ -181,3 +257,23 @@ By default, the command creates a temp directory in `/tmp` which is used as the 
 To keep an automatically created temp directory for subsequent compilations, users can specify `--keep-dir` to skip deleting the temp directory created by the command.
 Users can specify a custom temp directory location with flag `--tmp-dir`.
 If the path provided with `--tmp-dir` doesn't exist, Commodore will create it as a directory.
+
+== Package Sync
+
+  commodore package sync PACKAGE_FILE
+
+This command processes all packages listed in the provided `PACKAGE_LIST` YAML file.
+
+Currently, the command only supports updating packages hosted on GitHub.
+The command expects that the YAML file contains a single document with a list of GitHub repositories in form `organization/repository-name`.
+
+The command supports selectively updating packages through parameter `--filter`.
+This parameter enables callers to filter the list provided in the YAML file by an arbitrary regex.
+
+The command clones each package and runs `package update` on the local copy.
+If there are any changes, the command creates a PR for the changes.
+For each package, the command parses the package's `.cruft.json` to determine the template repository and template version for the package.
+The command bases each PR on the default branch of the corresponding package repository as reported by the GitHub API.
+
+The command requires a GitHub Access token with the 'public_repo' permission, which is required to create PRs on public repositories.
+If you want to manage private repos, the access token may require additional permissions.

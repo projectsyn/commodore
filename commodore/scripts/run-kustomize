@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# The wrapper always calls `kustomize build`. To use the wrapper provide the
+# directory in which the output should be written as the first argument. We
+# need to pass the output directory as an argument, because otherwise Kapitan
+# won't substitute `${compiled_target_dir}` with the path of the compilation
+# target directory. To avoid having to reimplement kustomize argument parsing,
+# we require that the output directory is the first argument.
+# Further arguments are passed to kustomize as provided. The input directory
+# is expected to be provided in environment variable ${INPUT_DIR}.
+#
+# export INPUT_DIR=/path/to/kustomization
+# run-kustomize <OUTPUT_DIR> [kustomize args...]
+#
+# Wrapper around kustomize which provides some convenience features
+# 1) The wrapper searches for the kustomize binary in ${PATH}
+# 2) The wrapper ensures that the user provides the expected arguments
+# 3) The wrapper ensures that the provided output directory exists
+#
+set -e
+
+# Kapitan provides a fairly standard PATH variable, we add /opt/homebrew/bin for macOS
+export PATH="${PATH}:/opt/homebrew/bin"
+
+kustomize=$(which kustomize) || (>&2 echo "kustomize not found in ${PATH}"; exit 7)
+
+if [ -z "${INPUT_DIR}" ]; then
+  (>&2 echo "INPUT_DIR environment variable not provided"; exit 2)
+fi
+
+# Assumption: output dir provided as first arg
+readonly output_dir="$1"
+if [ -z "${output_dir}" ]; then
+  (>&2 echo "First argument is empty, expected output directory as first argument"; exit 2)
+fi
+mkdir -p "${output_dir}"
+
+exec "$kustomize" build "${INPUT_DIR}" -o "${@}"

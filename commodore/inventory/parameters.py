@@ -6,10 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
-from kapitan.reclass import reclass
-from kapitan.reclass.reclass import settings as reclass_settings
-from kapitan.reclass.reclass import core as reclass_core
-from kapitan.reclass.reclass import errors as reclass_errors
+from reclass_rs import Reclass
 
 from commodore.cluster import Cluster, render_params
 from commodore.component import component_parameters_key
@@ -20,28 +17,6 @@ FAKE_TENANT_ID = "t-foo"
 FAKE_CLUSTER_ID = "c-bar"
 
 
-class ClassNotFound(reclass_errors.ClassNotFound):
-    """
-    Create a wrapper around kapitan.reclass's ClassNotFound exception.
-
-    This allows us to have clean exception handling outside of this file, because we
-    unfortunately can't catch ClassNotFound directly in our code if we import
-    and use Kapitan reclass's ClassNotFound with any import which doesn't map the class
-    to `reclass.errors.ClassNotFound`. This is the case because Python's implementation
-    doesn't try to figure out if two imports are the same if they have different import
-    paths, cf. https://docs.python.org/3/reference/import.html.
-
-    The only import that should work (in my understanding) would be
-    `from kapitan.reclass import reclass` but with that import we get the error
-    "AttributeError: module 'kapitan.reclass.reclass' has no attribute 'errors'"
-    """
-
-    @classmethod
-    def from_reclass(cls, e: reclass_errors.ClassNotFound):
-        """Wrap a reclass.errors.ClassNotFound instance in our wrapper."""
-        return ClassNotFound(e.storage, e.name, e.path)
-
-
 class InventoryFacts:
     def __init__(
         self,
@@ -49,11 +24,13 @@ class InventoryFacts:
         tenant_config: Optional[str],
         extra_class_files: Iterable[Path],
         allow_missing_classes: bool,
+        ignore_class_notfound_warning: bool = True,
     ):
         self._global_config = global_config
         self._tenant_config = tenant_config
         self._extra_class_files = extra_class_files
         self._allow_missing_classes = allow_missing_classes
+        self._ignore_class_notfound_warning = ignore_class_notfound_warning
 
     @property
     def global_config(self) -> str:
@@ -74,6 +51,10 @@ class InventoryFacts:
     @property
     def allow_missing_classes(self) -> bool:
         return self._allow_missing_classes
+
+    @property
+    def ignore_class_notfound_warning(self) -> bool:
+        return self._ignore_class_notfound_warning
 
     @property
     def tenant_id(self) -> str:
@@ -170,44 +151,25 @@ class InventoryFactory:
     def tenant_dir(self) -> Optional[Path]:
         return self._tenant_dir
 
-    def _reclass_config(self, allow_missing_classes: bool) -> dict:
-        return {
-            "storage_type": "yaml_fs",
-            "inventory_base_uri": str(self.directory.absolute()),
-            "nodes_uri": str(self.targets_dir.absolute()),
-            "classes_uri": str(self.classes_dir.absolute()),
-            "compose_node_name": False,
-            "allow_none_override": True,
-            "ignore_class_notfound": allow_missing_classes,
-        }
-
     def _render_inventory(
-        self, target: Optional[str] = None, allow_missing_classes: bool = True
+        self,
+        target: Optional[str] = None,
+        allow_missing_classes: bool = True,
+        ignore_class_notfound_warning: bool = True,
     ) -> dict[str, Any]:
-        rc = self._reclass_config(allow_missing_classes)
-        storage = reclass.get_storage(
-            rc["storage_type"],
-            rc["nodes_uri"],
-            rc["classes_uri"],
-            rc["compose_node_name"],
-        )
-        class_mappings = rc.get("class_mappings")
-        _reclass = reclass_core.Core(
-            storage, class_mappings, reclass_settings.Settings(rc)
+        r = Reclass(
+            nodes_path=str(self.targets_dir.absolute()),
+            classes_path=str(self.classes_dir.absolute()),
+            ignore_class_notfound=allow_missing_classes,
         )
 
         try:
             if target:
-                return _reclass.nodeinfo(target)
+                return r.nodeinfo(target).as_dict()
 
-            return _reclass.inventory()
-        except Exception as e:
-            if type(e).__name__ == "ClassNotFound":
-                # Wrap Kapitan reclass's ClassNotFound with ours so we can cleanly
-                # catch it. See docsstring for our ClassNotFound for a more detailed
-                # explanation why this is necessary.
-                raise ClassNotFound.from_reclass(e)
-            raise
+            return r.inventory().as_dict()
+        except ValueError as e:
+            raise e
 
     def reclass(self, invfacts: InventoryFacts) -> InventoryParameters:
         cluster_response: dict[str, Any] = {
@@ -266,11 +228,15 @@ class InventoryFactory:
 
         return InventoryParameters(
             self._render_inventory(
-                "global", allow_missing_classes=invfacts.allow_missing_classes
+                "global",
+                allow_missing_classes=invfacts.allow_missing_classes,
+                ignore_class_notfound_warning=invfacts.ignore_class_notfound_warning,
             )
         )
 
-    def _find_values(self, fact: DefaultsFact, cloud: str = None) -> Iterable[str]:
+    def _find_values(
+        self, fact: DefaultsFact, cloud: Optional[str] = None
+    ) -> Iterable[str]:
         values = []
         value_path = self.global_dir / fact.value
         if fact == DefaultsFact.REGION:

@@ -1,4 +1,7 @@
-FROM docker.io/python:3.10.5-slim-bullseye AS base
+FROM docker.io/python:3.11.5-slim-bullseye AS base
+
+ARG TARGETARCH
+ENV TARGETARCH=${TARGETARCH:-amd64}
 
 ENV HOME=/app
 
@@ -6,15 +9,23 @@ WORKDIR ${HOME}
 
 FROM base AS builder
 
-ENV PATH=${PATH}:${HOME}/.poetry/bin
+ENV PATH=${PATH}:${HOME}/.local/bin:/usr/local/go/bin
 
+ARG POETRY_VERSION=1.8.5
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
- && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python - --version 1.1.13 \
+ && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
  && mkdir -p /app/.config
+
+
+ARG GO_VERSION=1.23.4
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
+ && tar -C /usr/local -xzf go.tar.gz \
+ && rm go.tar.gz \
+ && go version
 
 COPY pyproject.toml poetry.lock ./
 
@@ -41,25 +52,33 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
  && ./get_helm.sh \
  && mv /usr/local/bin/helm /usr/local/bin/helm2
 
-RUN ./tools/install-jb.sh v0.4.0
+ARG KUSTOMIZE_VERSION=5.5.0
+
+RUN ./tools/install-jb.sh v0.6.2 \
+ && curl -fsSLO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
+ && chmod +x install_kustomize.sh \
+ && ./install_kustomize.sh ${KUSTOMIZE_VERSION} /usr/local/bin
 
 FROM base AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       git \
+      gpg \
+      libmagic1 \
       libnss-wrapper \
       openssh-client \
  && rm -rf /var/lib/apt/lists/* \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+      /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
       /usr/local/bin/helm* \
       /usr/local/bin/jb \
+      /usr/local/bin/kustomize \
       /usr/local/bin/
 
 RUN ln -s /usr/local/bin/helm3 /usr/local/bin/helm
@@ -67,7 +86,9 @@ RUN ln -s /usr/local/bin/helm3 /usr/local/bin/helm
 COPY ./tools/entrypoint.sh /usr/local/bin/
 
 RUN chgrp 0 /app/ \
- && chmod g+rwX /app/
+ && chmod g+rwX /app/ \
+ && mkdir /app/.gnupg \
+ && chmod ug+w /app/.gnupg
 
 USER 1001
 

@@ -1,0 +1,17 @@
+= Compilation metadata reporting
+
+The reporting is implemented according to https://syn.tools/syn/SDDs/0031-component-version-tracking.html[SDD 0031 - Central Component Version tracking].
+
+Commodore will only report metadata for catalog compilations that result in a new catalog commit which was successfully pushed to the catalog repository.
+
+Currently, Commodore reports the following metadata:
+
+* Component instance URLs, versions, subpaths, and Git commit hashes
+* Package URLs, versions, subpaths, and Git commit hashes
+* Global repo URL, version and Git commit hash
+* Tenant repo URL, version and Git commit hash
+* Commodore Python package version and Git version
+* The timestamp of the successful compilation
+
+
+Commodore uses the same data that's reported to Lieutenant to generate the catalog commit message.

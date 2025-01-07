@@ -1,6 +1,7 @@
 """
 Tests for command line interface (CLI)
 """
+
 from subprocess import call
 
 
@@ -52,8 +53,18 @@ def test_component_compile_command():
     assert exit_status == 0
 
 
+def test_inventory_show_command():
+    exit_status = call("commodore inventory show --help", shell=True)
+    assert exit_status == 0
+
+
 def test_inventory_components_command():
     exit_status = call("commodore inventory components --help", shell=True)
+    assert exit_status == 0
+
+
+def test_inventory_packages_command():
+    exit_status = call("commodore inventory packages --help", shell=True)
     assert exit_status == 0
 
 
@@ -79,4 +90,14 @@ def test_package_compile_command():
 
 def test_package_new_command():
     exit_status = call("commodore package new --help", shell=True)
+    assert exit_status == 0
+
+
+def test_package_update_command():
+    exit_status = call("commodore package update --help", shell=True)
+    assert exit_status == 0
+
+
+def test_package_sync_command():
+    exit_status = call("commodore package sync --help", shell=True)
     assert exit_status == 0

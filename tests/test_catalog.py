@@ -1,8 +1,10 @@
 """
 Tests for catalog internals
 """
+
 from __future__ import annotations
 
+import os
 import copy
 from pathlib import Path
 from unittest.mock import patch
@@ -12,10 +14,13 @@ import git
 import pytest
 import responses
 import yaml
+import textwrap
 
 from commodore import catalog
 from commodore.config import Config
-from commodore.cluster import Cluster
+from commodore.cluster import Cluster, CompileMeta
+
+from test_compile_meta import _setup_config_repos
 
 cluster_resp = {
     "id": "c-test",
@@ -41,10 +46,13 @@ tenant_resp = {
 }
 
 
-def make_cluster_resp(id: str, displayName: str = "Test cluster") -> dict:
+def make_cluster_resp(
+    id: str, displayName: str = "Test cluster", tenant: str = "t-test-tenant"
+) -> dict:
     r = copy.deepcopy(cluster_resp)
     r["id"] = id
     r["displayName"] = displayName
+    r["tenant"] = tenant
 
     return r
 
@@ -78,18 +86,6 @@ def fresh_cluster(tmp_path: Path) -> Cluster:
         cr,
         tenant_resp,
     )
-
-
-def test_catalog_commit_message(tmp_path: Path):
-    config = Config(
-        tmp_path,
-        api_url="https://syn.example.com",
-        api_token="token",
-    )
-
-    commit_message = catalog._render_catalog_commit_msg(config)
-    assert not commit_message.startswith("\n")
-    assert commit_message.startswith("Automated catalog update from Commodore\n\n")
 
 
 def test_fetch_catalog_inexistent(
@@ -261,14 +257,22 @@ def write_target_file_2(target: Path, name="test.txt", change=True):
         )
 
 
-@pytest.mark.parametrize("migration", ["", "kapitan-0.29-to-0.30"])
+@pytest.mark.parametrize(
+    "migration", ["", "kapitan-0.29-to-0.30", "ignore-yaml-formatting"]
+)
 def test_update_catalog(
-    capsys, tmp_path: Path, config: Config, fresh_cluster: Cluster, migration: str
+    capsys,
+    tmp_path: Path,
+    config: Config,
+    fresh_cluster: Cluster,
+    migration: str,
 ):
     repo = catalog.fetch_catalog(config, fresh_cluster)
     upstream = git.Repo(tmp_path / "repo.git")
 
     config.push = True
+    _setup_config_repos(config)
+    compile_meta = CompileMeta(config)
 
     target = tmp_path / "compiled" / "test"
     target.mkdir(parents=True, exist_ok=True)
@@ -277,7 +281,7 @@ def test_update_catalog(
 
     write_target_file_1(target, name="a.yaml")
     write_target_file_1(target, name="b.yaml")
-    catalog.update_catalog(config, ["test"], repo)
+    catalog.update_catalog(config, ["test"], repo, compile_meta)
 
     captured = capsys.readouterr()
     assert upstream.active_branch.commit.message.startswith(
@@ -296,7 +300,13 @@ def test_update_catalog(
     write_target_file_2(target, name="a.yaml")
     write_target_file_2(target, name="b.yaml", change=False)
     config.migration = migration
-    catalog.update_catalog(config, ["test"], repo)
+    catalog.update_catalog(config, ["test"], repo, compile_meta)
+
+    addl_indent = ""
+    # Diff with real changes is shown with correct additional
+    # indent if ignore-yaml-formatting is used
+    if migration != "":
+        addl_indent = 2 * " "
 
     expected_diff = (
         "     --- manifests/a.yaml\n"
@@ -309,10 +319,10 @@ def test_update_catalog(
         + "        namespace: test\n"
         + "     @@ -7,6 +5,6 @@\n"
         + "        data:\n"
-        + "        - a\n"
-        + "        - b\n"
-        + "     -  - c\n"
-        + "     +  - d\n"
+        + f"      {addl_indent}  - a\n"
+        + f"      {addl_indent}  - b\n"
+        + f"     -{addl_indent}  - c\n"
+        + f"     +{addl_indent}  - d\n"
         + "        key: value\n"
     )
 
@@ -374,7 +384,7 @@ def test_kapitan_029_030_difffunc_sorts_by_k8s_kind():
         + "   namespace: test\n"
         + "+spec:\n"
         + "+  data:\n"
-        + "+  - a\n"
+        + "+    - a\n"
         + " ---\n"
         + " kind: BBB\n"
         + " ---"
@@ -433,33 +443,120 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
     assert suppressed
 
 
+def test_ignore_yaml_formatting_difffunc_keep_semantic_whitespace():
+    before_text = textwrap.dedent(
+        """
+        a:
+        b: b
+        """
+    )
+    after_text = textwrap.dedent(
+        """
+        a:
+          b: b
+        """
+    )
+
+    diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    expected_diff = (
+        "--- test\n"
+        + "+++ test\n"
+        + "@@ -1,3 +1,3 @@\n"
+        + "-a: null\n"
+        + "-b: b\n"
+        + "+a:\n"
+        + "+  b: b\n"
+        + " "
+    )
+
+    assert not suppressed
+    assert "\n".join(diffs) == expected_diff
+
+
+def test_ignore_yaml_formatting_difffunc_suppresses_noise():
+    before_text = textwrap.dedent(
+        """
+        a:
+        - a
+        - b
+        b: b
+        """
+    )
+    after_text = textwrap.dedent(
+        """
+        a:
+          - a
+          - b
+        b: b
+        """
+    )
+
+    diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
+        before_text, after_text, fromfile="test", tofile="test"
+    )
+
+    print("\n".join(diffs))
+
+    assert suppressed
+
+
 @responses.activate
 @pytest.mark.parametrize(
-    "api_resp,verbose,expected",
+    "api_resp,output,expected",
     [
-        ([cluster_resp], 0, ["c-test"]),
+        ([cluster_resp], "id", "id_single"),
         (
             [
-                make_cluster_resp("c-test"),
-                make_cluster_resp("c-foo"),
                 make_cluster_resp("c-bar"),
+                make_cluster_resp("c-foo"),
+                make_cluster_resp("c-test"),
             ],
-            0,
-            ["c-test", "c-foo", "c-bar"],
+            "id",
+            "id_multi",
         ),
         (
             [
-                make_cluster_resp("c-test", "Test cluster"),
-                make_cluster_resp("c-foo", "Foo cluster"),
-                make_cluster_resp("c-bar", "Bar cluster"),
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
             ],
-            1,
-            ["c-test - Test cluster", "c-foo - Foo cluster", "c-bar - Bar cluster"],
+            "",
+            "pretty_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "json",
+            "json_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "yaml",
+            "yaml_multi",
+        ),
+        (
+            [
+                make_cluster_resp("c-bar", tenant="t-foo", displayName="Bar"),
+                make_cluster_resp("c-foo", tenant="t-foo", displayName="Foo"),
+                make_cluster_resp("c-test"),
+            ],
+            "yml",
+            "yml_multi",
         ),
     ],
 )
 def test_catalog_list(
-    config: Config, capsys, api_resp: list, expected: list[str], verbose: int
+    config: Config, capsys, api_resp: list, expected: str, output: str
 ):
     responses.add(
         responses.GET,
@@ -468,13 +565,55 @@ def test_catalog_list(
         json=api_resp,
     )
 
-    config.update_verbosity(verbose)
-    catalog.catalog_list(config)
+    catalog.catalog_list(config, output)
 
     captured = capsys.readouterr()
 
-    result = captured.out.strip().split("\n")
-    assert result == expected
+    update_golden = os.getenv("COMMODORE_TESTS_GEN_GOLDEN", "False").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+
+    result = captured.out
+
+    golden_file = (
+        Path(__file__).absolute().parent / "testdata" / "catalog_list" / expected
+    )
+    if update_golden:
+        with open(golden_file, "w") as f:
+            f.write(result)
+    with open(golden_file, "r") as f:
+        assert result == f.read()
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "tenant,sort_by",
+    [
+        ("", ""),
+        ("", "id"),
+        ("", "displayName"),
+        ("", "tenant"),
+        ("t-foo", ""),
+        ("t-bar", "displayName"),
+    ],
+)
+def test_catalog_list_parameters(config: Config, tenant: str, sort_by: str):
+    params = {}
+
+    if tenant != "":
+        params["tenant"] = tenant
+    if sort_by != "":
+        params["sort_by"] = sort_by
+    responses.add(
+        responses.GET,
+        "https://syn.example.com/clusters/",
+        status=200,
+        body="[]",
+        match=[responses.matchers.query_param_matcher(params)],
+    )
+    catalog.catalog_list(config, "id", tenant=tenant, sort_by=sort_by)
 
 
 @responses.activate
@@ -487,6 +626,6 @@ def test_catalog_list_error(config: Config):
     )
 
     with pytest.raises(click.ClickException) as e:
-        catalog.catalog_list(config)
+        catalog.catalog_list(config, "id")
 
     assert "While listing clusters on Lieutenant:" in str(e.value)

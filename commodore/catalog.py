@@ -10,11 +10,17 @@ from pathlib import Path as P
 
 import click
 import yaml
+import json
 
-from .component import Component
 from .gitrepo import GitRepo, GitCommandError
-from .helpers import ApiError, rm_tree_contents, lieutenant_query, sliding_window
-from .cluster import Cluster
+from .helpers import (
+    ApiError,
+    rm_tree_contents,
+    lieutenant_query,
+    sliding_window,
+    IndentedListDumper,
+)
+from .cluster import Cluster, CompileMeta
 from .config import Config, Migration
 from .k8sobject import K8sObject
 
@@ -25,44 +31,6 @@ def fetch_catalog(config: Config, cluster: Cluster) -> GitRepo:
     if config.debug:
         click.echo(f" > Cloning cluster catalog {repo_url}")
     return GitRepo.clone(repo_url, config.catalog_dir, config)
-
-
-def _pretty_print_component_commit(name, component: Component) -> str:
-    short_sha = component.repo.head_short_sha
-    return f" * {name}: {component.version} ({short_sha})"
-
-
-def _pretty_print_config_commit(name, repo: GitRepo) -> str:
-    short_sha = repo.head_short_sha
-    return f" * {name}: {short_sha}"
-
-
-def _render_catalog_commit_msg(cfg) -> str:
-    # pylint: disable=import-outside-toplevel
-    import datetime
-
-    now = datetime.datetime.now().isoformat(timespec="milliseconds")
-
-    component_commits = [
-        _pretty_print_component_commit(cn, c) for cn, c in cfg.get_components().items()
-    ]
-    component_commits_str = "\n".join(component_commits)
-
-    config_commits = [
-        _pretty_print_config_commit(c, r) for c, r in cfg.get_configs().items()
-    ]
-    config_commits_str = "\n".join(config_commits)
-
-    return f"""Automated catalog update from Commodore
-
-Component commits:
-{component_commits_str}
-
-Configuration commits:
-{config_commits_str}
-
-Compilation timestamp: {now}
-"""
 
 
 def clean_catalog(repo: GitRepo):
@@ -88,6 +56,8 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
     * User has requested pushing with `--push`
 
     Ask user to confirm push if `--interactive` is specified
+
+    Returns True if the push was actually done and successful. False otherwise.
     """
     if cfg.local:
         repo.reset(working_tree=False)
@@ -107,6 +77,7 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
             raise click.ClickException(
                 "Failed to push to the catalog repository: "
                 + f"Git exited with status code {e.status}"
+                + f"\nThe error reported was: {e.stderr}"
             ) from e
         for pi in pushinfos:
             # Any error has pi.ERROR set in the `flags` bitmask
@@ -117,10 +88,13 @@ def _push_catalog(cfg: Config, repo: GitRepo, commit_message: str):
                 raise click.ClickException(
                     f"Failed to push to the catalog repository: {summary}"
                 )
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
-        click.echo(" > Use flag --push to commit and push the catalog repo")
-        click.echo(" > Add flag --interactive to show the diff and decide on the push")
+
+        return True
+
+    click.echo(" > Skipping commit+push to catalog...")
+    click.echo(" > Use flag --push to commit and push the catalog repo")
+    click.echo(" > Add flag --interactive to show the diff and decide on the push")
+    return False
 
 
 def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
@@ -173,21 +147,10 @@ def _is_semantic_diff_kapitan_029_030(win: tuple[str, str]) -> bool:
 def _kapitan_029_030_difffunc(
     before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
 ) -> tuple[Iterable[str], bool]:
-
-    before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
-    before_sorted_lines = yaml.dump_all(before_objs).split("\n")
-
-    after_objs = sorted(yaml.safe_load_all(after_text), key=K8sObject)
-    after_sorted_lines = yaml.dump_all(after_objs).split("\n")
-
-    diff = difflib.unified_diff(
-        before_sorted_lines,
-        after_sorted_lines,
-        lineterm="",
-        fromfile=fromfile,
-        tofile=tofile,
+    diff_lines, _ = _ignore_yaml_formatting_difffunc(
+        before_text, after_text, fromfile, tofile
     )
-    diff_lines = list(diff)
+
     suppress_diff = not any(
         _is_semantic_diff_kapitan_029_030(win)
         for win in sliding_window(diff_lines[2:], 2)
@@ -196,7 +159,41 @@ def _kapitan_029_030_difffunc(
     return diff_lines, suppress_diff
 
 
-def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
+def _ignore_yaml_formatting_difffunc(
+    before_text: str, after_text: str, fromfile: str = "", tofile: str = ""
+) -> tuple[list[str], bool]:
+    before_objs = sorted(yaml.safe_load_all(before_text), key=K8sObject)
+    before_sorted_lines = yaml.dump_all(before_objs, Dumper=IndentedListDumper).split(
+        "\n"
+    )
+
+    after_objs = sorted(yaml.safe_load_all(after_text), key=K8sObject)
+    after_sorted_lines = yaml.dump_all(after_objs, Dumper=IndentedListDumper).split(
+        "\n"
+    )
+
+    diff = difflib.unified_diff(
+        before_sorted_lines,
+        after_sorted_lines,
+        lineterm="",
+        fromfile=fromfile,
+        tofile=tofile,
+    )
+
+    diff_lines = list(diff)
+    return diff_lines, len(diff_lines) == 0
+
+
+def update_catalog(
+    cfg: Config, targets: Iterable[str], repo: GitRepo, compile_meta: CompileMeta
+):
+    """Updates cluster catalog repo if there are any changes
+
+    Prints diff of changes (with smart diffing if requested), and calls _push_catalog()
+    which will determine if the changes should actually be committed and pushed.
+
+    Returns True if a commit was successfully pushed. False otherwise.
+    """
     if repo.working_tree_dir is None:
         raise click.ClickException("Catalog repo has no working tree")
 
@@ -212,6 +209,9 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
     if cfg.migration == Migration.KAP_029_030:
         click.echo(" > Smart diffing started... (this can take a while)")
         difftext, changed = repo.stage_all(diff_func=_kapitan_029_030_difffunc)
+    elif cfg.migration == Migration.IGNORE_YAML_FORMATTING:
+        click.echo(" > Smart diffing started... (this can take a while)")
+        difftext, changed = repo.stage_all(diff_func=_ignore_yaml_formatting_difffunc)
     else:
         difftext, changed = repo.stage_all()
     elapsed = time.time() - start
@@ -225,26 +225,65 @@ def update_catalog(cfg: Config, targets: Iterable[str], repo: GitRepo):
         message = " > No changes."
     click.echo(message)
 
-    commit_message = _render_catalog_commit_msg(cfg)
+    commit_message = compile_meta.render_catalog_commit_message()
     if cfg.debug:
         click.echo(" > Commit message will be")
         click.echo(textwrap.indent(commit_message, "   "))
+
     if changed:
-        _push_catalog(cfg, repo, commit_message)
-    else:
-        click.echo(" > Skipping commit+push to catalog...")
+        return _push_catalog(cfg, repo, commit_message)
+
+    click.echo(" > Skipping commit+push to catalog...")
+    return False
 
 
-def catalog_list(cfg):
+def catalog_list(cfg, out: str, sort_by: str = "id", tenant: str = ""):
+    params = {"sort_by": sort_by}
+    if tenant != "":
+        params["tenant"] = tenant
     try:
-        clusters = lieutenant_query(cfg.api_url, cfg.api_token, "clusters", "")
+        clusters = lieutenant_query(
+            cfg.api_url,
+            cfg.api_token,
+            "clusters",
+            "",
+            params=params,
+            timeout=cfg.request_timeout,
+        )
     except ApiError as e:
         raise click.ClickException(f"While listing clusters on Lieutenant: {e}") from e
+    if out == "yaml" or out == "yml":
+        click.echo(yaml.safe_dump(clusters))
+    elif out == "json":
+        click.echo(json.dumps(clusters, indent=2))
+    elif out == "id":
+        _print_clusters_id(clusters)
+    else:
+        _print_clusters_pretty(clusters)
+
+
+def _print_clusters_id(clusters):
     for cluster in clusters:
-        display_name = cluster["displayName"]
-        catalog_id = cluster["id"]
-        if cfg.verbose:
-            click.secho(catalog_id, nl=False, bold=True)
-            click.echo(f" - {display_name}")
-        else:
-            click.echo(catalog_id)
+        click.echo(cluster["id"])
+
+
+def _print_clusters_pretty(clusters):
+    columns = {
+        "ID": "id",
+        "DISPLAY NAME": "displayName",
+        "TENANT": "tenant",
+    }
+    padding = 2 * " "
+
+    widths = {}
+    for header in columns:
+        widths[header] = len(columns[header] + padding)
+
+    for cluster in clusters:
+        for header, path in columns.items():
+            widths[header] = max(widths[header], len(cluster.get(path, "") + padding))
+
+    fmtstr = len(widths) * "{:<%d}" % tuple(widths.values())
+    click.echo(fmtstr.format(*columns))
+    for cluster in clusters:
+        click.echo(fmtstr.format(*[cluster.get(path) for path in columns.values()]))

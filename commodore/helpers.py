@@ -5,13 +5,17 @@ import itertools
 import json
 import shutil
 import os
+import sys
 from collections.abc import Callable, Iterable
+from datetime import datetime
 from pathlib import Path as P
 from typing import Optional
 
 import click
 import requests
 import yaml
+
+from enum import Enum
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
@@ -22,13 +26,22 @@ from kapitan import defaults
 from kapitan.cached import reset_cache as reset_reclass_cache
 from kapitan.refs.base import RefController, PlainRef
 from kapitan.refs.secrets.vaultkv import VaultBackend
-from kapitan.resources import inventory_reclass
+
+from reclass_rs import Reclass
 
 from commodore import __install_dir__
 from commodore.config import Config
 
 
-ArgumentCache = collections.namedtuple("ArgumentCache", ["inventory_path"])
+ArgumentCache = collections.namedtuple(
+    "ArgumentCache",
+    [
+        "inventory_backend",
+        "inventory_path",
+        "multiline_string_style",
+        "yaml_dump_null_as_empty",
+    ],
+)
 
 
 class FakeVaultBackend(VaultBackend):
@@ -42,6 +55,15 @@ class FakeVaultBackend(VaultBackend):
 
 class ApiError(Exception):
     pass
+
+
+class IndentedListDumper(yaml.Dumper):
+    """
+    Dumper which preserves indentation of list items by overriding indentless.
+    """
+
+    def increase_indent(self, flow=False, *args, **kwargs):
+        return super().increase_indent(flow=flow, indentless=False)
 
 
 def yaml_load(file):
@@ -83,7 +105,7 @@ def yaml_dump(obj, file):
     """
     yaml.add_representer(str, _represent_str)
     with open(file, "w", encoding="utf-8") as outf:
-        yaml.dump(obj, outf)
+        yaml.dump(obj, outf, Dumper=IndentedListDumper)
 
 
 def yaml_dump_all(obj, file):
@@ -92,19 +114,74 @@ def yaml_dump_all(obj, file):
     """
     yaml.add_representer(str, _represent_str)
     with open(file, "w", encoding="utf-8") as outf:
-        yaml.dump_all(obj, outf)
+        yaml.dump_all(obj, outf, Dumper=IndentedListDumper)
 
 
-def lieutenant_query(api_url, api_token, api_endpoint, api_id):
+class RequestMethod(Enum):
+    GET = "GET"
+    POST = "POST"
+
+
+def _lieutenant_request(
+    method: RequestMethod,
+    api_url: str,
+    api_token: str,
+    api_endpoint: str,
+    api_id: str,
+    params={},
+    timeout=5,
+    **kwargs,
+):
+    url = url_normalize(f"{api_url}/{api_endpoint}/{api_id}")
+    headers = {"Authorization": f"Bearer {api_token}"}
     try:
-        r = requests.get(
-            url_normalize(f"{api_url}/{api_endpoint}/{api_id}"),
-            headers={"Authorization": f"Bearer {api_token}"},
-        )
+        if method == RequestMethod.GET:
+            r = requests.get(url, headers=headers, params=params, timeout=timeout)
+        elif method == RequestMethod.POST:
+            headers["Content-Type"] = "application/json"
+            data = kwargs.get("post_data", {})
+            r = requests.post(
+                url,
+                json.dumps(data),
+                headers=headers,
+                params=params,
+                timeout=timeout,
+                # don't let requests handle redirects (usually if the API URL is given without
+                # https://), since requests will rewrite the method to GET for the redirect which
+                # makes no sense when we're trying to POST to a POST-only endpoint.
+                allow_redirects=False,
+            )
+
+            if r.status_code in [301, 302, 307, 308]:
+                # Explicitly redo the POST if we get a 301, 302, 307 or 308 status code for the
+                # first call. We don't validate that the redirect location has the same domain as
+                # the original request, since we already unconditionally follow redirects  with the
+                # bearer token for GET requests.
+                # Note that this wouldn't be necessary if all Lieutenant APIs would redirect us with
+                # a 308 for POST requests.
+                r = requests.post(
+                    r.headers["location"],
+                    json.dumps(data),
+                    headers=headers,
+                    params=params,
+                    timeout=timeout,
+                )
+        else:
+            raise NotImplementedError(f"QueryType {method} not implemented")
     except ConnectionError as e:
         raise ApiError(f"Unable to connect to Lieutenant at {api_url}") from e
+    except NotImplementedError as e:
+        raise e
+
+    return _handle_lieutenant_response(r)
+
+
+def _handle_lieutenant_response(r: requests.Response):
     try:
-        resp = json.loads(r.text)
+        if r.text:
+            resp = json.loads(r.text)
+        else:
+            resp = {}
     except json.JSONDecodeError as e:
         raise ApiError("Client error: Unable to parse JSON") from e
     try:
@@ -119,6 +196,27 @@ def lieutenant_query(api_url, api_token, api_endpoint, api_id):
         raise ApiError(f"API returned {r.status_code}{extra_msg}") from e
     else:
         return resp
+
+
+def lieutenant_query(api_url, api_token, api_endpoint, api_id, params={}, timeout=5):
+    return _lieutenant_request(
+        RequestMethod.GET, api_url, api_token, api_endpoint, api_id, params, timeout
+    )
+
+
+def lieutenant_post(
+    api_url, api_token, api_endpoint, api_id, post_data, params={}, timeout=5
+):
+    return _lieutenant_request(
+        RequestMethod.POST,
+        api_url,
+        api_token,
+        api_endpoint,
+        api_id,
+        params,
+        timeout,
+        post_data=post_data,
+    )
 
 
 def _verbose_rmtree(tree, *args, **kwargs):
@@ -146,7 +244,7 @@ def clean_working_tree(config: Config):
 def kapitan_compile(
     config: Config,
     targets: Iterable[str],
-    output_dir: P = None,
+    output_dir: Optional[P] = None,
     search_paths=None,
     fake_refs=False,
     reveal=False,
@@ -165,28 +263,32 @@ def kapitan_compile(
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
     click.secho("Compiling catalog...", bold=True)
-    cached.args["compile"] = ArgumentCache(
-        inventory_path=config.inventory.inventory_dir
-    )
+    # workaround the non-modifiable Namespace() default value for cached.args
+    cached.args.inventory_backend = "reclass-rs"
+    cached.args.inventory_path = str(config.inventory.inventory_dir)
+    cached.args.multiline_string_style = "literal"
+    cached.args.yaml_dump_null_as_empty = False
+    cached.args.verbose = config.trace
     kapitan_targets.compile_targets(
-        inventory_path=config.inventory.inventory_dir,
+        inventory_path=cached.args.inventory_path,
         search_paths=search_paths,
         output_path=output_dir,
-        targets=targets,
-        parallel=4,
+        desired_targets=targets,
+        parallelism=None,
         labels=None,
         ref_controller=refController,
-        verbose=config.trace,
         prune=False,
         indent=2,
         reveal=reveal,
         cache=False,
         cache_paths=None,
-        fetch_dependencies=config.fetch_dependencies,
-        force_fetch=True,
+        fetch=config.fetch_dependencies,
+        # We always want to force-fetch when we want to fetch dependencies
+        force_fetch=config.fetch_dependencies,
         validate=False,
         schemas_path=config.work_dir / "schemas",
         jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
+        use_go_jsonnet=True,
     )
 
 
@@ -194,14 +296,23 @@ def kapitan_inventory(
     config: Config, key: str = "nodes", ignore_class_notfound: bool = False
 ) -> dict:
     """
-    Reset reclass cache and render inventory.
     Returns the top-level key according to the kwarg.
     """
-    reset_reclass_cache()
-    inv = inventory_reclass(
-        config.inventory.inventory_dir, ignore_class_notfound=ignore_class_notfound
+    r = Reclass(
+        nodes_path=str(config.inventory.targets_dir),
+        classes_path=str(config.inventory.classes_dir),
+        ignore_class_notfound=ignore_class_notfound,
     )
-    return inv[key]
+    print("running reclass_rs", file=sys.stderr)
+    start = datetime.now()
+    try:
+        inv = r.inventory()
+    except ValueError as e:
+        raise click.ClickException(f"While rendering inventory: {e}")
+    elapsed = datetime.now() - start
+    print(f"Inventory (reclass_rs) took {elapsed}", file=sys.stderr)
+
+    return inv.as_dict()[key]
 
 
 def rm_tree_contents(basedir):

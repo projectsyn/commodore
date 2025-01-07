@@ -11,7 +11,15 @@ def lint_dependency_specification(
     deptype: DepType, file: Path, filecontents: dict[str, Any]
 ) -> int:
     errcount = 0
-    components = filecontents.get("parameters", {}).get(deptype.value, {})
+    params = filecontents.get("parameters", {})
+    if not isinstance(params, dict):
+        click.secho(
+            f"> Key 'parameters' isn't a dictionary in {file}",
+            fg="red",
+        )
+        return 1
+
+    components = params.get(deptype.value, {})
     deptype_str = deptype.name.capitalize()
     for d, dspec in components.items():
         if "version" not in dspec:
@@ -22,7 +30,7 @@ def lint_dependency_specification(
             )
             errcount += 1
 
-        unk_keys = set(dspec.keys()) - {"url", "version"}
+        unk_keys = set(dspec.keys()) - {"url", "version", "path"}
         if len(unk_keys) > 0:
             click.secho(
                 f"> {deptype_str} specification for {d} "

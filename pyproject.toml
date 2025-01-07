@@ -11,67 +11,58 @@ packages = [
     {include = "commodore"}
 ]
 include = [
-    "commodore/component-template/**/*",
     "commodore/lib/commodore.libjsonnet",
+    "commodore/lib/kube.libsonnet",
+    "commodore/lib/kube.libjsonnet",
+    "commodore/lib/kube-libsonnet/kube.libsonnet",
     "commodore/filters/helm_namespace.jsonnet",
+    "commodore/scripts/run-kustomize",
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
-kapitan = "0.30.0"
-click = "8.1.3"
-cookiecutter = "2.1.1"
-# Kapitan requires exactly 3.1.24
-gitpython = "3.1.24"
-# Kapitan requires exactly 2.26.0
-# We explicitly request to use chardet on python3, so Poetry doesn't update
-# chartdet to v5.
-requests = {version = "2.26.0", extras = ["use_chardet_on_py3"]}
+python = ">=3.10, <3.13"
+# NOTE: We restrict boto3/botocore versions to reduce complexity of Poetry's
+# dependency resolution significantly, cf.
+# https://github.com/orgs/python-poetry/discussions/8165#discussioncomment-6387378
+# We put those dependencies first to constrain the Poetry dependency solver
+# which processes dependencies in the order they're listed. Without these
+# restrictions, the broad required boto3 dependency in Kapitan makes
+# dependency resolution very slow.
+boto3 = "^1.26.145"
+botocore="^1.29.145"
+kapitan = "0.34.2"
+click = "8.1.8"
+gitpython = "3.1.44"
+requests = "2.32.3"
 url-normalize = "1.4.3"
-python-dotenv = "0.20.0"
-importlib-metadata = "4.12.0"
+python-dotenv = "1.0.1"
+importlib-metadata = "8.5.0"
 pyxdg = "0.28"
-# Reenable dependency cruft once our patches are merged.
-# In the meantime we add typer as a top-level dependency since Cruft depends
-# on it.
-# cruft = {branch="patched-update", git="https://github.com/projectsyn/cruft.git"}
-typer = "0.6.1"
-# Kapitan requires exactly 3.1.1
-oauthlib = "3.1.1"
-# Kapitan requires exactly 2.1.0
-pyjwt = "2.1.0"
+cruft = "2.16.0"
+oauthlib = "3.2.2"
+pyjwt = "2.10.1"
+PyGithub = "2.5.0"
+reclass-rs = "0.5.0"
+gojsonnet = "0.20.0"
 
 [tool.poetry.dev-dependencies]
-tox = "3.25.1"
-autopep8 = "1.6.0"
-pytest = "7.1.2"
-pytest-xdist = "2.5.0"
-pytest-benchmark = "3.4.1"
-responses = "0.21.0"
-black = "22.6.0"
-pyfakefs = "4.6.2"
-pytest-cov = "3.0.0"
-pylint = "2.14.5"
-types-toml = "0.10.8"
+tox = "3.28.0"
+pytest = "8.3.4"
+pytest-xdist = "3.6.1"
+pytest-benchmark = "5.1.0"
+responses = "0.25.3"
+black = "24.10.0"
+pyfakefs = "5.7.3"
+pytest-cov = "6.0.0"
+pylint = "3.3.3"
+types-toml = "0.10.8.20240310"
 examples = "1.0.2"
 pytest-mock = "^3.8.2"
 
 [tool.poetry.scripts]
 commodore = 'commodore.cli:main'
-autopep = 'tools.tools:autopep'
-local_reveal = 'tools.tools:reveal'
-compile = 'tools.tools:compile'
+kapitan = 'kapitan.cli:main'
 
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
-[tool.coverage.run]
-omit = [
-    "commodore/component-template/*"
-]
-
-[tool.coverage.report]
-omit = [
-    "commodore/component-template/*"
-]

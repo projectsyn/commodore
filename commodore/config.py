@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import json
 import time
 import textwrap
 
 from enum import Enum
 from pathlib import Path as P
-from typing import Optional
-
-import jwt
+from typing import Any, Iterable, Optional
 
 import click
+import jwt
+import requests
+
+from url_normalize import url_normalize
 
 from commodore.component import Component, component_parameters_key
 from .gitrepo import GitRepo
@@ -21,6 +24,66 @@ from . import tokencache
 
 class Migration(Enum):
     KAP_029_030 = "kapitan-0.29-to-0.30"
+    IGNORE_YAML_FORMATTING = "ignore-yaml-formatting"
+
+
+class VersionInfo:
+    def __init__(
+        self,
+        url: str,
+        version: str,
+        git_sha: str,
+        short_sha: str,
+        path: Optional[str] = None,
+    ):
+        self.url = url
+        self.version = version
+        self.path = path
+        self.git_sha = git_sha
+        self.short_sha = short_sha
+
+    def as_dict(self):
+        info = {
+            "gitSha": self.git_sha,
+            "url": self.url,
+            "version": self.version,
+        }
+        if self.path:
+            info["path"] = self.path
+
+        return info
+
+    def pretty_print(self, name: str) -> str:
+        path = ""
+        if self.path:
+            path = f"\n   path: {self.path}"
+        return (
+            f" * {name}: {self.version} ({self.short_sha})\n"
+            + f"   url: {self.url}{path}"
+        )
+
+
+class InstanceVersionInfo(VersionInfo):
+    def __init__(self, component: Component):
+        super().__init__(
+            component.repo_url,
+            component.version or component.repo.default_version,
+            component.repo.head_sha,
+            component.repo.head_short_sha,
+            path=component.sub_path,
+        )
+        self.component = component.name
+
+    def as_dict(self):
+        info = super().as_dict()
+        info["component"] = self.component
+        return info
+
+    def pretty_print(self, name: str) -> str:
+        pretty_name = name
+        if self.component != name:
+            pretty_name = f"{name} ({self.component})"
+        return super().pretty_print(pretty_name)
 
 
 # pylint: disable=too-many-instance-attributes,too-many-public-methods
@@ -33,6 +96,9 @@ class Config:
     _dependency_repos: dict[str, MultiDependency]
     _deprecation_notices: list[str]
     _migration: Optional[Migration]
+    _dynamic_facts: dict[str, Any]
+    _github_token: Optional[str]
+    _request_timeout: int
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -70,6 +136,9 @@ class Config:
         self._global_repo_revision_override = None
         self._tenant_repo_revision_override = None
         self._migration = None
+        self._dynamic_facts = {}
+        self._github_token = None
+        self._request_timeout = 5
 
     @property
     def verbose(self):
@@ -131,19 +200,30 @@ class Config:
     @property
     def api_token(self):
         if self._api_token is None and self.api_url:
-            token = tokencache.get(self.api_url)
-            if token is not None:
-                # We don't verify the signature, we just want to know if the token is expired
-                # lieutenant will decide if it's valid
-                try:
-                    t = jwt.decode(
-                        token, algorithms=["RS256"], options={"verify_signature": False}
-                    )
-                    if "exp" in t and t["exp"] < time.time() + 10:
-                        return None
-                except jwt.exceptions.InvalidTokenError:
-                    return None
-                self._api_token = token
+            tokens = tokencache.get(self.api_url)
+            token = tokens.get("id_token")
+            self._api_token = token
+
+        if self._api_token:
+            # Clear cached token if it's expired.
+            #
+            # NOTE(sg): This assumes that users of this property call `login.login()` if they see
+            # that the property is None. Callers that don't do so must expect failed API operations
+            # when Commodore is invoked with a short-lived OIDC token.
+            try:
+                # We don't verify the signature, we just want to know if the token is expired.
+                t = jwt.decode(
+                    self._api_token,
+                    algorithms=["RS256"],
+                    options={"verify_signature": False},
+                )
+                if "exp" in t and t["exp"] < time.time() + 10:
+                    self._api_token = None
+                # Here: tokens without 'exp' don't expire
+            except jwt.exceptions.InvalidTokenError:
+                # Assume that unparseable tokens are long-lived.
+                pass
+
         return self._api_token
 
     @api_token.setter
@@ -173,12 +253,32 @@ class Config:
         self._global_repo_revision_override = rev
 
     @property
+    def global_version_info(self) -> VersionInfo:
+        repo = self._config_repos["global"]
+        return VersionInfo(
+            repo.remote,
+            self.global_repo_revision_override or repo.default_version,
+            repo.head_sha,
+            repo.head_short_sha,
+        )
+
+    @property
     def tenant_repo_revision_override(self):
         return self._tenant_repo_revision_override
 
     @tenant_repo_revision_override.setter
     def tenant_repo_revision_override(self, rev):
         self._tenant_repo_revision_override = rev
+
+    @property
+    def tenant_version_info(self) -> VersionInfo:
+        repo = self._config_repos["customer"]
+        return VersionInfo(
+            repo.remote,
+            self.tenant_repo_revision_override or repo.default_version,
+            repo.head_sha,
+            repo.head_short_sha,
+        )
 
     @property
     def migration(self):
@@ -188,6 +288,31 @@ class Config:
     def migration(self, migration):
         if migration and migration != "":
             self._migration = Migration(migration)
+
+    @property
+    def dynamic_facts(self) -> dict[str, Any]:
+        """Returns fallback dynamic facts provided on the command line."""
+        return self._dynamic_facts
+
+    @dynamic_facts.setter
+    def dynamic_facts(self, facts: dict[str, Any]):
+        self._dynamic_facts = facts
+
+    @property
+    def github_token(self) -> Optional[str]:
+        return self._github_token
+
+    @github_token.setter
+    def github_token(self, github_token: str):
+        self._github_token = github_token
+
+    @property
+    def request_timeout(self) -> int:
+        return self._request_timeout
+
+    @request_timeout.setter
+    def request_timeout(self, timeout: int):
+        self._request_timeout = timeout
 
     @property
     def inventory(self):
@@ -217,6 +342,18 @@ class Config:
     def register_package(self, pkg_name: str, pkg: Package):
         self._packages[pkg_name] = pkg
 
+    def get_package_versioninfos(self) -> dict[str, VersionInfo]:
+        return {
+            p: VersionInfo(
+                pkg.url,
+                pkg.version or pkg.repo.default_version,
+                pkg.repo.head_sha,
+                pkg.repo.head_short_sha,
+                path=pkg.sub_path,
+            )
+            for p, pkg in self._packages.items()
+        }
+
     def register_dependency_repo(self, repo_url: str) -> MultiDependency:
         """Register dependency repository, if it isn't registered yet.
 
@@ -224,7 +361,10 @@ class Config:
         depkey = dependency_key(repo_url)
         if depkey not in self._dependency_repos:
             self._dependency_repos[depkey] = MultiDependency(
-                repo_url, self.inventory.dependencies_dir
+                repo_url,
+                self.inventory.dependencies_dir,
+                author_name=self.username,
+                author_email=self.usermail,
             )
 
         dep = self._dependency_repos[depkey]
@@ -245,6 +385,12 @@ class Config:
                 raise click.ClickException(
                     f"Component {cn} with alias {alias} does not support instantiation."
                 )
+
+    def get_component_alias_versioninfos(self) -> dict[str, InstanceVersionInfo]:
+        return {
+            a: InstanceVersionInfo(self._components[cn])
+            for a, cn in self._component_aliases.items()
+        }
 
     def register_deprecation_notice(self, notice: str):
         self._deprecation_notices.append(notice)
@@ -277,8 +423,144 @@ class Config:
                     msg += f" {cmeta['deprecation_notice']}"
                 self.register_deprecation_notice(msg)
 
+    def discover_oidc_config(self) -> None:
+        """Check the configured Lieutenant API URL for OIDC client details, if no OIDC
+        client details are given on the command line.
+
+        Update the provided config object in place if the API provides OIDC client
+        details."""
+        if (
+            self.oidc_client is None
+            and self.oidc_discovery_url is None
+            and self.api_url is not None
+        ):
+            try:
+                r = requests.get(
+                    url_normalize(self.api_url), timeout=self.request_timeout
+                )
+                api_cfg = json.loads(r.text)
+                if "oidc" in api_cfg:
+                    self.oidc_client = api_cfg["oidc"].get("clientId")
+                    self.oidc_discovery_url = api_cfg["oidc"].get("discoveryUrl")
+            except (requests.RequestException, json.JSONDecodeError) as e:
+                # We do this on a best effort basis
+                click.echo(f" > Unable to auto-discover OIDC config: {e}")
+
 
 def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_instance", False)
+
+
+def set_fact_value(facts: dict[str, Any], raw_key: str, value: Any) -> None:
+    """Set value for nested fact at `raw_key` (expected form `path.to.key`) to `value`.
+
+    If a segment of the nested key is present in `facts` and not a dictionary or when
+    the raw key contains an empty segment, the function won't set a value and will
+    instead print a diagnostic message.
+    """
+    key_parts = raw_key.split(".")
+
+    if any(kp == "" for kp in key_parts):
+        # Bail out early if the raw key is malformed (any empty segment)
+        click.secho(f"Malformed nested key '{raw_key}' skipping...", fg="yellow")
+        return
+
+    prefix_key = ""
+    target_dict = facts
+    for k in key_parts[:-1]:
+        prefix_key = f"{prefix_key}{k}."
+        if k in target_dict and not isinstance(target_dict[k], dict):
+            click.secho(
+                "Trying to insert subkey into non-dictionary "
+                + f"dynamic fact '{prefix_key[:-1]}', skipping...",
+                fg="yellow",
+            )
+            return
+
+        target_dict = target_dict.setdefault(k, {})
+
+    key = key_parts[-1]
+
+    if key in target_dict:
+        click.secho(
+            f"Overwriting dynamic fact '{raw_key}={target_dict[key]}' with '{value}'",
+            fg="yellow",
+        )
+    target_dict[key] = value
+
+
+def parse_dynamic_fact_value(raw_value: str) -> Any:
+    """Parse raw dynamic fact value.
+
+    Tries to parse the value as JSON if it starts with the literal `json:`.
+
+    Returns the parsed value or `None` if trying to parse a JSON value results in a
+    decode error."""
+    if raw_value.startswith("json:"):
+        json_val = raw_value.replace("json:", "", 1)
+        # Parse value as JSON if it starts with `json:`, skip value completely
+        # on parse errors.
+        try:
+            v = json.loads(json_val)
+        except json.JSONDecodeError as e:
+            click.secho(
+                f"Expected value '{json_val}' to be parsable JSON, "
+                + f"but parsing failed with '{e}', skipping",
+                fg="yellow",
+            )
+            return None
+    else:
+        v = raw_value
+    return v
+
+
+def parse_dynamic_facts_from_cli(raw_facts: Iterable[str]) -> dict[str, Any]:
+    """Parse dynamic facts dictionary from strings provided on command line.
+
+    The function expects each raw fact (string) to be of the form `key=value`, where key
+    can contain dots to specify nested keys (e.g. `path.to.key`), and value is parsed as
+    JSON when it starts with the literal `json:`.
+
+    Inputs are processed in order, and subsequent inputs setting the same key will
+    overwrite any existing values. Facts for nested keys will be skipped, if a parent
+    key already exists *and* isn't a dictionary.
+
+    Facts with values marked as JSON which result in a decode error will be skipped.
+
+    Returns a dict with the parsed dynamic facts structure.
+    """
+    facts: dict[str, Any] = {}
+
+    for f in raw_facts:
+        if "=" not in f:
+            click.secho(
+                f"Ignoring dynamic fact {f} which is not in format key=value",
+                fg="yellow",
+            )
+            continue
+        raw_key, raw_value = f.split("=", maxsplit=1)
+        if not raw_key:
+            click.secho(
+                f"Ignoring malformed dynamic fact '{f}' with no key.", fg="yellow"
+            )
+            continue
+        if not raw_value:
+            click.secho(
+                f"Ignoring malformed dynamic fact '{f}' with no value. "
+                + "Please specify empty string value as 'json:\"\"'",
+                fg="yellow",
+            )
+            continue
+
+        # Parse value first, so we never add empty dicts for a nested key whose JSON
+        # value turns out to be malformed.
+        value = parse_dynamic_fact_value(raw_value)
+        if value is None:
+            # skip when we failed to parse a value that identified itself as JSON
+            continue
+
+        set_fact_value(facts, raw_key, value)
+
+    return facts

@@ -17,10 +17,19 @@ We recommend that you use the Commodore Python package provided on PyPI to make 
 
 === Prerequisites
 
-* Python 3.8, 3.9, or 3.10 as `python3` and the Python `venv` module.
+* A Python version between 3.10 and 3.12 as `python3` and the Python `venv` module.
 We recommend that you install Python and the `venv` module with your preferred package manager.
-* `jsonnet-bundler`, https://github.com/jsonnet-bundler/jsonnet-bundler#install[installation instructions]
+* Additionally, a few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
+On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
+Please refer to your operating system's documentation for instructions to setup a working C compiler.
+* Installing the `gojsonnet` Python package requires a working Go compiler.
+Please check your operating system's documentation for instructions to setup a working Go compiler.
+* On some Linux distributions, you may need to install the Python `wheel` package manually.
+* jsonnet-bundler from https://github.com/projectsyn/jsonnet-bundler/releases[projectsyn/jsonnet-bundler/releases] in your `$PATH` as `jb`.
 * Helm 3, https://helm.sh/docs/intro/install/[installation instructions]
+* `kustomize`, some components might require Kustomize.
+Versions >= 5 are recommended.
+https://kubectl.docs.kubernetes.io/installation/kustomize/[Installation instructions]
 
 [IMPORTANT]
 ====
@@ -44,7 +53,7 @@ This command should report something like
 +
 [source]
 ----
-Python 3.8.10
+Python 3.12.7
 ----
 
 . Create a virtualenv in `~/.local/commodore-venv`
@@ -68,6 +77,13 @@ source ~/.local/commodore-venv/bin/activate
 pip install syn-commodore
 ----
 
+. On MacOS you'll also need libmagic via brew
++
+[source,bash]
+----
+brew install libmagic
+----
+
 . Check that `commodore` was installed correctly
 +
 [source,bash]
@@ -77,7 +93,32 @@ commodore --version
 
 === Usage
 
-If you've installed Commodore into a virtualenv, you need to activate the virtualenv whenever you want to run Commodore.
+If you've installed Commodore into a virtualenv, you either need to activate the virtualenv whenever you want to run Commodore, or you can create a symlink to the `commodore` entrypoint script in a directory which is part of your `$PATH`.
+
+NOTE: You might need to change your git configuration so that the `.git/config.lock` file gets created with the correct permissions: `git config --global core.filemode false`
+
+==== Creating a symlink
+
+This section assumes that you've added `~/.local/bin` to your `$PATH`.
+If you use another directory, you can adjust the commands in this section as needed.
+
+Create a symlink to the `commodore` entrypoint script in `~/.local/bin`.
+
+[source,bash]
+----
+ln -s ~/.local/commodore-venv/bin/commodore ~/.local/bin/
+----
+
+After that, you can run Commodore with
+
+[source,bash]
+----
+commodore --help
+----
+
+TIP: We recommend this approach, especially if you're interested in xref:how-to/shell-completion.adoc[using shell completion] for Commodore.
+
+==== Activating the virtualenv
 
 [source,bash]
 ----
@@ -107,6 +148,13 @@ On Linux it's possible to use SSH agent and mounting the agents socket into the 
 [source,bash]
 ----
 commodore() {
+  local pubring="${HOME}/.gnupg/pubring.kbx"
+  if command -v gpgconf &>/dev/null && test -f "${pubring}"; then
+    gpg_opts=(--volume "${pubring}:/app/.gnupg/pubring.kbx:ro" --volume "$(gpgconf --list-dir agent-extra-socket):/app/.gnupg/S.gpg-agent:ro")
+  else
+    gpg_opts=
+  fi
+
   docker run \
     --interactive=true \
     --tty \
@@ -121,12 +169,19 @@ commodore() {
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    ${gpg_opts[@]} \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:${COMMODORE_VERSION:=latest} \
     $*
 }
 ----
+
+[NOTE]
+====
+We mount the current working directory on the host (`${PWD}`) to the same directory in the container.
+This is necessary to ensure that commands such as `catalog compile` and `component new` create Git repository checkouts which work both in the container and on the host.
+====
 
 === macOS
 
@@ -164,12 +219,18 @@ commodore() {
     --volume "${HOME}/.ssh/known_hosts:/app/.ssh/known_hosts:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:latest \
     $*
 }
 ----
+
+[NOTE]
+====
+We mount the current working directory on the host (`${PWD}`) to the same directory in the container.
+This is necessary to ensure that commands such as `catalog compile` and `component new` create Git repository checkouts which work both in the container and on the host.
+====
 
 Instead you can also mount your SSH key into the container.
 The container will pickup that key and add it do an SSH agent running inside the container.
@@ -189,8 +250,8 @@ commodore() {
     --volume "${HOME}/.ssh:/app/.ssh:ro" \
     --volume "${HOME}/.gitconfig:/app/.gitconfig:ro" \
     --volume "${HOME}/.cache:/app/.cache" \
-    --volume "${PWD}:/app/data" \
-    --workdir /app/data \
+    --volume "${PWD}:${PWD}" \
+    --workdir "${PWD}" \
     projectsyn/commodore:latest \
     $*
 }

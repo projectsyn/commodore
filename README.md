@@ -29,8 +29,11 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 ## System Requirements
 
-* Python 3.8 - 3.10 with `python3-dev` and `python3-venv` updated
+* Python 3.10 - 3.12 with `python3-dev` and `python3-venv` updated
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
+  * Our fork [projectsyn/jsonnet-bundler](https://github.com/projectsyn/jsonnet-bundler) is currently recommended.
+    It parallelizes fetching of dependencies, which speeds up Commodore significantly, and has fixes to make the dependency fetching more deterministic.
+* `libmagic` (install with `brew install libmagic` on macOS)
 
 ## Getting started
 
@@ -43,7 +46,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
     ```console
     pip install syn-commodore
     ```
-1. <a name="getting_started_jsonnet"></a>Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
+1. <a name="getting_started_jsonnet"></a>Download jsonnet-bundler from [projectsyn/jsonnet-bundler/releases](https://github.com/projectsyn/jsonnet-bundler/releases) and put the binary in your `$PATH` as `jb`.
 
 1. For Commodore to work, you need to run an instance of [Lieutenant](https://syn.tools/syn/tutorials/getting-started.html#_kickstart_lieutenant) somewhere
    (locally is fine too).
@@ -72,7 +75,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 ### Additional System Requirements
 
-* [Poetry](https://github.com/python-poetry/poetry) 1.1.0+
+* [Poetry](https://github.com/python-poetry/poetry) 1.3.0+
 * Docker
 
 
@@ -87,7 +90,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
     poetry install
     ```
 
-    Install jsonnet-bundler according to upstream [documentation](https://github.com/jsonnet-bundler/jsonnet-bundler#install).
+    Download jsonnet-bundler from [projectsyn/jsonnet-bundler/releases](https://github.com/projectsyn/jsonnet-bundler/releases) and put the binary in your `$PATH` as `jb`.
 
 
 1. Finish setup as described [above](#getting_started_jsonnet)

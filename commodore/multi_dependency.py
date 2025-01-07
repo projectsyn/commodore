@@ -13,9 +13,21 @@ class MultiDependency:
     _components: dict[str, Path]
     _packages: dict[str, Path]
 
-    def __init__(self, repo_url: str, dependencies_dir: Path):
+    def __init__(
+        self,
+        repo_url: str,
+        dependencies_dir: Path,
+        author_name: Optional[str] = None,
+        author_email: Optional[str] = None,
+    ):
         repo_dir = dependency_dir(dependencies_dir, repo_url)
-        self._repo = GitRepo(repo_url, repo_dir, bare=True)
+        self._repo = GitRepo(
+            repo_url,
+            repo_dir,
+            bare=True,
+            author_name=author_name,
+            author_email=author_email,
+        )
         self._components = {}
         self._packages = {}
 
@@ -30,6 +42,10 @@ class MultiDependency:
     @property
     def repo_directory(self) -> Path:
         return Path(self._repo.repo.common_dir).resolve().absolute()
+
+    @property
+    def bare_repo(self) -> GitRepo:
+        return self._repo
 
     def get_component(self, name: str) -> Optional[Path]:
         return self._components.get(name)

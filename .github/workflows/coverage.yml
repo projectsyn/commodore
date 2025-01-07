@@ -9,25 +9,27 @@ on:
 
 jobs:
   coverage:
+    # Only run coverage (which includes the integration test) for PRs which don't originate from a fork
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
-    - uses: Gr1N/setup-poetry@v7
-    - uses: actions/cache@v3
+        python-version: '3.11'
+    - uses: Gr1N/setup-poetry@v9
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
     - name: Install Poetry and setup Poetry virtualenv
       run: |
-        poetry env use python3.9
+        poetry env use python3.11
         poetry install
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
-          https://github.com/jsonnet-bundler/jsonnet-bundler/releases/download/v0.4.0/jb-linux-amd64 \
+          https://github.com/projectsyn/jsonnet-bundler/releases/download/v0.6.1/jb_linux_amd64 \
           && chmod +x /opt/bin/jb
     - name: Update PATH
       run: echo "/opt/bin" >> $GITHUB_PATH
@@ -44,7 +46,7 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
     - name: Upload code coverage report to Code Climate
-      uses: paambaati/codeclimate-action@v3.0.0
+      uses: paambaati/codeclimate-action@v9.0.0
       env:
         CC_TEST_REPORTER_ID: f9c194f25b65bf9c9413d736386e70d32c128516218768333cd7205e79076506
       with:

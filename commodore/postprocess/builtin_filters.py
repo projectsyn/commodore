@@ -4,7 +4,8 @@ import json
 
 from pathlib import Path as P
 
-import _jsonnet
+import _gojsonnet
+
 import click
 
 from commodore import __install_dir__
@@ -42,7 +43,7 @@ def _builtin_filter_helm_namespace(
         component.name,
         instance,
         path,
-        _jsonnet.evaluate_file,
+        _gojsonnet.evaluate_file,
         __install_dir__ / "filters" / "helm_namespace.jsonnet",
         namespace=kwargs["namespace"],
         create_namespace=create_namespace,

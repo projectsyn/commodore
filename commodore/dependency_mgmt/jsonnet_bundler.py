@@ -5,11 +5,11 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 from subprocess import call  # nosec
+from typing import Optional
 
 import click
 
 from commodore.config import Config
-from commodore.helpers import relsymlink
 
 
 def jsonnet_dependencies(config: Config) -> Iterable:
@@ -18,7 +18,7 @@ def jsonnet_dependencies(config: Config) -> Iterable:
     """
     dependencies = []
 
-    for component in config.get_components().values():
+    for _, component in sorted(config.get_components().items()):
         dependencies.append(
             {
                 "source": {
@@ -65,17 +65,17 @@ def write_jsonnetfile(file: Path, deps: Iterable):
         f.write("\n")
 
 
-def fetch_jsonnet_libraries(cwd: Path, deps: Iterable = None):
+def fetch_jsonnet_libraries(cwd: Path, deps: Optional[Iterable] = None):
     """
     Download Jsonnet libraries using Jsonnet-Bundler.
     """
     jsonnetfile = cwd / "jsonnetfile.json"
-    if not jsonnetfile.exists() or deps:
-        if not deps:
-            deps = []
+    if deps:
         write_jsonnetfile(jsonnetfile, deps)
 
-    inject_essential_libraries(jsonnetfile)
+    if not jsonnetfile.exists():
+        click.secho("No jsonnetfile.json found, skipping Jsonnet Bundler install.")
+        return
 
     try:
         # To make sure we don't use any stale lock files
@@ -88,39 +88,3 @@ def fetch_jsonnet_libraries(cwd: Path, deps: Iterable = None):
         raise click.ClickException(
             "the jsonnet-bundler executable `jb` could not be found"
         ) from e
-
-    # Link essential libraries for backwards compatibility.
-    lib_dir = (cwd / "vendor" / "lib").resolve()
-    lib_dir.mkdir(exist_ok=True)
-    relsymlink(
-        cwd / "vendor" / "kube-libsonnet" / "kube.libsonnet", lib_dir, "kube.libjsonnet"
-    )
-
-
-def inject_essential_libraries(file: Path):
-    """
-    Ensures essential libraries are added to `jsonnetfile.json`.
-    :param file: The path to `jsonnetfile.json`.
-    """
-    with open(file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    deps = data["dependencies"]
-    has_kube = False
-    for dep in deps:
-        remote = dep.get("source", {}).get("git", {}).get("remote", "")
-        has_kube = has_kube or "kube-libsonnet" in remote
-
-    if not has_kube:
-        deps.append(
-            {
-                "source": {
-                    "git": {"remote": "https://github.com/bitnami-labs/kube-libsonnet"}
-                },
-                "version": "v1.19.0",
-            },
-        )
-
-    with open(file, "w", encoding="utf-8") as j:
-        json.dump(data, j, indent=4)
-        j.write("\n")
