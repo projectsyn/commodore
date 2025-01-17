@@ -1,4 +1,4 @@
-FROM docker.io/python:3.11.5-slim-bullseye AS base
+FROM docker.io/python:3.12.8-slim-bookworm AS base
 
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
@@ -61,6 +61,8 @@ RUN ./tools/install-jb.sh v0.6.2 \
 
 FROM base AS runtime
 
+ENV PYTHON_MINOR="${PYTHON_VERSION%.*}"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       git \
@@ -72,7 +74,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+      /usr/local/lib/python${PYTHON_MINOR}/site-packages/ \
+      /usr/local/lib/python${PYTHON_MINOR}/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
