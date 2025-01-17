@@ -42,5 +42,19 @@
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "python-poetry/poetry"
     }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["docker.io/python"],
+      "separateMajorMinor": true,
+      "separateMinorPatch": true,
+      "separateMultipleMajor": true,
+      "separateMultipleMinor": true
+    },
+    {
+      "matchManagers": ["poetry"],
+      "matchPackageNames": ["python"],
+      "enabled": false
+    }
   ]
 }
