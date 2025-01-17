@@ -269,26 +269,31 @@ def kapitan_compile(
     cached.args.multiline_string_style = "literal"
     cached.args.yaml_dump_null_as_empty = False
     cached.args.verbose = config.trace
+    cached.args.output_path = output_dir
+    cached.args.targets = targets
+    cached.args.parallelism = None
+    cached.args.labels = None
+    cached.args.prune = False
+    cached.args.indent = 2
+    cached.args.reveal = reveal
+    cached.args.cache = False
+    cached.args.cache_paths = None
+    cached.args.fetch = config.fetch_dependencies
+    # We always want to force-fetch when we want to fetch dependencies
+    # XXX(sg): We need to set `force` because otherwise `compile_targets()` raises an exception
+    # becaues the field is missing, but we can't set it to true, because otherwise
+    # `compile_targets()` emits a deprecation warning.
+    cached.args.force = False
+    cached.args.force_fetch = config.fetch_dependencies
+    cached.args.validate = False
+    cached.args.schemas_path = config.work_dir / "schemas"
+    cached.args.jinja2_filters = defaults.DEFAULT_JINJA2_FILTERS_PATH
+    cached.args.use_go_jsonnet = True
     kapitan_targets.compile_targets(
         inventory_path=cached.args.inventory_path,
         search_paths=search_paths,
-        output_path=output_dir,
-        desired_targets=targets,
-        parallelism=None,
-        labels=None,
         ref_controller=refController,
-        prune=False,
-        indent=2,
-        reveal=reveal,
-        cache=False,
-        cache_paths=None,
-        fetch=config.fetch_dependencies,
-        # We always want to force-fetch when we want to fetch dependencies
-        force_fetch=config.fetch_dependencies,
-        validate=False,
-        schemas_path=config.work_dir / "schemas",
-        jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
-        use_go_jsonnet=True,
+        args=cached.args,
     )
 
 
