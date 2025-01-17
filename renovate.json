@@ -53,7 +53,7 @@
     },
     {
       "matchManagers": ["poetry"],
-      "matchPackageNames": ["python"],
+      "matchDepNames": ["python"],
       "enabled": false
     }
   ]
