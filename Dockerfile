@@ -1,4 +1,4 @@
-FROM docker.io/python:3.12.8-slim-bullseye AS base
+FROM docker.io/python:3.12.8-slim-bookworm AS base
 
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
