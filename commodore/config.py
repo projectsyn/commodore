@@ -388,9 +388,13 @@ class Config:
                         f"Component {cn} with alias {alias} does not support instantiation."
                     )
 
-                cv = cluster_parameters.get('components', {}).get(alias, {})
-                alias_has_version = cv.get('url') != None or cv.get('version') != None
-                if alias_has_version and not _component_supports_alias_version(cluster_parameters, cn, alias):
+                cv = cluster_parameters.get("components", {}).get(alias, {})
+                alias_has_version = (
+                    cv.get("url") is not None or cv.get("version") is not None
+                )
+                if alias_has_version and not _component_supports_alias_version(
+                    cluster_parameters, cn, alias
+                ):
                     raise click.ClickException(
                         f"Component {cn} with alias {alias} does not support overriding instance version."
                     )
@@ -461,7 +465,12 @@ def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_instance", False)
 
-def _component_supports_alias_version(cluster_parameters: dict, component_name: str, alias: str,):
+
+def _component_supports_alias_version(
+    cluster_parameters: dict,
+    component_name: str,
+    alias: str,
+):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     akey = component_parameters_key(alias)

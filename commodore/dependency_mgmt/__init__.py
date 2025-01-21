@@ -126,9 +126,12 @@ def fetch_components(cfg: Config):
         adep = None
         if aspec.url != c.repo_url or aspec.path != c._sub_path:
             adep = cfg.register_dependency_repo(aspec.url)
-            adep.register_component(
-                alias, component_dir(c.work_directory, alias)
-            )
+            wdir = c.work_directory
+            if not wdir:
+                raise ValueError(
+                    "Cannot checkout repo for component alias if component does not have a working directory."
+                )
+            adep.register_component(alias, component_dir(wdir, alias))
 
         print(alias, aspec)
         c.register_alias(alias, aspec.version)
@@ -301,7 +304,9 @@ def verify_version_overrides(cluster_parameters, component_aliases: dict[str, st
             # We don't require an url in component alias version configs
             # but we do require the base component to have one
             if component_aliases[cname] not in cluster_parameters["components"]:
-                errors.append(f"component '{component_aliases[cname]}' (imported as {cname})")
+                errors.append(
+                    f"component '{component_aliases[cname]}' (imported as {cname})"
+                )
         elif "url" not in cspec:
             errors.append(f"component '{cname}'")
 

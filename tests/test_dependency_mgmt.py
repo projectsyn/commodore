@@ -27,7 +27,9 @@ from test_package import _setup_package_remote
 from conftest import MockMultiDependency
 
 
-def setup_components_upstream(tmp_path: Path, components: Iterable[str], aliases: dict[str, str]={}):
+def setup_components_upstream(
+    tmp_path: Path, components: Iterable[str], aliases: dict[str, str] = {}
+):
     # Prepare minimum component directories
     upstream = tmp_path / "upstream"
     component_specs = {}
@@ -40,13 +42,15 @@ def setup_components_upstream(tmp_path: Path, components: Iterable[str], aliases
 
     return component_specs
 
-def setup_aliases_upstream(tmp_path: Path, aliases: Iterable[tuple[str,str]]):
+
+def setup_aliases_upstream(tmp_path: Path, aliases: Iterable[tuple[str, str]]):
     upstream = tmp_path / "upstream"
     component_specs = {}
     for alias, component in aliases:
         component_specs[alias] = _prepare_repository(upstream, alias, component)
 
     return component_specs
+
 
 def _prepare_repository(upstream: Path, repo_name: str, component_name: str):
     repo_path = upstream / repo_name
@@ -62,6 +66,7 @@ def _prepare_repository(upstream: Path, repo_name: str, component_name: str):
     repo.index.add(["class/defaults.yml", f"class/{component_name}.yml"])
     repo.index.commit("component defaults")
     return DependencySpec(url, version, "")
+
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path, mockdep):
     component = Component("my-component", mockdep, work_dir=tmp_path)
@@ -181,9 +186,12 @@ def test_fetch_components(patch_discover, patch_read, config: Config, tmp_path: 
         ).is_symlink()
         assert (tmp_path / "dependencies" / component).is_dir()
 
+
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
-def test_fetch_components_with_alias_version(patch_discover, patch_read, config: Config, tmp_path: Path):
+def test_fetch_components_with_alias_version(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
     components = ["component-one", "component-two"]
     aliases = {"alias-one": "component-one", "alias-two": "component-two"}
     patch_discover.return_value = (components, aliases)
@@ -616,7 +624,9 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
         ),
     ],
 )
-def test_verify_component_version_overrides(cluster_params: dict, aliases: dict, expected: str):
+def test_verify_component_version_overrides(
+    cluster_params: dict, aliases: dict, expected: str
+):
     if expected == "":
         dependency_mgmt.verify_version_overrides(cluster_params, aliases)
     else:

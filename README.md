@@ -115,9 +115,9 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
 1. Run linting and tests
 
-   Auto format with autopep8
+   Automatically apply Black formatting
    ```console
-   poetry run autopep
+   poetry run black .
    ```
 
    List all Tox targets
@@ -132,7 +132,7 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 
    Run just a specific target
    ```console
-   poetry run tox -e py38
+   poetry run tox -e py312
    ```
 
 
