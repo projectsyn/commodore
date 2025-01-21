@@ -1,4 +1,4 @@
-FROM docker.io/python:3.11.5-slim-bullseye AS base
+FROM docker.io/python:3.12.8-slim-bookworm AS base
 
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && mkdir -p /app/.config
 
 
-ARG GO_VERSION=1.23.4
+ARG GO_VERSION=1.23.5
 RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
  && tar -C /usr/local -xzf go.tar.gz \
  && rm go.tar.gz \
@@ -52,14 +52,17 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
  && ./get_helm.sh \
  && mv /usr/local/bin/helm /usr/local/bin/helm2
 
-ARG KUSTOMIZE_VERSION=5.5.0
+ARG KUSTOMIZE_VERSION=5.6.0
+ARG JSONNET_BUNDLER_VERSION=v0.6.3
 
-RUN ./tools/install-jb.sh v0.6.2 \
+RUN ./tools/install-jb.sh ${JSONNET_BUNDLER_VERSION} \
  && curl -fsSLO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
  && chmod +x install_kustomize.sh \
  && ./install_kustomize.sh ${KUSTOMIZE_VERSION} /usr/local/bin
 
 FROM base AS runtime
+
+ENV PYTHON_MINOR="${PYTHON_VERSION%.*}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
@@ -72,7 +75,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
 COPY --from=builder \
-      /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+      /usr/local/lib/python${PYTHON_MINOR}/site-packages/ \
+      /usr/local/lib/python${PYTHON_MINOR}/site-packages/
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \

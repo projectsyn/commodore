@@ -41,6 +41,26 @@
       "matchStrings": ["ARG POETRY_VERSION=(?<currentValue>.*?)\\n"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "python-poetry/poetry"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG JSONNET_BUNDLER_VERSION=(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "projectsyn/jsonnet-bundler"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["docker.io/python"],
+      "separateMajorMinor": true,
+      "separateMinorPatch": true,
+      "separateMultipleMajor": true,
+      "separateMultipleMinor": true
+    },
+    {
+      "matchManagers": ["poetry"],
+      "matchDepNames": ["python"],
+      "enabled": false
     }
   ]
 }
