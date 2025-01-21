@@ -53,7 +53,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
  && mv /usr/local/bin/helm /usr/local/bin/helm2
 
 ARG KUSTOMIZE_VERSION=5.6.0
-ARG JSONNET_BUNDLER_VERSION=v0.6.2
+ARG JSONNET_BUNDLER_VERSION=v0.6.3
 
 RUN ./tools/install-jb.sh ${JSONNET_BUNDLER_VERSION} \
  && curl -fsSLO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
