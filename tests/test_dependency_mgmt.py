@@ -27,27 +27,41 @@ from test_package import _setup_package_remote
 from conftest import MockMultiDependency
 
 
-def setup_components_upstream(tmp_path: Path, components: Iterable[str]):
+def setup_components_upstream(tmp_path: Path, components: Iterable[str], aliases: dict[str, str]={}):
     # Prepare minimum component directories
     upstream = tmp_path / "upstream"
     component_specs = {}
     for component in components:
-        repo_path = upstream / component
-        url = f"file://{repo_path.resolve()}"
-        version = None
-        repo = git.Repo.init(repo_path)
+        component_specs[component] = _prepare_repository(upstream, component, component)
 
-        class_dir = repo_path / "class"
-        class_dir.mkdir(parents=True, exist_ok=True)
-        (class_dir / "defaults.yml").touch(exist_ok=True)
-        (class_dir / f"{component}.yml").touch(exist_ok=True)
-
-        repo.index.add(["class/defaults.yml", f"class/{component}.yml"])
-        repo.index.commit("component defaults")
-        component_specs[component] = DependencySpec(url, version, "")
+        for alias in aliases.keys():
+            if aliases[alias] == component:
+                component_specs[alias] = component_specs[component]
 
     return component_specs
 
+def setup_aliases_upstream(tmp_path: Path, aliases: Iterable[tuple[str,str]]):
+    upstream = tmp_path / "upstream"
+    component_specs = {}
+    for alias, component in aliases:
+        component_specs[alias] = _prepare_repository(upstream, alias, component)
+
+    return component_specs
+
+def _prepare_repository(upstream: Path, repo_name: str, component_name: str):
+    repo_path = upstream / repo_name
+    url = f"file://{repo_path.resolve()}"
+    version = None
+    repo = git.Repo.init(repo_path)
+
+    class_dir = repo_path / "class"
+    class_dir.mkdir(parents=True, exist_ok=True)
+    (class_dir / "defaults.yml").touch(exist_ok=True)
+    (class_dir / f"{component_name}.yml").touch(exist_ok=True)
+
+    repo.index.add(["class/defaults.yml", f"class/{component_name}.yml"])
+    repo.index.commit("component defaults")
+    return DependencySpec(url, version, "")
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path, mockdep):
     component = Component("my-component", mockdep, work_dir=tmp_path)
@@ -166,6 +180,41 @@ def test_fetch_components(patch_discover, patch_read, config: Config, tmp_path: 
             tmp_path / "inventory" / "classes" / "defaults" / f"{component}.yml"
         ).is_symlink()
         assert (tmp_path / "dependencies" / component).is_dir()
+
+@patch("commodore.dependency_mgmt._read_components")
+@patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components_with_alias_version(patch_discover, patch_read, config: Config, tmp_path: Path):
+    components = ["component-one", "component-two"]
+    aliases = {"alias-one": "component-one", "alias-two": "component-two"}
+    patch_discover.return_value = (components, aliases)
+
+    forked_aliases = [("alias-two", "component-two")]
+    aspecs = setup_aliases_upstream(tmp_path, forked_aliases)
+    rv = setup_components_upstream(tmp_path, components, aliases)
+    rv["alias-two"] = aspecs["alias-two"]
+
+    patch_read.return_value = rv
+
+    dependency_mgmt.fetch_components(config)
+
+    for component in components:
+        assert component in config._components
+        assert (
+            tmp_path / "inventory" / "classes" / "components" / f"{component}.yml"
+        ).is_symlink()
+        assert (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{component}.yml"
+        ).is_symlink()
+        assert (tmp_path / "dependencies" / component).is_dir()
+
+    for alias in aliases.keys():
+        assert alias in config._component_aliases
+        assert (
+            tmp_path / "inventory" / "classes" / "components" / f"{alias}.yml"
+        ).is_symlink()
+        assert (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{alias}.yml"
+        ).is_symlink()
 
 
 @patch("commodore.dependency_mgmt._read_components")
@@ -407,7 +456,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
 
 
 @pytest.mark.parametrize(
-    "cluster_params,expected",
+    "cluster_params,aliases,expected",
     [
         (
             {
@@ -426,6 +475,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     },
                 },
             },
+            {},
             "",
         ),
         (
@@ -446,6 +496,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     },
                 },
             },
+            {},
             "Version override specified for component 'component_1' which has no URL",
         ),
         (
@@ -467,6 +518,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     },
                 },
             },
+            {},
             "Version overrides specified for component 'component_1' and component 'component_2' which have no URL",
         ),
         (
@@ -483,6 +535,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     }
                 },
             },
+            {},
             "Version override specified for package 'package-1' which has no URL",
         ),
         (
@@ -498,6 +551,7 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     }
                 },
             },
+            {},
             "Version overrides specified for component 'component-1' and package 'package-1' which have no URL",
         ),
         (
@@ -516,17 +570,58 @@ def test_validate_component_library_name(tmp_path: Path, libname: str, expected:
                     }
                 },
             },
+            {},
             "Version overrides specified for component 'component-1', "
             + "component 'component-2', and package 'package-1' which have no URL",
         ),
+        (
+            {
+                "components": {
+                    "component-1": {
+                        "version": "v1.2.3",
+                        "url": "https://example.com/component-1.git",
+                    },
+                    "component-2": {
+                        "version": "v1.2.3",
+                        "url": "https://example.com/component-2.git",
+                    },
+                    "alias-1": {
+                        "version": "v1.2.4",
+                        "url": "https://example.com/component-1-fork.git",
+                    },
+                    "alias-2": {
+                        "version": "v1.2.4",
+                    },
+                },
+            },
+            {
+                "alias-1": "component-1",
+                "alias-2": "component-2",
+            },
+            "",
+        ),
+        (
+            {
+                "components": {
+                    "alias-1": {
+                        "version": "v1.2.4",
+                        "url": "https://example.com/component-1-fork.git",
+                    },
+                },
+            },
+            {
+                "alias-1": "component-1",
+            },
+            "Version override specified for component 'component-1' (imported as alias-1) which has no URL",
+        ),
     ],
 )
-def test_verify_component_version_overrides(cluster_params: dict, expected: str):
+def test_verify_component_version_overrides(cluster_params: dict, aliases: dict, expected: str):
     if expected == "":
-        dependency_mgmt.verify_version_overrides(cluster_params, {})
+        dependency_mgmt.verify_version_overrides(cluster_params, aliases)
     else:
         with pytest.raises(click.ClickException) as e:
-            dependency_mgmt.verify_version_overrides(cluster_params, {})
+            dependency_mgmt.verify_version_overrides(cluster_params, aliases)
 
         assert expected in str(e)
 

@@ -135,6 +135,10 @@ class Component:
         return self._dir
 
     @property
+    def work_directory(self) -> P:
+        return self._work_dir
+
+    @property
     def target_directory(self) -> P:
         return self.alias_directory(self.name)
 
@@ -218,12 +222,15 @@ class Component:
                 alias, component_dir(self._work_dir, alias)
             )
 
-    def checkout_alias(self, alias: str):
+    def checkout_alias(self, alias: str, alias_dependency: MultiDependency = None):
         if alias not in self._aliases:
             raise ValueError(
                 f"alias {alias} is not registered on component {self.name}"
             )
-        if self._dependency:
+
+        if alias_dependency:
+            alias_dependency.checkout_component(alias, self._aliases[alias])
+        elif self._dependency:
             self._dependency.checkout_component(alias, self._aliases[alias])
 
     def is_checked_out(self) -> bool:

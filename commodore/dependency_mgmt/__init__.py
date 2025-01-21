@@ -123,14 +123,16 @@ def fetch_components(cfg: Config):
 
         c = components[component]
         aspec = cspecs[alias]
+        adep = None
         if aspec.url != c.repo_url or aspec.path != c._sub_path:
-            # TODO: Figure out how we'll handle URL/subpath overrides
-            raise NotImplementedError(
-                "URL/path override for component alias not supported"
+            adep = cfg.register_dependency_repo(aspec.url)
+            adep.register_component(
+                alias, component_dir(c.work_directory, alias)
             )
+
         print(alias, aspec)
         c.register_alias(alias, aspec.version)
-        c.checkout_alias(alias)
+        c.checkout_alias(alias, adep)
 
         create_alias_symlinks(cfg, c, alias)
 
@@ -297,8 +299,10 @@ def verify_version_overrides(cluster_parameters, component_aliases: dict[str, st
     for cname, cspec in cluster_parameters["components"].items():
         if cname in aliases:
             # We don't require an url in component alias version configs
-            continue
-        if "url" not in cspec:
+            # but we do require the base component to have one
+            if component_aliases[cname] not in cluster_parameters["components"]:
+                errors.append(f"component '{component_aliases[cname]}' (imported as {cname})")
+        elif "url" not in cspec:
             errors.append(f"component '{cname}'")
 
     for pname, pspec in cluster_parameters.get("packages", {}).items():
