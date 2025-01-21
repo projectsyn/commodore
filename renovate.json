@@ -41,6 +41,12 @@
       "matchStrings": ["ARG POETRY_VERSION=(?<currentValue>.*?)\\n"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "python-poetry/poetry"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG JSONNET_BUNDLER_VERSION=(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "projectsyn/jsonnet-bundler"
     }
   ],
   "packageRules": [
