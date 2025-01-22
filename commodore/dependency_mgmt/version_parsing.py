@@ -52,7 +52,7 @@ class DependencySpec:
         if base_config:
             url = info.get("url", base_config.url)
             version = info.get("version", base_config.version)
-            if path not in info:
+            if not path:
                 path = base_config.path
         else:
             url = info["url"]

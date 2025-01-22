@@ -124,7 +124,7 @@ def fetch_components(cfg: Config):
         c = components[component]
         aspec = cspecs[alias]
         adep = None
-        if aspec.url != c.repo_url or aspec.path != c._sub_path:
+        if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
             wdir = c.work_directory
             if not wdir:
@@ -134,7 +134,7 @@ def fetch_components(cfg: Config):
             adep.register_component(alias, component_dir(wdir, alias))
 
         print(alias, aspec)
-        c.register_alias(alias, aspec.version)
+        c.register_alias(alias, aspec.version, aspec.path)
         c.checkout_alias(alias, adep)
 
         create_alias_symlinks(cfg, c, alias)
@@ -216,9 +216,8 @@ def register_components(cfg: Config):
 
         c = registered_components[cn]
         aspec = cspecs[alias]
-        if aspec.url != c.repo_url or aspec.path != c.sub_path:
-            raise NotImplementedError("Changing alias sub path / URL NYI")
-        c.register_alias(alias, aspec.version)
+        if aspec.url == c.repo_url and aspec.path == c.sub_path:
+            c.register_alias(alias, aspec.version)
         if not component_dir(cfg.work_dir, alias).is_dir():
             raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
 

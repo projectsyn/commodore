@@ -23,15 +23,37 @@ from commodore.dependency_mgmt import version_parsing
 
 @patch.object(version_parsing, "kapitan_inventory")
 def test_read_components(patch_inventory, config: Config):
-    components = _setup_mock_inventory(patch_inventory)
+    components = _setup_mock_inventory(
+        patch_inventory,
+        aliases={"test-component": "test-alias", "other-component": "test-alias2"},
+    )
+    components["test-alias"] = {
+        "url": "https://example.com/test",
+    }
+    components["test-alias2"] = {
+        "version": "v0.0.1",
+        "path": "subpath",
+    }
     cspecs = version_parsing._read_components(
-        config, {"test-component": "test-component"}
+        config,
+        {
+            "test-component": "test-component",
+            "test-alias": "test-component",
+            "test-alias2": "other-component",
+        },
     )
 
-    # check that exactly 'test-component' is discovered
-    assert {"test-component"} == set(cspecs.keys())
+    # check that exactly the listed components are discovered
+    assert {"other-component", "test-component", "test-alias", "test-alias2"} == set(
+        cspecs.keys()
+    )
     assert components["test-component"]["url"] == cspecs["test-component"].url
     assert components["test-component"]["version"] == cspecs["test-component"].version
+    assert components["test-component"]["version"] == cspecs["test-alias"].version
+    assert components["test-alias2"]["version"] == cspecs["test-alias2"].version
+    assert components["test-alias"]["url"] == cspecs["test-alias"].url
+    assert components["other-component"]["url"] == cspecs["test-alias2"].url
+    assert components["test-alias2"]["path"] == cspecs["test-alias2"].path
 
 
 @patch.object(version_parsing, "kapitan_inventory")

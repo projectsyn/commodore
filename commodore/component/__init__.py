@@ -19,7 +19,7 @@ class Component:
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
-    _aliases: dict[str, str]
+    _aliases: dict[str, tuple[str, str]]
     _work_dir: Optional[P]
 
     @classmethod
@@ -59,7 +59,7 @@ class Component:
         self.version = version
         self._sub_path = sub_path
         self._repo = None
-        self._aliases = {self.name: self.version or ""}
+        self._aliases = {self.name: (self.version or "", self.sub_path or "")}
         self._work_dir = work_dir
 
     @property
@@ -160,6 +160,8 @@ class Component:
         apath = self._dependency.get_component(alias)
         if not apath:
             raise ValueError(f"unknown alias {alias} for component {self.name}")
+        if alias in self._aliases:
+            return apath / self._aliases[alias][1]
         return apath / self._sub_path
 
     def alias_class_file(self, alias: str) -> P:
@@ -206,7 +208,7 @@ class Component:
             )
         self._dependency.checkout_component(self.name, self.version)
 
-    def register_alias(self, alias: str, version: str):
+    def register_alias(self, alias: str, version: str, sub_path: str = ""):
         if not self._work_dir:
             raise ValueError(
                 f"Can't register alias on component {self.name} "
@@ -216,7 +218,7 @@ class Component:
             raise ValueError(
                 f"alias {alias} already registered on component {self.name}"
             )
-        self._aliases[alias] = version
+        self._aliases[alias] = (version, sub_path)
         if self._dependency:
             self._dependency.register_component(
                 alias, component_dir(self._work_dir, alias)
@@ -231,9 +233,9 @@ class Component:
             )
 
         if alias_dependency:
-            alias_dependency.checkout_component(alias, self._aliases[alias])
+            alias_dependency.checkout_component(alias, self._aliases[alias][0])
         elif self._dependency:
-            self._dependency.checkout_component(alias, self._aliases[alias])
+            self._dependency.checkout_component(alias, self._aliases[alias][0])
 
     def is_checked_out(self) -> bool:
         return self.target_dir is not None and self.target_dir.is_dir()

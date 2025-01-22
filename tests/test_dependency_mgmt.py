@@ -43,29 +43,37 @@ def setup_components_upstream(
     return component_specs
 
 
-def setup_aliases_upstream(tmp_path: Path, aliases: Iterable[tuple[str, str]]):
+def setup_aliases_upstream(
+    tmp_path: Path, aliases: Iterable[tuple[str, str]], sub_path: str = ""
+):
     upstream = tmp_path / "upstream"
     component_specs = {}
     for alias, component in aliases:
-        component_specs[alias] = _prepare_repository(upstream, alias, component)
+        component_specs[alias] = _prepare_repository(
+            upstream, alias, component, sub_path
+        )
 
     return component_specs
 
 
-def _prepare_repository(upstream: Path, repo_name: str, component_name: str):
+def _prepare_repository(
+    upstream: Path, repo_name: str, component_name: str, sub_path: str = ""
+):
     repo_path = upstream / repo_name
     url = f"file://{repo_path.resolve()}"
     version = None
     repo = git.Repo.init(repo_path)
 
-    class_dir = repo_path / "class"
+    class_dir = repo_path / sub_path / "class"
     class_dir.mkdir(parents=True, exist_ok=True)
     (class_dir / "defaults.yml").touch(exist_ok=True)
     (class_dir / f"{component_name}.yml").touch(exist_ok=True)
 
-    repo.index.add(["class/defaults.yml", f"class/{component_name}.yml"])
+    class_path = f"{sub_path}/class".strip("/")
+
+    repo.index.add([f"{class_path}/defaults.yml", f"{class_path}/{component_name}.yml"])
     repo.index.commit("component defaults")
-    return DependencySpec(url, version, "")
+    return DependencySpec(url, version, sub_path)
 
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path, mockdep):
@@ -193,13 +201,23 @@ def test_fetch_components_with_alias_version(
     patch_discover, patch_read, config: Config, tmp_path: Path
 ):
     components = ["component-one", "component-two"]
-    aliases = {"alias-one": "component-one", "alias-two": "component-two"}
+    aliases = {
+        "alias-one": "component-one",
+        "alias-two": "component-two",
+        "alias-three": "component-two",
+    }
     patch_discover.return_value = (components, aliases)
 
     forked_aliases = [("alias-two", "component-two")]
+    forked_aliases2 = [("alias-three", "component-two")]
+    # setup one alias with different repo
     aspecs = setup_aliases_upstream(tmp_path, forked_aliases)
+    # setup other alias with a subdirectory
+    aspecs2 = setup_aliases_upstream(tmp_path, forked_aliases2, "subdirectory")
+
     rv = setup_components_upstream(tmp_path, components, aliases)
     rv["alias-two"] = aspecs["alias-two"]
+    rv["alias-three"] = aspecs2["alias-three"]
 
     patch_read.return_value = rv
 
