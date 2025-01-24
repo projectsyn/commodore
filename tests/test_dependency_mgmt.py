@@ -405,6 +405,26 @@ def test_register_components_and_aliases(
 
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
+def test_register_components_and_aliases_raises(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
+    alias_data = {"fooer": "foo"}
+    component_dirs, other_dirs = _setup_register_components(tmp_path)
+    patch_discover.return_value = (component_dirs, alias_data)
+    patch_read.return_value = {
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        for cn in component_dirs
+    }
+    patch_read.return_value["fooer"] = patch_read.return_value["foo"]
+
+    with pytest.raises(Exception) as excinfo:
+        dependency_mgmt.register_components(config)
+
+    assert "Missing alias checkout for 'fooer as foo'" in str(excinfo.value)
+
+
+@patch("commodore.dependency_mgmt._read_components")
+@patch("commodore.dependency_mgmt._discover_components")
 def test_register_unknown_components(
     patch_discover, patch_read, config: Config, tmp_path: Path, capsys
 ):
