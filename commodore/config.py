@@ -380,7 +380,6 @@ class Config:
         self._component_aliases.update(aliases)
 
     def verify_component_aliases(self, cluster_parameters: dict):
-        print(cluster_parameters)
         for alias, cn in self._component_aliases.items():
             if alias != cn:
                 if not _component_is_aliasable(cluster_parameters, cn):

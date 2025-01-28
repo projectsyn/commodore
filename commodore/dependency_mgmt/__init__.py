@@ -56,9 +56,6 @@ def create_alias_symlinks(cfg, component: Component, alias: str):
         inventory_default.parent,
         dest_name=inventory_default.name,
     )
-    # TODO: How do we handle lib files when symlinking aliases? Code in the component
-    #  alias itself should be able to find the right library. We need to define what
-    #  version of the library is visible for other components.
 
 
 def create_package_symlink(cfg, pname: str, package: Package):
@@ -126,14 +123,8 @@ def fetch_components(cfg: Config):
         adep = None
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
-            wdir = c.work_directory
-            if not wdir:
-                raise ValueError(
-                    "Cannot checkout repo for component alias if component does not have a working directory."
-                )
-            adep.register_component(alias, component_dir(wdir, alias))
+            adep.register_component(alias, component_dir(cfg.work_dir, alias))
 
-        print(alias, aspec)
         c.register_alias(alias, aspec.version, aspec.path)
         c.checkout_alias(alias, adep)
 
@@ -216,8 +207,12 @@ def register_components(cfg: Config):
 
         c = registered_components[cn]
         aspec = cspecs[alias]
-        if aspec.url == c.repo_url and aspec.path == c.sub_path:
-            c.register_alias(alias, aspec.version)
+
+        if aspec.url != c.repo_url:
+            adep = cfg.register_dependency_repo(aspec.url)
+            adep.register_component(alias, component_dir(cfg.work_dir, alias))
+        c.register_alias(alias, aspec.version, aspec.path)
+
         if not component_dir(cfg.work_dir, alias).is_dir():
             raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
 

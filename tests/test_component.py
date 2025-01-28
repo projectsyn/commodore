@@ -61,7 +61,6 @@ def _setup_component(
 def _setup_existing_component(tmp_path: P, worktree=True):
     cr = Repo.init(tmp_path / ".repo", bare=True)
     upstream = tmp_path / "upstream"
-    cr
     u = cr.clone(upstream)
     with open(upstream / "README.md", "w") as f:
         f.write("# Dummy component\n")

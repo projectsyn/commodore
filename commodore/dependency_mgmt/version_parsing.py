@@ -100,9 +100,6 @@ def _read_versions(
 
         try:
             basename_for_dep = aliases.get(depname, depname)
-            print(depname, basename_for_dep)
-            print(deps.get(depname, {}))
-            print(fallback.get(basename_for_dep))
             dep = DependencySpec.parse(
                 deps.get(depname, {}),
                 base_config=fallback.get(basename_for_dep),
