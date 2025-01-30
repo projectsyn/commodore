@@ -160,9 +160,11 @@ class Component:
         apath = self._dependency.get_component(alias)
         if not apath:
             raise ValueError(f"unknown alias {alias} for component {self.name}")
-        if alias in self._aliases:
-            return apath / self._aliases[alias][1]
-        return apath / self._sub_path
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} for component {self.name} has not been registered"
+            )
+        return apath / self._aliases[alias][1]
 
     def alias_class_file(self, alias: str) -> P:
         return self.alias_directory(alias) / "class" / f"{self.name}.yml"
