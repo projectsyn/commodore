@@ -377,14 +377,26 @@ class Config:
         return self._component_aliases
 
     def register_component_aliases(self, aliases: dict[str, str]):
-        self._component_aliases = aliases
+        self._component_aliases.update(aliases)
 
     def verify_component_aliases(self, cluster_parameters: dict):
         for alias, cn in self._component_aliases.items():
-            if alias != cn and not _component_is_aliasable(cluster_parameters, cn):
-                raise click.ClickException(
-                    f"Component {cn} with alias {alias} does not support instantiation."
+            if alias != cn:
+                if not _component_is_aliasable(cluster_parameters, cn):
+                    raise click.ClickException(
+                        f"Component {cn} with alias {alias} does not support instantiation."
+                    )
+
+                cv = cluster_parameters.get("components", {}).get(alias, {})
+                alias_has_version = (
+                    cv.get("url") is not None or cv.get("version") is not None
                 )
+                if alias_has_version and not _component_supports_alias_version(
+                    cluster_parameters, cn, alias
+                ):
+                    raise click.ClickException(
+                        f"Component {cn} with alias {alias} does not support overriding instance version."
+                    )
 
     def get_component_alias_versioninfos(self) -> dict[str, InstanceVersionInfo]:
         return {
@@ -451,6 +463,18 @@ def _component_is_aliasable(cluster_parameters: dict, component_name: str):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_instance", False)
+
+
+def _component_supports_alias_version(
+    cluster_parameters: dict,
+    component_name: str,
+    alias: str,
+):
+    ckey = component_parameters_key(component_name)
+    cmeta = cluster_parameters[ckey].get("_metadata", {})
+    akey = component_parameters_key(alias)
+    ameta = cluster_parameters.get(akey, {}).get("_metadata", {})
+    return cmeta.get("multi_version", False) and ameta.get("multi_version", False)
 
 
 def set_fact_value(facts: dict[str, Any], raw_key: str, value: Any) -> None:

@@ -338,7 +338,6 @@ def rm_tree_contents(basedir):
             os.unlink(f)
 
 
-# pylint: disable=unsubscriptable-object
 def relsymlink(src: P, dest_dir: P, dest_name: Optional[str] = None):
     if dest_name is None:
         dest_name = src.name

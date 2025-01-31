@@ -35,18 +35,14 @@ class Filter:
     filterargs: dict
     enabled: bool
 
-    # PyLint complains about ClassVar not being subscriptable
-    # pylint: disable=unsubscriptable-object
     _run_handlers: ClassVar[dict[str, FilterFunc]] = {
         "builtin": run_builtin_filter,
         "jsonnet": run_jsonnet_filter,
     }
-    # pylint: disable=unsubscriptable-object
     _validate_handlers: ClassVar[dict[str, ValidateFunc]] = {
         "builtin": validate_builtin_filter,
         "jsonnet": validate_jsonnet_filter,
     }
-    # pylint: disable=unsubscriptable-object
     _required_keys: ClassVar[set[str]] = {"type", "path", "filter"}
 
     def __init__(self, fd: dict):

@@ -40,6 +40,24 @@ def create_component_symlinks(cfg, component: Component):
         )
 
 
+def create_alias_symlinks(cfg, component: Component, alias: str):
+    if not component.has_alias(alias):
+        raise ValueError(
+            f"component {component.name} doesn't have alias {alias} registered"
+        )
+    relsymlink(
+        component.alias_class_file(alias),
+        cfg.inventory.components_dir,
+        dest_name=f"{alias}.yml",
+    )
+    inventory_default = cfg.inventory.defaults_file(alias)
+    relsymlink(
+        component.alias_defaults_file(alias),
+        inventory_default.parent,
+        dest_name=inventory_default.name,
+    )
+
+
 def create_package_symlink(cfg, pname: str, package: Package):
     """
     Create package symlink in the inventory.
@@ -69,7 +87,7 @@ def fetch_components(cfg: Config):
     component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    cspecs = _read_components(cfg, component_names)
+    cspecs = _read_components(cfg, component_aliases)
     click.secho("Fetching components...", bold=True)
 
     deps: dict[str, list] = {}
@@ -92,6 +110,25 @@ def fetch_components(cfg: Config):
             )
         deps.setdefault(cdep.url, []).append(c)
     fetch_parallel(fetch_component, cfg, deps.values())
+
+    components = cfg.get_components()
+
+    for alias, component in component_aliases.items():
+        if alias == component:
+            # Nothing to setup for identity alias
+            continue
+
+        c = components[component]
+        aspec = cspecs[alias]
+        adep = None
+        if aspec.url != c.repo_url:
+            adep = cfg.register_dependency_repo(aspec.url)
+            adep.register_component(alias, component_dir(cfg.work_dir, alias))
+
+        c.register_alias(alias, aspec.version, aspec.path)
+        c.checkout_alias(alias, adep)
+
+        create_alias_symlinks(cfg, c, alias)
 
 
 def fetch_component(cfg, dependencies):
@@ -126,7 +163,7 @@ def register_components(cfg: Config):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
-        cspecs = _read_components(cfg, components)
+        cspecs = _read_components(cfg, component_aliases)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
@@ -152,9 +189,9 @@ def register_components(cfg: Config):
         cfg.register_component(component)
         create_component_symlinks(cfg, component)
 
-    registered_components = cfg.get_components().keys()
+    registered_components = cfg.get_components()
     pruned_aliases = {
-        a: c for a, c in component_aliases.items() if c in registered_components
+        a: c for a, c in component_aliases.items() if c in registered_components.keys()
     }
     pruned = sorted(set(component_aliases.keys()) - set(pruned_aliases.keys()))
     if len(pruned) > 0:
@@ -162,6 +199,24 @@ def register_components(cfg: Config):
             f" > Dropping alias(es) {pruned} with missing component(s).", fg="yellow"
         )
     cfg.register_component_aliases(pruned_aliases)
+
+    for alias, cn in pruned_aliases.items():
+        if alias == cn:
+            # Nothing to setup for identity alias
+            continue
+
+        c = registered_components[cn]
+        aspec = cspecs[alias]
+
+        if aspec.url != c.repo_url:
+            adep = cfg.register_dependency_repo(aspec.url)
+            adep.register_component(alias, component_dir(cfg.work_dir, alias))
+        c.register_alias(alias, aspec.version, aspec.path)
+
+        if not component_dir(cfg.work_dir, alias).is_dir():
+            raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
+
+        create_alias_symlinks(cfg, c, alias)
 
 
 def fetch_packages(cfg: Config):
@@ -235,10 +290,18 @@ def register_packages(cfg: Config):
         create_package_symlink(cfg, p, pkg)
 
 
-def verify_version_overrides(cluster_parameters):
+def verify_version_overrides(cluster_parameters, component_aliases: dict[str, str]):
     errors = []
+    aliases = set(component_aliases.keys()) - set(component_aliases.values())
     for cname, cspec in cluster_parameters["components"].items():
-        if "url" not in cspec:
+        if cname in aliases:
+            # We don't require an url in component alias version configs
+            # but we do require the base component to have one
+            if component_aliases[cname] not in cluster_parameters["components"]:
+                errors.append(
+                    f"component '{component_aliases[cname]}' (imported as {cname})"
+                )
+        elif "url" not in cspec:
             errors.append(f"component '{cname}'")
 
     for pname, pspec in cluster_parameters.get("packages", {}).items():

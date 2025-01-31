@@ -60,6 +60,10 @@ For each dependency which is stored in this repository, Commodore ensures that t
 Regardless of the value of key `path`, Commodore creates a checkout of the  complete repository in `dependencies/<dependency-name>`.
 However, Commodore will create a symlink to the specified path when making the dependency available in the hierarchy.
 
+For components which are instantiated multiple times, Commodore ensures that an additional Git worktree in `dependencies/<instance-name>` exists for each component instance and is checked out to the instance's desired component version.
+Once the Git worktree for a component instance exists, it's functionally mostly equivalent to a component Git worktree and is handled the same.
+See the section on <<_component_instance_versions>> for details on specifying versions for different component instances and for cases where an instance Git worktree isn't fully equivalent to the base component Git worktree.
+
 Commodore will make all included packages available before discovering and fetching components.
 This ensures that configuration packages can include additional components and can customize component versions.
 
@@ -188,6 +192,49 @@ Similar to Helm charts, the components themselves must make sure to not cause an
 This is required both for namespaced and non-namespaced resources.
 Components can make use of the meta-parameter `_instance` to ensure objects don't collide, as that parameter is guaranteed to be unique to each instance.
 
+=== Component instance versions
+
+With https://syn.tools/syn/SDDs/0033-commodore-component-instance-versioning.html[SDD0033], we've introduced support for instantiating components with different versions, meaning that different instances of the same component may use a different dependency or different versions of the same dependency.
+Component authors must explicitly declare that their component supports multi-version instantiation.
+Components advertise that they support multi-version instantiation by setting the field `multi_version` in `parameters.<component_name>._metadata` to `true`.
+Commodore will exit with an error if a hierarchy tries to override the version of a component instance where the component doesn't explicitly advertise multi-version support.
+
+Specifying the version of a component instance is done analogously to specifying the version of a base component or single-instance component.
+The component version is specified in `parameters.components.<instance_name>`. The content is merged into `parameters.components.<component_name>`.
+
+The version of the base component (`parameters.components.<component_name>`) must always be specified explicitly, even if the component is only used with instance names.
+
+.tenant/common.yml
+[source,yaml]
+----
+applications:
+  - nfs-subdir-external-provisioner
+  - nfs-subdir-external-provisioner as nfs-2
+  - nfs-subdir-external-provisioner as nfs-3
+parameters:
+  components:
+    nfs-subdir-external-provisioner: <1>
+      url: https://github.com/projectsyn/nfs-subdir-external-provisioner.git
+      version: v1.0.0
+    nfs-2:
+      version: v1.1.0 <2>
+    nfs-3:
+      url: https://github.com/projectsyn/nfs-subdir-external-provisioner-fork.git <3>
+      version: v1.1.0
+----
+<1> The URL and version of the base component must always be specified.
+Component instance version configurations will be merged into this base configuration.
+<2> If only a version is specified for an instance, then the same URL as the base component will be used.
+<3> It's possible to specify a different URL, for example, to use a fork of a component for this particular instance.
+
+[NOTE]
+====
+If a component requires Jsonnet dependencies, those are always provided from the base (non-instantiated) version of the component.
+In other words, if a component instance overrides the version, its Jsonnet dependencies are provided from a different component version.
+
+Similarly, if other components include references to a multi-version component's `defaults.yml` or to Jsonnet libraries provided by the multi-version component, then those files are always taken from the base (non-instantiated) components.
+====
+
 === Component dependencies
 
 Components can specify their dependencies in a `jsonnetfile.json`.
@@ -298,6 +345,7 @@ Commodore currently doesn't provide support for component authors to specify lib
 
 It's the responsibility of component authors to agree on an interface and to ensure that their implementations adhere to the interface.
 ====
+
 
 == Catalog Compilation
 

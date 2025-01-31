@@ -19,6 +19,8 @@ class Component:
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
+    _aliases: dict[str, tuple[str, str]]
+    _work_dir: Optional[P]
 
     @classmethod
     def clone(cls, cfg, clone_url: str, name: str, version: str = "master"):
@@ -57,6 +59,8 @@ class Component:
         self.version = version
         self._sub_path = sub_path
         self._repo = None
+        self._aliases = {self.name: (self.version or "", self.sub_path or "")}
+        self._work_dir = work_dir
 
     @property
     def name(self) -> str:
@@ -67,8 +71,12 @@ class Component:
         if not self._repo:
             if self._dependency:
                 dep_repo = self._dependency.bare_repo
-                author_name = dep_repo.author.name
-                author_email = dep_repo.author.email
+                author_name = (
+                    dep_repo.author.name if hasattr(dep_repo, "author") else None
+                )
+                author_email = (
+                    dep_repo.author.email if hasattr(dep_repo, "author") else None
+                )
             else:
                 # Fall back to author detection if we don't have a dependency
                 author_name = None
@@ -127,8 +135,12 @@ class Component:
         return self._dir
 
     @property
+    def work_directory(self) -> Optional[P]:
+        return self._work_dir
+
+    @property
     def target_directory(self) -> P:
-        return self._dir / self._sub_path
+        return self.alias_directory(self.name)
 
     @property
     def target_dir(self) -> P:
@@ -136,11 +148,32 @@ class Component:
 
     @property
     def class_file(self) -> P:
-        return self.target_directory / "class" / f"{self.name}.yml"
+        return self.alias_class_file(self.name)
 
     @property
     def defaults_file(self) -> P:
-        return self.target_directory / "class" / "defaults.yml"
+        return self.alias_defaults_file(self.name)
+
+    def alias_directory(self, alias: str) -> P:
+        if not self._dependency:
+            return self._dir / self._sub_path
+        apath = self._dependency.get_component(alias)
+        if not apath:
+            raise ValueError(f"unknown alias {alias} for component {self.name}")
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} for component {self.name} has not been registered"
+            )
+        return apath / self._aliases[alias][1]
+
+    def alias_class_file(self, alias: str) -> P:
+        return self.alias_directory(alias) / "class" / f"{self.name}.yml"
+
+    def alias_defaults_file(self, alias: str) -> P:
+        return self.alias_directory(alias) / "class" / "defaults.yml"
+
+    def has_alias(self, alias: str):
+        return alias in self._aliases
 
     @property
     def lib_files(self) -> Iterable[P]:
@@ -176,6 +209,35 @@ class Component:
                 f"Dependency for component {self._name} hasn't been initialized"
             )
         self._dependency.checkout_component(self.name, self.version)
+
+    def register_alias(self, alias: str, version: str, sub_path: str = ""):
+        if not self._work_dir:
+            raise ValueError(
+                f"Can't register alias on component {self.name} "
+                + "which isn't configured with a working directory"
+            )
+        if alias in self._aliases:
+            raise ValueError(
+                f"alias {alias} already registered on component {self.name}"
+            )
+        self._aliases[alias] = (version, sub_path)
+        if self._dependency:
+            self._dependency.register_component(
+                alias, component_dir(self._work_dir, alias)
+            )
+
+    def checkout_alias(
+        self, alias: str, alias_dependency: Optional[MultiDependency] = None
+    ):
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} is not registered on component {self.name}"
+            )
+
+        if alias_dependency:
+            alias_dependency.checkout_component(alias, self._aliases[alias][0])
+        elif self._dependency:
+            self._dependency.checkout_component(alias, self._aliases[alias][0])
 
     def is_checked_out(self) -> bool:
         return self.target_dir is not None and self.target_dir.is_dir()

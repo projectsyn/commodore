@@ -40,6 +40,98 @@ def test_verify_component_aliases_explicit_no_instance(config):
     config.verify_component_aliases(params)
 
 
+def test_verify_component_aliases_explicit_no_multiversion_exception(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {
+        "components": {
+            "bar": {"url": "foo", "version": "v1.0.0"},
+            "baz": {"version": "v1.1.0"},
+        },
+        "bar": {
+            "_metadata": {"multi_instance": True, "multi_version": False},
+            "namespace": "syn-bar",
+        },
+        "baz": {
+            "_metadata": {"multi_instance": True, "multi_version": False},
+            "namespace": "syn-baz",
+        },
+    }
+
+    with pytest.raises(click.ClickException) as e:
+        config.verify_component_aliases(params)
+
+    assert (
+        "Component bar with alias baz does not support overriding instance version."
+        in str(e.value)
+    )
+
+
+def test_verify_component_aliases_explicit_no_multiversion_in_alias_exception(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {
+        "components": {
+            "bar": {"url": "foo", "version": "v1.0.0"},
+            "baz": {"version": "v1.1.0"},
+        },
+        "bar": {
+            "_metadata": {"multi_instance": True, "multi_version": True},
+            "namespace": "syn-bar",
+        },
+        "baz": {
+            "_metadata": {"multi_instance": True, "multi_version": False},
+            "namespace": "syn-baz",
+        },
+    }
+
+    with pytest.raises(click.ClickException) as e:
+        config.verify_component_aliases(params)
+
+    assert (
+        "Component bar with alias baz does not support overriding instance version."
+        in str(e.value)
+    )
+
+
+def test_verify_component_multiversion_exception(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {
+        "components": {
+            "bar": {"url": "foo", "version": "v1.0.0"},
+            "baz": {"version": "v1.1.0"},
+        },
+        "bar": {"_metadata": {"multi_instance": True}},
+    }
+
+    with pytest.raises(click.ClickException) as e:
+        config.verify_component_aliases(params)
+
+    assert (
+        "Component bar with alias baz does not support overriding instance version."
+        in str(e.value)
+    )
+
+
+def test_verify_component_multiversion(config):
+    alias_data = {"baz": "bar"}
+    config.register_component_aliases(alias_data)
+    params = {
+        "components": {
+            "bar": {"url": "foo", "version": "v1.0.0"},
+            "baz": {"version": "v1.1.0"},
+        },
+        "bar": {
+            "_metadata": {"multi_instance": True, "multi_version": True},
+            "namespace": "syn-bar",
+        },
+        "baz": {"_metadata": {"multi_version": True}, "namespace": "syn-baz"},
+    }
+
+    config.verify_component_aliases(params)
+
+
 def test_verify_component_aliases_metadata(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
