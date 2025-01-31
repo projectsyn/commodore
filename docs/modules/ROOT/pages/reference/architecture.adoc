@@ -60,6 +60,10 @@ For each dependency which is stored in this repository, Commodore ensures that t
 Regardless of the value of key `path`, Commodore creates a checkout of the  complete repository in `dependencies/<dependency-name>`.
 However, Commodore will create a symlink to the specified path when making the dependency available in the hierarchy.
 
+For components which are instantiated multiple times, Commodore ensures that an additional Git worktree in `dependencies/<instance-name>` exists for each component instance and is checked out to the instance's desired component version.
+Once the Git worktree for a component instance exists, it's functionally mostly equivalent to a component Git worktree and is handled the same.
+See the section on <<_component_instance_versions>> for details on specifying versions for different component instances and for cases where an instance Git worktree isn't fully equivalent to the base component Git worktree.
+
 Commodore will make all included packages available before discovering and fetching components.
 This ensures that configuration packages can include additional components and can customize component versions.
 
@@ -299,7 +303,7 @@ Commodore currently doesn't provide support for component authors to specify lib
 It's the responsibility of component authors to agree on an interface and to ensure that their implementations adhere to the interface.
 ====
 
-=== Using different component versions across instances
+=== Component instance versions
 
 With https://syn.tools/syn/SDDs/0033-commodore-component-instance-versioning.html[SDD0033], we've introduced support for instantiating components with different versions, meaning that different instances of the same component may use a different dependency or different versions of the same dependency.
 Component authors must explicitly declare that their component supports multi-version instantiation.
