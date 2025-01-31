@@ -474,7 +474,7 @@ def _component_supports_alias_version(
     cmeta = cluster_parameters[ckey].get("_metadata", {})
     akey = component_parameters_key(alias)
     ameta = cluster_parameters.get(akey, {}).get("_metadata", {})
-    return cmeta.get("multi_versioning", False) and ameta.get("multi_versioning", False)
+    return cmeta.get("multi_version", False) and ameta.get("multi_version", False)
 
 
 def set_fact_value(facts: dict[str, Any], raw_key: str, value: Any) -> None:

@@ -49,11 +49,11 @@ def test_verify_component_aliases_explicit_no_multiversion_exception(config):
             "baz": {"version": "v1.1.0"},
         },
         "bar": {
-            "_metadata": {"multi_instance": True, "multi_versioning": False},
+            "_metadata": {"multi_instance": True, "multi_version": False},
             "namespace": "syn-bar",
         },
         "baz": {
-            "_metadata": {"multi_instance": True, "multi_versioning": False},
+            "_metadata": {"multi_instance": True, "multi_version": False},
             "namespace": "syn-baz",
         },
     }
@@ -76,11 +76,11 @@ def test_verify_component_aliases_explicit_no_multiversion_in_alias_exception(co
             "baz": {"version": "v1.1.0"},
         },
         "bar": {
-            "_metadata": {"multi_instance": True, "multi_versioning": True},
+            "_metadata": {"multi_instance": True, "multi_version": True},
             "namespace": "syn-bar",
         },
         "baz": {
-            "_metadata": {"multi_instance": True, "multi_versioning": False},
+            "_metadata": {"multi_instance": True, "multi_version": False},
             "namespace": "syn-baz",
         },
     }
@@ -123,10 +123,10 @@ def test_verify_component_multiversion(config):
             "baz": {"version": "v1.1.0"},
         },
         "bar": {
-            "_metadata": {"multi_instance": True, "multi_versioning": True},
+            "_metadata": {"multi_instance": True, "multi_version": True},
             "namespace": "syn-bar",
         },
-        "baz": {"_metadata": {"multi_versioning": True}, "namespace": "syn-baz"},
+        "baz": {"_metadata": {"multi_version": True}, "namespace": "syn-baz"},
     }
 
     config.verify_component_aliases(params)
