@@ -82,7 +82,7 @@ def compile_component(
 
         # Verify component alias
         nodes = kapitan_inventory(config)
-        config.verify_component_aliases(nodes[instance_name]["parameters"])
+        config.verify_component_aliases(nodes, bootstrap_target=instance_name)
 
         cluster_params = nodes[instance_name]["parameters"]
         create_component_library_aliases(config, cluster_params)
