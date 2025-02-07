@@ -236,7 +236,7 @@ def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[
     create_component_library_aliases(config, cluster_parameters)
 
     # Verify that all aliased components support instantiation
-    config.verify_component_aliases(cluster_parameters)
+    config.verify_component_aliases(inventory)
     config.register_component_deprecations(cluster_parameters)
     # Raise exception if component version override without URL is present in the
     # hierarchy.
