@@ -379,7 +379,12 @@ class Config:
     def register_component_aliases(self, aliases: dict[str, str]):
         self._component_aliases.update(aliases)
 
-    def verify_component_aliases(self, cluster_parameters: dict):
+    def verify_component_aliases(
+        self, inventory: dict, bootstrap_target: Optional[str] = None
+    ):
+        if bootstrap_target is None:
+            bootstrap_target = self.inventory.bootstrap_target
+        cluster_parameters = inventory[bootstrap_target]["parameters"]
         for alias, cn in self._component_aliases.items():
             if alias != cn:
                 if not _component_is_aliasable(cluster_parameters, cn):
@@ -391,8 +396,9 @@ class Config:
                 alias_has_version = (
                     cv.get("url") is not None or cv.get("version") is not None
                 )
+                ap = inventory.get(alias, {}).get("parameters", {})
                 if alias_has_version and not _component_supports_alias_version(
-                    cluster_parameters, cn, alias
+                    cluster_parameters, ap, cn, alias
                 ):
                     raise click.ClickException(
                         f"Component {cn} with alias {alias} does not support overriding instance version."
@@ -467,13 +473,14 @@ def _component_is_aliasable(cluster_parameters: dict, component_name: str):
 
 def _component_supports_alias_version(
     cluster_parameters: dict,
+    alias_parameters: dict,
     component_name: str,
     alias: str,
 ):
     ckey = component_parameters_key(component_name)
     cmeta = cluster_parameters[ckey].get("_metadata", {})
-    akey = component_parameters_key(alias)
-    ameta = cluster_parameters.get(akey, {}).get("_metadata", {})
+    # NOTE(sg): We access the merged alias parameters, so we need to lookup the component key.
+    ameta = alias_parameters[ckey].get("_metadata", {})
     return cmeta.get("multi_version", False) and ameta.get("multi_version", False)
 
 

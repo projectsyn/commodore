@@ -24,10 +24,14 @@ from commodore.package import Package
 from commodore.multi_dependency import dependency_key
 
 
+def make_inventory(cluster_params: dict) -> dict:
+    return {"cluster": {"parameters": cluster_params}}
+
+
 def test_verify_component_aliases_no_instance(config):
     alias_data = {"bar": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"namespace": "syn-bar"}}
+    params = make_inventory({"bar": {"namespace": "syn-bar"}})
 
     config.verify_component_aliases(params)
 
@@ -35,7 +39,9 @@ def test_verify_component_aliases_no_instance(config):
 def test_verify_component_aliases_explicit_no_instance(config):
     alias_data = {"bar": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+    params = make_inventory(
+        {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+    )
 
     config.verify_component_aliases(params)
 
@@ -43,19 +49,26 @@ def test_verify_component_aliases_explicit_no_instance(config):
 def test_verify_component_aliases_explicit_no_multiversion_exception(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {
-        "components": {
-            "bar": {"url": "foo", "version": "v1.0.0"},
-            "baz": {"version": "v1.1.0"},
-        },
-        "bar": {
-            "_metadata": {"multi_instance": True, "multi_version": False},
-            "namespace": "syn-bar",
-        },
-        "baz": {
-            "_metadata": {"multi_instance": True, "multi_version": False},
-            "namespace": "syn-baz",
-        },
+    params = make_inventory(
+        {
+            "components": {
+                "bar": {"url": "foo", "version": "v1.0.0"},
+                "baz": {"version": "v1.1.0"},
+            },
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": False},
+                "namespace": "syn-bar",
+            },
+        }
+    )
+    # Simulate merged target params for `baz` -> parameters key is `bar`
+    params["baz"] = {
+        "parameters": {
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": False},
+                "namespace": "syn-baz",
+            },
+        }
     }
 
     with pytest.raises(click.ClickException) as e:
@@ -70,19 +83,26 @@ def test_verify_component_aliases_explicit_no_multiversion_exception(config):
 def test_verify_component_aliases_explicit_no_multiversion_in_alias_exception(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {
-        "components": {
-            "bar": {"url": "foo", "version": "v1.0.0"},
-            "baz": {"version": "v1.1.0"},
-        },
-        "bar": {
-            "_metadata": {"multi_instance": True, "multi_version": True},
-            "namespace": "syn-bar",
-        },
-        "baz": {
-            "_metadata": {"multi_instance": True, "multi_version": False},
-            "namespace": "syn-baz",
-        },
+    params = make_inventory(
+        {
+            "components": {
+                "bar": {"url": "foo", "version": "v1.0.0"},
+                "baz": {"version": "v1.1.0"},
+            },
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": True},
+                "namespace": "syn-bar",
+            },
+        }
+    )
+    # Simulate merged target params for `baz` -> parameters key is `bar`
+    params["baz"] = {
+        "parameters": {
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": False},
+                "namespace": "syn-baz",
+            },
+        }
     }
 
     with pytest.raises(click.ClickException) as e:
@@ -97,12 +117,23 @@ def test_verify_component_aliases_explicit_no_multiversion_in_alias_exception(co
 def test_verify_component_multiversion_exception(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {
-        "components": {
-            "bar": {"url": "foo", "version": "v1.0.0"},
-            "baz": {"version": "v1.1.0"},
-        },
-        "bar": {"_metadata": {"multi_instance": True}},
+    params = make_inventory(
+        {
+            "components": {
+                "bar": {"url": "foo", "version": "v1.0.0"},
+                "baz": {"version": "v1.1.0"},
+            },
+            "bar": {"_metadata": {"multi_instance": True}},
+        }
+    )
+    # Simulate merged target params for `baz` -> parameters key is `bar`
+    params["baz"] = {
+        "parameters": {
+            "bar": {
+                "_metadata": {"multi_instance": True},
+                "namespace": "syn-baz",
+            },
+        }
     }
 
     with pytest.raises(click.ClickException) as e:
@@ -117,16 +148,26 @@ def test_verify_component_multiversion_exception(config):
 def test_verify_component_multiversion(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {
-        "components": {
-            "bar": {"url": "foo", "version": "v1.0.0"},
-            "baz": {"version": "v1.1.0"},
-        },
-        "bar": {
-            "_metadata": {"multi_instance": True, "multi_version": True},
-            "namespace": "syn-bar",
-        },
-        "baz": {"_metadata": {"multi_version": True}, "namespace": "syn-baz"},
+    params = make_inventory(
+        {
+            "components": {
+                "bar": {"url": "foo", "version": "v1.0.0"},
+                "baz": {"version": "v1.1.0"},
+            },
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": True},
+                "namespace": "syn-bar",
+            },
+        }
+    )
+    # Simulate merged target params for `baz` -> parameters key is `bar`
+    params["baz"] = {
+        "parameters": {
+            "bar": {
+                "_metadata": {"multi_instance": True, "multi_version": True},
+                "namespace": "syn-baz",
+            },
+        }
     }
 
     config.verify_component_aliases(params)
@@ -135,7 +176,9 @@ def test_verify_component_multiversion(config):
 def test_verify_component_aliases_metadata(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"_metadata": {"multi_instance": True}, "namespace": "syn-bar"}}
+    params = make_inventory(
+        {"bar": {"_metadata": {"multi_instance": True}, "namespace": "syn-bar"}}
+    )
 
     config.verify_component_aliases(params)
 
@@ -145,7 +188,7 @@ def test_verify_component_aliases_metadata(config):
 def test_verify_toplevel_component_aliases_exception(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"multi_instance": True, "namespace": "syn-bar"}}
+    params = make_inventory({"bar": {"multi_instance": True, "namespace": "syn-bar"}})
 
     with pytest.raises(click.ClickException) as e:
         config.verify_component_aliases(params)
@@ -158,7 +201,7 @@ def test_verify_toplevel_component_aliases_exception(config):
 def test_verify_component_aliases_error(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"namespace": "syn-bar"}}
+    params = make_inventory({"bar": {"namespace": "syn-bar"}})
 
     with pytest.raises(click.ClickException):
         config.verify_component_aliases(params)
@@ -167,7 +210,9 @@ def test_verify_component_aliases_error(config):
 def test_verify_component_aliases_explicit_no_instance_error(config):
     alias_data = {"baz": "bar"}
     config.register_component_aliases(alias_data)
-    params = {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+    params = make_inventory(
+        {"bar": {"_metadata": {"multi_instance": False}, "namespace": "syn-bar"}}
+    )
 
     with pytest.raises(click.ClickException):
         config.verify_component_aliases(params)
