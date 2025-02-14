@@ -19,7 +19,7 @@ class Component:
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
-    _aliases: dict[str, tuple[str, str]]
+    _aliases: dict[str, tuple[str, str, MultiDependency]]
     _work_dir: Optional[P]
 
     @classmethod
@@ -58,7 +58,13 @@ class Component:
         self.version = version
         self._sub_path = sub_path
         self._repo = None
-        self._aliases = {self.name: (self.version or "", self.sub_path or "")}
+        self._aliases = {
+            self.name: (
+                self.version or "",
+                self.sub_path or "",
+                self._dependency,
+            )
+        }
         self._work_dir = work_dir
 
     @property
@@ -137,13 +143,16 @@ class Component:
         return self.alias_defaults_file(self.name)
 
     def alias_directory(self, alias: str) -> P:
-        apath = self._dependency.get_component(alias)
-        if not apath:
-            raise ValueError(f"unknown alias {alias} for component {self.name}")
         if alias not in self._aliases:
             raise ValueError(
                 f"alias {alias} for component {self.name} has not been registered"
             )
+        adep = self._aliases[alias][2]
+        apath = adep.get_component(alias)
+        # Here: if alias is registered in `self._aliases` it must be registered on the
+        # alias's multi-dependency. The assert makes mypy happy. We disable bandit's
+        # "assert_used" lint, since we don't rely on this assertion for correctness.
+        assert apath  # nosec B101
         return apath / self._aliases[alias][1]
 
     def alias_class_file(self, alias: str) -> P:
@@ -190,9 +199,14 @@ class Component:
         self,
         alias: str,
         version: str,
+        dependency: MultiDependency,
         sub_path: str = "",
         target_dir: Optional[P] = None,
     ):
+        if alias in self._aliases:
+            raise ValueError(
+                f"alias {alias} already registered on component {self.name}"
+            )
         alias_target_dir = target_dir
         if not alias_target_dir:
             if not self._work_dir:
@@ -201,25 +215,16 @@ class Component:
                     + "which isn't configured with a working directory"
                 )
             alias_target_dir = component_dir(self._work_dir, alias)
-        if alias in self._aliases:
-            raise ValueError(
-                f"alias {alias} already registered on component {self.name}"
-            )
-        self._aliases[alias] = (version, sub_path)
-        self._dependency.register_component(alias, alias_target_dir)
+        self._aliases[alias] = (version, sub_path, dependency)
+        dependency.register_component(alias, alias_target_dir)
 
-    def checkout_alias(
-        self, alias: str, alias_dependency: Optional[MultiDependency] = None
-    ):
+    def checkout_alias(self, alias: str):
         if alias not in self._aliases:
             raise ValueError(
                 f"alias {alias} is not registered on component {self.name}"
             )
-
-        if alias_dependency:
-            alias_dependency.checkout_component(alias, self._aliases[alias][0])
-        else:
-            self._dependency.checkout_component(alias, self._aliases[alias][0])
+        adep = self._aliases[alias][2]
+        adep.checkout_component(alias, self._aliases[alias][0])
 
     def is_checked_out(self) -> bool:
         return self.target_dir is not None and self.target_dir.is_dir()

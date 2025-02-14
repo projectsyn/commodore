@@ -485,14 +485,14 @@ def test_component_register_alias_workdir(tmp_path: P, workdir: bool):
 
     if not workdir:
         with pytest.raises(ValueError) as exc:
-            c.register_alias("test-alias", c.version)
+            c.register_alias("test-alias", c.version, c.dependency)
 
         assert (
             "Can't register alias on component test-component which isn't configured with a working directory"
             in str(exc.value)
         )
     else:
-        c.register_alias("test-alias", c.version)
+        c.register_alias("test-alias", c.version, c.dependency)
         assert (
             c.alias_directory("test-alias") == tmp_path / "dependencies" / "test-alias"
         )
@@ -505,6 +505,24 @@ def test_component_register_alias_targetdir(tmp_path: P, workdir: bool):
     if workdir:
         c._work_dir = tmp_path
 
-    c.register_alias("test-alias", c.version, target_dir=tmp_path / "test-alias")
+    c.register_alias(
+        "test-alias", c.version, c.dependency, target_dir=tmp_path / "test-alias"
+    )
     # explicit `target_dir` has precedence over the component's _work_dir
     assert c.alias_directory("test-alias") == tmp_path / "test-alias"
+
+
+def test_component_register_alias_multiple_err(tmp_path: P):
+    c = _setup_component(tmp_path, name="test-component")
+    c.register_alias(
+        "test-alias", c.version, c.dependency, target_dir=tmp_path / "test-alias"
+    )
+
+    with pytest.raises(ValueError) as exc:
+        c.register_alias(
+            "test-alias", c.version, c.dependency, target_dir=tmp_path / "test-alias"
+        )
+
+    assert "alias test-alias already registered on component test-component" in str(
+        exc.value
+    )
