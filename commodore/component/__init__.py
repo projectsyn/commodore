@@ -149,8 +149,10 @@ class Component:
             )
         adep = self._aliases[alias][2]
         apath = adep.get_component(alias)
-        if not apath:
-            raise ValueError(f"unknown alias {alias} for component {self.name}")
+        # Here: if alias is registered in `self._aliases` it must be registered on the
+        # alias's multi-dependency. The assert makes mypy happy. We disable bandit's
+        # "assert_used" lint, since we don't rely on this assertion for correctness.
+        assert apath  # nosec B101
         return apath / self._aliases[alias][1]
 
     def alias_class_file(self, alias: str) -> P:
