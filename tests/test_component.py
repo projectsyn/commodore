@@ -510,3 +510,19 @@ def test_component_register_alias_targetdir(tmp_path: P, workdir: bool):
     )
     # explicit `target_dir` has precedence over the component's _work_dir
     assert c.alias_directory("test-alias") == tmp_path / "test-alias"
+
+
+def test_component_register_alias_multiple_err(tmp_path: P):
+    c = _setup_component(tmp_path, name="test-component")
+    c.register_alias(
+        "test-alias", c.version, c.dependency, target_dir=tmp_path / "test-alias"
+    )
+
+    with pytest.raises(ValueError) as exc:
+        c.register_alias(
+            "test-alias", c.version, c.dependency, target_dir=tmp_path / "test-alias"
+        )
+
+    assert "alias test-alias already registered on component test-component" in str(
+        exc.value
+    )
