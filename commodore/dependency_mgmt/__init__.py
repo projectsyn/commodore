@@ -14,7 +14,7 @@ from commodore.package import Package, package_dependency_dir
 from .component_library import validate_component_library_name
 from .discovery import _discover_components, _discover_packages
 from .tools import format_component_list
-from .version_parsing import _read_components, _read_packages
+from .version_parsing import _read_components, _read_packages, DependencySpec
 
 
 def create_component_symlinks(cfg, component: Component):
@@ -112,8 +112,16 @@ def fetch_components(cfg: Config):
         deps.setdefault(cdep.url, []).append(c)
     do_parallel(fetch_component, cfg, deps.values())
 
-    components = cfg.get_components()
+    _setup_component_aliases(cfg, component_aliases, cspecs, set(deps.keys()))
 
+
+def _setup_component_aliases(
+    cfg: Config,
+    component_aliases: dict[str, str],
+    cspecs: dict[str, DependencySpec],
+    component_urls: set[str],
+):
+    components = cfg.get_components()
     aliases: dict[str, list] = {}
     for alias, component in component_aliases.items():
         if alias == component:
@@ -126,7 +134,12 @@ def fetch_components(cfg: Config):
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
         c.register_alias(alias, aspec.version, adep, aspec.path)
-        if adep.url in deps:
+        if c.alias_checkout_is_dirty(alias) and not cfg.force:
+            raise click.ClickException(
+                f"Component alias {alias} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
+        if adep.url in component_urls:
             # NOTE(sg): if we already processed the dependency URL in the previous fetch
             # stage, we can create all instance worktrees in parallel. We do so by using
             # the alias name as the key for our "parallelization" dict.

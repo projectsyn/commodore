@@ -475,6 +475,44 @@ def test_checkout_is_dirty(tmp_path: P, config: Config):
 
     assert not c.checkout_is_dirty()
 
+    with open(c.target_dir / "README.md", "a", encoding="utf-8") as f:
+        f.writelines(["", "change"])
+
+    assert c.checkout_is_dirty()
+
+
+def test_alias_checkout_is_dirty(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+
+    c.register_alias("test-alias", c.version, c.dependency)
+    c.checkout_alias("test-alias")
+
+    assert not c.alias_checkout_is_dirty("test-alias")
+
+    with open(
+        c.alias_directory("test-alias") / "README.md", "a", encoding="utf-8"
+    ) as f:
+        f.writelines(["", "change"])
+
+    assert c.alias_checkout_is_dirty("test-alias")
+
+
+def test_component_alias_checkout_is_dirty_missing_alias(tmp_path: P, config: Config):
+    rem = _setup_existing_component(tmp_path, worktree=False)
+    clone_url = f"file://{rem.common_dir}"
+
+    c = Component.clone(config, clone_url, "test-component")
+
+    with pytest.raises(ValueError) as exc:
+        c.alias_checkout_is_dirty("test-alias")
+
+    assert "alias test-alias is not registered on component test-component" in str(
+        exc.value
+    )
+
 
 @pytest.mark.parametrize("workdir", [True, False])
 def test_component_register_alias_workdir(tmp_path: P, workdir: bool):
