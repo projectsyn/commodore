@@ -15,7 +15,7 @@ from commodore.multi_dependency import MultiDependency
 class Component:
     _name: str
     _repo: Optional[GitRepo]
-    _dependency: Optional[MultiDependency] = None
+    _dependency: MultiDependency
     _version: Optional[str] = None
     _dir: P
     _sub_path: str
@@ -38,7 +38,7 @@ class Component:
     def __init__(
         self,
         name: str,
-        dependency: Optional[MultiDependency],
+        dependency: MultiDependency,
         work_dir: Optional[P] = None,
         version: Optional[str] = None,
         directory: Optional[P] = None,
@@ -53,9 +53,8 @@ class Component:
             raise click.ClickException(
                 "Either `work_dir` or `directory` must be provided."
             )
-        if dependency:
-            self._dependency = dependency
-            self._dependency.register_component(self.name, self._dir)
+        self._dependency = dependency
+        self._dependency.register_component(self.name, self._dir)
         self.version = version
         self._sub_path = sub_path
         self._repo = None
@@ -69,18 +68,11 @@ class Component:
     @property
     def repo(self) -> GitRepo:
         if not self._repo:
-            if self._dependency:
-                dep_repo = self._dependency.bare_repo
-                author_name = (
-                    dep_repo.author.name if hasattr(dep_repo, "author") else None
-                )
-                author_email = (
-                    dep_repo.author.email if hasattr(dep_repo, "author") else None
-                )
-            else:
-                # Fall back to author detection if we don't have a dependency
-                author_name = None
-                author_email = None
+            dep_repo = self._dependency.bare_repo
+            author_name = dep_repo.author.name if hasattr(dep_repo, "author") else None
+            author_email = (
+                dep_repo.author.email if hasattr(dep_repo, "author") else None
+            )
             self._repo = GitRepo(
                 None,
                 self._dir,
@@ -91,19 +83,13 @@ class Component:
 
     @property
     def dependency(self) -> MultiDependency:
-        if self._dependency is None:
-            raise ValueError(
-                f"Dependency for component {self._name} hasn't been initialized"
-            )
         return self._dependency
 
     @dependency.setter
-    def dependency(self, dependency: Optional[MultiDependency]):
+    def dependency(self, dependency: MultiDependency):
         """Update the GitRepo backing the component"""
-        if self._dependency:
-            self._dependency.deregister_component(self.name)
-        if dependency:
-            dependency.register_component(self.name, self._dir)
+        self._dependency.deregister_component(self.name)
+        dependency.register_component(self.name, self._dir)
         self._dependency = dependency
         # Clear worktree GitRepo wrapper when we update the component's backing
         # dependency. The new GitRepo wrapper will be created on the nex access of
@@ -112,10 +98,6 @@ class Component:
 
     @property
     def repo_url(self) -> str:
-        if self._dependency is None:
-            raise ValueError(
-                f"Dependency for component {self._name} hasn't been initialized"
-            )
         return self._dependency.url
 
     @property
@@ -155,8 +137,6 @@ class Component:
         return self.alias_defaults_file(self.name)
 
     def alias_directory(self, alias: str) -> P:
-        if not self._dependency:
-            return self._dir / self._sub_path
         apath = self._dependency.get_component(alias)
         if not apath:
             raise ValueError(f"unknown alias {alias} for component {self.name}")
@@ -204,27 +184,29 @@ class Component:
         return component_parameters_key(self.name)
 
     def checkout(self):
-        if self._dependency is None:
-            raise ValueError(
-                f"Dependency for component {self._name} hasn't been initialized"
-            )
         self._dependency.checkout_component(self.name, self.version)
 
-    def register_alias(self, alias: str, version: str, sub_path: str = ""):
-        if not self._work_dir:
-            raise ValueError(
-                f"Can't register alias on component {self.name} "
-                + "which isn't configured with a working directory"
-            )
+    def register_alias(
+        self,
+        alias: str,
+        version: str,
+        sub_path: str = "",
+        target_dir: Optional[P] = None,
+    ):
+        alias_target_dir = target_dir
+        if not alias_target_dir:
+            if not self._work_dir:
+                raise ValueError(
+                    f"Can't register alias on component {self.name} "
+                    + "which isn't configured with a working directory"
+                )
+            alias_target_dir = component_dir(self._work_dir, alias)
         if alias in self._aliases:
             raise ValueError(
                 f"alias {alias} already registered on component {self.name}"
             )
         self._aliases[alias] = (version, sub_path)
-        if self._dependency:
-            self._dependency.register_component(
-                alias, component_dir(self._work_dir, alias)
-            )
+        self._dependency.register_component(alias, alias_target_dir)
 
     def checkout_alias(
         self, alias: str, alias_dependency: Optional[MultiDependency] = None
@@ -236,22 +218,17 @@ class Component:
 
         if alias_dependency:
             alias_dependency.checkout_component(alias, self._aliases[alias][0])
-        elif self._dependency:
+        else:
             self._dependency.checkout_component(alias, self._aliases[alias][0])
 
     def is_checked_out(self) -> bool:
         return self.target_dir is not None and self.target_dir.is_dir()
 
     def checkout_is_dirty(self) -> bool:
-        if self._dependency:
-            dep_repo = self._dependency.bare_repo
-            author_name = dep_repo.author.name
-            author_email = dep_repo.author.email
-            worktree = self._dependency.get_component(self.name)
-        else:
-            author_name = None
-            author_email = None
-            worktree = self.target_dir
+        dep_repo = self._dependency.bare_repo
+        author_name = dep_repo.author.name
+        author_email = dep_repo.author.email
+        worktree = self._dependency.get_component(self.name)
 
         if worktree and worktree.is_dir():
             r = GitRepo(

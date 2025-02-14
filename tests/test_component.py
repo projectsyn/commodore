@@ -416,95 +416,40 @@ def test_component_get_library(tmp_path: P, libfiles: Iterable[str]):
         assert c.get_library(f) == tmp_path / "tc1" / "lib" / f
 
 
-def test_component_no_dep_get_dependency(tmp_path: P):
-    c = Component("test-component", None, directory=tmp_path)
-    with pytest.raises(ValueError) as e:
-        _ = c.dependency
-
-    assert (
-        str(e.value)
-        == "Dependency for component test-component hasn't been initialized"
-    )
-
-
-def test_component_no_dep_get_url(tmp_path: P):
-    c = Component("test-component", None, directory=tmp_path)
-    with pytest.raises(ValueError) as e:
-        _ = c.repo_url
-
-    assert (
-        str(e.value)
-        == "Dependency for component test-component hasn't been initialized"
-    )
-
-
-def test_component_no_dep_checkout(tmp_path: P):
-    c = Component("test-component", None, directory=tmp_path)
-    with pytest.raises(ValueError) as e:
-        c.checkout()
-
-    assert (
-        str(e.value)
-        == "Dependency for component test-component hasn't been initialized"
-    )
-
-
-@pytest.mark.parametrize("init_dep", [False, True])
-@pytest.mark.parametrize("new_dep", [False, True])
-def test_component_update_dependency(tmp_path: P, init_dep: bool, new_dep: bool):
+def test_component_update_dependency(tmp_path: P):
     r1 = _setup_existing_component(tmp_path / "tc1")
     r2 = _setup_existing_component(tmp_path / "tc2")
 
-    idep = None
-    if init_dep:
-        idep = MultiDependency(f"file://{r1.common_dir}", tmp_path / "dependencies")
+    idep = MultiDependency(f"file://{r1.common_dir}", tmp_path / "dependencies")
 
     c = Component("tc1", idep, tmp_path)
 
-    if init_dep:
-        c.checkout()
-        assert c.dependency == idep
-        assert c.repo_url == idep.url
-        assert c.repo.repo.head.commit.hexsha == r1.head.commit.hexsha
-    else:
-        with pytest.raises(ValueError) as exc:
-            _ = c.dependency
-        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+    c.checkout()
+    assert c.dependency == idep
+    assert c.repo_url == idep.url
+    assert c.repo.repo.head.commit.hexsha == r1.head.commit.hexsha
 
-    ndep = None
-    if new_dep:
-        ndep = MultiDependency(f"file://{r2.common_dir}", tmp_path / "dependencies")
-
+    ndep = MultiDependency(f"file://{r2.common_dir}", tmp_path / "dependencies")
     c.dependency = ndep
 
-    if ndep:
-        c.checkout()
-        assert c.dependency == ndep
-        assert c.repo_url == ndep.url
-        assert c.repo.repo.head.commit.hexsha == r2.head.commit.hexsha
-    else:
-        with pytest.raises(ValueError) as exc:
-            _ = c.dependency
-        assert str(exc.value) == "Dependency for component tc1 hasn't been initialized"
+    c.checkout()
+    assert c.dependency == ndep
+    assert c.repo_url == ndep.url
+    assert c.repo.repo.head.commit.hexsha == r2.head.commit.hexsha
 
 
-@pytest.mark.parametrize("dep", [True, False])
-def test_component_repo(tmp_path: P, dep: bool):
+def test_component_repo(tmp_path: P):
     u = Repo.init(tmp_path / "bare.git")
     (tmp_path / "bare.git" / "x").touch()
     u.index.add(["x"])
     u.index.commit("Initial commit")
 
-    if dep:
-        md = MultiDependency(f"file://{tmp_path}/bare.git", tmp_path)
-    else:
-        md = None
+    md = MultiDependency(f"file://{tmp_path}/bare.git", tmp_path)
 
     c = Component(
         "test-component", md, directory=tmp_path / "test-component", version="master"
     )
-    if md:
-        c.checkout()
+    c.checkout()
 
     assert c.repo.working_tree_dir == tmp_path / "test-component"
 
@@ -527,6 +472,39 @@ def test_checkout_is_dirty(tmp_path: P, config: Config):
 
     c = Component.clone(config, clone_url, "test-component")
     c.checkout()
-    c._dependency = None
 
     assert not c.checkout_is_dirty()
+
+
+@pytest.mark.parametrize("workdir", [True, False])
+def test_component_register_alias_workdir(tmp_path: P, workdir: bool):
+    c = _setup_component(tmp_path, name="test-component")
+    assert not c.work_directory
+    if workdir:
+        c._work_dir = tmp_path
+
+    if not workdir:
+        with pytest.raises(ValueError) as exc:
+            c.register_alias("test-alias", c.version)
+
+        assert (
+            "Can't register alias on component test-component which isn't configured with a working directory"
+            in str(exc.value)
+        )
+    else:
+        c.register_alias("test-alias", c.version)
+        assert (
+            c.alias_directory("test-alias") == tmp_path / "dependencies" / "test-alias"
+        )
+
+
+@pytest.mark.parametrize("workdir", [True, False])
+def test_component_register_alias_targetdir(tmp_path: P, workdir: bool):
+    c = _setup_component(tmp_path, name="test-component")
+    assert not c.work_directory
+    if workdir:
+        c._work_dir = tmp_path
+
+    c.register_alias("test-alias", c.version, target_dir=tmp_path / "test-alias")
+    # explicit `target_dir` has precedence over the component's _work_dir
+    assert c.alias_directory("test-alias") == tmp_path / "test-alias"
