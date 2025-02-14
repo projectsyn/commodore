@@ -29,6 +29,7 @@ class Component:
             name,
             cdep,
             directory=component_dir(cfg.work_dir, name),
+            work_dir=cfg.work_dir,
             version=version,
         )
         c.checkout()
