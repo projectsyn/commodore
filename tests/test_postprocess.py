@@ -145,7 +145,7 @@ def _setup(tmp_path, f, alias="test-component"):
     cdep = MultiDependency("https://fake.repo.url/", tmp_path / "dependencies")
     component = Component("test-component", dependency=cdep, work_dir=tmp_path)
     if alias != "test-component":
-        component.register_alias(alias, "master")
+        component.register_alias(alias, "master", cdep)
         os.symlink(component.target_directory, component.alias_directory(alias))
     config.register_component(component)
     aliases = {alias: "test-component"}

@@ -169,7 +169,7 @@ def _setup_component(
     config.register_component_aliases({instance_name: component_name})
     if instance_name != component_name:
         component.register_alias(
-            instance_name, "", sub_path=sub_path, target_dir=target_dir
+            instance_name, "", cdep, sub_path=sub_path, target_dir=target_dir
         )
 
     # Validate component libraries

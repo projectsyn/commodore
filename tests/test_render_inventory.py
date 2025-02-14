@@ -28,7 +28,7 @@ def _setup(tmp_path: Path):
     os.makedirs(tmp_path / "dependencies" / "test")
     cdep = MockMultiDependency(git.Repo.init(tmp_path / "repo.git"))
     c = Component("test", cdep, work_dir=tmp_path)
-    c.register_alias("test-1", "master")
+    c.register_alias("test-1", "master", cdep)
     os.makedirs(c.class_file.parent)
     # Create alias checkout by symlinking component directory
     os.symlink(c.target_directory, c.alias_directory("test-1"))

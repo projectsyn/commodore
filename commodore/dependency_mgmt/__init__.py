@@ -120,13 +120,11 @@ def fetch_components(cfg: Config):
 
         c = components[component]
         aspec = cspecs[alias]
-        adep = None
+        adep = c.dependency
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
-            adep.register_component(alias, component_dir(cfg.work_dir, alias))
-
-        c.register_alias(alias, aspec.version, aspec.path)
-        c.checkout_alias(alias, adep)
+        c.register_alias(alias, aspec.version, adep, aspec.path)
+        c.checkout_alias(alias)
 
         create_alias_symlinks(cfg, c, alias)
 
@@ -208,10 +206,10 @@ def register_components(cfg: Config):
         c = registered_components[cn]
         aspec = cspecs[alias]
 
+        adep = c.dependency
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
-            adep.register_component(alias, component_dir(cfg.work_dir, alias))
-        c.register_alias(alias, aspec.version, aspec.path)
+        c.register_alias(alias, aspec.version, adep, aspec.path)
 
         if not component_dir(cfg.work_dir, alias).is_dir():
             raise click.ClickException(f"Missing alias checkout for '{alias} as {cn}'")
