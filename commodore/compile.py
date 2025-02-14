@@ -219,7 +219,7 @@ def _abort_on_local_changes(cfg: Config, cluster: Cluster):
         )
 
     tr = GitRepo(None, cfg.inventory.tenant_config_dir(cluster.tenant_id))
-    if tr.has_local_changes() or gr.has_local_branches() or gr.is_ahead_of_remote():
+    if tr.has_local_changes() or tr.has_local_branches() or tr.is_ahead_of_remote():
         raise click.ClickException(
             "Tenant repo has local (uncommitted or unpushed) changes. "
             + "Please specify `--force` to discard them."
