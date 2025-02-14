@@ -243,19 +243,25 @@ def test_fetch_components_with_alias_version(
         ).is_symlink()
 
 
+@pytest.mark.parametrize("dirty_alias", [False, True])
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_raises(
-    patch_discover, patch_read, config: Config, tmp_path: Path
+    patch_discover, patch_read, config: Config, tmp_path: Path, dirty_alias: bool
 ):
     components = ["foo"]
-    patch_discover.return_value = (components, {})
+    aliases = {"bar": "foo"}
+    patch_discover.return_value = (components, aliases)
     patch_read.return_value = setup_components_upstream(tmp_path, components)
+    patch_read.return_value["bar"] = patch_read.return_value["foo"]
 
     dependency_mgmt.fetch_components(config)
 
+    c = config.get_components()["foo"]
+    dirty_name = "bar" if dirty_alias else "foo"
+
     with open(
-        config.get_components()["foo"].target_dir / "class" / "defaults.yml",
+        c.alias_directory(dirty_name) / "class" / "defaults.yml",
         "w",
         encoding="utf-8",
     ) as f:
@@ -264,13 +270,15 @@ def test_fetch_components_raises(
     config._dependency_repos.clear()
     config._components.clear()
 
+    if dirty_alias:
+        msg = "Component alias bar has uncommitted changes. Please specify `--force` to discard them"
+    else:
+        msg = "Component foo has uncommitted changes. Please specify `--force` to discard them"
+
     with pytest.raises(click.ClickException) as excinfo:
         dependency_mgmt.fetch_components(config)
 
-    assert (
-        "Component foo has uncommitted changes. Please specify `--force` to discard them"
-        in str(excinfo.value)
-    )
+    assert msg in str(excinfo.value)
 
 
 @patch("commodore.dependency_mgmt._read_components")
