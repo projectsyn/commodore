@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Iterable
 
 import click
 
@@ -109,10 +110,11 @@ def fetch_components(cfg: Config):
                 + "Please specify `--force` to discard them"
             )
         deps.setdefault(cdep.url, []).append(c)
-    fetch_parallel(fetch_component, cfg, deps.values())
+    do_parallel(fetch_component, cfg, deps.values())
 
     components = cfg.get_components()
 
+    aliases: dict[str, list] = {}
     for alias, component in component_aliases.items():
         if alias == component:
             # Nothing to setup for identity alias
@@ -124,12 +126,21 @@ def fetch_components(cfg: Config):
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
         c.register_alias(alias, aspec.version, adep, aspec.path)
-        c.checkout_alias(alias)
+        if adep.url in deps:
+            # NOTE(sg): if we already processed the dependency URL in the previous fetch
+            # stage, we can create all instance worktrees in parallel. We do so by using
+            # the alias name as the key for our "parallelization" dict.
+            aliases[alias] = [(alias, c)]
+        else:
+            # Otherwise, we use adep.url as the parallelization key to avoid any race
+            # conditions when creating multiple worktrees from a not-yet-cloned
+            # dependency URL.
+            aliases.setdefault(adep.url, []).append((alias, c))
 
-        create_alias_symlinks(cfg, c, alias)
+    do_parallel(setup_alias, cfg, aliases.values())
 
 
-def fetch_component(cfg, dependencies):
+def fetch_component(cfg: Config, dependencies: Iterable):
     """
     Fetch all components of a MultiDependency object.
     """
@@ -139,7 +150,13 @@ def fetch_component(cfg, dependencies):
         create_component_symlinks(cfg, c)
 
 
-def fetch_parallel(fetch_fun, cfg, to_fetch):
+def setup_alias(cfg: Config, aliases: Iterable):
+    for alias, c in aliases:
+        c.checkout_alias(alias)
+        create_alias_symlinks(cfg, c, alias)
+
+
+def do_parallel(fun: Callable[[Config, Iterable], None], cfg: Config, data: Iterable):
     """
     Fetch dependencies in parallel threads with ThreadPoolExecutor.
     """
@@ -148,7 +165,7 @@ def fetch_parallel(fetch_fun, cfg, to_fetch):
         # that any exceptions raised in `fetch_fun` are propagated, cf.
         # https://docs.python.org/3/library/concurrent.futures.html#executor-objects. We
         # do so by simply materializing the iterator into a list.
-        list(exe.map(fetch_fun, itertools.repeat(cfg), to_fetch))
+        list(exe.map(fun, itertools.repeat(cfg), data))
 
 
 def register_components(cfg: Config):
@@ -247,10 +264,10 @@ def fetch_packages(cfg: Config):
                 + "Please specify `--force` to discard them"
             )
         deps.setdefault(pdep.url, []).append((p, pkg))
-    fetch_parallel(fetch_package, cfg, deps.values())
+    do_parallel(fetch_package, cfg, deps.values())
 
 
-def fetch_package(cfg, dependencies):
+def fetch_package(cfg: Config, dependencies: Iterable):
     """
     Fetch all package dependencies of a MultiDependency object.
     """
