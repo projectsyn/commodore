@@ -126,6 +126,11 @@ def fetch_components(cfg: Config):
         if aspec.url != c.repo_url:
             adep = cfg.register_dependency_repo(aspec.url)
         c.register_alias(alias, aspec.version, adep, aspec.path)
+        if c.alias_checkout_is_dirty(alias) and not cfg.force:
+            raise click.ClickException(
+                f"Component alias {alias} has uncommitted changes. "
+                + "Please specify `--force` to discard them"
+            )
         if adep.url in deps:
             # NOTE(sg): if we already processed the dependency URL in the previous fetch
             # stage, we can create all instance worktrees in parallel. We do so by using

@@ -244,6 +244,25 @@ class Component:
         else:
             return False
 
+    def alias_checkout_is_dirty(self, alias: str) -> bool:
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} is not registered on component {self.name}"
+            )
+        adep = self._aliases[alias][2]
+        dep_repo = adep.bare_repo
+        author_name = dep_repo.author.name
+        author_email = dep_repo.author.email
+        worktree = adep.get_component(alias)
+
+        if worktree and worktree.is_dir():
+            r = GitRepo(
+                None, worktree, author_name=author_name, author_email=author_email
+            )
+            return r.repo.is_dirty()
+        else:
+            return False
+
     def render_jsonnetfile_json(self, component_params):
         """
         Render jsonnetfile.json from jsonnetfile.jsonnet
