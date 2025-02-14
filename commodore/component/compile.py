@@ -22,6 +22,7 @@ from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
+from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
 
 
@@ -142,16 +143,21 @@ def _setup_component(
         target_dir = P(cr.working_tree_dir)
         # compute subpath from Repo working tree dir and component path
         sub_path = str(component_path.absolute().relative_to(target_dir))
+        cdep = MultiDependency(cr.remote().url, target_dir.parent)
     except git.InvalidGitRepositoryError:
         click.echo(" > Couldn't determine Git repository for component")
         # Just treat `component_path` as a directory holding a component, don't care
         # about Git repo details here.
         target_dir = component_path
         sub_path = ""
+        # We need a MultiDependency, but it doesn't matter what it's contents are, since
+        # we never actually call any methods backed by the MultiDependency in
+        # `component_compile()`.
+        cdep = MultiDependency("https://fake.example.org", component_path)
 
     component = Component(
         component_name,
-        None,
+        cdep,
         # Use repo working tree as component "target directory", otherwise we get messy
         # results with duplicate subpaths.
         directory=target_dir,
@@ -161,6 +167,10 @@ def _setup_component(
     )
     config.register_component(component)
     config.register_component_aliases({instance_name: component_name})
+    if instance_name != component_name:
+        component.register_alias(
+            instance_name, "", sub_path=sub_path, target_dir=target_dir
+        )
 
     # Validate component libraries
     for lib in component.lib_files:
