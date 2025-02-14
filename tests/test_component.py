@@ -474,3 +474,37 @@ def test_checkout_is_dirty(tmp_path: P, config: Config):
     c.checkout()
 
     assert not c.checkout_is_dirty()
+
+
+@pytest.mark.parametrize("workdir", [True, False])
+def test_component_register_alias_workdir(tmp_path: P, workdir: bool):
+    c = _setup_component(tmp_path, name="test-component")
+    assert not c.work_directory
+    if workdir:
+        c._work_dir = tmp_path
+
+    if not workdir:
+        with pytest.raises(ValueError) as exc:
+            c.register_alias("test-alias", c.version)
+
+        assert (
+            "Can't register alias on component test-component which isn't configured with a working directory"
+            in str(exc.value)
+        )
+    else:
+        c.register_alias("test-alias", c.version)
+        assert (
+            c.alias_directory("test-alias") == tmp_path / "dependencies" / "test-alias"
+        )
+
+
+@pytest.mark.parametrize("workdir", [True, False])
+def test_component_register_alias_targetdir(tmp_path: P, workdir: bool):
+    c = _setup_component(tmp_path, name="test-component")
+    assert not c.work_directory
+    if workdir:
+        c._work_dir = tmp_path
+
+    c.register_alias("test-alias", c.version, target_dir=tmp_path / "test-alias")
+    # explicit `target_dir` has precedence over the component's _work_dir
+    assert c.alias_directory("test-alias") == tmp_path / "test-alias"
