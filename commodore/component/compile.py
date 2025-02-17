@@ -143,7 +143,7 @@ def _setup_component(
         target_dir = P(cr.working_tree_dir)
         # compute subpath from Repo working tree dir and component path
         sub_path = str(component_path.absolute().relative_to(target_dir))
-        cdep = MultiDependency(cr.remote().url, target_dir.parent)
+        cdep = MultiDependency(cr.remote().url, config.inventory.dependencies_dir)
     except git.InvalidGitRepositoryError:
         click.echo(" > Couldn't determine Git repository for component")
         # Just treat `component_path` as a directory holding a component, don't care
