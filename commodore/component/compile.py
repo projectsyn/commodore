@@ -270,7 +270,7 @@ def _prepare_kapitan_inventory(
         argocd_libf.write(
             dedent(
                 """
-            local ArgoApp(component, namespace, project='', secrets=true) = {};
+            local ArgoApp(component, namespace, project='', secrets=true, base=null) = {};
             local ArgoProject(name) = {};
 
             {
