@@ -5,9 +5,11 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Iterable
 
 import click
+from click import ClickException
 
 from commodore.config import Config
 from commodore.component import Component, component_dir
+from commodore.gitrepo import RefError
 from commodore.helpers import relsymlink
 from commodore.package import Package, package_dependency_dir
 
@@ -153,19 +155,25 @@ def _setup_component_aliases(
     do_parallel(setup_alias, cfg, aliases.values())
 
 
-def fetch_component(cfg: Config, dependencies: Iterable):
+def fetch_component(cfg: Config, dependencies: Iterable[Component]):
     """
     Fetch all components of a MultiDependency object.
     """
     for c in dependencies:
-        c.checkout()
+        try:
+            c.checkout()
+        except RefError as e:
+            raise ClickException(f"while fetching component {c.name}: {e}")
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
 
 
-def setup_alias(cfg: Config, aliases: Iterable):
+def setup_alias(cfg: Config, aliases: Iterable[tuple[str, Component]]):
     for alias, c in aliases:
-        c.checkout_alias(alias)
+        try:
+            c.checkout_alias(alias)
+        except RefError as e:
+            raise ClickException(f"while setting up component instance {alias}: {e}")
         create_alias_symlinks(cfg, c, alias)
 
 
@@ -280,12 +288,15 @@ def fetch_packages(cfg: Config):
     do_parallel(fetch_package, cfg, deps.values())
 
 
-def fetch_package(cfg: Config, dependencies: Iterable):
+def fetch_package(cfg: Config, dependencies: Iterable[tuple[str, Package]]):
     """
     Fetch all package dependencies of a MultiDependency object.
     """
     for p, pkg in dependencies:
-        pkg.checkout()
+        try:
+            pkg.checkout()
+        except RefError as e:
+            raise ClickException(f"while fetching package {p}: {e}")
         cfg.register_package(p, pkg)
         create_package_symlink(cfg, p, pkg)
 

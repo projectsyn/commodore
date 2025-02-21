@@ -18,7 +18,7 @@ from commodore import dependency_mgmt
 from commodore.config import Config
 from commodore.component import Component
 from commodore.inventory import Inventory
-from commodore.package import package_dependency_dir
+from commodore.package import package_dependency_dir, Package
 
 
 from commodore.dependency_mgmt.version_parsing import DependencySpec
@@ -794,4 +794,70 @@ def test_register_packages_skip_nonexistent(
 
     assert (
         "Skipping registration of package 'bar': repo is not available" in captured.out
+    )
+
+
+def test_fetch_component_raises_clickexception(tmp_path: Path, config: Config):
+    deps = setup_components_upstream(tmp_path, ["test-component"], {})
+    cspec = deps["test-component"]
+    cspec.version = "foo"
+    cdep = config.register_dependency_repo(cspec.url)
+    component = Component(
+        "test-component",
+        work_dir=tmp_path,
+        dependency=cdep,
+        sub_path=cspec.path,
+        version=cspec.version,
+    )
+    with pytest.raises(click.ClickException) as exc:
+        dependency_mgmt.fetch_component(config, [component])
+
+    assert (
+        "while fetching component test-component: Failed to checkout revision 'foo'"
+        in str(exc.value)
+    )
+
+
+def test_setup_alias_raises_clickexception(tmp_path: Path, config: Config):
+    deps = setup_components_upstream(
+        tmp_path, ["test-component"], {"test-alias": "test-component"}
+    )
+    aspec = deps["test-alias"]
+    aspec.version = "foo"
+    adep = config.register_dependency_repo(aspec.url)
+    component = Component(
+        "test-component",
+        work_dir=tmp_path,
+        dependency=adep,
+        sub_path=aspec.path,
+        version="master",
+    )
+    component.register_alias("test-alias", aspec.version, adep)
+    with pytest.raises(click.ClickException) as exc:
+        dependency_mgmt.setup_alias(config, [("test-alias", component)])
+
+    assert (
+        "while setting up component instance test-alias: Failed to checkout revision 'foo'"
+        in str(exc.value)
+    )
+
+
+def test_fetch_package_raises_clickexception(tmp_path: Path, config: Config):
+    deps = _setup_packages(tmp_path / "upstream", ["test-package"])
+    pspec = deps["test-package"]
+    pdep = config.register_dependency_repo(pspec.url)
+    pkg = Package(
+        "test-package",
+        dependency=pdep,
+        target_dir=package_dependency_dir(config.work_dir, "test-package"),
+        version="foo",
+        sub_path=pspec.path,
+    )
+
+    with pytest.raises(click.ClickException) as exc:
+        dependency_mgmt.fetch_package(config, [("test-package", pkg)])
+
+    assert (
+        "while fetching package test-package: Failed to checkout revision 'foo'"
+        in str(exc.value)
     )
