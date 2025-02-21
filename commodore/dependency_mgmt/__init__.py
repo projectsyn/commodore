@@ -153,7 +153,7 @@ def _setup_component_aliases(
     do_parallel(setup_alias, cfg, aliases.values())
 
 
-def fetch_component(cfg: Config, dependencies: Iterable):
+def fetch_component(cfg: Config, dependencies: Iterable[Component]):
     """
     Fetch all components of a MultiDependency object.
     """
@@ -163,7 +163,7 @@ def fetch_component(cfg: Config, dependencies: Iterable):
         create_component_symlinks(cfg, c)
 
 
-def setup_alias(cfg: Config, aliases: Iterable):
+def setup_alias(cfg: Config, aliases: Iterable[tuple[str, Component]]):
     for alias, c in aliases:
         c.checkout_alias(alias)
         create_alias_symlinks(cfg, c, alias)
@@ -280,7 +280,7 @@ def fetch_packages(cfg: Config):
     do_parallel(fetch_package, cfg, deps.values())
 
 
-def fetch_package(cfg: Config, dependencies: Iterable):
+def fetch_package(cfg: Config, dependencies: Iterable[tuple[str, Package]]):
     """
     Fetch all package dependencies of a MultiDependency object.
     """
