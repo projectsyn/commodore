@@ -47,7 +47,7 @@ gojsonnet = "0.20.0"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
-pytest = "8.3.4"
+pytest = "8.3.5"
 pytest-xdist = "3.6.1"
 pytest-benchmark = "5.1.0"
 responses = "0.25.6"
