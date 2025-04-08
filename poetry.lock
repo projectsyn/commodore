@@ -799,6 +799,17 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.6.10)", "diff-cover (>=9.2.1)",
 typing = ["typing-extensions (>=4.12.2)"]
 
 [[package]]
+name = "filetype"
+version = "1.2.0"
+description = "Infer file type and MIME type of any file/buffer. No external dependencies."
+optional = false
+python-versions = "*"
+files = [
+    {file = "filetype-1.2.0-py2.py3-none-any.whl", hash = "sha256:7ce71b6880181241cf7ac8697a2f1eb6a8bd9b429f7ad6d27b8db9ba5f1c2d25"},
+    {file = "filetype-1.2.0.tar.gz", hash = "sha256:66b56cd6474bf41d8c54660347d37afcc3f7d1970648de365c102ef77548aadb"},
+]
+
+[[package]]
 name = "funcy"
 version = "2.0"
 description = "A fancy and practical functional tools"
@@ -1197,13 +1208,13 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.34.4"
+version = "0.34.5"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "kapitan-0.34.4-py3-none-any.whl", hash = "sha256:712e1329376040935737a5b20bff56333e93a490659d4f0c5bcae43efbecd75d"},
-    {file = "kapitan-0.34.4.tar.gz", hash = "sha256:4810983f5176e71ba7fba158903000a99ee16714f1b53d453044b1875b6cab95"},
+    {file = "kapitan-0.34.5-py3-none-any.whl", hash = "sha256:d0d2e85604a94313ff76c7a8930d98f664834aa5ac322d6402f0b646860c9208"},
+    {file = "kapitan-0.34.5.tar.gz", hash = "sha256:0e49c2e258f0eea30db0f06424b58f2b10fa17636a3351076966e288929a7e98"},
 ]
 
 [package.dependencies]
@@ -1214,6 +1225,7 @@ boto3 = ">=1.18.17,<2.0.0"
 certifi = "*"
 copier = ">=9.3.1,<10.0.0"
 cryptography = ">=3.4.7,<44.0.0"
+filetype = ">=1.2.0,<2.0.0"
 gitdb = ">=4.0.10,<5.0.0"
 gitpython = ">=3.1.30,<4.0.0"
 google-api-python-client = ">=2.15.0,<3.0.0"
@@ -1229,7 +1241,6 @@ pydantic = ">=2.8.2,<3.0.0"
 pydantic-settings = ">=2.4.0,<3.0.0"
 python-box = ">=7.2.0,<8.0.0"
 python-gnupg = ">=0.4.7,<0.6.0"
-python-magic = ">=0.4.27,<0.5.0"
 pyyaml = ">=6.0,<7.0"
 regex = ">=2024.5.10,<2025.0.0"
 requests = ">=2.28.2,<3.0.0"
@@ -1242,7 +1253,7 @@ yamllint = ">=1.29.0,<2.0.0"
 [package.extras]
 gojsonnet = ["gojsonnet (>=0.20.0,<0.21.0)"]
 omegaconf = ["omegaconf (>=2.4.0.dev3,<3.0.0)"]
-reclass-rs = ["reclass-rs (>=0.5.0,<0.6.0)"]
+reclass-rs = ["reclass-rs (>=0.6.0,<0.7.0)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -2068,17 +2079,6 @@ python-versions = "*"
 files = [
     {file = "python-gnupg-0.5.4.tar.gz", hash = "sha256:f2fdb5fb29615c77c2743e1cb3d9314353a6e87b10c37d238d91ae1c6feae086"},
     {file = "python_gnupg-0.5.4-py2.py3-none-any.whl", hash = "sha256:40ce25cde9df29af91fe931ce9df3ce544e14a37f62b13ca878c897217b2de6c"},
-]
-
-[[package]]
-name = "python-magic"
-version = "0.4.27"
-description = "File type identification using libmagic"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-files = [
-    {file = "python-magic-0.4.27.tar.gz", hash = "sha256:c1ba14b08e4a5f5c31a302b7721239695b2f0f058d125bd5ce1ee36b9d9d3c3b"},
-    {file = "python_magic-0.4.27-py2.py3-none-any.whl", hash = "sha256:c212960ad306f700aa0d01e5d7a325d20548ff97eb9920dcd29513174f0294d3"},
 ]
 
 [[package]]
@@ -3085,4 +3085,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "aee4173736c646d9c4c93aa56859f3ac86b01d4e1e44f5165a15c75701df7107"
+content-hash = "236a2e3e615720d506db27d2f6f02682c60f0c9d2fff11b9094a9393c9a5255d"
