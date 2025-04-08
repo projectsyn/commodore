@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && mkdir -p /app/.config
 
 
-ARG GO_VERSION=1.24.1
+ARG GO_VERSION=1.24.2
 RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
  && tar -C /usr/local -xzf go.tar.gz \
  && rm go.tar.gz \
