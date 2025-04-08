@@ -77,13 +77,6 @@ source ~/.local/commodore-venv/bin/activate
 pip install syn-commodore
 ----
 
-. On MacOS you'll also need libmagic via brew
-+
-[source,bash]
-----
-brew install libmagic
-----
-
 . Check that `commodore` was installed correctly
 +
 [source,bash]

@@ -68,7 +68,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       git \
       gpg \
-      libmagic1 \
       libnss-wrapper \
       openssh-client \
  && rm -rf /var/lib/apt/lists/* \
