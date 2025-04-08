@@ -33,7 +33,6 @@ Commodore also supports additional processing on the output of Kapitan, such as 
 * [jsonnet-bundler](https://github.com/jsonnet-bundler/jsonnet-bundler)
   * Our fork [projectsyn/jsonnet-bundler](https://github.com/projectsyn/jsonnet-bundler) is currently recommended.
     It parallelizes fetching of dependencies, which speeds up Commodore significantly, and has fixes to make the dependency fetching more deterministic.
-* `libmagic` (install with `brew install libmagic` on macOS)
 
 ## Getting started
 
