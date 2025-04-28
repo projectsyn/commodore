@@ -2880,20 +2880,20 @@ files = [
 
 [[package]]
 name = "url-normalize"
-version = "2.2.0"
+version = "2.2.1"
 description = "URL normalization for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "url_normalize-2.2.0-py3-none-any.whl", hash = "sha256:3fe387b62f5b66db94304bc703bf6d34de52aaa9590d4d1f1bbdf305a1430064"},
-    {file = "url_normalize-2.2.0.tar.gz", hash = "sha256:0f0b7cc95a95d2d9b0c9a51d47a326559bc05bd1558accdada21bb0c9504de85"},
+    {file = "url_normalize-2.2.1-py3-none-any.whl", hash = "sha256:3deb687587dc91f7b25c9ae5162ffc0f057ae85d22b1e15cf5698311247f567b"},
+    {file = "url_normalize-2.2.1.tar.gz", hash = "sha256:74a540a3b6eba1d95bdc610c24f2c0141639f3ba903501e61a52a8730247ff37"},
 ]
 
 [package.dependencies]
 idna = ">=3.3"
 
 [package.extras]
-dev = ["mypy", "pre-commit", "pytest", "pytest-cov", "pytest-ruff", "pytest-socket", "ruff", "tox"]
+dev = ["mypy", "pre-commit", "pytest", "pytest-cov", "pytest-socket", "ruff"]
 
 [[package]]
 name = "urllib3"
@@ -3052,4 +3052,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "sphinx"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "89753184d45df68bca89ae524f44d939258ae2053b6766b8fcd0fe68111f133f"
+content-hash = "7d5da79e8602efbeddaf7e5d1546d3c32ce701c61c251e75617d6115f293ee02"
