@@ -12,9 +12,9 @@ import click
 import jwt
 import requests
 
-from url_normalize import url_normalize
 
 from commodore.component import Component, component_parameters_key
+from .normalize_url import normalize_url
 from .gitrepo import GitRepo
 from .inventory import Inventory
 from .multi_dependency import MultiDependency, dependency_key
@@ -454,7 +454,7 @@ class Config:
         ):
             try:
                 r = requests.get(
-                    url_normalize(self.api_url), timeout=self.request_timeout
+                    normalize_url(self.api_url), timeout=self.request_timeout
                 )
                 api_cfg = json.loads(r.text)
                 if "oidc" in api_cfg:

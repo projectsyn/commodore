@@ -19,7 +19,6 @@ from enum import Enum
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
-from url_normalize import url_normalize
 from kapitan import cached
 from kapitan import targets as kapitan_targets
 from kapitan import defaults
@@ -31,6 +30,7 @@ from reclass_rs import Reclass
 
 from commodore import __install_dir__
 from commodore.config import Config
+from commodore.normalize_url import normalize_url
 
 
 ArgumentCache = collections.namedtuple(
@@ -132,7 +132,7 @@ def _lieutenant_request(
     timeout=5,
     **kwargs,
 ):
-    url = url_normalize(f"{api_url}/{api_endpoint}/{api_id}")
+    url = normalize_url(f"{api_url}/{api_endpoint}/{api_id}")
     headers = {"Authorization": f"Bearer {api_token}"}
     try:
         if method == RequestMethod.GET:
