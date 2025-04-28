@@ -1188,13 +1188,13 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.34.5"
+version = "0.34.6"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "kapitan-0.34.5-py3-none-any.whl", hash = "sha256:d0d2e85604a94313ff76c7a8930d98f664834aa5ac322d6402f0b646860c9208"},
-    {file = "kapitan-0.34.5.tar.gz", hash = "sha256:0e49c2e258f0eea30db0f06424b58f2b10fa17636a3351076966e288929a7e98"},
+    {file = "kapitan-0.34.6-py3-none-any.whl", hash = "sha256:2074389351265e86895fae4a18685a6ca400d3ef8752313ac9bd263665cdbb15"},
+    {file = "kapitan-0.34.6.tar.gz", hash = "sha256:3c20bfea3e7a1fd6ff0ff5672caee41f163ed402c37dd3d5a0fea88161840a0c"},
 ]
 
 [package.dependencies]
@@ -1233,7 +1233,7 @@ yamllint = ">=1.29.0,<2.0.0"
 [package.extras]
 gojsonnet = ["gojsonnet (>=0.20.0,<0.21.0)"]
 omegaconf = ["omegaconf (>=2.4.0.dev3,<3.0.0)"]
-reclass-rs = ["reclass-rs (>=0.6.0,<0.7.0)"]
+reclass-rs = ["reclass-rs (>=0.8.0,<0.9.0)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -3052,4 +3052,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "sphinx"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "ae5f0387fe7f7cdcfe5566a7bd8e6ed1bf4aa1611040c8d5a791af0c538aaed9"
+content-hash = "89753184d45df68bca89ae524f44d939258ae2053b6766b8fcd0fe68111f133f"
