@@ -10,7 +10,8 @@ def test_runas_module():
     Can this package be run as a Python module?
     """
     exit_status = call("python -m commodore", shell=True)
-    assert exit_status == 0
+    # click 8.2 changed exit code for `no_args_is_help` from 0 to 2
+    assert exit_status == 2
 
 
 def test_entrypoint():

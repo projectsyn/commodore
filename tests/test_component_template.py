@@ -1107,7 +1107,7 @@ def test_component_update_no_cruft_json(tmp_path: P, cli_runner: RunnerFunc):
     result = cli_runner(["component", "update", str(component_path)])
     assert result.exit_code == 1
     assert (
-        result.stdout
+        result.stderr
         == "Error: Provided component path doesn't have `.cruft.json`, can't update.\n"
     )
 
@@ -1171,7 +1171,7 @@ def test_component_update_test_cases(
     assert result.exit_code == (0 if len(updated_cases) > 0 else 1)
     if len(updated_cases) == 0:
         assert (
-            result.stdout
+            result.stderr
             == "Error: Component template doesn't support removing all test cases.\n"
         )
         final_cases = orig_cases
@@ -1745,9 +1745,9 @@ def test_component_update_raises_on_merge_conflict(
     result = cli_runner(["component", "update", "--lib", str(component_path)])
 
     assert result.exit_code == 1
-    stdout_lines = result.stdout.strip().split("\n")
+    stderr_lines = result.stderr.strip().split("\n")
     assert (
-        stdout_lines[-1]
+        stderr_lines[-1]
         == "Error: Can't commit template changes: merge error in "
         + "'lib/test-component.libsonnet'. Please resolve conflicts and commit manually."
     )
