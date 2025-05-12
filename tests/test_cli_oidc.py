@@ -42,7 +42,8 @@ def test_commodore_fetch_token(
     result = cli_runner(["fetch-token"] + args)
 
     assert result.exit_code == exitcode
-    assert result.stdout == output
+    out = result.stdout if result.exit_code == 0 else result.stderr
+    assert out == output
 
 
 @pytest.mark.parametrize(

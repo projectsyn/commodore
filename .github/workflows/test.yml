@@ -162,4 +162,9 @@ jobs:
     - name: Build image
       run: make docker
     - name: Run image
-      run: docker run docker.io/projectsyn/commodore:test
+      run: |
+        docker run docker.io/projectsyn/commodore:test || exit_code=$?
+        if [ "$exit_code" -ne 2 ]; then
+          echo "Unexpected exit code $exit_code, expected 2"
+          exit $exit_code
+        fi

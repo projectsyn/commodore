@@ -138,7 +138,7 @@ def test_catalog_compile_cli(
     if exitcode == 1:
         assert (
             "Cannot push changes when local global or tenant repo override is specified"
-            in result.stdout
+            in result.stderr
         )
     if "push" in expected and not expected.get("fetch_dependencies", True):
         assert (
