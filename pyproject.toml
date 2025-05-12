@@ -42,7 +42,7 @@ oauthlib = "3.2.2"
 pyjwt = "2.10.1"
 PyGithub = "2.6.1"
 reclass-rs = "0.8.0"
-gojsonnet = "0.20.0"
+gojsonnet = "0.21.0"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
