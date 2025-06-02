@@ -62,7 +62,7 @@ class MultiDependency:
         except KeyError as e:
             raise ValueError(f"can't deregister unknown component {name}") from e
 
-    def checkout_component(self, name: str, version: str):
+    def checkout_component(self, name: str, version: Optional[str]):
         """Create or update worktree for component `name`."""
         target_dir = self.get_component(name)
         if not target_dir:

@@ -112,7 +112,7 @@ class Component:
         return self._version
 
     @version.setter
-    def version(self, version: str):
+    def version(self, version: Optional[str]):
         self._version = version
 
     @property
