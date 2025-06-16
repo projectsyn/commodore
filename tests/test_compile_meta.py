@@ -1,3 +1,4 @@
+import copy
 import os
 
 from datetime import datetime, timedelta
@@ -14,7 +15,7 @@ from commodore.config import Config
 from commodore.dependency_mgmt import fetch_components, fetch_packages
 from commodore.gitrepo import GitRepo
 
-from test_dependency_mgmt import setup_components_upstream, _setup_packages
+from test_dependency_mgmt import setup_aliases_upstream, _setup_packages
 
 from commodore.catalog import CompileMeta
 from commodore.cluster import report_compile_metadata
@@ -81,18 +82,34 @@ def test_compile_meta_creation(
     components = ["foo", "bar", "baz", "qux"]
     packages = ["foo", "bar"]
 
-    # setup mock components
-    patch_discover_components.return_value = (components, {})
-    # setup_components_upstream sets version=None for all components
-    cdeps = setup_components_upstream(tmp_path, components)
+    # foo,bar,baz are setup as "standard" upstreams
+    aliases = {cn: cn for cn in components if cn != "qux"}
+    # the actual aliases and qux need to be handled separately
+    aliases2 = {"qux": "qux", "quxxer": "qux", "barer": "bar"}
 
-    # NOTE: We assume that setup_components_upstream creates upstream repos in
+    # setup_aliases_upstream sets version=None for all components
+    cdeps = setup_aliases_upstream(tmp_path, aliases.items())
+    # create upstream for `qux` with subpath
+    cdeps.update(
+        setup_aliases_upstream(tmp_path, [("qux", "qux")], sub_path="component")
+    )
+    # We manually create copies of `qux` and `bar` to prepare the alias upstreams
+    cdeps["quxxer"] = copy.deepcopy(cdeps["qux"])
+    cdeps["barer"] = copy.deepcopy(cdeps["bar"])
+
+    # setup mock components, we want the full aliases dict here
+    aliases.update(aliases2)
+    patch_discover_components.return_value = (components, aliases)
+
+    # NOTE: We assume that setup_aliases_upstream creates upstream repos in
     # `tmp_path/upstream/<component-name>`
     crepos = {cn: git.Repo(tmp_path / "upstream" / cn) for cn in components}
 
     crepos["foo"].version = "master"
     crepos["bar"].create_tag("v1.2.3")
+    # Setup separate versions for bar and it's alias
     cdeps["bar"].version = "v1.2.3"
+    cdeps["barer"].version = "master"
     cdeps["baz"].version = crepos["baz"].head.commit.hexsha
 
     patch_read_components.return_value = cdeps
@@ -112,13 +129,6 @@ def test_compile_meta_creation(
     # use regular logic to fetch mocked packages & components
     fetch_packages(config)
     fetch_components(config)
-
-    config.get_components()["qux"]._sub_path = "component"
-
-    aliases = {cn: cn for cn in components}
-    # create alias to verify instance reporting
-    aliases["quxxer"] = "qux"
-    config.register_component_aliases(aliases)
 
     meta = CompileMeta(config)
     meta_dict = meta.as_dict()
@@ -146,7 +156,14 @@ def test_compile_meta_creation(
     ) < timedelta(seconds=1)
 
     # check instances
-    assert set(meta_dict["instances"].keys()) == {"foo", "bar", "baz", "qux", "quxxer"}
+    assert set(meta_dict["instances"].keys()) == {
+        "foo",
+        "bar",
+        "barer",
+        "baz",
+        "qux",
+        "quxxer",
+    }
     for alias, info in meta_dict["instances"].items():
         cn = alias[0:3]
         assert len({"url", "version", "gitSha", "component"} - set(info.keys())) == 0

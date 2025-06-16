@@ -143,7 +143,7 @@ class Component:
     def defaults_file(self) -> P:
         return self.alias_defaults_file(self.name)
 
-    def alias_directory(self, alias: str) -> P:
+    def _alias_path(self, alias: str) -> P:
         if alias not in self._aliases:
             raise ValueError(
                 f"alias {alias} for component {self.name} has not been registered"
@@ -154,6 +154,10 @@ class Component:
         # alias's multi-dependency. The assert makes mypy happy. We disable bandit's
         # "assert_used" lint, since we don't rely on this assertion for correctness.
         assert apath  # nosec B101
+        return apath
+
+    def alias_directory(self, alias: str) -> P:
+        apath = self._alias_path(alias)
         return apath / self._aliases[alias][1]
 
     def alias_class_file(self, alias: str) -> P:
@@ -164,6 +168,17 @@ class Component:
 
     def has_alias(self, alias: str):
         return alias in self._aliases
+
+    def alias_info(self, alias: str) -> tuple[str, str, MultiDependency]:
+        if alias not in self._aliases:
+            raise ValueError(
+                f"alias {alias} for component {self.name} has not been registered"
+            )
+        return self._aliases[alias]
+
+    def alias_repo(self, alias: str) -> GitRepo:
+        apath = self._alias_path(alias)
+        return GitRepo(None, apath)
 
     @property
     def lib_files(self) -> Iterable[P]:

@@ -64,13 +64,15 @@ class VersionInfo:
 
 
 class InstanceVersionInfo(VersionInfo):
-    def __init__(self, component: Component):
+    def __init__(self, name: str, component: Component):
+        version, path, dep = component.alias_info(name)
+        arepo = component.alias_repo(name)
         super().__init__(
-            component.repo_url,
-            component.version or component.repo.default_version,
-            component.repo.head_sha,
-            component.repo.head_short_sha,
-            path=component.sub_path,
+            dep.url,
+            version,
+            arepo.head_sha,
+            arepo.head_short_sha,
+            path=path,
         )
         self.component = component.name
 
@@ -406,7 +408,7 @@ class Config:
 
     def get_component_alias_versioninfos(self) -> dict[str, InstanceVersionInfo]:
         return {
-            a: InstanceVersionInfo(self._components[cn])
+            a: InstanceVersionInfo(a, self._components[cn])
             for a, cn in self._component_aliases.items()
         }
 
