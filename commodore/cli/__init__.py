@@ -11,6 +11,7 @@ from reclass_rs import Reclass
 from dotenv import load_dotenv, find_dotenv
 from commodore import __git_version__, __version__
 from commodore.config import Config
+from commodore.version import version_info
 
 import commodore.cli.options as options
 
@@ -28,6 +29,16 @@ def _version():
 
 
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+
+
+@click.command(name="version", short_help="Extended Commodore version information")
+@options.pass_config
+def commodore_version(config: Config):
+    """Print extended Commodore version information.
+
+    This command returns exit code 127 if a required external dependency (helm,
+    kustomize, jb) can't be found in the PATH."""
+    version_info(config, _version())
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -66,6 +77,7 @@ commodore.add_command(inventory_group)
 commodore.add_command(package_group)
 commodore.add_command(commodore_login)
 commodore.add_command(commodore_fetch_token)
+commodore.add_command(commodore_version)
 
 
 def main():
