@@ -102,3 +102,8 @@ def test_package_update_command():
 def test_package_sync_command():
     exit_status = call("commodore package sync --help", shell=True)
     assert exit_status == 0
+
+
+def test_version_command():
+    exit_status = call("commodore version --help", shell=True)
+    assert exit_status == 0
