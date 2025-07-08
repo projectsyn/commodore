@@ -1,8 +1,6 @@
 """Extended Commodore version information"""
 
 import os
-import subprocess  # nosec
-import shutil
 import sys
 
 from importlib import metadata
@@ -10,6 +8,7 @@ from importlib import metadata
 import click
 import reclass_rs
 
+from commodore import tools
 from commodore.config import Config
 
 from pygobuildinfo import get_go_build_info
@@ -51,28 +50,6 @@ _buildinfo = {
 }
 
 
-def _get_tool_info(tool) -> tuple[str, bool]:
-    tool_path = shutil.which(tool)
-    if not tool_path:
-        return "NOT FOUND IN PATH", False
-
-    version_arg = {
-        "jb": ["--version"],
-        "helm": ["version", "--template", "{{.Version}}"],
-        "kustomize": ["version"],
-    }
-    tool_version = (
-        subprocess.run(
-            [tool_path] + version_arg[tool],
-            stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE,
-        )
-        .stdout.decode("utf-8")
-        .strip()
-    )
-    return f"{tool_path}, version: {tool_version}", True
-
-
 def version_info(config: Config, version: str):
     exit_code = 0
     click.secho(f"Commodore {version}", bold=True)
@@ -86,13 +63,13 @@ def version_info(config: Config, version: str):
         click.echo(f"{dep}: {dep_ver}{dep_buildinfo}")
     click.echo("")
     click.secho("External tool versions", bold=True)
-    for tool in ["helm", "jb", "kustomize"]:
-        tool_info, found = _get_tool_info(tool)
+    for tool in tools.REQUIRED_TOOLS:
+        tool_info = tools.ToolInfo(tool)
         fgcolor = None
         bold = False
-        if not found:
+        if not tool_info.available:
             fgcolor = "red"
             bold = True
             exit_code = 127
-        click.secho(f"{tool}: {tool_info}", fg=fgcolor, bold=bold)
+        click.secho(f"{tool}: {tool_info.info()}", fg=fgcolor, bold=bold)
     sys.exit(exit_code)

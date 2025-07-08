@@ -101,6 +101,7 @@ class Config:
     _dynamic_facts: dict[str, Any]
     _github_token: Optional[str]
     _request_timeout: int
+    _managed_tools: dict[str, str]
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -141,6 +142,7 @@ class Config:
         self._dynamic_facts = {}
         self._github_token = None
         self._request_timeout = 5
+        self._managed_tools = {}
 
     @property
     def verbose(self):
@@ -315,6 +317,14 @@ class Config:
     @request_timeout.setter
     def request_timeout(self, timeout: int):
         self._request_timeout = timeout
+
+    @property
+    def managed_tools(self) -> dict[str, str]:
+        return self._managed_tools
+
+    @managed_tools.setter
+    def managed_tools(self, managed_tools: dict[str, str]):
+        self._managed_tools = managed_tools
 
     @property
     def inventory(self):
