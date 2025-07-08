@@ -654,3 +654,7 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--template-version* TEXT::
   The component template version (Git tree-ish) to use.
   If not provided, the currently active template version will be used.
+
+== Version
+
+Show extended version information for Commodore.
