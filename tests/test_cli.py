@@ -107,3 +107,18 @@ def test_package_sync_command():
 def test_version_command():
     exit_status = call("commodore version --help", shell=True)
     assert exit_status == 0
+
+
+def test_tool_list_command():
+    exit_status = call("commodore tool list --help", shell=True)
+    assert exit_status == 0
+
+
+def test_tool_install_command():
+    exit_status = call("commodore tool install --help", shell=True)
+    assert exit_status == 0
+
+
+def test_tool_upgrade_command():
+    exit_status = call("commodore tool upgrade --help", shell=True)
+    assert exit_status == 0

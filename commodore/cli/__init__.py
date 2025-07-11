@@ -9,7 +9,8 @@ import click
 from reclass_rs import Reclass
 
 from dotenv import load_dotenv, find_dotenv
-from commodore import __git_version__, __version__
+
+from commodore import __git_version__, __version__, tools
 from commodore.config import Config
 from commodore.version import version_info
 
@@ -20,6 +21,7 @@ from .component import component_group
 from .inventory import inventory_group
 from .package import package_group
 from .oidc import commodore_fetch_token, commodore_login
+from .tool import tool_group
 
 
 def _version():
@@ -75,6 +77,7 @@ commodore.add_command(catalog_group)
 commodore.add_command(component_group)
 commodore.add_command(inventory_group)
 commodore.add_command(package_group)
+commodore.add_command(tool_group)
 commodore.add_command(commodore_login)
 commodore.add_command(commodore_fetch_token)
 commodore.add_command(commodore_version)
@@ -83,6 +86,7 @@ commodore.add_command(commodore_version)
 def main():
     multiprocessing.set_start_method("spawn")
     Reclass.set_thread_count(0)
+    tools.setup_path()
 
     load_dotenv(dotenv_path=find_dotenv(usecwd=True))
     commodore.main(
