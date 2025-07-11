@@ -304,12 +304,16 @@ For `jb`, the command directly downloads the requested version from the GitHub r
 Optionally, the command accepts a tool version to install.
 The command accepts versions prefixed  with "v" and unprefixed versions.
 
+  commodore tool install --missing
+
+Install the latest version of each required tool which isn't managed by Commodore yet.
+This variant of the command doesn't accept a tool name or the `--version` flag.
+
 == Tool Upgrade
 
   commodore tool upgrade TOOL
 
 Upgrade (or downgrade) one of the required tools in `$XDG_CACHE_DIR/commodore/tools`.
-
 The command will fail for tools which aren't managed by Commodore yet.
 
 By default, the command will upgrade the tool to the latest available version.
@@ -318,6 +322,11 @@ For `jb`, the command directly downloads the requested version from the GitHub r
 
 Optionally, the command accepts a tool version to upgrade (or downgrade) to.
 The command accepts versions prefixed with "v" and unprefixed versions.
+
+  commodore tool upgrade --all
+
+Upgrade all tools which are managed by Commodore to their latest versions.
+This variant of the command doesn't accept a tool name or the `--version` flag.
 
 == Version
 

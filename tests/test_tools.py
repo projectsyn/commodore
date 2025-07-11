@@ -467,6 +467,55 @@ def test_install_kustomize(config: Config, capfd, tmp_path, github_token):
     assert outlines[4] == f"GITHUB_TOKEN={github_token}"
 
 
+@patch.object(tools, "do_install")
+@pytest.mark.parametrize(
+    "managed,output",
+    [
+        (
+            {
+                "helm": "2025-07-11T11:04:40",
+                "jb": "2025-07-11T10:58:11",
+                "kustomize": "2025-07-11T11:05:05",
+            },
+            "All required tools are already managed by Commodore.\n\n"
+            + "Use `commodore tool upgrade --all` to upgrade all tools "
+            + "to their latest versions.\n",
+        ),
+        (
+            {"jb": "2025-07-11T10:58:11"},
+            "Installing tool helm\n"
+            + "Tool jb already managed, skipping...\n"
+            + "Installing tool kustomize\n",
+        ),
+    ],
+)
+def test_install_missing_tools(
+    mock_do_install: MagicMock,
+    config: Config,
+    capsys,
+    managed: dict[str, str],
+    output: str,
+):
+    config.managed_tools = managed
+
+    tools.install_missing_tools(config)
+
+    assert mock_do_install.call_count == len(tools.REQUIRED_TOOLS) - len(managed)
+
+    out, _ = capsys.readouterr()
+    assert out == output
+
+
+def test_install_script_invalid_version(config: Config):
+    with pytest.raises(ValueError) as exc:
+        tools.install_script(config, "jb", "v0.6.3")
+
+    assert (
+        str(exc.value)
+        == "Function install_script() expects parameter `version` to not be prefixed with 'v'."
+    )
+
+
 def test_upgrade_tool_not_installed(config: Config, capsys):
     config.managed_tools = {}
     tools.upgrade_tool(config, "jb", None)
@@ -509,3 +558,38 @@ def test_upgrade_tool(mock_do_install, config: Config, tmp_path, managed_jb):
             tools.upgrade_tool(config, "jb", None)
 
     assert jb_file.exists() != managed_jb
+
+
+@patch.object(tools, "do_upgrade")
+@pytest.mark.parametrize(
+    "managed,output",
+    [
+        (
+            {},
+            "No tools managed by Commodore yet.\n\n"
+            + "Use `commodore tool install --missing` to install the latest "
+            + "version for all required tools.\n",
+        ),
+        (
+            {"jb": "2025-07-11T10:58:11"},
+            "Tool helm not managed, skipping...\n"
+            + "Upgrading tool jb\n"
+            + "Tool kustomize not managed, skipping...\n",
+        ),
+    ],
+)
+def test_upgrade_all_tools(
+    mock_do_upgrade: MagicMock,
+    config: Config,
+    capsys,
+    managed: dict[str, str],
+    output: str,
+):
+    config.managed_tools = managed
+
+    tools.upgrade_all_tools(config)
+
+    assert mock_do_upgrade.call_count == len(managed)
+
+    out, _ = capsys.readouterr()
+    assert out == output

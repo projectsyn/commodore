@@ -63,9 +63,21 @@ def tool_list(config: Config, verbose: int, github_token: str, version_check: bo
     help="A version to install for the requested tool. "
     + "By default, the latest version is installed.",
 )
-@click.argument("tool")
+@click.option(
+    "--missing",
+    is_flag=True,
+    default=False,
+    help="Install the latest version for all currently unmanaged tools. "
+    + "This flag and providing a tool name on the command line are mutually exclusive.",
+)
+@click.argument("tool", required=False, default="")
 def tool_install(
-    config: Config, verbose: int, tool: str, version: Optional[str], github_token: str
+    config: Config,
+    verbose: int,
+    tool: str,
+    version: Optional[str],
+    github_token: str,
+    missing: bool,
 ):
     """Install one of the required tools in `$XDG_CACHE_DIR/commodore/tools`.
 
@@ -78,10 +90,28 @@ def tool_install(
 
     Optionally, the command accepts a tool version to install. The command
     accepts versions prefixed  with "v" and unprefixed versions.
+
+    Alternatively, the command can install the latest version for all required
+    tools which aren't managed by Commodore yet by passing flag `--missing`.
+    This flag is mutually exclusive with providing a tool name.
     """
     config.update_verbosity(verbose)
     config.github_token = github_token
-    tools.install_tool(config, tool, version)
+
+    if not tool and not missing or tool and missing:
+        raise click.ClickException(
+            "`commodore tool install` expects to be called with either a tool name or the `--missing` flag."
+        )
+    if missing and version:
+        click.secho(
+            "Flag `--version` has no effect when calling the command with `--missing`.",
+            fg="yellow",
+        )
+
+    if missing:
+        tools.install_missing_tools(config)
+    else:
+        tools.install_tool(config, tool, version)
 
 
 @tool_group.command(name="upgrade", short_help="Upgrade external tools")
@@ -95,9 +125,21 @@ def tool_install(
     help="A version to upgrade (or downgrade) to for the requested tool. "
     + "By default, the tool is upgraded to the latest version.",
 )
-@click.argument("tool")
+@click.option(
+    "--all",
+    is_flag=True,
+    default=False,
+    help="Upgrade all currently managed tools to their latest versions. "
+    + "This flag and providing a tool name on the command line are mutually exclusive.",
+)
+@click.argument("tool", required=False, default="")
 def tool_upgrade(
-    config: Config, verbose: int, tool: str, version: Optional[str], github_token: str
+    config: Config,
+    verbose: int,
+    tool: str,
+    version: Optional[str],
+    github_token: str,
+    all: bool,
 ):
     """Upgrade (or downgrade) one of the required tools in `$XDG_CACHE_DIR/commodore/tools`.
 
@@ -111,7 +153,24 @@ def tool_upgrade(
 
     Optionally, the command accepts a tool version to upgrade (or downgrade) to.
     The command accepts versions prefixed with "v" and unprefixed versions.
+
+    Alternatively, the command can upgrade all managed tools to their latest
+    versions by passing flag `--all`. This flag is mutually exclusive with
+    providing a tool name.
     """
     config.update_verbosity(verbose)
     config.github_token = github_token
-    tools.upgrade_tool(config, tool, version)
+
+    if not tool and not all or tool and all:
+        raise click.ClickException(
+            "`commodore tool upgrade` expects to be called with either a tool name or the `--all` flag."
+        )
+    if all and version:
+        click.secho(
+            "Flag `--version` has no effect when calling the command with `--all`.",
+            fg="yellow",
+        )
+    if all:
+        tools.upgrade_all_tools(config)
+    else:
+        tools.upgrade_tool(config, tool, version)

@@ -290,15 +290,25 @@ def install_tool(config: Config, tool: str, version: Optional[str]):
     do_install(config, tool, version)
 
 
-def upgrade_tool(config: Config, tool: str, version: Optional[str]):
-    check_known(tool)
-    if tool not in config.managed_tools:
+def install_missing_tools(config: Config):
+    MANAGED_TOOLS_PATH.mkdir(parents=True, exist_ok=True)
+    missing_tools = set(REQUIRED_TOOLS) - set(config.managed_tools.keys())
+    if len(missing_tools) == 0:
         click.echo(
-            f"Tool {tool} not installed yet. "
-            + f"Use `commodore tool install {tool}` to install tools."
+            "All required tools are already managed by Commodore.\n\n"
+            + "Use `commodore tool upgrade --all` to upgrade all tools to their latest versions."
         )
         return
 
+    for tool in sorted(REQUIRED_TOOLS):
+        if tool in config.managed_tools:
+            click.secho(f"Tool {tool} already managed, skipping...", fg="yellow")
+            continue
+        click.secho(f"Installing tool {tool}", bold=True)
+        do_install(config, tool, None)
+
+
+def do_upgrade(config: Config, tool: str, version: Optional[str]):
     # The kustomize install script is unhappy if the kustomize binary is already
     # present in the install directory. To keep it simple, we unlink the old
     # tool binary for all tools when doing an upgrade (note that this generates
@@ -312,3 +322,31 @@ def upgrade_tool(config: Config, tool: str, version: Optional[str]):
         if tool_path.parent == MANAGED_TOOLS_PATH:
             tool_path.unlink()
     do_install(config, tool, version)
+
+
+def upgrade_tool(config: Config, tool: str, version: Optional[str]):
+    check_known(tool)
+    if tool not in config.managed_tools:
+        click.echo(
+            f"Tool {tool} not installed yet. "
+            + f"Use `commodore tool install {tool}` to install tools."
+        )
+        return
+
+    do_upgrade(config, tool, version)
+
+
+def upgrade_all_tools(config: Config):
+    if len(config.managed_tools) == 0:
+        click.echo(
+            "No tools managed by Commodore yet.\n\n"
+            + "Use `commodore tool install --missing` to install the latest version for all required tools."
+        )
+        return
+
+    for tool in sorted(REQUIRED_TOOLS):
+        if tool not in config.managed_tools:
+            click.secho(f"Tool {tool} not managed, skipping...", fg="yellow")
+            continue
+        click.secho(f"Upgrading tool {tool}", bold=True)
+        do_upgrade(config, tool, None)
