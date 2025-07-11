@@ -655,6 +655,37 @@ However, labels added by previous runs can't be removed since we've got no easy 
   The component template version (Git tree-ish) to use.
   If not provided, the currently active template version will be used.
 
+== Tool List
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+
+*--version-check / -V, --skip-version-check*::
+  Whether to query the GitHub API to get latest versions.
+
+== Tool Install
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+*--version VERSION*::
+  Specify a version to install for the requested tool.
+  By default, the latest version is installed.
+
+
+== Tool Upgrade
+
+*--github-token* TEXT::
+  The GitHub access token to use when interacting with the GitHub API.
+  We recommend passing the token in environment variable `COMMODORE_GITHUB_TOKEN`.
+
+*--version VERSION*::
+  Specify a custom version to upgrade (or downgrade) to for the requested tool.
+  By default, tools are upgraded to the latest version.
+
 == Version
 
 Show extended version information for Commodore.
