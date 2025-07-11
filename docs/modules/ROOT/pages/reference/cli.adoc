@@ -675,6 +675,9 @@ However, labels added by previous runs can't be removed since we've got no easy 
   Specify a version to install for the requested tool.
   By default, the latest version is installed.
 
+*--missing*::
+  Install the latest version for all currently unmanaged tools.
+  This flag and providing a tool name on the command line are mutually exclusive.
 
 == Tool Upgrade
 
@@ -685,6 +688,10 @@ However, labels added by previous runs can't be removed since we've got no easy 
 *--version VERSION*::
   Specify a custom version to upgrade (or downgrade) to for the requested tool.
   By default, tools are upgraded to the latest version.
+
+*--all*::
+  Upgrade all currently managed tools to their latest versions.
+  This flag and providing a tool name on the command line are mutually exclusive.
 
 == Version
 
