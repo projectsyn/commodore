@@ -1,5 +1,7 @@
 = Running Commodore
 
+TIP: See xref:how-to/installing-commodore.adoc[] for the recommended installation with https://docs.astral.sh/uv[`uv`].
+
 Commodore is written in Python and it requires external dependencies.
 We provide Commodore as a container image and a Python package on PyPI.
 
@@ -17,6 +19,7 @@ We recommend that you use the Commodore Python package provided on PyPI to make 
 
 === Prerequisites
 
+* `git`
 * A Python version between 3.10 and 3.12 as `python3` and the Python `venv` module.
 We recommend that you install Python and the `venv` module with your preferred package manager.
 * Additionally, a few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
@@ -32,10 +35,11 @@ Please check your operating system's documentation for instructions to setup a w
 Versions >= 5 are recommended.
 https://kubectl.docs.kubernetes.io/installation/kustomize/[Installation instructions]
 
-[IMPORTANT]
+[NOTE]
 ====
-Other documentation assumes that Helm 3 is available as `helm` and `helm3`, and Helm 2 is available as `helm2` in `$PATH`.
-Please make sure you setup the Helm binaries accordingly on your local system.
+Some older documentation assumes that Helm 3 is available as `helm` and `helm3`, and Helm 2 is available as `helm2` in `$PATH`.
+
+If you still need `helm2` for some reason, we recommend this approach.
 ====
 
 === Installation
@@ -56,6 +60,13 @@ This command should report something like
 ----
 Python 3.12.7
 ----
++
+[IMPORTANT]
+====
+Make sure that you use a Python version that's supported by Commodore for the following steps.
+
+Check your system's documentation on how to install additional Python versions.
+====
 
 . Create a virtualenv in `~/.local/commodore-venv`
 +

@@ -1,0 +1,83 @@
+= Installing Commodore
+
+Commodore is written in Python and requires external dependencies.
+We provide Commodore as a https://pypi.org/project/syn-commodore[Python package on PyPI] and as a https://hub.docker.com/r/projectsyn/commodore[container image].
+
+Commodore interacts with Git repositories that might require authorization.
+For this to work, Commodore needs to have access to an authorized SSH key.
+
+We recommend using https://docs.astral.sh/uv/[`uv`] to install the Commodore python package from PyPI.
+`uv tool` makes installing and updating Python tools very simple and transparently manages Python versions and virtualenvs for each tool.
+See the https://docs.astral.sh/uv/concepts/tools/[upstream documentation] for more details.
+
+TIP: See the extended xref:explanation/running-commodore.adoc[Running Commodore] explanation for a generic PyPI installation in a user-managed virtualenv and for instructions on how to run the container image locally.
+
+== Prerequisites
+
+* `git`
+* `uv`.
+Please check the https://docs.astral.sh/uv/getting-started/installation/[uv installation instructions] for installing `uv` on your system.
+This installation guide uses  `uv` to install a `python3` version that's supported by Commodore if your system's default Python version isn't compatible with Commodore.
+* A few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
+On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
+Please refer to your operating system's documentation for instructions to setup a working C compiler.
+* Installing the `gojsonnet` Python package may require a working Go compiler on some operating systems.
+gojsonnet 0.21 and newer (Commodore v1.27.6 and newer) are available as prebuilt wheels for Linux and macOS.
+Please check your operating system's documentation for instructions to setup a working Go compiler.
+* On some Linux distributions, you may need to install the Python `wheel` package manually.
+
+== Installation with `uv`
+
+. Install Commodore as a tool with `uv tool`
++
+[source,bash]
+----
+uv tool install --python=python3.12 --python-preference=system syn-commodore
+----
++
+[TIP]
+====
+Commodore currently only supports Python 3.10 - Python 3.12.
+
+This command will prefer using your system's version of Python 3.12.
+However, `uv` will download a copy of Python 3.12 if `python3.12` isn't available on your system.
+
+If you'd prefer to use your system's `python3.10` or `python3.11` you can adjust the command accordingly.
+====
++
+[TIP]
+====
+`uv` creates symlinks for installed tools in `~/.local/bin`.
+We recommend that you add that directory to your `$PATH` variable if your system doesn't do so out of the box.
+====
+
+. Verify that `commodore` is available in your `$PATH`
++
+[source,bash]
+----
+commodore version
+----
+
+. Install all the required external tools (`helm`, `jb`, and `kustomize`)
++
+[source,bash]
+----
+commodore tool install --missing
+----
++
+[TIP]
+====
+This command installs the required external tools in `$XDG_CACHE_HOME/commodore/tools`.
+This defaults to `$HOME/.cache/commodore/tools` if you've not customized the `$XDG_CACHE_HOME` environment variable.
+
+If you want, you can add that directory to your `$PATH` so that you can always use the Commodore-managed copies of `helm`, `jb` and `kustomize`.
+====
+
+== Upgrade with `uv`
+
+. Upgrade your Commodore installation to the latest published version
++
+[source,bash]
+----
+uv tool upgrade syn-commodore
+----
