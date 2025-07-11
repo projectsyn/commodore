@@ -4,8 +4,8 @@
 [![PyPI release](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/projectsyn/commodore.svg)](https://github.com/projectsyn/commodore/releases)
 [![PyPI Release](https://img.shields.io/pypi/v/syn-commodore?color=blue)](https://pypi.org/project/syn-commodore)
-[![Maintainability](https://api.codeclimate.com/v1/badges/abb63d489a6d6e01939d/maintainability)](https://codeclimate.com/github/projectsyn/commodore/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/abb63d489a6d6e01939d/test_coverage)](https://codeclimate.com/github/projectsyn/commodore/test_coverage)
+[![Maintainability](https://qlty.sh/gh/projectsyn/projects/commodore/maintainability.svg)](https://qlty.sh/gh/projectsyn/projects/commodore)
+[![Code Coverage](https://qlty.sh/gh/projectsyn/projects/commodore/coverage.svg)](https://qlty.sh/gh/projectsyn/projects/commodore)
 
 This repository is part of Project Syn.
 For documentation on Project Syn and this component, see https://syn.tools.
