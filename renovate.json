@@ -47,6 +47,12 @@
       "matchStrings": ["ARG JSONNET_BUNDLER_VERSION=(?<currentValue>.*?)\\n"],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "projectsyn/jsonnet-bundler"
+    },
+    {
+      "fileMatch": ["^Dockerfile$"],
+      "matchStrings": ["ARG HELM_VERSION=(?<currentValue>.*?)\\n"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "helm/helm"
     }
   ],
   "packageRules": [
