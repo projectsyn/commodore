@@ -15,6 +15,7 @@ ARG POETRY_VERSION=1.8.5
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
+      git \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
@@ -37,22 +38,13 @@ RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/
 
 RUN pip install ./dist/syn_commodore-*-py3-none-any.whl
 
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
- && chmod 700 get_helm.sh \
- && ./get_helm.sh \
- && mv /usr/local/bin/helm /usr/local/bin/helm3 \
- && curl -LO https://git.io/get_helm.sh \
- && chmod 700 get_helm.sh \
- && ./get_helm.sh \
- && mv /usr/local/bin/helm /usr/local/bin/helm2
-
 ARG KUSTOMIZE_VERSION=5.7.0
 ARG JSONNET_BUNDLER_VERSION=v0.6.3
+ARG HELM_VERSION=v3.18.4
 
-RUN ./tools/install-jb.sh ${JSONNET_BUNDLER_VERSION} \
- && curl -fsSLO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
- && chmod +x install_kustomize.sh \
- && ./install_kustomize.sh ${KUSTOMIZE_VERSION} /usr/local/bin
+RUN commodore tool install helm --version ${HELM_VERSION} \
+ && commodore tool install kustomize --version ${KUSTOMIZE_VERSION} \
+ && commodore tool install jb --version ${JSONNET_BUNDLER_VERSION}
 
 FROM base AS runtime
 
@@ -73,12 +65,17 @@ COPY --from=builder \
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
-      /usr/local/bin/helm* \
-      /usr/local/bin/jb \
-      /usr/local/bin/kustomize \
       /usr/local/bin/
 
-RUN ln -s /usr/local/bin/helm3 /usr/local/bin/helm
+COPY --from=builder \
+      /app/.cache/commodore/tools/ \
+      /app/.cache/commodore/tools/
+
+RUN ln -s \
+      /app/.cache/commodore/tools/helm \
+      /app/.cache/commodore/tools/jb \
+      /app/.cache/commodore/tools/kustomize \
+      /usr/local/bin/
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
 
