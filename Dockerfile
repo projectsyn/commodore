@@ -79,8 +79,10 @@ RUN ln -s \
 
 COPY ./tools/entrypoint.sh /usr/local/bin/
 
-RUN chgrp 0 /app/ \
+RUN chgrp -R 0 /app/ \
  && chmod g+rwX /app/ \
+ && chmod g+rwX /app/.cache \
+ && chmod g+rwX /app/.cache/commodore \
  && mkdir /app/.gnupg \
  && chmod ug+w /app/.gnupg
 
