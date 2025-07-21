@@ -271,7 +271,7 @@ def kapitan_compile(
     cached.args.verbose = config.trace
     cached.args.output_path = output_dir
     cached.args.targets = targets
-    cached.args.parallelism = None
+    cached.args.parallelism = cpu_count()
     cached.args.labels = None
     cached.args.prune = False
     cached.args.indent = 2
@@ -385,3 +385,15 @@ def python3_executable() -> str:
         fg="yellow",
     )
     return path_python
+
+
+def cpu_count(fallback: Optional[int] = None) -> Optional[int]:
+    """Return the number of available CPU cores or `fallback` if CPU count can't be determined.
+
+    On Linux this respects the process's scheduling affinity.
+
+    NOTE(sg): This can be replaced by `os.process_cpu_count() on Python >= 3.13.
+    """
+    if hasattr(os, "sched_getaffinity"):
+        return len(os.sched_getaffinity(0))
+    return os.cpu_count() or fallback

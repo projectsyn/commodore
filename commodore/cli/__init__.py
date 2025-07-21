@@ -12,6 +12,7 @@ from dotenv import load_dotenv, find_dotenv
 
 from commodore import __git_version__, __version__, tools
 from commodore.config import Config
+from commodore.helpers import cpu_count
 from commodore.version import version_info
 
 import commodore.cli.options as options
@@ -85,7 +86,10 @@ commodore.add_command(commodore_version)
 
 def main():
     multiprocessing.set_start_method("spawn")
-    Reclass.set_thread_count(0)
+    # `Reclass.set_thread_count()` wants 0 if it should use its internal detection logic, so we call
+    # the `cpu_count()` helper with `fallback=0` to return 0 if the number of CPUs can't be
+    # determined.
+    Reclass.set_thread_count(cpu_count(fallback=0))
     tools.setup_path()
 
     load_dotenv(dotenv_path=find_dotenv(usecwd=True))
