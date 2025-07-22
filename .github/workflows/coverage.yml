@@ -1,4 +1,4 @@
-name: Test coverage with codeclimate/qlty.sh
+name: Test coverage with qlty.sh
 on:
   pull_request:
     branches:
@@ -49,12 +49,6 @@ jobs:
       run: make test_coverage
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-    - name: Upload code coverage report to Code Climate
-      uses: paambaati/codeclimate-action@v9.0.0
-      env:
-        CC_TEST_REPORTER_ID: f9c194f25b65bf9c9413d736386e70d32c128516218768333cd7205e79076506
-      with:
-        coverageLocations: coverage.xml:coverage.py
     - name: Upload code coverage report to qlty.sh
       uses: qltysh/qlty-action/coverage@v1
       with:
