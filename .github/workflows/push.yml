@@ -60,7 +60,7 @@ jobs:
         # with a space with sed.
         TAG_MSG=$(echo ${TAG_MSG} |sed 's/\([^A]\)%0A\([^%]\)/\1 \2/g')
         # Set action output `messsage`
-        echo "::set-output name=message::${TAG_MSG}"
+        echo "message=${TAG_MSG}" >> $GITHUB_OUTPUT
       env:
         GITHUB_REF: ${{ github.ref }}
     - name: Create Release
