@@ -271,7 +271,7 @@ def kapitan_compile(
     cached.args.verbose = config.trace
     cached.args.output_path = output_dir
     cached.args.targets = targets
-    cached.args.parallelism = None
+    cached.args.parallelism = cpu_count()
     cached.args.labels = None
     cached.args.prune = False
     cached.args.indent = 2
@@ -364,3 +364,12 @@ def sliding_window(iterable, n):
     for x in it:
         window.append(x)
         yield tuple(window)
+
+
+def cpu_count() -> Optional[int]:
+    """Return the number of available CPU cores or `None` if CPU count can't be determined.
+
+    On Linux this respects the process's scheduling affinity."""
+    if hasattr(os, "sched_getaffinity"):
+        return len(os.sched_getaffinity(0))
+    return os.cpu_count()
