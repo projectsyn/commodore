@@ -38,7 +38,7 @@ RUN sed -i "s/^__git_version__.*$/__git_version__ = '${GITVERSION}'/" commodore/
 
 RUN pip install ./dist/syn_commodore-*-py3-none-any.whl
 
-ARG KUSTOMIZE_VERSION=5.7.0
+ARG KUSTOMIZE_VERSION=5.7.1
 ARG JSONNET_BUNDLER_VERSION=v0.6.3
 ARG HELM_VERSION=v3.18.4
 
