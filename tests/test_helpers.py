@@ -503,3 +503,42 @@ def test_python3_executable_err(mock_shutil, mock_sys, capsys):
         "[ERROR] No python3 in $PATH, components which use `${_python3}` will fail."
         in out
     )
+
+
+class MockOS:
+    _cpu_count: Optional[int]
+    _sched_affinity: list[int]
+
+    def __init__(self):
+        self._cpu_count = None
+        self._sched_affinitiy = []
+
+    def cpu_count(self) -> Optional[int]:
+        return self._cpu_count
+
+
+class MockOSAff(MockOS):
+    def sched_getaffinity(self, pid: int) -> list[int]:
+        assert pid == 0
+        return self._sched_affinity
+
+
+@pytest.mark.parametrize(
+    "cpu_count,fallback", [(None, None), (None, 0), (4, None), (4, 0)]
+)
+@patch.object(helpers, "os", new_callable=MockOS)
+def test_cpu_count(mock_os, cpu_count, fallback):
+    mock_os._cpu_count = cpu_count
+    r = helpers.cpu_count(fallback=fallback)
+    if cpu_count is None:
+        assert r == fallback
+    else:
+        assert r == cpu_count
+
+
+@pytest.mark.parametrize("sched_affinity", [[0, 3], [0, 1, 2, 3, 4, 5, 6]])
+@patch.object(helpers, "os", new_callable=MockOSAff)
+def test_cpu_count_affinity(mock_os, sched_affinity):
+    mock_os._cpu_count = 4
+    mock_os._sched_affinity = sched_affinity
+    assert helpers.cpu_count() == len(sched_affinity)
