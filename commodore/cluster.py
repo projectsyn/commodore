@@ -13,6 +13,7 @@ from . import __kustomize_wrapper__, __git_version__, __version__
 from .helpers import (
     lieutenant_post,
     lieutenant_query,
+    python3_executable,
     yaml_dump,
     yaml_load,
 )
@@ -173,6 +174,7 @@ def generate_target(
             components[component].alias_directory(target)
         )
         parameters["_kustomize_wrapper"] = str(__kustomize_wrapper__)
+        parameters["_python3"] = python3_executable()
         parameters["kapitan"] = {
             "vars": {
                 "target": target,

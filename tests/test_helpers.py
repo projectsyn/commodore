@@ -8,7 +8,10 @@ import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Optional
+from unittest.mock import patch
 import textwrap
+import shutil
+import sys
 
 import click
 import pytest
@@ -459,4 +462,44 @@ def test_kapitan_inventory(tmp_path: Path, config: Config):
         "While rendering inventory: Error while rendering inventory: Error rendering node test: "
         + "While resolving references: lookup error for reference '${bar}' in parameter 'foo': key 'bar' not found"
         in str(e.value)
+    )
+
+
+class MockSYS:
+    executable: str
+
+    def __init__(self):
+        self.executable = sys.executable
+
+
+@pytest.mark.parametrize(
+    "python_exe,expected",
+    [(sys.executable, sys.executable), (None, shutil.which("python3"))],
+)
+@patch.object(helpers, "sys", new_callable=MockSYS)
+def test_python3_executable(mock_sys, capsys, python_exe, expected):
+    mock_sys.executable = python_exe
+    assert helpers.python3_executable() == expected
+    out, _ = capsys.readouterr()
+    if not python_exe:
+        assert (
+            f"[WARN] Unable to determine path to current Python executable, falling back to {expected}."
+            in out
+        )
+
+
+class MockSHUTIL:
+    def which(self, prog) -> Optional[str]:
+        return None
+
+
+@patch.object(helpers, "sys", new_callable=MockSYS)
+@patch.object(helpers, "shutil", new_callable=MockSHUTIL)
+def test_python3_executable_err(mock_shutil, mock_sys, capsys):
+    mock_sys.executable = None
+    assert helpers.python3_executable() == "NOT_AVAILABLE"
+    out, _ = capsys.readouterr()
+    assert (
+        "[ERROR] No python3 in $PATH, components which use `${_python3}` will fail."
+        in out
     )
