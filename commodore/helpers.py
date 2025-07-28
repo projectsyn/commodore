@@ -364,3 +364,24 @@ def sliding_window(iterable, n):
     for x in it:
         window.append(x)
         yield tuple(window)
+
+
+def python3_executable() -> str:
+    python_exe = sys.executable
+    if python_exe:
+        return python_exe
+
+    path_python = shutil.which("python3")
+    if not path_python:
+        click.secho(
+            "[ERROR] No python3 in $PATH, components which use `${_python3}` will fail.",
+            fg="red",
+        )
+        return "NOT_AVAILABLE"
+
+    click.secho(
+        f"[WARN] Unable to determine path to current Python executable, falling back to {path_python}."
+        + "Components which use `${_python3}` may fail.",
+        fg="yellow",
+    )
+    return path_python

@@ -86,3 +86,8 @@ This parameter is intended for component authors to use in `kapitan.compile` and
 This parameter provides the absolute path to the Kustomize wrapper script bundled with Commodore.
 This parameter is intended for component authors to use to call Kustomize in components.
 See the xref:syn:ROOT:explanations/commodore-components/kustomizations.adoc[Kustomization best practices] for more details.
+
+=== `_python3`
+
+This parameter provides the absolute path to the Python 3 interpreter of the Commodore installation.
+This parameter is intended for component authors to use to execute Python scripts in the Commodore Python environment.
