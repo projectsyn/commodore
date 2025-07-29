@@ -51,15 +51,17 @@ jobs:
         git fetch origin +refs/tags/*:refs/tags/*
         # Extract tag message
         TAG_MSG=$(git tag -n --format='%(contents:body)' ${GITHUB_REF##refs/tags/} | tr -d '\r')
-        # Escape literal % and newlines (\n, \r) for github actions output
-        TAG_MSG=${TAG_MSG//'%'/%25}
-        TAG_MSG=${TAG_MSG//$'\n'/%0A}
         # Join multiple lines belonging to the same paragraph for GitHub
         # markdown.
-        # Paragraph breaks should be %0A%0A. We replace single line breaks
-        # with a space with sed.
-        TAG_MSG=$(echo ${TAG_MSG} |sed 's/\([^A]\)%0A\([^%]\)/\1 \2/g')
-        # Set action output `messsage`
+        # Paragraph breaks should be '\n\n'. List items should be '\n*'. We
+        # replace single line breaks which don't preceed a '*' with a space
+        # with sed. Note `sed -z` operates on the whole input instead of
+        # line-wise. Note that this currently still breaks markdown code
+        # blocks.
+        TAG_MSG=$(echo "$TAG_MSG" | sed -z 's/\([^\n]\)\n\([^\n\*]\)/\1 \2/g')
+        # Set action output `messsage` as JSON-encoded string to preserve
+        # newlines. We decode with `fromJSON()` below.
+        TAG_MSG=$(jq -n --arg msg "${TAG_MSG}" '$msg')
         echo "message=${TAG_MSG}" >> $GITHUB_OUTPUT
       env:
         GITHUB_REF: ${{ github.ref }}
@@ -67,7 +69,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       uses: ncipollo/release-action@v1
       with:
-        body: "# Summary\n\n${{steps.tag_message.outputs.message}}\n\n# Changes\n\n${{steps.build_changelog.outputs.changelog}}"
+        body: "# Summary\n\n${{fromJSON(steps.tag_message.outputs.message)}}\n\n# Changes\n\n${{steps.build_changelog.outputs.changelog}}"
         prerelease: "${{ contains(github.ref, '-rc') }}"
         # Ensure target branch for release is "master"
         commit: master
