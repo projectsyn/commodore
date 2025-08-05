@@ -1,3 +1,5 @@
+FROM docker.io/golang:1.24.5 AS golang
+
 FROM docker.io/python:3.12.11-slim-bookworm AS base
 
 ARG TARGETARCH
@@ -21,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
  && mkdir -p /app/.config
 
+COPY --from=golang /usr/local/go /usr/local/go
 
 COPY pyproject.toml poetry.lock ./
 
