@@ -33,17 +33,6 @@ from commodore.config import Config
 from commodore.normalize_url import normalize_url
 
 
-ArgumentCache = collections.namedtuple(
-    "ArgumentCache",
-    [
-        "inventory_backend",
-        "inventory_path",
-        "multiline_string_style",
-        "yaml_dump_null_as_empty",
-    ],
-)
-
-
 class FakeVaultBackend(VaultBackend):
     def __init__(self):
         "init FakeVaultBackend ref backend type"
