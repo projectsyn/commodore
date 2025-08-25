@@ -18,7 +18,8 @@ TIP: See the extended xref:explanation/running-commodore.adoc[Running Commodore]
 * `uv`.
 Please check the https://docs.astral.sh/uv/getting-started/installation/[uv installation instructions] for installing `uv` on your system.
 This installation guide uses  `uv` to install a `python3` version that's supported by Commodore if your system's default Python version isn't compatible with Commodore.
-* A few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
+* Installation may require a working C compiler, the Python 3 development package, and the FFI development package on some operating systems.
+For Commodore v1.29.1 and newer, all dependencies should be available as prebuilt wheels for Linux and macOS.
 On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
 Please refer to your operating system's documentation for instructions to setup a working C compiler.
 * Installing the `gojsonnet` Python package may require a working Go compiler on some operating systems.
