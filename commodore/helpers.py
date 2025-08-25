@@ -33,17 +33,6 @@ from commodore.config import Config
 from commodore.normalize_url import normalize_url
 
 
-ArgumentCache = collections.namedtuple(
-    "ArgumentCache",
-    [
-        "inventory_backend",
-        "inventory_path",
-        "multiline_string_style",
-        "yaml_dump_null_as_empty",
-    ],
-)
-
-
 class FakeVaultBackend(VaultBackend):
     def __init__(self):
         "init FakeVaultBackend ref backend type"
@@ -266,6 +255,7 @@ def kapitan_compile(
     # workaround the non-modifiable Namespace() default value for cached.args
     cached.args.inventory_backend = "reclass-rs"
     cached.args.inventory_path = str(config.inventory.inventory_dir)
+    cached.args.inventory_pool_cache = True
     cached.args.multiline_string_style = "literal"
     cached.args.yaml_dump_null_as_empty = False
     cached.args.verbose = config.trace

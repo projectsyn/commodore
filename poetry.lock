@@ -1106,12 +1106,37 @@ files = [
 
 [[package]]
 name = "jsonnet"
-version = "0.20.0"
-description = "Python bindings for Jsonnet - The data templating language"
+version = "0.21.0"
+description = "Python bindings for Jsonnet - The data templating language "
 optional = false
 python-versions = "*"
 files = [
-    {file = "jsonnet-0.20.0.tar.gz", hash = "sha256:7e770c7bf3a366b97b650a39430450f77612e74406731eb75c5bd59f3f104d4f"},
+    {file = "jsonnet-0.21.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e4717d83a15144adc9ae7d3d0a0d0ff54d7fe18349346130bd9b9bb7f8c9b0db"},
+    {file = "jsonnet-0.21.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:121a24583fe6980705b8f775f2b66e2b01c4006dbd258d047d54f60b76b98681"},
+    {file = "jsonnet-0.21.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2c87bbf37e2f118e75de30ec4d3d1d2a5eedd7fe213f00042e3a2fe0e7026bbc"},
+    {file = "jsonnet-0.21.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:902cb1a9bb7916f3e8041a2936e6ba4deea7312843927360c698d1092144d49c"},
+    {file = "jsonnet-0.21.0-cp310-cp310-win_amd64.whl", hash = "sha256:ad896e2d70bc6ea4c5503b9587703e75a233506a57c33fa3192922e49b97a90a"},
+    {file = "jsonnet-0.21.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:bc2c8b35122884dcb63431a831e81d6ab494e37148704a781ef88bb7e12fb36b"},
+    {file = "jsonnet-0.21.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f837389c6b384070b870c98f12c05847fdd801bb7752ab7893beaeac662f4b54"},
+    {file = "jsonnet-0.21.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:85a2089fb77d6db86ef84d9403654d710ba3e41dcf4ad21d0cba2635497ba852"},
+    {file = "jsonnet-0.21.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:559d59e8984b804f60a97d72e7aeaa2a2572fc0a5bf7ef1109eb21b91dbc166c"},
+    {file = "jsonnet-0.21.0-cp311-cp311-win_amd64.whl", hash = "sha256:6018365037491e91b5d3f0eccfdf78812d84e25aa9ccbba097bd3ba6ce70709a"},
+    {file = "jsonnet-0.21.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:ba35051103bed81ddcb446db52c31bba00391c52069107498eb44952feac8a30"},
+    {file = "jsonnet-0.21.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:71afa464a74dcbec30b39d8f28cad091ce27497a8620c0ef7859814e173ce454"},
+    {file = "jsonnet-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fccebb019917004cf860490a80d17189bad01c9d425b7a1cb138a14745488cf0"},
+    {file = "jsonnet-0.21.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:ba913bb650b2b5dac29e65fd6963dff7cad960580523c0ccdd66e23e22e3b772"},
+    {file = "jsonnet-0.21.0-cp312-cp312-win_amd64.whl", hash = "sha256:7a39b5a3195bb6ec16050d14f8aa9378cf862ff2dd54ca0973cbbfbc9cec6e89"},
+    {file = "jsonnet-0.21.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:95d0e0e59ed29f7e424066c05c4585fd255e288fd6050686e1d5bb54bd719896"},
+    {file = "jsonnet-0.21.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:eb926cae6ea157e2e0851e6ec8f6a2949e926f67754a87980bbcb2698a211dc5"},
+    {file = "jsonnet-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cb642fe864e41a432957f71bfa57ae4eaab904886f06dec183c9e40d6ce4e24b"},
+    {file = "jsonnet-0.21.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:22a87070c1c50ecf6c0c8df252a4984a89275ceb18fe059dfa99eeaf548be71f"},
+    {file = "jsonnet-0.21.0-cp313-cp313-win_amd64.whl", hash = "sha256:6e23e55e0a0811b899398aaa03a5b46eea01ffcafc697a705fe7b07eb8cd0ce7"},
+    {file = "jsonnet-0.21.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:9da10d31f4a540d57d31be70fc89c2d1c1124b1fffdee251cc2a5e3b2c56e4ab"},
+    {file = "jsonnet-0.21.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:27da1b36735ac2c6f277c235f62a9524f769989e52314f06894d070d52ae1225"},
+    {file = "jsonnet-0.21.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:874e0ed8838b1f4a019c77324d7219173cb971e7f4193a18c4757b643f0f2bfc"},
+    {file = "jsonnet-0.21.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:874714350cd89e41cb95509490147865696ab9420255ff21e01f11e02d0033d8"},
+    {file = "jsonnet-0.21.0-cp39-cp39-win_amd64.whl", hash = "sha256:8dddc2e5394a27b6ee12e49253121fea87284cac6042cdb4983b3427d590e1b8"},
+    {file = "jsonnet-0.21.0.tar.gz", hash = "sha256:7fe2865e6e1dc2b9791d880fea3eba7e72334b256d85f027da3ae1f56a55b1da"},
 ]
 
 [[package]]
@@ -1201,13 +1226,13 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.34.6"
+version = "0.34.7"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.13,>=3.10"
 files = [
-    {file = "kapitan-0.34.6-py3-none-any.whl", hash = "sha256:2074389351265e86895fae4a18685a6ca400d3ef8752313ac9bd263665cdbb15"},
-    {file = "kapitan-0.34.6.tar.gz", hash = "sha256:3c20bfea3e7a1fd6ff0ff5672caee41f163ed402c37dd3d5a0fea88161840a0c"},
+    {file = "kapitan-0.34.7-py3-none-any.whl", hash = "sha256:7efa4b52404f44edff2ff467ec98e3ac56d9c22a1698a667c7f06446b11ef92f"},
+    {file = "kapitan-0.34.7.tar.gz", hash = "sha256:fd17adda04ae0ed92775dea5f20c2ea32d69359b82eae81e7aff1076e1d44e82"},
 ]
 
 [package.dependencies]
@@ -1224,12 +1249,12 @@ gitpython = ">=3.1.30,<4.0.0"
 google-api-python-client = ">=2.15.0,<3.0.0"
 hvac = "2.3.0"
 jinja2 = ">=3.0.1,<4.0.0"
-jsonnet = ">=0.20.0,<0.21.0"
+jsonnet = ">=0.21.0,<0.22.0"
 jsonpath-ng = ">=1.7.0,<2.0.0"
 jsonschema = ">=4.17.3,<5.0.0"
 kadet = ">=0.3.0,<0.4.0"
 kapicorp-reclass = ">=2.0.0"
-packaging = ">=23,<25"
+packaging = ">=23,<26"
 pydantic = ">=2.8.2,<3.0.0"
 pydantic-settings = ">=2.4.0,<3.0.0"
 python-box = ">=7.2.0,<8.0.0"
@@ -1244,7 +1269,7 @@ typing-extensions = ">=4.0.0,<5.0.0"
 yamllint = ">=1.29.0,<2.0.0"
 
 [package.extras]
-gojsonnet = ["gojsonnet (>=0.20.0,<0.21.0)"]
+gojsonnet = ["gojsonnet (>=0.21.0,<0.22.0)"]
 omegaconf = ["omegaconf (>=2.4.0.dev3,<3.0.0)"]
 reclass-rs = ["reclass-rs (>=0.8.0,<0.9.0)"]
 
@@ -3095,4 +3120,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "sphinx"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "5f40edf4f8fe3527575122adcd0534cd51cc797fd2a373648a0d6534b6230100"
+content-hash = "8c107e191d1b29204c8f9ff3fbf148c82f54a0b715eb9afc209eec10676766ef"
