@@ -22,7 +22,8 @@ We recommend that you use the Commodore Python package provided on PyPI to make 
 * `git`
 * A Python version between 3.10 and 3.12 as `python3` and the Python `venv` module.
 We recommend that you install Python and the `venv` module with your preferred package manager.
-* Additionally, a few of the Commodore Python package dependencies require a working C compiler, the Python 3 development package, and the FFI development package.
+* Installation may require a working C compiler, the Python 3 development package, and the FFI development package on some operating systems.
+For Commodore v1.29.1 and newer, all dependencies should be available as prebuilt wheels for Linux and macOS.
 On Linux distributions you'll want packages `python3-dev` or `python3-devel` and `libffi-dev` or `libffi-devel` respectively.
 Please refer to your operating system's documentation for instructions to setup a working C compiler.
 * Installing the `gojsonnet` Python package may require a working Go compiler on some operating systems.
