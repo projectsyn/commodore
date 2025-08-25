@@ -266,6 +266,7 @@ def kapitan_compile(
     # workaround the non-modifiable Namespace() default value for cached.args
     cached.args.inventory_backend = "reclass-rs"
     cached.args.inventory_path = str(config.inventory.inventory_dir)
+    cached.args.inventory_pool_cache = True
     cached.args.multiline_string_style = "literal"
     cached.args.yaml_dump_null_as_empty = False
     cached.args.verbose = config.trace
