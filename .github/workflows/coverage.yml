@@ -50,7 +50,7 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
     - name: Upload code coverage report to qlty.sh
-      uses: qltysh/qlty-action/coverage@v1
+      uses: qltysh/qlty-action/coverage@v2
       with:
         files: coverage.lcov
         oidc: true
