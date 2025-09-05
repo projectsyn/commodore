@@ -738,20 +738,6 @@ files = [
 ]
 
 [[package]]
-name = "examples"
-version = "1.0.2"
-description = "Tests and Documentation Done by Example."
-optional = false
-python-versions = ">=3.6,<4.0"
-files = [
-    {file = "examples-1.0.2-py3-none-any.whl", hash = "sha256:372fefd15d5a17bda3b003cf26edbc2d29632bc63f29c816b55ed33dcccb3e65"},
-    {file = "examples-1.0.2.tar.gz", hash = "sha256:f29ba443f158bb47913ac21f098306a9749ed459a2290540ff1f86baac074597"},
-]
-
-[package.dependencies]
-pydantic = ">=0.32.2"
-
-[[package]]
 name = "exceptiongroup"
 version = "1.3.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -2063,23 +2049,6 @@ pytest = ">=6.2.5"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
-name = "pytest-mock"
-version = "3.15.0"
-description = "Thin-wrapper around the mock package for easier use with pytest"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "pytest_mock-3.15.0-py3-none-any.whl", hash = "sha256:ef2219485fb1bd256b00e7ad7466ce26729b30eadfc7cbcdb4fa9a92ca68db6f"},
-    {file = "pytest_mock-3.15.0.tar.gz", hash = "sha256:ab896bd190316b9d5d87b277569dfcdf718b2d049a2ccff5f7aca279c002a1cf"},
-]
-
-[package.dependencies]
-pytest = ">=6.2.5"
-
-[package.extras]
-dev = ["pre-commit", "pytest-asyncio", "tox"]
-
-[[package]]
 name = "pytest-xdist"
 version = "3.8.0"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
@@ -2983,17 +2952,6 @@ files = [
 ]
 
 [[package]]
-name = "types-toml"
-version = "0.10.8.20240310"
-description = "Typing stubs for toml"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-toml-0.10.8.20240310.tar.gz", hash = "sha256:3d41501302972436a6b8b239c850b26689657e25281b48ff0ec06345b8830331"},
-    {file = "types_toml-0.10.8.20240310-py3-none-any.whl", hash = "sha256:627b47775d25fa29977d9c70dc0cbab3f314f32c8d8d0c012f2ef5de7aaec05d"},
-]
-
-[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -3116,4 +3074,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "sphinx"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "a865c801df6cc8b32a867a4571fd4b1307dcc4e3c4d806279416bec8df556965"
+content-hash = "1299441e4ae140dc6692cb720b90445fced6e24251767d6d1585dfab96542da7"
