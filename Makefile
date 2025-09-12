@@ -77,7 +77,7 @@ test_integration:
 
 .PHONY: test_coverage
 test_coverage:
-	poetry run pytest -m "not bench" -n auto --cov="commodore" --cov-report lcov
+	poetry run pytest -m "not bench" -n auto --cov="commodore" --cov-report html --cov-report lcov tests/
 
 .PHONY: test_gen_golden
 test_gen_golden:
