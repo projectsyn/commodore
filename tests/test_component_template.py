@@ -1767,6 +1767,9 @@ def test_component_update_ignore_template_commit_id(
         tmp_path / "template",
     )
     cruft_json["commit"] = template_repo.head.commit.parents[0].hexsha
+    cruft_json["context"]["cookiecutter"]["_commit"] = (
+        template_repo.head.commit.parents[0].hexsha
+    )
     with open(component_path / ".cruft.json", "w", encoding="utf-8") as f:
         json.dump(cruft_json, f, indent=2)
         f.write("\n")

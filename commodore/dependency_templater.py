@@ -50,19 +50,32 @@ def _ignore_cruft_json_commit_id(
             )
         )[3:]
         if (
-            # If the context-less diff has exactly 2 lines and both of them start with
-            # '[-+] "commit":', we omit the diff
-            len(minimal_diff) == 2
-            and minimal_diff[0].startswith('-  "commit":')
-            and minimal_diff[1].startswith('+  "commit":')
-        ) or (
-            # If the context-less diff has exactly 4 lines and the two pairs start with
-            # '[-+] "commit":' and '[-+] "checkout":', we omit the diff
-            len(minimal_diff) == 4
-            and minimal_diff[0].startswith('-  "commit":')
-            and minimal_diff[1].startswith('-  "checkout":')
-            and minimal_diff[2].startswith('+  "commit":')
-            and minimal_diff[3].startswith('+  "checkout":')
+            (
+                # If the context-less diff has exactly 2 lines and both of them start with
+                # '[-+] "commit":', we omit the diff
+                len(minimal_diff) == 2
+                and minimal_diff[0].startswith('-  "commit":')
+                and minimal_diff[1].startswith('+  "commit":')
+            )
+            or (
+                # If the context-less diff has exactly 4 lines and the two pairs start with
+                # '[-+] "commit":' and '[-+] "checkout":', we omit the diff
+                len(minimal_diff) == 4
+                and minimal_diff[0].startswith('-  "commit":')
+                and minimal_diff[1].startswith('-  "checkout":')
+                and minimal_diff[2].startswith('+  "commit":')
+                and minimal_diff[3].startswith('+  "checkout":')
+            )
+            or (
+                # If the context-less diff has exactly 5 lines and both diff pairs start
+                # with '[-+][ ]+"(_?)commit":' we omit the diff
+                len(minimal_diff) == 5
+                and minimal_diff[0].startswith('-  "commit":')
+                and minimal_diff[1].startswith('+  "commit":')
+                and minimal_diff[2].startswith("@@")
+                and minimal_diff[3].startswith('-      "_commit":')
+                and minimal_diff[4].startswith('+      "_commit":')
+            )
         ):
             omit = True
     # never suppress diffs in default difffunc
