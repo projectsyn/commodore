@@ -69,10 +69,10 @@ def sync_dependencies(
         if changed:
             update_count += 1
         if not dry_run and i < dep_count:
-            # Pause processing to avoid running into GitHub secondary rate limits, if
-            # we're not in dry run mode, and we've not yet processed the last
+            # Pause processing every pr_batch_size updates to avoid running into GitHub secondary
+            # rate limits, if we're not in dry run mode, and we've not yet processed the last
             # dependency.
-            _maybe_pause(update_count, pr_batch_size, pause)
+            update_count = _maybe_pause(update_count, pr_batch_size, pause)
 
 
 def sync_dependency(
@@ -168,7 +168,7 @@ def render_pr_comment(d: Union[Component, Package]):
 
 
 def _maybe_pause(update_count: int, pr_batch_size: int, pause: timedelta):
-    if update_count > 0 and update_count % pr_batch_size == 0:
+    if update_count == pr_batch_size:
         # Pause for 2 minutes after we've created `pr_batch_size` (defaults to 10)
         # PRs, to avoid hitting secondary rate limits for PR creation. No need to
         # consider dependencies for which we're not creating a PR. Additionally,
@@ -178,6 +178,11 @@ def _maybe_pause(update_count: int, pr_batch_size: int, pause: timedelta):
             + f"pausing for {pause.seconds}s to avoid secondary rate limits."
         )
         time.sleep(pause.seconds)
+        # Reset update_count after sleeping to avoid issues when updating a subset of
+        # components, but more than pr_batch_size overall.
+        return 0
+
+    return update_count
 
 
 def create_or_update_pr(

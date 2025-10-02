@@ -604,13 +604,12 @@ def test_type_name(o: object, expected: str):
 
 
 @pytest.mark.parametrize(
-    "update_count,pr_batch_size,pause_seconds,expected_pause",
+    "update_count,pr_batch_size,pause_seconds,expected_pause,retval",
     [
-        (0, 1, 2, False),  # 0 updates, batch size 1, no pause
-        (1, 1, 2, True),  # 1 update, batch size 1, sleep 2
-        (1, 3, 2, False),  # 1 update, batch size 3, no pause
-        (3, 3, 2, True),  # 1 update, batch size 3, sleep 2
-        (5, 3, 2, False),  # 1 update, batch size 3, no pause
+        (0, 1, 2, False, 0),  # 0 updates, batch size 1, no pause, returns 0
+        (1, 1, 2, True, 0),  # 1 update, batch size 1, sleep 2, returns 0
+        (1, 3, 2, False, 1),  # 1 update, batch size 3, no pause, returns 1
+        (3, 3, 2, True, 0),  # 1 update, batch size 3, sleep 2, returns 0
     ],
 )
 def test_maybe_pause(
@@ -619,15 +618,17 @@ def test_maybe_pause(
     pr_batch_size: int,
     pause_seconds: int,
     expected_pause: bool,
+    retval: int,
 ):
     start = datetime.datetime.now()
-    dependency_syncer._maybe_pause(
+    r = dependency_syncer._maybe_pause(
         update_count, pr_batch_size, datetime.timedelta(seconds=pause_seconds)
     )
     elapsed = datetime.datetime.now() - start
 
     captured = capsys.readouterr()
 
+    assert r == retval
     assert (
         f"Created or updated {pr_batch_size} PRs, "
         + f"pausing for {pause_seconds}s to avoid secondary rate limits."
