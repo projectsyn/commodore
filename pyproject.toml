@@ -52,7 +52,7 @@ pytest-xdist = "3.8.0"
 pytest-benchmark = "5.2.0"
 responses = "0.25.8"
 black = "25.9.0"
-pyfakefs = "5.10.1"
+pyfakefs = "5.10.2"
 pytest-cov = "7.0.0"
 pylint = "4.0.2"
 
