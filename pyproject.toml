@@ -47,7 +47,7 @@ pygobuildinfo = "0.1.26"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
-pytest = "8.4.2"
+pytest = "9.0.0"
 pytest-xdist = "3.8.0"
 pytest-benchmark = "5.2.2"
 responses = "0.25.8"
