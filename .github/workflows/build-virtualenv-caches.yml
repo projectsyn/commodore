@@ -21,7 +21,7 @@ jobs:
           - mypy
           - black
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: '3.11'
@@ -46,7 +46,7 @@ jobs:
           - '3.11'
           - '3.12'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -74,7 +74,7 @@ jobs:
           - '3.11'
           - '3.12'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -96,7 +96,7 @@ jobs:
   build_poetry_virtualenv:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-python@v6
       with:
         python-version: '3.11'
