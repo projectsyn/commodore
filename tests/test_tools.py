@@ -399,7 +399,7 @@ def test_install_helm(config: Config, capfd, tmp_path, github_token):
 
     responses.add(
         responses.GET,
-        "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3",
+        "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-4",
         body=textwrap.dedent(
             """#!/bin/sh
         echo 'Helm installer'
