@@ -17,7 +17,7 @@ import pytest
 from click.testing import CliRunner, Result
 from git import Repo
 
-from commodore import cli
+from commodore import cli, tools
 from commodore.config import Config
 from commodore.gitrepo import GitRepo
 
@@ -32,6 +32,7 @@ class RunnerFunc(Protocol):
 @pytest.fixture(autouse=True, scope="session")
 def init_env():
     multiprocessing.set_start_method("spawn")
+    tools.setup_path()
 
 
 @pytest.fixture(autouse=True)
