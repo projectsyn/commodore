@@ -38,7 +38,7 @@ MANAGED_TOOLS_PATH = Path(xdg_cache_home) / "commodore" / "tools"
 MANAGED_TOOLS_STATE = MANAGED_TOOLS_PATH / "state.json"
 
 TOOL_INSTALL_SCRIPT_URL = {
-    "helm": "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3",
+    "helm": "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-4",
     "kustomize": "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh",
 }
 
