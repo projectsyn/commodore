@@ -9,7 +9,7 @@ import sys
 from collections.abc import Callable, Iterable
 from datetime import datetime
 from pathlib import Path as P
-from typing import Optional
+from typing import Optional, overload
 
 import click
 import requests
@@ -19,12 +19,12 @@ from enum import Enum
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError, HTTPError
-from kapitan import cached
-from kapitan import targets as kapitan_targets
-from kapitan import defaults
-from kapitan.cached import reset_cache as reset_reclass_cache
-from kapitan.refs.base import RefController, PlainRef
-from kapitan.refs.secrets.vaultkv import VaultBackend
+from kapitan import cached  # type: ignore
+from kapitan import targets as kapitan_targets  # type: ignore
+from kapitan import defaults  # type: ignore
+from kapitan.cached import reset_cache as reset_reclass_cache  # type: ignore
+from kapitan.refs.base import RefController, PlainRef  # type: ignore
+from kapitan.refs.secrets.vaultkv import VaultBackend  # type: ignore
 
 from reclass_rs import Reclass
 
@@ -375,6 +375,12 @@ def python3_executable() -> str:
         fg="yellow",
     )
     return path_python
+
+
+@overload
+def cpu_count(fallback: int) -> int: ...
+@overload
+def cpu_count(fallback: Optional[int] = None) -> Optional[int]: ...
 
 
 def cpu_count(fallback: Optional[int] = None) -> Optional[int]:

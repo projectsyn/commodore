@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from pathlib import Path as P
 from typing import Optional
 
-import _gojsonnet
+import _gojsonnet  # type: ignore
 import click
 import git
 

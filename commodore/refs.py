@@ -4,6 +4,7 @@ import re
 import os
 from base64 import b64encode
 from pathlib import Path as P
+from typing import Optional
 
 import click
 
@@ -92,6 +93,7 @@ class RefBuilder:
     """
 
     _refs: dict[str, SecretRef]
+    _ref_params: Optional[dict[str, dict]]
 
     def __init__(self, config: Config, inventory):
         self.debug = config.debug

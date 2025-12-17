@@ -4,7 +4,7 @@ import json
 
 from pathlib import Path as P
 
-import _gojsonnet
+import _gojsonnet  # type: ignore
 
 import click
 
