@@ -458,9 +458,10 @@ def test_kapitan_inventory(tmp_path: Path, config: Config):
 
     with pytest.raises(click.ClickException) as e:
         helpers.kapitan_inventory(config)
+
     assert (
         "While rendering inventory: Error while rendering inventory: Error rendering node test: "
-        + "While resolving references: lookup error for reference '${bar}' in parameter 'foo': key 'bar' not found"
+        + "lookup error for reference '${bar}' in parameter 'foo': key 'bar' not found"
         in str(e.value)
     )
 
