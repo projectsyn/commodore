@@ -41,7 +41,7 @@ cruft = "2.16.0"
 oauthlib = "3.3.1"
 pyjwt = "2.10.1"
 PyGithub = "2.8.1"
-reclass-rs = "0.9.0"
+reclass-rs = "0.10.1"
 gojsonnet = "0.21.0"
 pygobuildinfo = "0.1.27"
 
