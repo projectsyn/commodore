@@ -84,7 +84,7 @@ class MultiDependency:
         except KeyError as e:
             raise ValueError(f"can't deregister unknown package {name}") from e
 
-    def checkout_package(self, name: str, version: str):
+    def checkout_package(self, name: str, version: Optional[str]):
         """Create or update worktree for package `name`."""
         target_dir = self.get_package(name)
         if not target_dir:

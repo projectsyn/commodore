@@ -102,6 +102,7 @@ class Config:
     _github_token: Optional[str]
     _request_timeout: int
     _managed_tools: dict[str, str]
+    _api_token: Optional[str]
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -240,7 +241,7 @@ class Config:
                         api_token = apitoken.read()
             except OSError as e:
                 # File name too long, assume token is not configured as file
-                if "File name too long" in e.strerror:
+                if e.strerror and "File name too long" in e.strerror:
                     pass
                 else:
                     raise

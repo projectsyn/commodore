@@ -11,7 +11,7 @@ import reclass_rs
 from commodore import tools
 from commodore.config import Config
 
-from pygobuildinfo import get_go_build_info
+from pygobuildinfo import get_go_build_info  # type: ignore
 
 
 def _native_find_so(dep) -> os.PathLike[str]:

@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 from pathlib import Path as P
 from typing import Any
 
-import _gojsonnet
+import _gojsonnet  # type: ignore
 
 from commodore.config import Config
 from commodore.component import Component
