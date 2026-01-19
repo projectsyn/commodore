@@ -271,9 +271,7 @@ def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
     ur = cr.clone(upath)
     jsonnetfile = upath / "jsonnetfile.jsonnet"
     with open(jsonnetfile, "w") as jf:
-        jf.write(
-            dedent(
-                """
+        jf.write(dedent("""
             {
                version: 1,
                dependencies: [
@@ -288,9 +286,7 @@ def _setup_render_jsonnetfile_json(tmp_path: P) -> Component:
                     },
                ],
                legacyImports: true,
-            }"""
-            )
-        )
+            }"""))
     ur.index.add("*")
     ur.index.commit("initial commit")
     ur.remote().push()

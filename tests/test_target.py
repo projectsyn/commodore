@@ -252,15 +252,11 @@ def test_read_cluster_and_tenant(tmp_path):
     file = cfg.inventory.params_file
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:
-        f.write(
-            dedent(
-                """
+        f.write(dedent("""
             parameters:
               cluster:
                 name: c-twilight-water-9032
-                tenant: t-delicate-pine-3938"""
-            )
-        )
+                tenant: t-delicate-pine-3938"""))
 
     cluster_id, tenant_id = cluster.read_cluster_and_tenant(cfg.inventory)
     assert cluster_id == "c-twilight-water-9032"
@@ -272,13 +268,9 @@ def test_read_cluster_and_tenant_missing_fact(tmp_path):
     file = inv.params_file
     os.makedirs(file.parent, exist_ok=True)
     with open(file, "w") as f:
-        f.write(
-            dedent(
-                """
+        f.write(dedent("""
             classes: []
-            parameters: {}"""
-            )
-        )
+            parameters: {}"""))
 
     with pytest.raises(KeyError):
         cluster.read_cluster_and_tenant(inv)

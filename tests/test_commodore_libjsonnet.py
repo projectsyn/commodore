@@ -12,7 +12,6 @@ import _gojsonnet
 import pytest
 import yaml
 
-
 TESTS_DIR = Path(__file__).parent / "jsonnet"
 
 

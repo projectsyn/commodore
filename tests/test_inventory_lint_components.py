@@ -12,7 +12,6 @@ from commodore.helpers import yaml_dump, yaml_dump_all
 from commodore.inventory import lint_dependency_specification
 from commodore.inventory import lint
 
-
 LINT_FILECONTENTS = [
     ({}, 0),
     ({"a": "b"}, 0),

@@ -48,8 +48,7 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
 
     create_ns_jsonnet = ""
     if create_namespace:
-        create_ns_jsonnet = dedent(
-            """
+        create_ns_jsonnet = dedent("""
             {
                 "00_namespace": {
                     apiVersion: "v1",
@@ -63,13 +62,10 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
                     }
                 }
             }
-            """
-        )
+            """)
 
     with open(filter_file, "w") as ff:
-        ff.write(
-            dedent(
-                """
+        ff.write(dedent("""
                 local com = import 'lib/commodore.libjsonnet';
                 local inv = com.inventory();
                 local params = inv.parameters.test_component;
@@ -82,10 +78,7 @@ def _make_jsonnet_filter(tmp_path, ns, enabled=None, create_namespace=False):
                 {
                     [stem(file)]: fixup(objs),
                 }
-                """
-                + create_ns_jsonnet
-            )
-        )
+                """ + create_ns_jsonnet))
 
     f = {
         "filters": [

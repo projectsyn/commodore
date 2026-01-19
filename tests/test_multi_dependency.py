@@ -11,7 +11,6 @@ from commodore import multi_dependency
 
 from test_gitrepo import setup_remote
 
-
 CASES = [
     (
         "https://github.com/projectsyn/component-argocd.git",

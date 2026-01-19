@@ -327,16 +327,11 @@ def test_print_deprecation_notices(config, capsys):
 
     config.print_deprecation_notices()
     captured = capsys.readouterr()
-    assert (
-        textwrap.dedent(
-            """
+    assert textwrap.dedent("""
             Commodore notices:
              > test 1
              > test 2
-            """
-        )
-        == captured.out
-    )
+            """) == captured.out
 
 
 def mock_get_token(url: str) -> Optional[str]:
