@@ -188,15 +188,11 @@ def _setup_inventory(
     # We plug "fake" Argo CD library here because every component relies on it
     # and we don't want to provide it every time when compiling a single component.
     with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
-        argocd_libf.write(
-            dedent(
-                """
+        argocd_libf.write(dedent("""
             local ArgoApp(component, namespace, project='', secrets=true) = {};
             local ArgoProject(name) = {};
 
             {
               App: ArgoApp,
               Project: ArgoProject,
-            }"""
-            )
-        )
+            }"""))

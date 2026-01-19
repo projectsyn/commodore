@@ -9,7 +9,6 @@ from typing import Optional
 from commodore.inventory import parameters
 from commodore.helpers import yaml_dump
 
-
 GLOBAL_PARAMS = {
     "components": {
         "tc1": {

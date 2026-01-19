@@ -400,14 +400,12 @@ def test_install_helm(config: Config, capfd, tmp_path, github_token):
     responses.add(
         responses.GET,
         "https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-4",
-        body=textwrap.dedent(
-            """#!/bin/sh
+        body=textwrap.dedent("""#!/bin/sh
         echo 'Helm installer'
         echo "command line=$@"
         echo "HELM_INSTALL_DIR=${HELM_INSTALL_DIR}"
         echo "GITHUB_TOKEN=${GITHUB_TOKEN}"
-        """
-        ),
+        """),
         status=200,
     )
 
@@ -436,14 +434,12 @@ def test_install_kustomize(config: Config, capfd, tmp_path, github_token):
     responses.add(
         responses.GET,
         "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh",
-        body=textwrap.dedent(
-            """#!/bin/sh
+        body=textwrap.dedent("""#!/bin/sh
         echo 'Kustomize installer'
         echo "command line=$@"
         echo "HELM_INSTALL_DIR=${HELM_INSTALL_DIR}"
         echo "GITHUB_TOKEN=${GITHUB_TOKEN}"
-        """
-        ),
+        """),
         status=200,
     )
 

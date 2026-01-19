@@ -42,9 +42,7 @@ def _prepare_component(
         shutil.move(str(component_root / ".git"), str(tmp_path / component_name))
 
     with open(component_root / "component/main.jsonnet", "a") as file:
-        file.write(
-            dedent(
-                """
+        file.write(dedent("""
             {
               "test_service_account": kube.ServiceAccount('test') {
                 metadata+: {
@@ -60,9 +58,7 @@ def _prepare_component(
                   },
                 },
               },
-            }"""
-            )
-        )
+            }"""))
     return component_root
 
 
@@ -343,8 +339,7 @@ def test_component_compile_kustomize(tmp_path: P, cli_runner: RunnerFunc):
     with open(
         component_path / "component" / "kustomization.jsonnet", "w", encoding="utf-8"
     ) as f:
-        f.write(
-            """
+        f.write("""
 local com = import 'lib/commodore.libjsonnet';
 
 com.Kustomization(
@@ -359,8 +354,7 @@ com.Kustomization(
   {
     namespace: 'foo',
   }
-)"""
-        )
+)""")
     with open(
         component_path / "class" / f"{component_name}.yml", "r", encoding="utf-8"
     ) as cyaml:

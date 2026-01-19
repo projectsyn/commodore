@@ -1729,14 +1729,12 @@ def test_component_update_raises_on_merge_conflict(
     with open(
         component_path / "lib" / "test-component.libsonnet", "w", encoding="utf-8"
     ) as f:
-        f.write(
-            """// Test contents
+        f.write("""// Test contents
 
 {
   Foo: {bar: 1, baz: false},
 }
-"""
-        )
+""")
 
     r = Repo(component_path)
     r.index.add([".cruft.json", "lib/test-component.libsonnet"])

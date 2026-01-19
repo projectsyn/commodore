@@ -62,44 +62,36 @@ def _test_yaml_dump_fun(
     [
         (
             {"a": 1, "b": "test"},
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a: 1
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
         (
             {"a": [1, 2], "b": "test"},
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a:
                   - 1
                   - 2
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
         (
             {"a": {"test": 1}, "b": "test"},
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a:
                   test: 1
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
         (
             {"a": "first line\nsecond line", "b": "test"},
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a: |-
                   first line
                   second line
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
     ],
 )
@@ -112,38 +104,32 @@ def test_yaml_dump(tmp_path: Path, input, expected):
     [
         (
             [{"a": 1}, {"b": "test"}],
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                     a: 1
                     ---
                     b: test
-                    """
-            )[1:],
+                    """)[1:],
         ),
         (
             [{"a": {"test": "first line\nsecond line"}}, {"b": "test"}],
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a:
                   test: |-
                     first line
                     second line
                 ---
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
         (
             [{"a": [1, 2]}, {"b": "test"}],
-            textwrap.dedent(
-                """
+            textwrap.dedent("""
                 a:
                   - 1
                   - 2
                 ---
                 b: test
-                """
-            )[1:],
+                """)[1:],
         ),
     ],
 )

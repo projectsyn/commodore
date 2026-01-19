@@ -444,18 +444,14 @@ def test_kapitan_029_030_difffunc_suppresses_noise():
 
 
 def test_ignore_yaml_formatting_difffunc_keep_semantic_whitespace():
-    before_text = textwrap.dedent(
-        """
+    before_text = textwrap.dedent("""
         a:
         b: b
-        """
-    )
-    after_text = textwrap.dedent(
-        """
+        """)
+    after_text = textwrap.dedent("""
         a:
           b: b
-        """
-    )
+        """)
 
     diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
         before_text, after_text, fromfile="test", tofile="test"
@@ -477,22 +473,18 @@ def test_ignore_yaml_formatting_difffunc_keep_semantic_whitespace():
 
 
 def test_ignore_yaml_formatting_difffunc_suppresses_noise():
-    before_text = textwrap.dedent(
-        """
+    before_text = textwrap.dedent("""
         a:
         - a
         - b
         b: b
-        """
-    )
-    after_text = textwrap.dedent(
-        """
+        """)
+    after_text = textwrap.dedent("""
         a:
           - a
           - b
         b: b
-        """
-    )
+        """)
 
     diffs, suppressed = catalog._ignore_yaml_formatting_difffunc(
         before_text, after_text, fromfile="test", tofile="test"
