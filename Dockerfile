@@ -59,6 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       gpg \
       libnss-wrapper \
       openssh-client \
+      patch \
  && rm -rf /var/lib/apt/lists/* \
  && echo "    ControlMaster auto\n    ControlPath /tmp/%r@%h:%p" >> /etc/ssh/ssh_config
 
