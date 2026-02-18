@@ -1,0 +1,21 @@
+---
+name: Delete closed PR container image tag
+
+"on":
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  cleanup-pr-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set image version for PR to branch name
+        run: echo "VERSION=${GITHUB_HEAD_REF//\//-}" >> ${GITHUB_ENV}
+
+      - name: Delete PR container image tag
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          tags: ${{ env.VERSION }}
+          package: ${{ github.event.repository.name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
