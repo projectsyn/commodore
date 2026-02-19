@@ -592,12 +592,10 @@ def test_catalog_list(
     ],
 )
 def test_catalog_list_parameters(config: Config, tenant: str, sort_by: str):
-    params = {}
+    params = {"sort_by": sort_by}
 
     if tenant != "":
         params["tenant"] = tenant
-    if sort_by != "":
-        params["sort_by"] = sort_by
     responses.add(
         responses.GET,
         "https://syn.example.com/clusters/",
