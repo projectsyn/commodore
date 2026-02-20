@@ -53,15 +53,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - uses: Gr1N/setup-poetry@v9
-    - name: Install tox
-      run: |
-        pip install tox
     - uses: actions/cache@v5
       with:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-test-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+    - name: Install Poetry and setup Poetry virtualenv
+      run: |
+        poetry env use python${{ matrix.python-version }}
+        poetry install
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
@@ -87,15 +88,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - uses: Gr1N/setup-poetry@v9
-    - name: Install tox
-      run: |
-        pip install tox
     - uses: actions/cache@v5
       with:
         path: |
           .tox
           ~/.cache/pypoetry/virtualenvs
         key: ${{ runner.os }}-bench-py${{ matrix.python-version }}-${{ hashFiles('poetry.lock', 'tox.ini') }}
+    - name: Install Poetry and setup Poetry virtualenv
+      run: |
+        poetry env use python${{ matrix.python-version }}
+        poetry install
     - name: Install jsonnet-bundler
       run: |
         mkdir -p /opt/bin && curl -sLo /opt/bin/jb \
