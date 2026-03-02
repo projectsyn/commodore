@@ -199,17 +199,17 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.42.54"
+version = "1.42.59"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "boto3-1.42.54-py3-none-any.whl", hash = "sha256:71194e855bfc81a21872cbe29c41f52ffdbe67e0a184a52c13346ef00b328939"},
-    {file = "boto3-1.42.54.tar.gz", hash = "sha256:fe3d8ec586c39a0c96327fd317c77ca601ec5f991e9ba7211cacae8db4c07a73"},
+    {file = "boto3-1.42.59-py3-none-any.whl", hash = "sha256:7a66e3e8e2087ea4403e135e9de592e6d63fc9a91080d8dac415bb74df873a72"},
+    {file = "boto3-1.42.59.tar.gz", hash = "sha256:6c4a14a4eb37b58a9048901bdeefbe1c529638b73e8f55413319a25f010ca211"},
 ]
 
 [package.dependencies]
-botocore = ">=1.42.54,<1.43.0"
+botocore = ">=1.42.59,<1.43.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.16.0,<0.17.0"
 
@@ -218,13 +218,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.42.54"
+version = "1.42.59"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "botocore-1.42.54-py3-none-any.whl", hash = "sha256:853a0822de66d060aeebafa07ca13a03799f7958313d1b29f8dc7e2e1be8f527"},
-    {file = "botocore-1.42.54.tar.gz", hash = "sha256:ab203d4e57d22913c8386a695d048e003b7508a8a4a7a46c9ddf4ebd67a20b69"},
+    {file = "botocore-1.42.59-py3-none-any.whl", hash = "sha256:d2f2ff7ecc31e86ef46b5daee112cfbca052c13801285fb23af909f7bff5b657"},
+    {file = "botocore-1.42.59.tar.gz", hash = "sha256:5314f19e1da8fc0ebc41bdb8bbe17c9a7397d87f4d887076ac8bdef972a34138"},
 ]
 
 [package.dependencies]
@@ -237,13 +237,13 @@ crt = ["awscrt (==0.31.2)"]
 
 [[package]]
 name = "certifi"
-version = "2026.1.4"
+version = "2026.2.25"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "certifi-2026.1.4-py3-none-any.whl", hash = "sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c"},
-    {file = "certifi-2026.1.4.tar.gz", hash = "sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120"},
+    {file = "certifi-2026.2.25-py3-none-any.whl", hash = "sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa"},
+    {file = "certifi-2026.2.25.tar.gz", hash = "sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7"},
 ]
 
 [[package]]
@@ -835,13 +835,13 @@ testing = ["hatch", "pre-commit", "pytest", "tox"]
 
 [[package]]
 name = "filelock"
-version = "3.24.3"
+version = "3.25.0"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "filelock-3.24.3-py3-none-any.whl", hash = "sha256:426e9a4660391f7f8a810d71b0555bce9008b0a1cc342ab1f6947d37639e002d"},
-    {file = "filelock-3.24.3.tar.gz", hash = "sha256:011a5644dc937c22699943ebbfc46e969cdde3e171470a6e40b9533e5a72affa"},
+    {file = "filelock-3.25.0-py3-none-any.whl", hash = "sha256:5ccf8069f7948f494968fc0713c10e5c182a9c9d9eef3a636307a20c2490f047"},
+    {file = "filelock-3.25.0.tar.gz", hash = "sha256:8f00faf3abf9dc730a1ffe9c354ae5c04e079ab7d3a683b7c32da5dd05f26af3"},
 ]
 
 [[package]]
@@ -1091,13 +1091,13 @@ files = [
 
 [[package]]
 name = "isort"
-version = "8.0.0"
+version = "8.0.1"
 description = "A Python utility / library to sort Python imports."
 optional = false
 python-versions = ">=3.10.0"
 files = [
-    {file = "isort-8.0.0-py3-none-any.whl", hash = "sha256:184916a933041c7cf718787f7e52064f3c06272aff69a5cb4dc46497bd8911d9"},
-    {file = "isort-8.0.0.tar.gz", hash = "sha256:fddea59202f231e170e52e71e3510b99c373b6e571b55d9c7b31b679c0fed47c"},
+    {file = "isort-8.0.1-py3-none-any.whl", hash = "sha256:28b89bc70f751b559aeca209e6120393d43fbe2490de0559662be7a9787e3d75"},
+    {file = "isort-8.0.1.tar.gz", hash = "sha256:171ac4ff559cdc060bcfff550bc8404a486fee0caab245679c2abe7cb253c78d"},
 ]
 
 [package.extras]
@@ -1186,18 +1186,14 @@ files = [
 
 [[package]]
 name = "jsonpath-ng"
-version = "1.7.0"
+version = "1.8.0"
 description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
 optional = false
 python-versions = "*"
 files = [
-    {file = "jsonpath-ng-1.7.0.tar.gz", hash = "sha256:f6f5f7fd4e5ff79c785f1573b394043b39849fb2bb47bcead935d12b00beab3c"},
-    {file = "jsonpath_ng-1.7.0-py2-none-any.whl", hash = "sha256:898c93fc173f0c336784a3fa63d7434297544b7198124a68f9a3ef9597b0ae6e"},
-    {file = "jsonpath_ng-1.7.0-py3-none-any.whl", hash = "sha256:f3d7f9e848cba1b6da28c55b1c26ff915dc9e0b1ba7e752a53d6da8d5cbd00b6"},
+    {file = "jsonpath_ng-1.8.0-py3-none-any.whl", hash = "sha256:b8dde192f8af58d646fc031fac9c99fe4d00326afc4148f1f043c601a8cfe138"},
+    {file = "jsonpath_ng-1.8.0.tar.gz", hash = "sha256:54252968134b5e549ea5b872f1df1168bd7defe1a52fed5a358c194e1943ddc3"},
 ]
-
-[package.dependencies]
-ply = "*"
 
 [[package]]
 name = "jsonschema"
@@ -1463,13 +1459,13 @@ files = [
 
 [[package]]
 name = "msal"
-version = "1.34.0"
+version = "1.35.0"
 description = "The Microsoft Authentication Library (MSAL) for Python library enables your app to access the Microsoft Cloud by supporting authentication of users with Microsoft Azure Active Directory accounts (AAD) and Microsoft Accounts (MSA) using industry standard OAuth2 and OpenID Connect."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msal-1.34.0-py3-none-any.whl", hash = "sha256:f669b1644e4950115da7a176441b0e13ec2975c29528d8b9e81316023676d6e1"},
-    {file = "msal-1.34.0.tar.gz", hash = "sha256:76ba83b716ea5a6d75b0279c0ac353a0e05b820ca1f6682c0eb7f45190c43c2f"},
+    {file = "msal-1.35.0-py3-none-any.whl", hash = "sha256:baf268172d2b736e5d409689424d2f321b4142cab231b4b96594c86762e7e01d"},
+    {file = "msal-1.35.0.tar.gz", hash = "sha256:76ab7513dbdac88d76abdc6a50110f082b7ed3ff1080aca938c53fc88bc75b51"},
 ]
 
 [package.dependencies]
@@ -1478,7 +1474,7 @@ PyJWT = {version = ">=1.0.0,<3", extras = ["crypto"]}
 requests = ">=2.0.0,<3"
 
 [package.extras]
-broker = ["pymsalruntime (>=0.14,<0.19)", "pymsalruntime (>=0.17,<0.19)", "pymsalruntime (>=0.18,<0.19)"]
+broker = ["pymsalruntime (>=0.14,<0.21)", "pymsalruntime (>=0.17,<0.21)", "pymsalruntime (>=0.18,<0.21)"]
 
 [[package]]
 name = "msal-extensions"
@@ -1594,17 +1590,6 @@ pywin32 = {version = "*", markers = "platform_system == \"Windows\" and platform
 
 [package.extras]
 ssh = ["paramiko"]
-
-[[package]]
-name = "ply"
-version = "3.11"
-description = "Python Lex & Yacc"
-optional = false
-python-versions = "*"
-files = [
-    {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
-    {file = "ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"},
-]
 
 [[package]]
 name = "prompt-toolkit"
@@ -2231,6 +2216,25 @@ files = [
 
 [package.dependencies]
 six = ">=1.5"
+
+[[package]]
+name = "python-discovery"
+version = "1.1.0"
+description = "Python interpreter discovery"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "python_discovery-1.1.0-py3-none-any.whl", hash = "sha256:a162893b8809727f54594a99ad2179d2ede4bf953e12d4c7abc3cc9cdbd1437b"},
+    {file = "python_discovery-1.1.0.tar.gz", hash = "sha256:447941ba1aed8cc2ab7ee3cb91be5fc137c5bdbb05b7e6ea62fbdcb66e50b268"},
+]
+
+[package.dependencies]
+filelock = ">=3.15.4"
+platformdirs = ">=4.3.6,<5"
+
+[package.extras]
+docs = ["furo (>=2025.12.19)", "sphinx (>=9.1)", "sphinx-autodoc-typehints (>=3.6.3)", "sphinxcontrib-mermaid (>=2)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.5.4)", "pytest (>=8.3.5)", "pytest-mock (>=3.14)", "setuptools (>=75.1)"]
 
 [[package]]
 name = "python-dotenv"
@@ -3184,24 +3188,21 @@ zstd = ["backports-zstd (>=1.0.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.38.0"
+version = "21.1.0"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "virtualenv-20.38.0-py3-none-any.whl", hash = "sha256:d6e78e5889de3a4742df2d3d44e779366325a90cf356f15621fddace82431794"},
-    {file = "virtualenv-20.38.0.tar.gz", hash = "sha256:94f39b1abaea5185bf7ea5a46702b56f1d0c9aa2f41a6c2b8b0af4ddc74c10a7"},
+    {file = "virtualenv-21.1.0-py3-none-any.whl", hash = "sha256:164f5e14c5587d170cf98e60378eb91ea35bf037be313811905d3a24ea33cc07"},
+    {file = "virtualenv-21.1.0.tar.gz", hash = "sha256:1990a0188c8f16b6b9cf65c9183049007375b26aad415514d377ccacf1e4fb44"},
 ]
 
 [package.dependencies]
 distlib = ">=0.3.7,<1"
 filelock = {version = ">=3.24.2,<4", markers = "python_version >= \"3.10\""}
 platformdirs = ">=3.9.1,<5"
+python-discovery = ">=1"
 typing-extensions = {version = ">=4.13.2", markers = "python_version < \"3.11\""}
-
-[package.extras]
-docs = ["furo (>=2023.7.26)", "pre-commit-uv (>=4.1.4)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "sphinx-argparse (>=0.4)", "sphinx-autodoc-typehints (>=3.6.2)", "sphinx-copybutton (>=0.5.2)", "sphinx-inline-tabs (>=2025.12.21.14)", "sphinxcontrib-mermaid (>=2)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=23.6)"]
-test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "pytest-xdist (>=3.5)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
 [[package]]
 name = "wcwidth"
