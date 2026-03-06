@@ -45,7 +45,7 @@ pyjwt = "2.11.0"
 PyGithub = "2.8.1"
 reclass-rs = "0.10.1"
 gojsonnet = "0.21.0"
-pygobuildinfo = "0.1.27"
+pygobuildinfo = "0.1.28"
 
 [tool.poetry.dev-dependencies]
 tox = "3.28.0"
