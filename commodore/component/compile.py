@@ -174,7 +174,7 @@ def _setup_component(
 
     # Validate component libraries
     for lib in component.lib_files:
-        validate_component_library_name(component.name, lib)
+        validate_component_library_name(config.get_components(), component.name, lib)
 
     return component
 

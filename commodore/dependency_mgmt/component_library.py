@@ -12,7 +12,18 @@ from commodore.helpers import relsymlink
 from .tools import format_component_list
 
 
-def validate_component_library_name(cname: str, lib: Path) -> Path:
+def validate_component_library_name(
+    components: dict[str, Component], cname: str, lib: Path
+) -> Path:
+    # This variable holds the set of component names which are prefixed with `cname` but aren't
+    # cname. We need to prohibit component library names that are prefixed with another component's
+    # name even if they're prefixed with our name to avoid non-deterministic library symlinks when
+    # e.g. components `foo` and `foo-operator` both define `foo-operator.libsonnet`.
+    other_components = set(c for c in components if c != cname and c.startswith(cname))
+    if any(lib.stem.startswith(c) for c in other_components):
+        raise click.ClickException(
+            f"Component '{cname}' defines component library '{lib.name}' which is reserved for another component."
+        )
     if not lib.stem.startswith(cname):
         raise click.ClickException(
             f"Component '{cname}' uses invalid component library name '{lib.name}'. "

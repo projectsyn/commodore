@@ -19,7 +19,7 @@ from .tools import format_component_list
 from .version_parsing import _read_components, _read_packages, DependencySpec
 
 
-def create_component_symlinks(cfg, component: Component):
+def create_component_symlinks(cfg: Config, component: Component):
     """
     Create symlinks in the inventory subdirectory.
 
@@ -38,7 +38,7 @@ def create_component_symlinks(cfg, component: Component):
         if cfg.debug:
             click.echo(f"     > installing template library: {file}")
         relsymlink(
-            validate_component_library_name(component.name, file),
+            validate_component_library_name(cfg.get_components(), component.name, file),
             cfg.inventory.lib_dir,
         )
 

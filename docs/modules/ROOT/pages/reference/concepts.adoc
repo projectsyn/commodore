@@ -57,7 +57,9 @@ inventory to install the software.
 Components can optionally provide Jsonnet libraries which can be used by other components.
 To allow Commodore to make component libraries available to other components, they must be placed in directory `lib/`.
 Components must ensure that all Jsonnet libraries which they provide are prefixed with the component name.
+Additionally, components must ensure that their Jsonnet library names don't collide with other component names that are prefixed by the component's name.
 For example, component `foo-bar` can only contain libraries whose file name starts with `foo-bar`, such as `foo-bar.libsonnet`, or `foo-bar-baz.libsonnet`.
+However, note that the library name `foo-bar-baz.libsonnet` would be prohibited if component `foo-bar-baz` also exists.
 Commodore allows components to advertise aliases for their component libraries.
 Component library aliases are described in more detail in the xref:commodore:ROOT:reference/architecture.adoc#_component_template_libraries[architecture documentation].
 
