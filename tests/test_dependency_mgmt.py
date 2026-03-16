@@ -483,27 +483,50 @@ def test_register_dangling_aliases(
 
 
 @pytest.mark.parametrize(
-    "libname,expected",
+    "cnames,libname,expected",
     [
-        ("test-component.libsonnet", ""),
-        ("test-component-lib.libsonnet", ""),
+        (["test-component"], "test-component.libsonnet", ""),
+        (["test-component"], "test-component-lib.libsonnet", ""),
         (
+            ["test-component"],
             "lib.libsonnet",
             "Component 'test-component' uses invalid component library name 'lib.libsonnet'. "
             + "Consider using a library alias.",
         ),
+        (
+            ["test-component", "test-component-operator"],
+            "test-component-operator.libsonnet",
+            "Component 'test-component' defines component library "
+            + "'test-component-operator.libsonnet' which is reserved for another component.",
+        ),
     ],
 )
-def test_validate_component_library_name(tmp_path: Path, libname: str, expected: str):
+def test_validate_component_library_name(
+    config: Config, tmp_path: Path, cnames: list[str], libname: str, expected: str
+):
+    deps = setup_components_upstream(tmp_path, cnames, {})
+    for cn, cspec in deps.items():
+        cdep = config.register_dependency_repo(cspec.url)
+        component = Component(
+            cn,
+            work_dir=tmp_path,
+            dependency=cdep,
+        )
+        config.register_component(component)
+
     if expected == "":
         lpath = Path(tmp_path / "lib" / libname)
-        r = dependency_mgmt.validate_component_library_name("test-component", lpath)
+        r = dependency_mgmt.validate_component_library_name(
+            config.get_components(), "test-component", lpath
+        )
         assert lpath == r
 
     else:
         with pytest.raises(click.ClickException) as e:
             dependency_mgmt.validate_component_library_name(
-                "test-component", Path(tmp_path / "lib" / libname)
+                config.get_components(),
+                "test-component",
+                Path(tmp_path / "lib" / libname),
             )
 
         assert expected in str(e.value)
