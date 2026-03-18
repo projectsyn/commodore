@@ -1891,13 +1891,13 @@ yaml = ["pyyaml (>=6.0.1)"]
 
 [[package]]
 name = "pyfakefs"
-version = "6.1.5"
+version = "6.1.6"
 description = "Implements a fake file system that mocks the Python file system modules."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "pyfakefs-6.1.5-py3-none-any.whl", hash = "sha256:2c482f36bad7d1f7516d58d17818fb0dbe397a3372ec5274869386a9b7cd4883"},
-    {file = "pyfakefs-6.1.5.tar.gz", hash = "sha256:d70fb1c622a1d5c729462d31bb58eead99c1830986bc049bf8975c480a49d19b"},
+    {file = "pyfakefs-6.1.6-py3-none-any.whl", hash = "sha256:28e620e117b9728d7f8ebb50f9537da6ab36ef9c0bebc12469aaba3c72759ff7"},
+    {file = "pyfakefs-6.1.6.tar.gz", hash = "sha256:dcdfc09b13f3fd464142e20ef6154639bd26fb0890572c5dd869339a083e2903"},
 ]
 
 [package.extras]
@@ -3236,4 +3236,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "60c11f3ee2d48c383fee80d76f9126ab41b2ea3bdd43a1a964a64ef9abff4957"
+content-hash = "2609a4daa8ee89f22bdf2dd75891ff80e79eed433161d82a9afa8563bd1bdd1f"
