@@ -1,6 +1,6 @@
 FROM docker.io/golang:1.26.1 AS golang
 
-FROM docker.io/python:3.12.13-slim-bookworm AS base
+FROM docker.io/python:3.14.3-slim-bookworm AS base
 
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
