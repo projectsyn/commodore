@@ -22,8 +22,6 @@ jobs:
         echo "git version: $GITVERSION, pyversion: $PYVERSION"
         echo "gitversion=${GITVERSION}" >> ${GITHUB_OUTPUT}
         echo "pyversion=${PYVERSION}" >> ${GITHUB_OUTPUT}
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
     - name: Set image version latest
