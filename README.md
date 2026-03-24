@@ -1,6 +1,6 @@
 # Project Syn: Commodore
 
-[![Docker](https://github.com/projectsyn/commodore/actions/workflows/push.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/push.yml)
+[![Container Image](https://github.com/projectsyn/commodore/actions/workflows/container-image.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/container-image.yml)
 [![PyPI release](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml/badge.svg)](https://github.com/projectsyn/commodore/actions/workflows/publish-pypi.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/projectsyn/commodore.svg)](https://github.com/projectsyn/commodore/releases)
 [![PyPI Release](https://img.shields.io/pypi/v/syn-commodore?color=blue)](https://pypi.org/project/syn-commodore)
