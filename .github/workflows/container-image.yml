@@ -123,7 +123,9 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
-        cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform.name }}
+        cache-from: |
+          type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform.name }}
+          type=gha,scope=${{ github.repository }}-master-${{ matrix.platform.name }}
         cache-to: type=gha,mode=max,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform.name }}
         build-args: |
           GITVERSION=${{ needs.get-version.outputs.gitversion }}
