@@ -1,0 +1,293 @@
+name: Build & Push Container Image
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+  pull_request: {}
+
+permissions:
+  contents: read
+
+# NOTE(sg): Configure the workflow to cancel old runs for the same Git ref
+# when a new run is started.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  DOCKER_IMAGE: docker.io/${{ github.repository }}
+
+jobs:
+  get-version:
+    name: Render version for Python package and container image
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.image-tag.outputs.tag }}
+      gitversion: ${{ steps.get-version-info.outputs.gitversion }}
+      pyversion: ${{ steps.get-version-info.outputs.pyversion }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0 # NOTE(aa): Required in order to have tag information available
+    - name: Get version information
+      id: get-version-info
+      run: |
+        GITVERSION="$(git describe --tags --always --match=v* --dirty=+dirty || (echo "command failed $?"; exit 1))"
+        PYVERSION="$(git describe --tags --always --match=v* | cut -d- -f1,2 || (echo "command failed $?"; exit 1))"
+        echo "git version: $GITVERSION, pyversion: $PYVERSION"
+        echo "gitversion=${GITVERSION}" >> ${GITHUB_OUTPUT}
+        echo "pyversion=${PYVERSION}" >> ${GITHUB_OUTPUT}
+    - name: Set image tag latest
+      if: github.ref == 'refs/heads/master'
+      run: echo "TAG=latest" >> ${GITHUB_ENV}
+    - name: Set image tag for PRs to branch name
+      if: github.event_name == 'pull_request'
+      run: echo "TAG=${GITHUB_HEAD_REF//\//-}" >> ${GITHUB_ENV}
+    - name: Set image tag from Git tag
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: echo "TAG=$(echo ${GITHUB_REF#refs/tags/})" >> ${GITHUB_ENV}
+    - name: Set image tag as output
+      id: image-tag
+      run: |
+        echo "tag=${{ env.TAG }}" >> ${GITHUB_OUTPUT}
+
+  build:
+    name: Build container image
+    needs:
+      - get-version
+    strategy:
+      fail-fast: false # NOTE(sg): allow matrix jobs to complete even if one of them fails
+      matrix:
+        platform:
+          - name: linux/amd64
+            runner: ubuntu-24.04
+          - name: linux/arm64
+            runner: ubuntu-24.04-arm
+    permissions:
+      # The permissions are set to allow the job to write to the GitHub Container Registry (GHCR) and read from the repository.
+      attestations: write
+      actions: read
+      checks: write
+      contents: write
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
+      packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+    - name: Prepare environment for current platform
+      run: |
+        platform=${{ matrix.platform.name }}
+        echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+    - name: checkout
+      uses: actions/checkout@v6
+    - name: Login to ghcr.io
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate Docker image metadata
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: |
+          ${{ env.GHCR_IMAGE }}
+        tags: |
+          type=raw,value=${{ needs.get-version.outputs.tag }},enable=true
+    - name: Set up Docker context for Buildx
+      run: |
+        docker context create builders
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+      with:
+        endpoint: builders
+        platforms: ${{ matrix.platform.name }}
+    - name: Build and push by digest
+      id: build
+      uses: docker/build-push-action@v7
+      env:
+        DOCKER_BUILDKIT: 1
+      with:
+        context: .
+        platforms: ${{ matrix.platform.name }}
+        labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
+        cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform.name }}
+        cache-to: type=gha,mode=max,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform.name }}
+        build-args: |
+          GITVERSION=${{ needs.get-version.outputs.gitversion }}
+          PYVERSION=${{ needs.get-version.outputs.pyversion }}
+    - name: Export digest
+      run: |
+        mkdir -p /tmp/digests
+        digest="${{ steps.build.outputs.digest }}"
+        touch "/tmp/digests/${digest#sha256:}"
+    - name: Upload digest
+      uses: actions/upload-artifact@v7
+      with:
+        name: digests-${{ env.PLATFORM_PAIR }}
+        path: /tmp/digests/*
+        if-no-files-found: error
+        retention-days: 1
+
+  merge:
+    name: Merge Docker manifests
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      actions: read
+      checks: read
+      contents: read
+      deployments: none
+      id-token: write
+      issues: read
+      discussions: read
+      packages: write
+      pages: none
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
+    needs:
+      - get-version
+      - build
+    steps:
+    - name: Download digests
+      uses: actions/download-artifact@v8
+      with:
+        path: /tmp/digests
+        pattern: digests-*
+        merge-multiple: true
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+      with:
+        driver-opts: |
+          network=host
+    - name: Login to docker.io
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v4
+      with:
+        registry: docker.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Login to ghcr.io
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate Docker metadata
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: |
+          ${{ env.GHCR_IMAGE }}
+          ${{ github.event_name != 'pull_request' && env.DOCKER_IMAGE || '' }}
+        annotations: |
+          type=org.opencontainers.image.description,value=${{ github.event.repository.description || 'No description provided' }}
+        tags: |
+          type=raw,value=${{ needs.get-version.outputs.tag }},enable=true
+    - name: Get timestamp in RFC3339
+      id: timestamp
+      run: |
+        echo "timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+    - name: Create manifest list and push
+      # NOTE(sg): This will push the manifest list to both ghcr.io and
+      # docker.io when the docker.io image is enabled in the "Generate Docker
+      # metadata" step.
+      working-directory: /tmp/digests
+      run: |
+        docker buildx imagetools create \
+          $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+          --annotation='index:org.opencontainers.image.description=${{ github.event.repository.description }}' \
+          --annotation='index:org.opencontainers.image.created=${{ steps.timestamp.outputs.timestamp }}' \
+          --annotation='index:org.opencontainers.image.url=${{ github.event.repository.url }}' \
+          --annotation='index:org.opencontainers.image.source=${{ github.event.repository.url }}' \
+          $(printf '${{ env.GHCR_IMAGE }}@sha256:%s ' *)
+    - name: Inspect ghcr.io image
+      run: |
+        docker buildx imagetools inspect '${{ env.GHCR_IMAGE }}:${{ steps.meta.outputs.version }}'
+    - name: Inspect docker.io image
+      if: github.event_name != 'pull_request'
+      run: |
+        docker buildx imagetools inspect '${{ env.DOCKER_IMAGE }}:${{ steps.meta.outputs.version }}'
+
+    - name: Run image
+      if: github.event_name == 'pull_request'
+      run: |
+        docker run ghcr.io/projectsyn/commodore:${{ needs.get-version.outputs.tag }} version
+
+    - name: Delete untagged container images
+      # We always delete all untagged container images after building an
+      # image. This way, there should never be stale untagged images laying
+      # around in the registry. In combination with the workflow that
+      # deletes PR tags after the PR is closed we should be able to keep the
+      # container image registry size in check.
+      uses: dataaxiom/ghcr-cleanup-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        package: ${{ github.event.repository.name }}
+        validate: true
+
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    needs:
+    - merge
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0 # NOTE(aa): Required in order to have tag information available
+    - name: Build changelog from PRs with labels
+      id: build_changelog
+      uses: mikepenz/release-changelog-builder-action@v6
+      with:
+        configuration: ".github/changelog-configuration.json"
+        # PreReleases still get a changelog, but the next full release gets a diff since the last full release,
+        # combining possible changelogs of all previous PreReleases in between.
+        # PreReleases show a partial changelog since last PreRelease.
+        ignorePreReleases: "${{ !contains(github.ref, '-rc') }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Read release message from tag commit
+      id: tag_message
+      run: |
+        git fetch origin +refs/tags/*:refs/tags/*
+        # Extract tag message
+        TAG_MSG=$(git tag -n --format='%(contents:body)' ${GITHUB_REF##refs/tags/} | tr -d '\r')
+        # Join multiple lines belonging to the same paragraph for GitHub
+        # markdown.
+        # Paragraph breaks should be '\n\n'. List items should be '\n*'. We
+        # replace single line breaks which don't preceed a '*' with a space
+        # with sed. Note `sed -z` operates on the whole input instead of
+        # line-wise. Note that this currently still breaks markdown code
+        # blocks.
+        TAG_MSG=$(echo "$TAG_MSG" | sed -z 's/\([^\n]\)\n\([^\n\*]\)/\1 \2/g')
+        # Set action output `messsage` as JSON-encoded string to preserve
+        # newlines. We decode with `fromJSON()` below.
+        TAG_MSG=$(jq -n --arg msg "${TAG_MSG}" '$msg')
+        echo "message=${TAG_MSG}" >> $GITHUB_OUTPUT
+      env:
+        GITHUB_REF: ${{ github.ref }}
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        body: "# Summary\n\n${{fromJSON(steps.tag_message.outputs.message)}}\n\n# Changes\n\n${{steps.build_changelog.outputs.changelog}}"
+        prerelease: "${{ contains(github.ref, '-rc') }}"
+        # Ensure target branch for release is "master"
+        commit: master
+        token: ${{ secrets.GITHUB_TOKEN }}
