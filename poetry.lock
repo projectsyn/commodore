@@ -952,28 +952,34 @@ test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock ; python_version < \"3.
 
 [[package]]
 name = "gojsonnet"
-version = "0.21.0"
+version = "0.22.0"
 description = "Python bindings for Jsonnet - The data templating language "
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "gojsonnet-0.21.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:6241f9bcef9a4734e48a8353cbfb0e36cd382a410fb030850c01f196abd6a33f"},
-    {file = "gojsonnet-0.21.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:1952254a8240bc3f326ea17ec5dbb5d88a554b36df5a507b180bfd40ec200729"},
-    {file = "gojsonnet-0.21.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6f428e8978df6b4629bccaf16dc67ad5dbb35f7f3d0249d42264e6c39289fd51"},
-    {file = "gojsonnet-0.21.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:c357513562a29fff3968b54f148efd061db9b54ca03125032e88d9e9eb92d828"},
-    {file = "gojsonnet-0.21.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7121a9d1fd32d9b2e204b50b18e951312e939f8f668f48413e569e229d395a70"},
-    {file = "gojsonnet-0.21.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c1d30f6f5996faacf76e06786cd530ed5f081b21e990fdad76d8f1623640cd59"},
-    {file = "gojsonnet-0.21.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:cdffcb3a7a172a60395630a24048230969142091f2ff83a64227d44a17acc3b5"},
-    {file = "gojsonnet-0.21.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:123a349b704ec01581df239b8db3979ebee4d5db824ea6fe6b9dffadcb1e5f9e"},
-    {file = "gojsonnet-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5a11dd26a4ac189face2f51438d7b8c6d8a0909617e118c644485ed72f504c07"},
-    {file = "gojsonnet-0.21.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:55549a81d0857fb36c17200f125a9a47ee24125c9a9557636aa37c8e873e9fed"},
-    {file = "gojsonnet-0.21.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:bcbfe4c69dc26e7a93015fc92c3c90738cfda54395ec8d075fe0f4c265129adb"},
-    {file = "gojsonnet-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2a6e1bb5e8874f916e7b14df9fd43cd582802d5972c012b000d9ebeaaa93c5f2"},
-    {file = "gojsonnet-0.21.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e910cc7cb5fe636ccf82edb51e3bcc6d99f0baebf18c1507d5318c72481be47f"},
-    {file = "gojsonnet-0.21.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:952ca4897a0c237a4682e1b8365bd414abe3324cf3849b164bf46bd9e7de975a"},
-    {file = "gojsonnet-0.21.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:96abec47c9c44aa191eb945d3bffcdbe99ee9192d510948827751938ce215f90"},
-    {file = "gojsonnet-0.21.0.tar.gz", hash = "sha256:35e7c75a47027bc4c593285a250ae33d713d7a082644da0de1eabb0bd65fae9d"},
+    {file = "gojsonnet-0.22.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7fc336b2bc01bbd559dc748f1340219d74d4e04b2ff258ec2d63c4f7d547220f"},
+    {file = "gojsonnet-0.22.0-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:482b350e46bb8f0d6fd90bc619e1dffdd714523c15101852dcf55fc2ff3526dc"},
+    {file = "gojsonnet-0.22.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c996d79ad9e7f33dbe578816f2c68d067367761f36f6c3a1bf4837d67b8998d9"},
+    {file = "gojsonnet-0.22.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:218bae282db04eab455c1ee3bca458cea197c1f9959f8c663e855161bfb60864"},
+    {file = "gojsonnet-0.22.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9cb3bf694564b41210d99b7d0aac77ad63d1c8bae52318a91a5785c335e0aafd"},
+    {file = "gojsonnet-0.22.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7288a71126caed7e145027410becf39bddc23882b15638676109de12f99ea27c"},
+    {file = "gojsonnet-0.22.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:342810a282f5f501a45588d0d468ac13327d3d0a33de5182506d1a79b48b4f7e"},
+    {file = "gojsonnet-0.22.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ac7cae7ba9fcaf3c4c2c2377204a6fea8c4bcb6d2e4b2a42b71e6f83bdcf9855"},
+    {file = "gojsonnet-0.22.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7645cb88583dd2372f6fd6a99be073333c9c66acd18ce7c686ab836d081c613b"},
+    {file = "gojsonnet-0.22.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:64cf34e33e64879d4a2ef33dba70558f489433af96f0e6a218e875c285e04c29"},
+    {file = "gojsonnet-0.22.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:21237943720bae64672ec9eb3631704ec90380b95fdcdb37e352db3ce4b5b4d6"},
+    {file = "gojsonnet-0.22.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f8612fc9c7a4e81e33899d5dfb49d747f8660051ddd6bd8b9e22679bae67f902"},
+    {file = "gojsonnet-0.22.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:5827b5565d56e2625f682c9f54883dbe90d5af4259b37b51cd86d140af10969d"},
+    {file = "gojsonnet-0.22.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e451036a77ce52a2e8f47eae49b92aff513827a2f1eaa8b059087f5008f4e8df"},
+    {file = "gojsonnet-0.22.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1121b51a6cda3a01f05d476f32e6a9930a5b39f0f2500017eccbcafe0254d108"},
+    {file = "gojsonnet-0.22.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:9c8d7a4eef1402fe645af08805b6db7ec901fc47dd19f65fa014631ce92a76e2"},
+    {file = "gojsonnet-0.22.0-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1927325ae90e13cd58e7494c3e70d13fa46d46108bdec144b5b8a53a66a81449"},
+    {file = "gojsonnet-0.22.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8a015c7b515d599208de035b236c8b8c1f6cdada5ff24d864094b2121e53af81"},
+    {file = "gojsonnet-0.22.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9eeb35cc650311213d10d60e86f2a13143d3ad26aabb5535a68f1e5b13004f1c"},
+    {file = "gojsonnet-0.22.0-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:54e3419e2c436d9bc3ece0dd38ad5bfd2799d789106fa403482e2c9e5eb7c89e"},
+    {file = "gojsonnet-0.22.0-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fb9714801dd4bf3a9b8c195bdcb673b230aed53dc2c2b6052c476280f75b4a7d"},
+    {file = "gojsonnet-0.22.0.tar.gz", hash = "sha256:b00f09e019d403fc5fb0e691e043115dd84548e055c018638e22b6b7e9829d09"},
 ]
 
 [[package]]
@@ -3376,4 +3382,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.13"
-content-hash = "cb1cf83fa1ab2ce9d626d205fd5d69f1c54d9e7301ce0da37fc81f1a3a406591"
+content-hash = "473dbb5a8aca1d7fd4e18ff43c09d8e2d56ddfd87cc89c36ca3f77589d36246d"

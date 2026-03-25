@@ -53,7 +53,7 @@ oauthlib = "3.3.1"
 pyjwt = "2.12.1"
 PyGithub = "2.9.0"
 reclass-rs = "0.10.1"
-gojsonnet = "0.21.0"
+gojsonnet = "0.22.0"
 pygobuildinfo = "0.1.28"
 
 [tool.poetry.group.dev.dependencies]
