@@ -237,6 +237,10 @@ jobs:
       # deletes PR tags after the PR is closed we should be able to keep the
       # container image registry size in check.
       uses: dataaxiom/ghcr-cleanup-action@v1
+      # Don't fail the job on errors in this step. The action can fail if
+      # multiple PR jobs are running in parallel and try to delete the same
+      # stale layers & images.
+      continue-on-error: true
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         package: ${{ github.event.repository.name }}
