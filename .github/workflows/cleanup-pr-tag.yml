@@ -19,3 +19,9 @@ jobs:
           tags: ${{ env.VERSION }}
           package: ${{ github.event.repository.name }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          # NOTE(sg): When we delete a tag, we need to explicitly enable
+          # `delete-untagged` to also cleanup the now untagged images.  Here,
+          # we probably don't need to have an age guard, since this action
+          # will almost certainly always run before other (renovate) PRs are
+          # updated to the latest master branch.
+          delete-untagged: true
