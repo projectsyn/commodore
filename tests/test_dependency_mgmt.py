@@ -73,7 +73,7 @@ def _prepare_repository(
 
     repo.index.add([f"{class_path}/defaults.yml", f"{class_path}/{component_name}.yml"])
     repo.index.commit("component defaults")
-    return DependencySpec(url, version, sub_path)
+    return DependencySpec(url, version, None, sub_path)
 
 
 def test_create_component_symlinks_fails(config: Config, tmp_path: Path, mockdep):
@@ -365,7 +365,7 @@ def test_register_components(
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, {})
     patch_read.return_value = {
-        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", None, "")
         for cn in component_dirs
     }
 
@@ -389,7 +389,7 @@ def test_register_components_and_aliases(
     )
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
-        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", None, "")
         for cn in component_dirs
     }
     patch_read.return_value["fooer"] = patch_read.return_value["foo"]
@@ -420,7 +420,7 @@ def test_register_components_and_aliases_raises(
     component_dirs, other_dirs = _setup_register_components(tmp_path)
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
-        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", None, "")
         for cn in component_dirs
     }
     patch_read.return_value["fooer"] = patch_read.return_value["foo"]
@@ -441,7 +441,7 @@ def test_register_unknown_components(
     component_dirs.extend(unknown_components)
     patch_discover.return_value = (component_dirs, {})
     patch_read.return_value = {
-        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", None, "")
         for cn in component_dirs
     }
 
@@ -469,7 +469,7 @@ def test_register_dangling_aliases(
 
     patch_discover.return_value = (component_dirs, alias_data)
     patch_read.return_value = {
-        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", "")
+        cn: DependencySpec(f"https://fake.repo.url/{cn}.git", "master", None, "")
         for cn in component_dirs
     }
     patch_read.return_value["bazzer"] = patch_read.return_value["baz"]
@@ -714,7 +714,7 @@ def _setup_packages(
         _setup_package_remote(p, upstream_path / f"{p}.git")
         url = f"file://{upstream_path}/{p}.git"
         version = "master"
-        package_specs[p] = DependencySpec(url, version, "")
+        package_specs[p] = DependencySpec(url, version, None, "")
 
     return package_specs
 
@@ -833,7 +833,7 @@ def test_fetch_component_raises_clickexception(tmp_path: Path, config: Config):
         version=cspec.version,
     )
     with pytest.raises(click.ClickException) as exc:
-        dependency_mgmt.fetch_component(config, [component])
+        dependency_mgmt.fetch_component(config, [(component, cspec.version)])
 
     assert (
         "while fetching component test-component: Failed to checkout revision 'foo'"

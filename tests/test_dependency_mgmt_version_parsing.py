@@ -144,7 +144,7 @@ params_packages = {
             ["test"],
             {
                 "test": version_parsing.DependencySpec(
-                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                    "https://git.example.com/pkg.git", "v1.0.0", None, ""
                 ),
             },
         ),
@@ -153,10 +153,10 @@ params_packages = {
             ["test", "foo"],
             {
                 "test": version_parsing.DependencySpec(
-                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                    "https://git.example.com/pkg.git", "v1.0.0", None, ""
                 ),
                 "foo": version_parsing.DependencySpec(
-                    "https://git.example.com/foo.git", "feat/initial", ""
+                    "https://git.example.com/foo.git", "feat/initial", None, ""
                 ),
             },
         ),
@@ -165,16 +165,16 @@ params_packages = {
             ["test", "foo", "bar", "baz"],
             {
                 "test": version_parsing.DependencySpec(
-                    "https://git.example.com/pkg.git", "v1.0.0", ""
+                    "https://git.example.com/pkg.git", "v1.0.0", None, ""
                 ),
                 "foo": version_parsing.DependencySpec(
-                    "https://git.example.com/foo.git", "feat/initial", ""
+                    "https://git.example.com/foo.git", "feat/initial", None, ""
                 ),
                 "bar": version_parsing.DependencySpec(
-                    "https://git.example.com/barbaz.git", "master", "bar"
+                    "https://git.example.com/barbaz.git", "master", None, "bar"
                 ),
                 "baz": version_parsing.DependencySpec(
-                    "https://git.example.com/barbaz.git", "master", "baz"
+                    "https://git.example.com/barbaz.git", "master", None, "baz"
                 ),
             },
         ),
