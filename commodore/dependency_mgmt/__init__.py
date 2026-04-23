@@ -103,7 +103,7 @@ def fetch_components(cfg: Config):
             cn,
             work_dir=cfg.work_dir,
             dependency=cdep,
-            version=cspec.version,
+            version=cspec.test_version or cspec.version,
             sub_path=cspec.path,
         )
         if c.checkout_is_dirty() and not cfg.force:
@@ -111,7 +111,8 @@ def fetch_components(cfg: Config):
                 f"Component {cn} has uncommitted changes. "
                 + "Please specify `--force` to discard them"
             )
-        deps.setdefault(cdep.url, []).append(c)
+        ci = (c, cspec.version)
+        deps.setdefault(cdep.url, []).append(ci)
     do_parallel(fetch_component, cfg, deps.values())
 
     _setup_component_aliases(cfg, component_aliases, cspecs, set(deps.keys()))
@@ -155,15 +156,26 @@ def _setup_component_aliases(
     do_parallel(setup_alias, cfg, aliases.values())
 
 
-def fetch_component(cfg: Config, dependencies: Iterable[Component]):
+def fetch_component(cfg: Config, dependencies: Iterable[tuple[Component, str]]):
     """
     Fetch all components of a MultiDependency object.
     """
-    for c in dependencies:
+    for c, fallback_version in dependencies:
         try:
             c.checkout()
         except RefError as e:
-            raise ClickException(f"while fetching component {c.name}: {e}")
+            if c.version == fallback_version:
+                raise ClickException(f"while fetching component {c.name}: {e}")
+            else:
+                click.echo(
+                    f" > Unable to checkout version '{c.version}' for component '{c.name}', "
+                    + f"trying again with version '{fallback_version}'"
+                )
+                c.version = fallback_version
+                try:
+                    c.checkout()
+                except RefError as e:
+                    raise ClickException(f"while fetching component {c.name}: {e}")
         cfg.register_component(c)
         create_component_symlinks(cfg, c)
 
