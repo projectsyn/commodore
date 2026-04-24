@@ -33,17 +33,17 @@ Please check your operating system's documentation for instructions to setup a w
 +
 [source,bash]
 ----
-uv tool install --python=python3.12 --python-preference=system syn-commodore
+uv tool install --python=python3.14 --python-preference=system syn-commodore
 ----
 +
 [TIP]
 ====
-Commodore currently only supports Python 3.10 - Python 3.12.
+Commodore currently supports Python 3.10 - Python 3.14.
 
-This command will prefer using your system's version of Python 3.12.
-However, `uv` will download a copy of Python 3.12 if `python3.12` isn't available on your system.
+This command will prefer using your system's version of Python 3.14.
+However, `uv` will download a copy of Python 3.14 if `python3.14` isn't available on your system.
 
-If you'd prefer to use your system's `python3.10` or `python3.11` you can adjust the command accordingly.
+If you'd prefer to use your system's `python3`, you can omit the `--python` and `--python-preference` flags.
 ====
 +
 [TIP]
