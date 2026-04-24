@@ -39,7 +39,7 @@ lintenv_mypy:
 lintenv_black:
 	$(TOX_COMMAND) -e black --notest
 
-.PHONY: test_py3.10 test_py3.11 test_py3.12
+.PHONY: test_py3.10 test_py3.11 test_py3.12 test_py3.13 test_py3.14
 
 test_py3.10:
 	$(TOX_COMMAND) -e py310
@@ -50,7 +50,13 @@ test_py3.11:
 test_py3.12:
 	$(TOX_COMMAND) -e py312
 
-.PHONY: testenv_py3.10 testenv_py3.11 testenv_py3.12
+test_py3.13:
+	$(TOX_COMMAND) -e py313
+
+test_py3.14:
+	$(TOX_COMMAND) -e py314
+
+.PHONY: testenv_py3.10 testenv_py3.11 testenv_py3.12 testenv_py3.13 testenv_py3.14
 
 testenv_py3.10:
 	$(TOX_COMMAND) -e py310 --notest
@@ -61,7 +67,13 @@ testenv_py3.11:
 testenv_py3.12:
 	$(TOX_COMMAND) -e py312 --notest
 
-.PHONY: bench_py3.10 bench_py3.11 bench_py3.12
+testenv_py3.13:
+	$(TOX_COMMAND) -e py313 --notest
+
+testenv_py3.1k:
+	$(TOX_COMMAND) -e py314 --notest
+
+.PHONY: bench_py3.10 bench_py3.11 bench_py3.12 bench_py3.13 bench_py3.14
 
 bench_py3.10:
 	$(TOX_COMMAND) -e py310-bench
@@ -72,7 +84,13 @@ bench_py3.11:
 bench_py3.12:
 	$(TOX_COMMAND) -e py312-bench
 
-.PHONY: benchenv_py3.10 benchenv_py3.11 benchenv_py3.12
+bench_py3.13:
+	$(TOX_COMMAND) -e py312-bench
+
+bench_py3.14:
+	$(TOX_COMMAND) -e py312-bench
+
+.PHONY: benchenv_py3.10 benchenv_py3.11 benchenv_py3.12 benchenv_py3.13 benchenv_py3.14
 
 benchenv_py3.10:
 	$(TOX_COMMAND) -e py310-bench --notest
@@ -82,3 +100,9 @@ benchenv_py3.11:
 
 benchenv_py3.12:
 	$(TOX_COMMAND) -e py312-bench --notest
+
+benchenv_py3.13:
+	$(TOX_COMMAND) -e py313-bench --notest
+
+benchenv_py3.14:
+	$(TOX_COMMAND) -e py314-bench --notest
