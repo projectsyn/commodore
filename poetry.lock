@@ -246,6 +246,18 @@ urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >
 crt = ["awscrt (==0.31.2)"]
 
 [[package]]
+name = "cachetools"
+version = "7.0.6"
+description = "Extensible memoizing collections and decorators"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "cachetools-7.0.6-py3-none-any.whl", hash = "sha256:4e94956cfdd3086f12042cdd29318f5ced3893014f7d0d059bf3ead3f85b7f8b"},
+    {file = "cachetools-7.0.6.tar.gz", hash = "sha256:e5d524d36d65703a87243a26ff08ad84f73352adbeafb1cde81e207b456aaf24"},
+]
+
+[[package]]
 name = "certifi"
 version = "2026.2.25"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -1091,14 +1103,14 @@ pyparsing = ">=3.1,<4"
 
 [[package]]
 name = "hvac"
-version = "2.3.0"
+version = "2.4.0"
 description = "HashiCorp Vault API client"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "hvac-2.3.0-py3-none-any.whl", hash = "sha256:a3afc5710760b6ee9b3571769df87a0333da45da05a5f9f963e1d3925a84be7d"},
-    {file = "hvac-2.3.0.tar.gz", hash = "sha256:1b85e3320e8642dd82f234db63253cda169a817589e823713dc5fca83119b1e2"},
+    {file = "hvac-2.4.0-py3-none-any.whl", hash = "sha256:008db5efd8c2f77bd37d2368ea5f713edceae1c65f11fd608393179478649e0f"},
+    {file = "hvac-2.4.0.tar.gz", hash = "sha256:e0056ad9064e7923e874e6769015b032580b639e29246f5ab1044f7959c1c7e0"},
 ]
 
 [package.dependencies]
@@ -1334,53 +1346,53 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.34.7"
+version = "0.35.0"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
-python-versions = "<3.13,>=3.10"
+python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "kapitan-0.34.7-py3-none-any.whl", hash = "sha256:7efa4b52404f44edff2ff467ec98e3ac56d9c22a1698a667c7f06446b11ef92f"},
-    {file = "kapitan-0.34.7.tar.gz", hash = "sha256:fd17adda04ae0ed92775dea5f20c2ea32d69359b82eae81e7aff1076e1d44e82"},
+    {file = "kapitan-0.35.0-py3-none-any.whl", hash = "sha256:5787ceb7a5dc1561af5953d130e9add2fcccd3c90b9251be94521066f6c515a2"},
+    {file = "kapitan-0.35.0.tar.gz", hash = "sha256:ddaf71d16b74949dc7a128bedb5f1a67589df512bc1a17e3b033db65f3751270"},
 ]
 
 [package.dependencies]
-addict = ">=2.4.0,<3.0.0"
-azure-identity = ">=1.12.0,<2.0.0"
-azure-keyvault-keys = ">=4.7.0,<5.0.0"
-boto3 = ">=1.18.17,<2.0.0"
+addict = ">=2.4.0,<3"
+azure-identity = ">=1.12.0,<2"
+azure-keyvault-keys = ">=4.7.0,<5"
+boto3 = ">=1.18.17,<2"
+cachetools = ">=7.0.1,<8.0.0"
 certifi = "*"
-copier = ">=9.3.1,<10.0.0"
-cryptography = ">=3.4.7,<44.0.0"
-filetype = ">=1.2.0,<2.0.0"
-gitdb = ">=4.0.10,<5.0.0"
-gitpython = ">=3.1.30,<4.0.0"
-google-api-python-client = ">=2.15.0,<3.0.0"
-hvac = "2.3.0"
-jinja2 = ">=3.0.1,<4.0.0"
-jsonnet = ">=0.21.0,<0.22.0"
-jsonpath-ng = ">=1.7.0,<2.0.0"
-jsonschema = ">=4.17.3,<5.0.0"
-kadet = ">=0.3.0,<0.4.0"
+copier = ">=9.3.1,<10"
+cryptography = ">=3.4.7,<47.0.0"
+filetype = ">=1.2.0,<2"
+gitdb = ">=4.0.10,<5"
+gitpython = ">=3.1.30,<4"
+google-api-python-client = ">=2.15.0,<3"
+hvac = "2.4.0"
+jinja2 = ">=3.0.1,<4"
+jsonnet = ">=0.21.0,<0.22"
+jsonpath-ng = ">=1.7.0,<2"
+jsonschema = ">=4.17.3,<5"
+kadet = ">=0.3.0,<0.4"
 kapicorp-reclass = ">=2.0.0"
 packaging = ">=23,<26"
-pydantic = ">=2.8.2,<3.0.0"
-pydantic-settings = ">=2.4.0,<3.0.0"
-python-box = ">=7.2.0,<8.0.0"
+pydantic = ">=2.8.2,<3"
+pydantic-settings = ">=2.4.0,<3"
+python-box = ">=7.2.0,<8"
 python-gnupg = ">=0.4.7,<0.6.0"
 pyyaml = ">=6.0,<7.0"
-regex = ">=2024.5.10,<2025.0.0"
-requests = ">=2.28.2,<3.0.0"
-six = ">=1.16.0,<2.0.0"
-strenum = {version = ">=0.4.15,<0.5.0", markers = "python_version >= \"3.10\" and python_version < \"4.0\""}
-toml = ">=0.10.2,<0.11.0"
-typing-extensions = ">=4.0.0,<5.0.0"
-yamllint = ">=1.29.0,<2.0.0"
+regex = ">=2024.5.10,<2025"
+requests = ">=2.28.2,<3"
+strenum = {version = ">=0.4.15,<0.5", markers = "python_version ~= \"3.10\""}
+toml = ">=0.10.2,<0.11"
+typing-extensions = ">=4.0.0,<5"
+yamllint = ">=1.29.0,<2"
 
 [package.extras]
-gojsonnet = ["gojsonnet (>=0.21.0,<0.22.0)"]
-omegaconf = ["omegaconf (>=2.4.0.dev3,<3.0.0)"]
-reclass-rs = ["reclass-rs (>=0.8.0,<0.9.0)"]
+gojsonnet = ["gojsonnet (>=0.21.0,<0.22)"]
+omegaconf = ["omegaconf (>=2.4.0.dev3,<3)"]
+reclass-rs = ["reclass-rs (>=0.10.1,<0.11.0)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -3367,4 +3379,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.13"
-content-hash = "cb42bbb39065d926bafa24137dc782efea16f91f99e7908819c1bf919ec5f7c0"
+content-hash = "41092a6c6fec84e059cc6ac369b5a1d0095123b10f35dfd9c169b6ddd5cd77c0"
