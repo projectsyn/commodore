@@ -1372,14 +1372,14 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.35.0"
+version = "0.35.1"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "kapitan-0.35.0-py3-none-any.whl", hash = "sha256:5787ceb7a5dc1561af5953d130e9add2fcccd3c90b9251be94521066f6c515a2"},
-    {file = "kapitan-0.35.0.tar.gz", hash = "sha256:ddaf71d16b74949dc7a128bedb5f1a67589df512bc1a17e3b033db65f3751270"},
+    {file = "kapitan-0.35.1-py3-none-any.whl", hash = "sha256:c1159f830a4368782f34c890d2a6b06007a6fe3894ab02861d6fdb218b3a5730"},
+    {file = "kapitan-0.35.1.tar.gz", hash = "sha256:fa091b606680269fe861b4b596cec9deeb3679679d5f915d0f5ceed0c961c328"},
 ]
 
 [package.dependencies]
@@ -3404,4 +3404,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.15"
-content-hash = "d7a2c73e027fa88e5bb6c32f82842c3525ec3ac9b0f6e730760f150bb4a1cd83"
+content-hash = "f6e91b136e76baeb606a83c4be9ad6e31704c4352db5a96c0009ed08e93a541a"
