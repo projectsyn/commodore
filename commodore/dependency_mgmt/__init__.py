@@ -141,16 +141,11 @@ def _setup_component_aliases(
                 f"Component alias {alias} has uncommitted changes. "
                 + "Please specify `--force` to discard them"
             )
-        if adep.url in component_urls:
-            # NOTE(sg): if we already processed the dependency URL in the previous fetch
-            # stage, we can create all instance worktrees in parallel. We do so by using
-            # the alias name as the key for our "parallelization" dict.
-            aliases[alias] = [(alias, c)]
-        else:
-            # Otherwise, we use adep.url as the parallelization key to avoid any race
-            # conditions when creating multiple worktrees from a not-yet-cloned
-            # dependency URL.
-            aliases.setdefault(adep.url, []).append((alias, c))
+        # NOTE(sg): Starting from gitpython 3.1.48, we intermittently run into locking errors and
+        # similar if we try to create multiple worktrees in parallel from a single bare checkout, so
+        # we unconditionally use adep.url as the parallelization key to avoid any race conditions
+        # when creating multiple worktrees from a single dependency URL.
+        aliases.setdefault(adep.url, []).append((alias, c))
 
     do_parallel(setup_alias, cfg, aliases.values())
 

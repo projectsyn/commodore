@@ -197,6 +197,42 @@ def test_fetch_components(patch_discover, patch_read, config: Config, tmp_path: 
 
 @patch("commodore.dependency_mgmt._read_components")
 @patch("commodore.dependency_mgmt._discover_components")
+def test_fetch_components_aliases(
+    patch_discover, patch_read, config: Config, tmp_path: Path
+):
+    components = ["component-one", "component-two"]
+    aliases = {
+        "alias-one-a": "component-one",
+        "alias-one-b": "component-one",
+        "alias-one-c": "component-one",
+        "alias-one-d": "component-one",
+        "alias-two-a": "component-two",
+        "alias-two-b": "component-two",
+        "alias-two-c": "component-two",
+        "alias-two-d": "component-two",
+    }
+    patch_discover.return_value = (components, aliases)
+    patch_read.return_value = setup_components_upstream(
+        tmp_path, components, aliases=aliases
+    )
+
+    dependency_mgmt.fetch_components(config)
+
+    for alias, component in aliases.items():
+        assert component in config._components
+        assert alias in config._component_aliases
+        assert config._component_aliases[alias] == component
+        assert (
+            tmp_path / "inventory" / "classes" / "components" / f"{alias}.yml"
+        ).is_symlink()
+        assert (
+            tmp_path / "inventory" / "classes" / "defaults" / f"{alias}.yml"
+        ).is_symlink()
+        assert (tmp_path / "dependencies" / alias).is_dir()
+
+
+@patch("commodore.dependency_mgmt._read_components")
+@patch("commodore.dependency_mgmt._discover_components")
 def test_fetch_components_with_alias_version(
     patch_discover, patch_read, config: Config, tmp_path: Path
 ):
