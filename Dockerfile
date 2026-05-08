@@ -1,4 +1,4 @@
-FROM docker.io/golang:1.26.2 AS golang
+FROM docker.io/golang:1.26.3 AS golang
 
 FROM docker.io/python:3.14.4-slim-bookworm AS base
 
