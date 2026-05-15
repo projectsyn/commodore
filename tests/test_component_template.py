@@ -851,6 +851,12 @@ def test_run_component_new_then_delete(tmp_path: P, cli_runner: RunnerFunc):
         ["-d", tmp_path, "-vvv", "component", "new", component_name, "--lib", "--pp"]
     )
     assert result.exit_code == 0
+    assert (tmp_path / "dependencies" / component_name).exists()
+    assert (
+        tmp_path
+        / "dependencies"
+        / f".repos/github.com/projectsyn/component-{component_name}.git"
+    ).exists()
 
     result = cli_runner(
         ["-d", tmp_path, "-vvv", "component", "delete", "--force", component_name]
@@ -859,6 +865,11 @@ def test_run_component_new_then_delete(tmp_path: P, cli_runner: RunnerFunc):
 
     # Ensure the dependencies folder is gone.
     assert not (tmp_path / "dependencies" / component_name).exists()
+    assert not (
+        tmp_path
+        / "dependencies"
+        / f".repos/github.com/projectsyn/component-{component_name}.git"
+    ).exists()
 
     # Links in the inventory should be gone too.
     for f in [
