@@ -9,6 +9,7 @@ import os
 
 import click
 import pytest
+import time
 import shutil
 import yaml
 from pathlib import Path as P
@@ -851,6 +852,20 @@ def test_run_component_new_then_delete(tmp_path: P, cli_runner: RunnerFunc):
         ["-d", tmp_path, "-vvv", "component", "new", component_name, "--lib", "--pp"]
     )
     assert result.exit_code == 0
+    assert (tmp_path / "dependencies" / component_name).exists()
+    assert (
+        tmp_path
+        / "dependencies"
+        / f".repos/github.com/projectsyn/component-{component_name}.git"
+    ).exists()
+
+    # NOTE(sg): This test is flaky without this sleep because something continues to create files in
+    # the component's Git repo directory after the `cli_runner()` call for `component create`
+    # returns. After some testing, we've settled on 0.5s sleep which is enough to not see a single
+    # failure in approx 8000 back-to-back runs. Using `subprocess.call()` instead of the click
+    # `CliRunner` seems to also fix (or hide) the issue, but two `subprocess.call()` are actually
+    # slower than sleeping here.
+    time.sleep(0.5)
 
     result = cli_runner(
         ["-d", tmp_path, "-vvv", "component", "delete", "--force", component_name]
@@ -859,6 +874,11 @@ def test_run_component_new_then_delete(tmp_path: P, cli_runner: RunnerFunc):
 
     # Ensure the dependencies folder is gone.
     assert not (tmp_path / "dependencies" / component_name).exists()
+    assert not (
+        tmp_path
+        / "dependencies"
+        / f".repos/github.com/projectsyn/component-{component_name}.git"
+    ).exists()
 
     # Links in the inventory should be gone too.
     for f in [
