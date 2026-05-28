@@ -166,6 +166,8 @@ def _complete_clusters(ctx: click.Context, _, incomplete: str) -> list[str]:
 )
 @click.option(
     "--processes",
+    envvar="COMMODORE_PROCESSES",
+    metavar="COUNT",
     type=int,
     default=0,
     show_default=True,
