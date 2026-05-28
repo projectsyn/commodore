@@ -164,6 +164,16 @@ def _complete_clusters(ctx: click.Context, _, incomplete: str) -> list[str]:
     + "uncommitted changes in tracked files count as local changes."
     + "The parameter has no effect if `--local` is given.",
 )
+@click.option(
+    "--processes",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Control the number of worker processes that are spawned when compiling the catalog. "
+    + "A value of `0` will set the number of worker processes to the number of CPUs available "
+    + "on the system. Note that this parameter doesn't adjust the number of threads used by "
+    + "reclass-rs.",
+)
 @options.verbosity
 @options.pass_config
 # pylint: disable=too-many-arguments
@@ -187,6 +197,7 @@ def compile_catalog(
     migration,
     dynamic_fact: str,
     force: bool,
+    processes: int,
 ):
     config.update_verbosity(verbose)
     config.api_url = api_url
@@ -204,6 +215,7 @@ def compile_catalog(
     config.fetch_dependencies = fetch_dependencies
     config.dynamic_facts = parse_dynamic_facts_from_cli(dynamic_fact)
     config.force = not config.local and force
+    config.processes = processes
 
     if config.push and (
         config.global_repo_revision_override or config.tenant_repo_revision_override
