@@ -129,6 +129,12 @@ With `--no-force`, local changes in global, tenant, or dependency checkouts are 
 Specifying `--force` has no effect if `--local` is given, and is silently ignored.
 Defaults to `--no-force`.
 
+*--processes*::
+  Control the number of worker processes that are spawned when compiling the catalog.
+  A value of `0` will set the number of worker processes to the number of CPUs available on the system.
+  Note that this parameter doesn't adjust the number of threads used by reclass-rs.
+  Defaults to `0`.
+
 *--help*::
   Show catalog clean usage and options then exit.
 

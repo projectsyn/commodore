@@ -251,6 +251,10 @@ def kapitan_compile(
     refController = RefController(config.refs_dir)
     if fake_refs:
         refController.register_backend(FakeVaultBackend())
+    processes: Optional[int] = config.processes
+    if config.processes == 0:
+        processes = cpu_count()
+
     click.secho("Compiling catalog...", bold=True)
     # workaround the non-modifiable Namespace() default value for cached.args
     cached.args.inventory_backend = "reclass-rs"
@@ -261,7 +265,7 @@ def kapitan_compile(
     cached.args.verbose = config.trace
     cached.args.output_path = output_dir
     cached.args.targets = targets
-    cached.args.parallelism = cpu_count()
+    cached.args.parallelism = processes
     cached.args.labels = None
     cached.args.prune = False
     cached.args.indent = 2

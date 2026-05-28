@@ -103,6 +103,7 @@ class Config:
     _request_timeout: int
     _managed_tools: dict[str, str]
     _api_token: Optional[str]
+    _processes: int
 
     oidc_client: Optional[str]
     oidc_discovery_url: Optional[str]
@@ -144,6 +145,7 @@ class Config:
         self._github_token = None
         self._request_timeout = 5
         self._managed_tools = {}
+        self._processes = 0
 
     @property
     def verbose(self):
@@ -326,6 +328,14 @@ class Config:
     @managed_tools.setter
     def managed_tools(self, managed_tools: dict[str, str]):
         self._managed_tools = managed_tools
+
+    @property
+    def processes(self) -> int:
+        return self._processes
+
+    @processes.setter
+    def processes(self, processes: int):
+        self._processes = processes
 
     @property
     def inventory(self):
