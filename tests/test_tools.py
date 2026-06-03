@@ -5,7 +5,7 @@ import textwrap
 import stat
 import sys
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from unittest.mock import patch, MagicMock
@@ -276,6 +276,7 @@ def test_install_jb(config: Config, fs, capsys):
     config.managed_tools = {}
     _setup_tool_github_responses()
     assert not tools.MANAGED_TOOLS_PATH.exists()
+    before_install = datetime.now().replace(microsecond=0)
 
     tools.install_tool(config, "jb", None)
 
@@ -299,7 +300,10 @@ def test_install_jb(config: Config, fs, capsys):
     assert len(state) == 1
     assert "jb" in state
     updated = datetime.fromisoformat(state["jb"])
-    assert datetime.now() - updated < timedelta(seconds=1)
+    # NOTE(sg): we're not checking timedelta here, instead we're verifying that the updated
+    # timestamp is between now and before we installed the tool.
+    assert datetime.now() > updated
+    assert updated >= before_install
 
 
 @pytest.mark.skipif(
