@@ -10,6 +10,8 @@ on:
     branches:
     - master
 
+permissions: {}
+
 jobs:
   build-and-publish:
     # Skip job on forks

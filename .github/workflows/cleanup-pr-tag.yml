@@ -6,6 +6,9 @@ name: Delete closed PR container image tag
     types:
       - closed
 
+permissions:
+  packages: write
+
 jobs:
   cleanup-pr-tag:
     runs-on: ubuntu-latest

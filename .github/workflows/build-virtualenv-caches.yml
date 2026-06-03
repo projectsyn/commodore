@@ -9,6 +9,8 @@ on:
   schedule:
     - cron: '0 4 * * MON'
 
+permissions: {}
+
 jobs:
   build-lint-virtualenvs:
     runs-on: ubuntu-latest
