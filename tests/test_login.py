@@ -27,6 +27,8 @@ from commodore.config import Config
 from commodore import login
 from commodore import tokencache
 
+akey = "a" * 32
+
 
 def mock_open_browser(authorization_endpoint: str, code="foobar"):
     def mock(request_uri: str):
@@ -156,7 +158,7 @@ def test_fetch_token(mock_login, config: Config, tmp_path, fs, cached):
     if cached:
         expected_token_payload["marker"] = "id-456"
 
-    expected_token = jwt.encode(expected_token_payload, "aaaaaa")
+    expected_token = jwt.encode(expected_token_payload, akey)
     if cached:
         cache_contents = {config.api_url: {"id_token": expected_token}}
 
@@ -199,13 +201,13 @@ def test_refresh_tokens(config: Config, tmp_path, fs, idp_status_code):
     }
 
     current_tokens = {
-        "id_token": jwt.encode(current_id_token, "aaaaaa"),
-        "refresh_token": jwt.encode(current_refresh_token, "aaaaaa"),
+        "id_token": jwt.encode(current_id_token, akey),
+        "refresh_token": jwt.encode(current_refresh_token, akey),
     }
     new_tokens = {
         "access_token": "dummy-access-token-456",
-        "id_token": jwt.encode(new_id_token, "aaaaaa"),
-        "refresh_token": jwt.encode(new_refresh_token, "aaaaaa"),
+        "id_token": jwt.encode(new_id_token, akey),
+        "refresh_token": jwt.encode(new_refresh_token, akey),
     }
     cache_contents = {config.api_url: current_tokens}
 
@@ -263,14 +265,14 @@ def test_refresh_tokens_not_needed(
 
     id_token = {"marker": "id", "exp": time.time() - 10}
     tokens = {
-        "id_token": jwt.encode(id_token, "aaaaaa"),
+        "id_token": jwt.encode(id_token, akey),
     }
     if expired_refresh_token:
         tokens["refresh_token"] = jwt.encode(
-            {"marker": "R", "exp": time.time() - 10}, "aaaaaa"
+            {"marker": "R", "exp": time.time() - 10}, akey
         )
     if broken_refresh_token:
-        rt = jwt.encode({"marker": "R", "exp": time.time() + 600}, "aaaaaa")
+        rt = jwt.encode({"marker": "R", "exp": time.time() + 600}, akey)
         tokens["refresh_token"] = f"X{rt[1:]}"
     cache_contents = {config.api_url: tokens}
     fs.create_file(
