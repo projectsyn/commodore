@@ -72,61 +72,63 @@ _test_objs = [
 
 @pytest.mark.parametrize(
     "k8sdict,expected",
-    zip(
-        [None] + _test_objs,
-        [
-            {
-                "kind": "",
-                "name": "",
-                "namespace": "",
-            },
-            {
-                "kind": "ServiceAccount",
-                "name": "test",
-                "namespace": "test",
-            },
-            {
-                "kind": "ServiceAccount",
-                "name": "test-sa-2",
-                "namespace": "test",
-            },
-            {
-                "kind": "Pod",
-                "name": "test",
-                "namespace": "test",
-            },
-            {
-                "kind": "Role",
-                "name": "test-role",
-                "namespace": "test",
-                "spec": {
-                    "test": "testing",
+    list(
+        zip(
+            [None] + _test_objs,
+            [
+                {
+                    "kind": "",
+                    "name": "",
+                    "namespace": "",
                 },
-            },
-            {
-                "kind": "Role",
-                "name": "test-role",
-                "namespace": "test-2",
-                "spec": {
-                    "test": "testing2",
+                {
+                    "kind": "ServiceAccount",
+                    "name": "test",
+                    "namespace": "test",
                 },
-            },
-            {
-                "kind": "ClusterRole",
-                "namespace": "",
-                "name": "test-cr",
-            },
-            {
-                "kind": "ClusterRole",
-                "namespace": "",
-                "name": "test-cr-2",
-            },
-            {
-                "name": "",
-                "namespace": "",
-                "kind": "",
-            },
-        ],
+                {
+                    "kind": "ServiceAccount",
+                    "name": "test-sa-2",
+                    "namespace": "test",
+                },
+                {
+                    "kind": "Pod",
+                    "name": "test",
+                    "namespace": "test",
+                },
+                {
+                    "kind": "Role",
+                    "name": "test-role",
+                    "namespace": "test",
+                    "spec": {
+                        "test": "testing",
+                    },
+                },
+                {
+                    "kind": "Role",
+                    "name": "test-role",
+                    "namespace": "test-2",
+                    "spec": {
+                        "test": "testing2",
+                    },
+                },
+                {
+                    "kind": "ClusterRole",
+                    "namespace": "",
+                    "name": "test-cr",
+                },
+                {
+                    "kind": "ClusterRole",
+                    "namespace": "",
+                    "name": "test-cr-2",
+                },
+                {
+                    "name": "",
+                    "namespace": "",
+                    "kind": "",
+                },
+            ],
+        )
     ),
 )
 def test_k8sobject_constructor(k8sdict, expected):
@@ -164,10 +166,12 @@ _ns_scoped_obj = k8sobject.K8sObject(
 
 @pytest.mark.parametrize(
     "k8sdict,to_cluster_scoped,to_ns_scoped",
-    zip(
-        _test_objs,
-        [False, False, False, False, False, True, True, True],
-        [False, False, True, True, True, True, True, True],
+    list(
+        zip(
+            _test_objs,
+            [False, False, False, False, False, True, True, True],
+            [False, False, True, True, True, True, True, True],
+        )
     ),
 )
 def test_k8sobject_less_than(k8sdict, to_cluster_scoped, to_ns_scoped):
