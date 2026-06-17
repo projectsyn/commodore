@@ -339,7 +339,7 @@ def mock_get_token(url: str) -> Optional[str]:
         return {
             "id_token": jwt.encode(
                 {"exp": time.time() + 100, "from_cache": True},
-                "secret",
+                "secret10" * 4,
                 algorithm="HS256",
             )
         }
@@ -347,7 +347,7 @@ def mock_get_token(url: str) -> Optional[str]:
         return {
             "id_token": jwt.encode(
                 {"exp": time.time() - 100, "from_cache": True},
-                "secret",
+                "secret10" * 4,
                 algorithm="HS256",
             )
         }
