@@ -986,8 +986,8 @@ files = [
 google-auth = ">=2.14.1,<3.0.0"
 googleapis-common-protos = ">=1.63.2,<2.0.0"
 proto-plus = [
-    {version = ">=1.24.0,<2.0.0"},
     {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""},
+    {version = ">=1.24.0,<2.0.0", markers = "python_version < \"3.13\""},
 ]
 protobuf = ">=5.29.6,<8.0.0"
 requests = ">=2.33.0,<3.0.0"
@@ -2020,64 +2020,66 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pygobuildinfo"
-version = "0.1.28"
+version = "0.1.30"
 description = "A utility to extract go build info information fro go executables and shared libraries"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:60357366a79ebb48edb303c15b5118ef9bc1b1e4e6fda14990f7886ea34cd478"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f3a7f2afaa77883b95cdcef29597d5b7afb13f21ccec0171e21775cb0e1f74d6"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:147caa1568afa639c5ce135af2975895a6310a8ad0c3772784197de263fb013d"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9dc9bc2736cd514d7ae89255b38b442a9ef81e49993edfbad8f30c4b78bb4c30"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:f86ac402c35cc8fb88b1824029856142cd5c4836179cd100b1c3c5a5e707b92b"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:4f5b77a2742b1fa2445275de5ada947a4fefc2098207df07ecb496c46c698478"},
-    {file = "pygobuildinfo-0.1.28-cp310-cp310-win_amd64.whl", hash = "sha256:b714021545fe9d678c9a38d3c4ff5aff8f256f565d924b398b9b66b384b2b256"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:794af5f5497335136642abb9961c8f6ec78e9c4db276a8856248e9a8e89e69fe"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:5f4e78a21435f04ec706409f9b0009de3d5e3ed2ff0e05e51fab42edb55d8f04"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:05a1dcf1ac62110ae467b97e4d6745f386425f1b74f2827955d0ff3b413f5b47"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ba159ab4deaee758a26fdaed96a2613aeff5a1c1d0265de435f3e4f2bc114f55"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:dade4ff93c9576aa01a4da90353f32fa010f1fbf948920d623f9201fa9b8230c"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:55886d6ab85d9a3f9a13f91fccfdfcdb7fe6bd088c227a5617715e65cdf1cb0b"},
-    {file = "pygobuildinfo-0.1.28-cp311-cp311-win_amd64.whl", hash = "sha256:228993714729ae76558591aa9e1f946db12eaf492433d2be5f0b0cb61f78c7f0"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:0d61c11d0bcd4585cb47877118960ab47446286f1c176142576c17fd6c94d445"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c32bd92e35fe36e1fd1d95202aa2342d3e69bf275707420c02cea0434a9cf961"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:f1b0939bc865f99dbcfc65ebd183089711557b2ac07bd864df96f4790804f43e"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ea7915459a802a1573e6f1d86ded8cbfa2eeead610f0e7fa8394e76d29385c72"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:e3cb9e1adf068bc82e15b01c248a95444fafca8945d3e3d59fe6ebbef84f144c"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0e9d74ee3411202edb9f6a2f48dd3e107d879fa63b3debfbe1695f0973c6a718"},
-    {file = "pygobuildinfo-0.1.28-cp312-cp312-win_amd64.whl", hash = "sha256:988b5b3e54d0734bdd912d363fcdcd0fd7abcc0335344cb54ae3cf3c33cbb933"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:c1aa18a7c90ea10e07951893a457557b78a6ed4863a7bd8869dce9e65869ca6c"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:7b35ff3cee165d05d47790eff2f940145879ba8f9f69edff9803777408317cd7"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:b312cb650e31e6bcbca515fc84b4a699ccd83ed9ce41526716ff5e848b1d2f20"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5e02a8e33d6a5e99bbf1d474491d9cb37aff8e3401deb57f943b9e4d33a5711d"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:ea9b63803b2160fbc9e01d82c8580b2f16ebd1db9e5f8cdba7b5c5ecca6db158"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:d58b9b45c1821905f75e1bedc4a4d7f6fa6867f7b8d9711ddd4030cd3c2ae1ad"},
-    {file = "pygobuildinfo-0.1.28-cp313-cp313-win_amd64.whl", hash = "sha256:fa612cc53ab10f9aaad765396cb7366372278a55414cd8e7232654ce7eb482c3"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:411df9084b1eda85d1005df970f45ace8d551bd53e5d7b89cd30ab8894e07f8e"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:b089dd2ae745c1409e671eb5a7e6ef0319bdb80d2a4d8b7288287dcf89bae78d"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:8329399f0a5c61ed862cf8b328361e2f5f508c1a69d1d134529b4da3a7df9746"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c660df912b1d7ce4e1e2bb03e81d238fbcabd3f4e2f8e1196df1057e215cea03"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:d3f86dfe5faa0c84cad9bd58a92e5bfad6e449b0da237fd692aa40dde5906dc7"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:09e6aded1a4c004398677c01b543b6874254d13db2b401fa3c6d1db28e7479bc"},
-    {file = "pygobuildinfo-0.1.28-cp314-cp314-win_amd64.whl", hash = "sha256:78a24886e5ef2ea4f7122a4a95bfca60033ca030cac85b4b4f157a3949031a9a"},
-    {file = "pygobuildinfo-0.1.28-pp310-pypy310_pp73-macosx_10_15_x86_64.whl", hash = "sha256:532fe072c36dba81304b8ea33baa621ab2bc4f3a31c9ab66df453494dbd8c046"},
-    {file = "pygobuildinfo-0.1.28-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:f02b034da27f94ebb3d27660fbf342c2c4247f4f7518c7a9fda991379e38b594"},
-    {file = "pygobuildinfo-0.1.28-pp310-pypy310_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:7110531397623d09d62f0b805eb994638f55fbbe4422ebcdc804563a17e8fbd1"},
-    {file = "pygobuildinfo-0.1.28-pp310-pypy310_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bb73ef58973b002ae20cfe75225e34b2ddef60a6faf203b7daca7cb37d7267a7"},
-    {file = "pygobuildinfo-0.1.28-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:7c6480ef2de31b43fa7340e4da2df8fbbf463fd9719c84f8c755a56a3a2f95ec"},
-    {file = "pygobuildinfo-0.1.28-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:9f2e40344244d8bb7bedc03fae6608a2e04e7670e98ba4d904a2506a3a7e2416"},
-    {file = "pygobuildinfo-0.1.28-pp311-pypy311_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:e3b20629db8f58179468554cb172c64dfecb6ded726200e32850ac93abe5a11f"},
-    {file = "pygobuildinfo-0.1.28-pp311-pypy311_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0b92ed4a6f7b88277a1dbf1fd0b30c63a8e849e5d084a77eb0766da02d4b2c67"},
-    {file = "pygobuildinfo-0.1.28-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:a64c39ddc02eab62d71051071f2047fec46263e30506493b3b9d6f034437d566"},
-    {file = "pygobuildinfo-0.1.28-pp38-pypy38_pp73-macosx_11_0_arm64.whl", hash = "sha256:419401025b650cb452b1edc29a0ab487383fe695ebe31d13df9b8737721d1a3d"},
-    {file = "pygobuildinfo-0.1.28-pp38-pypy38_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:325b981fa7e94cff5b100f24da12ce90ac4f1422d2dc0ca8b1a55e7c79f9db7d"},
-    {file = "pygobuildinfo-0.1.28-pp38-pypy38_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a54fecb4d076bc81be33ab5601f5b33d4f9f2fa7ced1846e7e9de4735ec3ec3c"},
-    {file = "pygobuildinfo-0.1.28-pp39-pypy39_pp73-macosx_10_15_x86_64.whl", hash = "sha256:feaa52ff91e1b0045ff43a5a0de3c74b512a67e65ca38593ebfcdbe39975844c"},
-    {file = "pygobuildinfo-0.1.28-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:baded35ba593335f2360fce9d6c425edd28a29935c04b3968dd69df76cd4674a"},
-    {file = "pygobuildinfo-0.1.28-pp39-pypy39_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:b40f28aeee05d3dcc0c750db311bf93ae9c8e88504a98cd013c10920320bc10b"},
-    {file = "pygobuildinfo-0.1.28-pp39-pypy39_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:53cc836fe56b33100fef56d3f93e71f1fe72f4d6a637364709b19b59f065bd61"},
-    {file = "pygobuildinfo-0.1.28.tar.gz", hash = "sha256:6497ab8a30dfced02cf53a922a0db63d3556bc6c5504b5361deeac9880a12c4d"},
+    {file = "pygobuildinfo-0.1.30.tar.gz", hash = "sha256:987024c7591091cb171afef9d76f0a6fd2b9ac097a5a67674750340c3c62db06"},
+]
+
+[package.dependencies]
+pygorpmrustinfo = ">=0.1.0"
+
+[[package]]
+name = "pygorpmrustinfo"
+version = "0.1.4"
+description = "Unified Go-backed helpers for rpmdb, rust audit, and Go build metadata"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:c91dacb8069d0eef88753f5f02fef06f508fed0f044c0dfc942b36b7ccaf00cf"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4755018c200194ce4efbe3c647c5c93fcb5d06347f800515d08daf29caec199b"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:98c0739ca6d2b7886f649246f9aff78f278cd2fadcd1ad3444ddf5600a3249b7"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:be4169616d5b56bffa41327b3360ff2f6f017803a85cfcee89acaffd13a7eb29"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:3c4cca7f3eef1cb9a7f43f2c7b9b2131837d1edc680b2ff6f4804ff05617f5e2"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:f7e229dc24b62899c31fc7154df257c729f1db33e2e3f3d85f3f2701fa6c0f9c"},
+    {file = "pygorpmrustinfo-0.1.4-cp310-cp310-win_amd64.whl", hash = "sha256:8ac309166e417b52e632cf55a6f6ca741649201a24c73f54c554167d9e559e9f"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:aab4ce49bc5518ed3a14d504a36f87739e18ea7c72201b1ecb03b4a533cba40e"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c93f531529d387a3efca8c7f1206edea070cb5ea122ee8a3a83deac216ac8143"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:aea345c0dfd59fda7b21dc4006de11b1b6ee41ccc6fb9b20a64515d6ebc06517"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:136f46d1fe97e49c5f4d35dd92cfdc8cb28f6945e0a33bb714ffb53c7a8a3c72"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:4ae6e291ed6afe0f66146357317f953b871f66ebed8e05a231c857789400c242"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:ba89089e4f1be4539d266f9b4f4a2df8abdb03307df1b05504b4ef7b1351e33f"},
+    {file = "pygorpmrustinfo-0.1.4-cp311-cp311-win_amd64.whl", hash = "sha256:7edac64ed5439126dca11553b1430e578c65e92253f7bd24c071d34049b952ed"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:036e461d31105c3543008428461b080201509c2082640bd33547c857b54a631c"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a86cafe32758617ae091d5973f647819ad82d172f79c5ec15946af99c9e2b947"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:81844f1ddd26b8dcd80f29ee3ad1fbd438ba22af98a9c2a484a2dda3e9708d65"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1f495c9f84ba3a8e902dfdac9e592a0613e6b73870f75d588d29446092735e1c"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:beca5c20fc349422a0d88b0f969eb0c05857a07eb3e26c682663c0152f72aa3b"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:606529a38c1fcd8c41d513b460fc66a7f21f97ecccd12b8a10972f444cd7cae0"},
+    {file = "pygorpmrustinfo-0.1.4-cp312-cp312-win_amd64.whl", hash = "sha256:2cb9fe2d35d8c4fd6649fd0490468d9d42bcabedfae8a5d46fda311c37357ecd"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:f9dcd3c5e6a1160e2020c522583332c985b8d242659f434df0b499081401ca53"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1c5d5343b5170954b441383050bb1896904a12f7f28b1ec977e79914188a9bba"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:602948fbeedc41e73dbbf3f59d9425728c71f5166462bf2759941c5d461f53da"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0d1467d240d71c18096d51b26bd6c9bd96fd4d257ad34ab75eaabde87adf0f7d"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:4e90ce008257249fbed39ffab89443028f6f4cdd0f339cbfa07ee450e2810b55"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:402491149b665a2ce8d9d0207171f10743cbd6117efd8f5d615f70ec91828dd8"},
+    {file = "pygorpmrustinfo-0.1.4-cp313-cp313-win_amd64.whl", hash = "sha256:4cd590ff9cb28c1eca9f9cd6e9118f24d1851cfcd5f7a955ad8ca3e0e3404e56"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:2440f90ac3a89ea191db98e10c28b73ef149f3356212f5fd63377d8c8bd18f83"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:a72f61eade934a74cd2ec7c15c7edaeb452820003776a6b76eea1c006da7a06b"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:0d0eae8c0d47ec9af12f44ccaaef014b55d18b1f29fd931a1159c5e8147750ad"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:661b891afb352537584cd99f400467873df7bfee89ec3f97ddc411dd7ad266cb"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:01d7fa543ef20b4a1a280a76cac5965c6aaf99e961d2955b6eb0bb9acd143332"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:e6abe1b4b254b5f8e98076756fe8fa7ff65ca7b87ad6308cb921159d30821d89"},
+    {file = "pygorpmrustinfo-0.1.4-cp314-cp314-win_amd64.whl", hash = "sha256:dc79c33535e7765d79949fabcb7065f0de6f6c4ae52b1335052cc92b73c269bb"},
+    {file = "pygorpmrustinfo-0.1.4-pp311-pypy311_pp73-macosx_10_15_x86_64.whl", hash = "sha256:1c58a2499dc4caed999b8bef52820747f11351c0718531c4ade5d4fbb107c667"},
+    {file = "pygorpmrustinfo-0.1.4-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:c5bbc07057a1494e9d848065ba22930db25652dd74456f850697caab880507b1"},
+    {file = "pygorpmrustinfo-0.1.4-pp311-pypy311_pp73-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:3b2d9b2ec0ce11b8b6b74e730c3c1998954b9be82baf26a910e1d764db45eca9"},
+    {file = "pygorpmrustinfo-0.1.4-pp311-pypy311_pp73-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8b099acf419cbcc358d81a5eef00606e86145a072e7d80dcd4d9e8c9e5ca1255"},
+    {file = "pygorpmrustinfo-0.1.4.tar.gz", hash = "sha256:dd92095c45a94bf2c4c107fd7f86cb5e50d4091398cc81aafb3f3065dbcaea5c"},
 ]
 
 [[package]]
@@ -2115,8 +2117,8 @@ files = [
 astroid = ">=4.0.2,<=4.1.dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
-    {version = ">=0.2", markers = "python_version < \"3.11\""},
     {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
+    {version = ">=0.2", markers = "python_version < \"3.11\""},
     {version = ">=0.3.6", markers = "python_version == \"3.11\""},
 ]
 isort = ">=5,<5.13 || >5.13,<9"
@@ -3477,4 +3479,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.15"
-content-hash = "af2087f90d49d20a0966b48b39682ac1df33744dd3f8e9a9456b7d598d1df33a"
+content-hash = "c89bb5b6c824d4c162c1eb4e70af8bc624276b5109e4f95a17130f6da5bafa40"
