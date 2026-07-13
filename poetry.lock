@@ -986,8 +986,8 @@ files = [
 google-auth = ">=2.14.1,<3.0.0"
 googleapis-common-protos = ">=1.63.2,<2.0.0"
 proto-plus = [
-    {version = ">=1.24.0,<2.0.0"},
     {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""},
+    {version = ">=1.24.0,<2.0.0", markers = "python_version < \"3.13\""},
 ]
 protobuf = ">=5.29.6,<8.0.0"
 requests = ">=2.33.0,<3.0.0"
@@ -1338,14 +1338,14 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.35.1"
+version = "0.36.3"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "kapitan-0.35.1-py3-none-any.whl", hash = "sha256:c1159f830a4368782f34c890d2a6b06007a6fe3894ab02861d6fdb218b3a5730"},
-    {file = "kapitan-0.35.1.tar.gz", hash = "sha256:fa091b606680269fe861b4b596cec9deeb3679679d5f915d0f5ceed0c961c328"},
+    {file = "kapitan-0.36.3-py3-none-any.whl", hash = "sha256:76aef58b2b372469c47afde3cccc5dabc4b45eee5bb1b6f1c7f978ca4959082f"},
+    {file = "kapitan-0.36.3.tar.gz", hash = "sha256:a32adedf38c8056a4a26d95610868e3f36b9834d46fce33ad06862bdd4f1e317"},
 ]
 
 [package.dependencies]
@@ -1356,7 +1356,7 @@ boto3 = ">=1.18.17,<2"
 cachetools = ">=7.0.1,<8.0.0"
 certifi = "*"
 copier = ">=9.3.1,<10"
-cryptography = ">=3.4.7,<47.0.0"
+cryptography = ">=3.4.7,<49.0.0"
 filetype = ">=1.2.0,<2"
 gitdb = ">=4.0.10,<5"
 gitpython = ">=3.1.30,<4"
@@ -1383,7 +1383,10 @@ yamllint = ">=1.29.0,<2"
 
 [package.extras]
 gojsonnet = ["gojsonnet (>=0.21.0,<0.22)"]
+oci = ["oras (>=0.2.0)"]
 omegaconf = ["omegaconf (>=2.4.0.dev3,<3)"]
+profile = ["pyinstrument (>=4.6,<6)"]
+rapidyaml = ["rapidyaml (>=0.12,<1)"]
 reclass-rs = ["reclass-rs (>=0.10.1,<0.11.0)"]
 
 [[package]]
@@ -2115,8 +2118,8 @@ files = [
 astroid = ">=4.0.2,<=4.1.dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
-    {version = ">=0.2", markers = "python_version < \"3.11\""},
     {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
+    {version = ">=0.2", markers = "python_version < \"3.11\""},
     {version = ">=0.3.6", markers = "python_version == \"3.11\""},
 ]
 isort = ">=5,<5.13 || >5.13,<9"
@@ -3477,4 +3480,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.15"
-content-hash = "af2087f90d49d20a0966b48b39682ac1df33744dd3f8e9a9456b7d598d1df33a"
+content-hash = "c3b0d5e8af61960039b3aa52e048323f2cdc2f40d1f2b432a682662537827a8b"
