@@ -53,6 +53,7 @@ PyGithub = "2.9.1"
 reclass-rs = "0.11.0"
 gojsonnet = "0.22.0"
 pygorpmrustinfo = "0.1.5"
+semver = "3.0.4"
 
 [tool.poetry.group.dev.dependencies]
 tox = "3.28.0"
