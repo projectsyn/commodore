@@ -3064,6 +3064,18 @@ botocore = ">=1.37.4,<2.0a0"
 crt = ["botocore[crt] (>=1.37.4,<2.0a0)"]
 
 [[package]]
+name = "semver"
+version = "3.0.4"
+description = "Python helper for Semantic Versioning (https://semver.org)"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746"},
+    {file = "semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602"},
+]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 description = "Tool to Detect Surrounding Shell"
@@ -3349,4 +3361,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11, <3.15"
-content-hash = "8fb1d1b206459e1f562ae6572aeb070f7f9bae2c495caf0fe5a612ccb5606250"
+content-hash = "45f6a49766255c4bacb09b2a8b5ea75cc60dfd1e678b0c75abfafa372db6f37d"

@@ -25,6 +25,7 @@ from .dependency_mgmt import (
     verify_version_overrides,
 )
 from .dependency_mgmt.component_library import create_component_library_aliases
+from .dependency_mgmt.component_dependency import validate_catalog_dependencies
 from .dependency_mgmt.jsonnet_bundler import (
     fetch_jsonnet_libraries,
     jsonnet_dependencies,
@@ -245,6 +246,8 @@ def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[
     for component in config.get_components().values():
         ckey = component.parameters_key
         component.render_jsonnetfile_json(cluster_parameters[ckey])
+
+    validate_catalog_dependencies(config, inventory)
 
     if config.fetch_dependencies:
         fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
