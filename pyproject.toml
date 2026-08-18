@@ -44,7 +44,7 @@ click = "8.4.2"
 gitpython = "3.1.59"
 requests = { version = "2.34.2", extras = ["socks"] }
 url-normalize = "3.0.0"
-python-dotenv = "1.2.2"
+python-dotenv = "1.2.3"
 pyxdg = "0.28"
 cruft = "2.16.0"
 oauthlib = "3.3.1"
