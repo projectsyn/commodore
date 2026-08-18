@@ -14,6 +14,7 @@ FROM base AS builder
 ENV PATH=${PATH}:${HOME}/.local/bin:/usr/local/go/bin
 
 ARG POETRY_VERSION=2.4.1
+ARG ENVSUBST_VERSION=v1.4.3
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
@@ -21,6 +22,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libffi-dev \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://install.python-poetry.org | python - --version ${POETRY_VERSION} \
+ && curl -L https://github.com/a8m/envsubst/releases/download/${ENVSUBST_VERSION}/envsubst-`uname -s`-`uname -m` -o envsubst \
+ && chmod +x envsubst \
+ && mv envsubst /usr/local/bin/ \
  && mkdir -p /app/.config
 
 COPY --from=golang /usr/local/go /usr/local/go
@@ -69,6 +73,7 @@ COPY --from=builder \
 COPY --from=builder \
       /usr/local/bin/kapitan* \
       /usr/local/bin/commodore* \
+      /usr/local/bin/envsubst \
       /usr/local/bin/
 
 COPY --from=builder \
