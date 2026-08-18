@@ -1447,14 +1447,14 @@ six = "*"
 
 [[package]]
 name = "kapitan"
-version = "0.35.1"
+version = "0.36.3"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "kapitan-0.35.1-py3-none-any.whl", hash = "sha256:c1159f830a4368782f34c890d2a6b06007a6fe3894ab02861d6fdb218b3a5730"},
-    {file = "kapitan-0.35.1.tar.gz", hash = "sha256:fa091b606680269fe861b4b596cec9deeb3679679d5f915d0f5ceed0c961c328"},
+    {file = "kapitan-0.36.3-py3-none-any.whl", hash = "sha256:76aef58b2b372469c47afde3cccc5dabc4b45eee5bb1b6f1c7f978ca4959082f"},
+    {file = "kapitan-0.36.3.tar.gz", hash = "sha256:a32adedf38c8056a4a26d95610868e3f36b9834d46fce33ad06862bdd4f1e317"},
 ]
 
 [package.dependencies]
@@ -1465,7 +1465,7 @@ boto3 = ">=1.18.17,<2"
 cachetools = ">=7.0.1,<8.0.0"
 certifi = "*"
 copier = ">=9.3.1,<10"
-cryptography = ">=3.4.7,<47.0.0"
+cryptography = ">=3.4.7,<49.0.0"
 filetype = ">=1.2.0,<2"
 gitdb = ">=4.0.10,<5"
 gitpython = ">=3.1.30,<4"
@@ -1492,7 +1492,10 @@ yamllint = ">=1.29.0,<2"
 
 [package.extras]
 gojsonnet = ["gojsonnet (>=0.21.0,<0.22)"]
+oci = ["oras (>=0.2.0)"]
 omegaconf = ["omegaconf (>=2.4.0.dev3,<3)"]
+profile = ["pyinstrument (>=4.6,<6)"]
+rapidyaml = ["rapidyaml (>=0.12,<1)"]
 reclass-rs = ["reclass-rs (>=0.10.1,<0.11.0)"]
 
 [[package]]
@@ -3576,4 +3579,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.15"
-content-hash = "23b6d340094e3ceb4ced68adc1c10fa6d8bf29e9afa54bf9303d889db22f4369"
+content-hash = "cfd6e5e6a495ee5bba371da213bad6c3e843110e6d6fc58eb54be818ba7816af"
