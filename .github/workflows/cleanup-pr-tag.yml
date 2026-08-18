@@ -5,6 +5,9 @@ name: Delete closed PR container image tag
   pull_request:
     types:
       - closed
+  merge_group:
+    types:
+      - destroyed
 
 permissions:
   packages: write
@@ -14,7 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set image version for PR to branch name
+        if: github.event_name == 'pull_request'
         run: echo "VERSION=${GITHUB_HEAD_REF//\//-}" >> ${GITHUB_ENV}
+      - name: Set image version for merge queue to branch name
+        if: github.event_name == 'merge_group'
+        run: echo "VERSION=${GITHUB_REF//\//-}" >> ${GITHUB_ENV}
 
       - name: Delete PR container image tag
         uses: dataaxiom/ghcr-cleanup-action@v1
