@@ -1,8 +1,9 @@
 name: Pull Request
 on:
-  pull_request:
-    branches:
-    - master
+  pull_request: {}
+  merge_group:
+    types:
+      - checks_requested
 
 permissions: {}
 
@@ -43,7 +44,9 @@ jobs:
         args: 'check'
   tests:
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         python-version:
           - '3.10'

@@ -1,8 +1,6 @@
 name: Test coverage with qlty.sh
 on:
-  pull_request:
-    branches:
-      - master
+  pull_request: {}
   push:
     branches:
       - master
