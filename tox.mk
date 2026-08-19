@@ -76,10 +76,10 @@ bench_py3.12:
 	$(TOX_COMMAND) -e py312-bench
 
 bench_py3.13:
-	$(TOX_COMMAND) -e py312-bench
+	$(TOX_COMMAND) -e py313-bench
 
 bench_py3.14:
-	$(TOX_COMMAND) -e py312-bench
+	$(TOX_COMMAND) -e py314-bench
 
 .PHONY: benchenv_py3.11 benchenv_py3.12 benchenv_py3.13 benchenv_py3.14
 
