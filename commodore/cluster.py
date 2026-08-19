@@ -5,7 +5,7 @@ import os
 import textwrap
 
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 import click
 
@@ -200,6 +200,7 @@ def render_target(
     target: str,
     components: dict[str, Component],
     component: Optional[str] = None,
+    extra_classes: Optional[Iterable[str]] = None,
 ):
     if not component:
         component = target
@@ -221,6 +222,8 @@ def render_target(
             click.secho(f" > Default file for class {c} missing", fg="yellow")
 
     classes.append("global.commodore")
+    if extra_classes:
+        classes.extend(extra_classes)
 
     if not bootstrap:
         if not inv.component_file(target).is_file():
@@ -232,12 +235,21 @@ def render_target(
     return generate_target(inv, target, components, classes, component)
 
 
-def update_target(cfg: Config, target: str, component: Optional[str] = None):
+def update_target(
+    cfg: Config,
+    target: str,
+    component: Optional[str] = None,
+    extra_classes: Optional[Iterable[str]] = None,
+):
     click.secho(f"Updating Kapitan target for {target}...", bold=True)
     file = cfg.inventory.target_file(target)
     os.makedirs(file.parent, exist_ok=True)
     targetdata = render_target(
-        cfg.inventory, target, cfg.get_components(), component=component
+        cfg.inventory,
+        target,
+        cfg.get_components(),
+        component=component,
+        extra_classes=extra_classes,
     )
     yaml_dump(targetdata, file)
 

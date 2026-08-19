@@ -29,6 +29,7 @@ class ComponentDependency:
     name: str
     instances: list[str]
     url: str
+    minverspec: Optional[str]
     minversion: Optional[semver.Version]
     mandatory: bool
     requiredif: list[str]
@@ -40,6 +41,7 @@ class ComponentDependency:
         if "url" not in depspec:
             raise ComponentDependencyParseError("url")
         url = depspec["url"]
+        minverspec = None
         if "minversion" in depspec:
             minverspec = depspec["minversion"]
             try:
@@ -59,7 +61,7 @@ class ComponentDependency:
             requiredif = [depspec["requiredif"]]
 
         return ComponentDependency(
-            depname, [cname], url, minversion, mandatory, requiredif
+            depname, [cname], url, minverspec, minversion, mandatory, requiredif
         )
 
     def update(self, other: ComponentDependency):

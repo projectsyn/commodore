@@ -6,18 +6,23 @@ import tempfile
 from collections.abc import Iterable
 from pathlib import Path as P
 from textwrap import dedent
-from typing import Optional
+from typing import Any, Optional
 
 import click
 import git
 
-from commodore.cluster import generate_target
+from commodore.cluster import update_target
 from commodore.config import Config
 from commodore.component import Component
 from commodore.dependency_mgmt.component_library import (
     validate_component_library_name,
     create_component_library_aliases,
 )
+from commodore.dependency_mgmt.component_dependency import (
+    collect_catalog_dependencies,
+    ComponentDependency,
+)
+from commodore.dependency_mgmt import fetch_components
 from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
 from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
@@ -65,6 +70,8 @@ def compile_component(
             click.echo(f"   > Created temp workspace: {config.work_dir}")
         inv = config.inventory
         inv.ensure_dirs()
+        inv.global_config_dir.mkdir()
+        yaml_dump({}, inv.global_config_dir / "commodore.yml")
         search_paths.append(inv.dependencies_dir)
         component = _setup_component(
             config,
@@ -72,7 +79,8 @@ def compile_component(
             instance_name,
             component_path,
         )
-        _prepare_kapitan_inventory(inv, component, value_files, instance_name)
+        config.register_component(component)
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
 
         # Raise error if component uses removed reclass parameters
         check_removed_reclass_variables(
@@ -80,6 +88,26 @@ def compile_component(
             "component",
             [component.defaults_file, component.class_file] + value_files,
         )
+
+        # Fetch and install component dependencies
+        init_inv = kapitan_inventory(config)
+        component_deps = collect_catalog_dependencies(config, init_inv)
+        component_deps["argocd"] = ComponentDependency(
+            "argocd",
+            ["argocd"],
+            "https://github.com/projectsyn/component-argocd.git",
+            None,
+            None,
+            True,
+            [""],
+        )
+
+        _setup_dependencies(inv, component_deps)
+        update_target(config, inv.bootstrap_target)
+
+        fetch_components(config)
+
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
 
         # Verify component alias
         nodes = kapitan_inventory(config)
@@ -180,7 +208,10 @@ def _setup_component(
 
 
 def _prepare_kapitan_inventory(
-    inv: Inventory, component: Component, value_files: Iterable[P], instance_name: str
+    config: Config,
+    component: Component,
+    value_files: Iterable[P],
+    instance_name: str,
 ):
     """
     Setup Kapitan inventory.
@@ -188,6 +219,9 @@ def _prepare_kapitan_inventory(
     Create component symlinks, values file symlinks, setup params class with fake values
     and Kapitan target for the component, create a fake `lib/argocd.libjsonnet`.
     """
+
+    inv = config.inventory
+
     component_class_file = component.class_file
     component_defaults_file = component.defaults_file
     if not component_class_file.exists():
@@ -229,9 +263,6 @@ def _prepare_kapitan_inventory(
                     "cloud": "cloudscale",
                     "region": "rma1",
                 },
-                "argocd": {
-                    "namespace": "test",
-                },
                 "components": {
                     component.name: {
                         "url": f"https://example.com/{component.name}.git",
@@ -251,27 +282,21 @@ def _prepare_kapitan_inventory(
 
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
-    classes = [
-        f"params.{inv.bootstrap_target}",
-        f"defaults.{component.name}",
-        f"components.{component.name}",
-    ] + value_classes
-    yaml_dump(
-        generate_target(
-            inv, instance_name, {component.name: component}, classes, component.name
-        ),
-        inv.target_file(instance_name),
-    )
+    update_target(config, instance_name, component.name, value_classes)
 
-    # Fake Argo CD lib
-    # We plug "fake" Argo CD library here because every component relies on it
-    # and we don't want to provide it every time when compiling a single component.
-    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
-        argocd_libf.write(dedent("""
-            local ArgoApp(component, namespace, project='', secrets=true, base=null) = {};
-            local ArgoProject(name) = {};
 
-            {
-              App: ArgoApp,
-              Project: ArgoProject,
-            }"""))
+def _setup_dependencies(inv: Inventory, dependencies: dict[str, ComponentDependency]):
+    dependencies_yaml: dict[str, Any] = {
+        "applications": list(dependencies.keys()),
+        "parameters": {
+            "components": {
+                dn: {
+                    "url": dep.url,
+                    "version": dep.minverspec or "master",
+                    # TODO(sg): subpath?
+                }
+                for dn, dep in dependencies.items()
+            }
+        },
+    }
+    yaml_dump(dependencies_yaml, inv.global_config_dir / "commodore.yml")
