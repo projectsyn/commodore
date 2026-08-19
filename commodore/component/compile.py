@@ -14,16 +14,19 @@ import git
 from commodore.cluster import update_target
 from commodore.config import Config
 from commodore.component import Component
-from commodore.dependency_mgmt.component_library import (
-    validate_component_library_name,
-    create_component_library_aliases,
-)
+from commodore.dependency_mgmt import fetch_components, create_component_symlinks
 from commodore.dependency_mgmt.component_dependency import (
     collect_catalog_dependencies,
     ComponentDependency,
 )
-from commodore.dependency_mgmt import fetch_components
-from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
+from commodore.dependency_mgmt.component_library import (
+    validate_component_library_name,
+    create_component_library_aliases,
+)
+from commodore.dependency_mgmt.jsonnet_bundler import (
+    fetch_jsonnet_libraries,
+    jsonnet_dependencies,
+)
 from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
@@ -45,7 +48,6 @@ def compile_component(
     component_path = P(component_path_).resolve()
     value_files = [P(f).resolve() for f in value_files_]
     search_paths = [P(d).resolve() for d in search_paths_]
-    search_paths.append(component_path / "vendor")
     output_path = P(output_path_).resolve()
 
     if not component_name:
@@ -64,6 +66,7 @@ def compile_component(
         )
 
     temp_dir = P(tempfile.mkdtemp(prefix="component-")).resolve()
+    search_paths.append(temp_dir / "vendor")
     config.work_dir = temp_dir
     try:
         if config.debug:
@@ -90,24 +93,45 @@ def compile_component(
         )
 
         # Fetch and install component dependencies
+        click.secho(
+            f"Discovering component dependencies for {instance_name}...", bold=True
+        )
         init_inv = kapitan_inventory(config)
         component_deps = collect_catalog_dependencies(config, init_inv)
-        component_deps["argocd"] = ComponentDependency(
-            "argocd",
-            ["argocd"],
-            "https://github.com/projectsyn/component-argocd.git",
-            None,
-            None,
-            True,
-            [""],
-        )
+        if len(component_deps) > 0:
+            component_deps["argocd"] = ComponentDependency(
+                "argocd",
+                ["argocd"],
+                "https://github.com/projectsyn/component-argocd.git",
+                None,
+                None,
+                True,
+                [""],
+            )
 
-        _setup_dependencies(inv, component_deps)
-        update_target(config, inv.bootstrap_target)
+            _setup_dependencies(inv, component_deps)
+            update_target(config, inv.bootstrap_target)
 
-        fetch_components(config)
+            fetch_components(config)
 
-        _prepare_kapitan_inventory(config, component, value_files, instance_name)
+            update_target(config, inv.bootstrap_target)
+            _prepare_kapitan_inventory(config, component, value_files, instance_name)
+
+            cluster_parameters = kapitan_inventory(config)[inv.bootstrap_target][
+                "parameters"
+            ]
+        else:
+            _setup_fake_argocd_lib(inv)
+            cluster_parameters = kapitan_inventory(config)[instance_name]["parameters"]
+            create_component_symlinks(config, component)
+            search_paths.append(component_path / "vendor")
+
+        # Fetch Jsonnet dependencies
+        for component in config.get_components().values():
+            ckey = component.parameters_key
+            component.render_jsonnetfile_json(cluster_parameters[ckey])
+
+        fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
         # Verify component alias
         nodes = kapitan_inventory(config)
@@ -115,14 +139,6 @@ def compile_component(
 
         cluster_params = nodes[instance_name]["parameters"]
         create_component_library_aliases(config, cluster_params)
-
-        # Render jsonnetfile.jsonnet if necessary
-        component_params = nodes[instance_name]["parameters"].get(
-            component_name.replace("-", "_"), {}
-        )
-        component.render_jsonnetfile_json(component_params)
-        # Fetch Jsonnet libs
-        fetch_jsonnet_libraries(component_path)
 
         # Compile component
         kapitan_compile(
@@ -283,6 +299,21 @@ def _prepare_kapitan_inventory(
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
     update_target(config, instance_name, component.name, value_classes)
+
+
+def _setup_fake_argocd_lib(inv: Inventory):
+    # Fake Argo CD lib
+    # We plug "fake" Argo CD library here because every component relies on it
+    # and we don't want to provide it every time when compiling a single component.
+    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
+        argocd_libf.write(dedent("""
+            local ArgoApp(component, namespace, project='', secrets=true, base=null) = {};
+            local ArgoProject(name) = {};
+
+            {
+              App: ArgoApp,
+              Project: ArgoProject,
+            }"""))
 
 
 def _setup_dependencies(inv: Inventory, dependencies: dict[str, ComponentDependency]):
