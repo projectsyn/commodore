@@ -6,7 +6,10 @@ from typing import Any, Optional
 import click
 import semver
 
+from cel_expr_python import cel  # type: ignore
+
 from commodore.config import Config
+from commodore.component import component_parameters_key
 
 
 class ComponentDependencyParseError(ValueError):
@@ -109,12 +112,40 @@ class ComponentDependency:
             + f"in a version '>= {self.minverspec}': catalog has '{cv}'"
         )
 
+    def required_for_catalog(
+        self, config: Config, cparams: dict[str, Any], facts: dict[str, Any]
+    ) -> bool:
+        if self.mandatory:
+            return True
+
+        required = False
+        cel_env = cel.NewEnv(variables={"config": cel.Type.MAP, "facts": cel.Type.MAP})
+        for expr in self.requiredif:
+            if config.debug:
+                click.echo(f"   > Evaluating CEL expression: {expr}")
+            cel_expr = cel_env.compile(expr)
+            res = cel_expr.eval(data={"config": cparams, "facts": facts})
+            if res.type() == cel.Type.ERROR:
+                raise ValueError(
+                    f"Evaluation failed for `requiredif` CEL expression: {res.value()}"
+                )
+            if res.type() != cel.Type.BOOL:
+                raise ValueError(
+                    "Component dependency `requiredif` CEL expression must evaluate to a boolean"
+                )
+            resval = res.value()
+            required = required or resval
+
+        return required
+
 
 def collect_catalog_dependencies(
     config: Config, inventory: dict[str, Any]
 ) -> dict[str, ComponentDependency]:
     catalog_deps: dict[str, ComponentDependency] = {}
     for instance, cn in config.get_component_aliases().items():
+        if config.debug:
+            click.echo(f" > Collecting dependencies for component instance {instance}")
         params = inventory[instance]["parameters"]
         deps = map(
             lambda d: ComponentDependency.parse(instance, *d),
@@ -122,6 +153,13 @@ def collect_catalog_dependencies(
         )
 
         for dep in deps:
+            if not dep.required_for_catalog(
+                config, params[component_parameters_key(cn)], params["facts"]
+            ):
+                if config.debug:
+                    click.echo(f"   > Dependency {dep.name} not required for catalog")
+                continue
+
             if dep.name in catalog_deps:
                 catalog_deps[dep.name].update(dep)
             else:

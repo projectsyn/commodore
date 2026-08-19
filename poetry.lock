@@ -253,6 +253,36 @@ files = [
 ]
 
 [[package]]
+name = "cel-expr-python"
+version = "0.1.3"
+description = "The CEL Python runtime"
+optional = false
+python-versions = ">=3.11"
+groups = ["main"]
+files = [
+    {file = "cel_expr_python-0.1.3-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:5b2ecfc4f4e8120928b446262b13977ee3326b535c1684bdc3eb2fb990298dba"},
+    {file = "cel_expr_python-0.1.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:11e4cf0a3b2bf7b4231df4ed1f359de006001f2680676c99631df86744f9c1f2"},
+    {file = "cel_expr_python-0.1.3-cp311-cp311-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cc1d80c53affcaf7f31b09dd3e10d87add48833b1de51f037b8fcfb549e7362f"},
+    {file = "cel_expr_python-0.1.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:292ae505727bfcfc1986c8bf653c2580faa06f46af56b9087060eafdf2a08652"},
+    {file = "cel_expr_python-0.1.3-cp311-cp311-win_amd64.whl", hash = "sha256:8b56ebf586df6ec4dae0449d90bd9f6da0027bef407f2ffbb92701a9886ee43c"},
+    {file = "cel_expr_python-0.1.3-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:5ab17a336e7f01e3868fc454630c05596fb8a16293833fa34a7a2f946faa835f"},
+    {file = "cel_expr_python-0.1.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4e2694afe68a0484ee7c99a79887309511f6738e562a5d2c4ff566dc791e7ec6"},
+    {file = "cel_expr_python-0.1.3-cp312-cp312-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4170d1e6a3cf359b0ec7c1fb50317daa3e3e3eb12b61311260714a1e02313fbe"},
+    {file = "cel_expr_python-0.1.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ab3b0a418b3911177a77ee69fef1f4199b4a053e2ddd1c339119e58c9cd72824"},
+    {file = "cel_expr_python-0.1.3-cp312-cp312-win_amd64.whl", hash = "sha256:925bbf323fdf2743491ddf411e40b5c4a12ab102e3bc7e0bfec0fed1c6defa3b"},
+    {file = "cel_expr_python-0.1.3-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:ac60fdb981d1435faadc536c0582ada321a3a392c18ba70e94e3f3caa0f37437"},
+    {file = "cel_expr_python-0.1.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:b8eb8d3c92b11e99fffddb846ba68f8b1ba12a3bf1bc0ccdd8c2914c7458f3a4"},
+    {file = "cel_expr_python-0.1.3-cp313-cp313-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ea4679e74567c145c824e1ef049ae340af5b2a1a4451324d215e58ed5db20969"},
+    {file = "cel_expr_python-0.1.3-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:aa80370ed20cee201a7671634f9c58dc17fd93f15addf680d7e0393969bc51b3"},
+    {file = "cel_expr_python-0.1.3-cp313-cp313-win_amd64.whl", hash = "sha256:cd6ff40b4a89af6b62ca24d431893d8fcce5cca6149f06926a0e88211a370645"},
+    {file = "cel_expr_python-0.1.3-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:665fbb261c4733e69a4022763c16f7655cfe6e057cd394ad9f36dfee92b9df8c"},
+    {file = "cel_expr_python-0.1.3-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:b3e1ba34748796624b2cf8c9bc664b79baccc0662c97299a1991278ef45d3aed"},
+    {file = "cel_expr_python-0.1.3-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0d2035831cfb9c0ae36c91e3de421828f8fa27173680e86676a7d6e0f68300a0"},
+    {file = "cel_expr_python-0.1.3-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9b36c7a36ca865b147e1fc68f3f6faaae5b113e9de4d77e7eb751c95e1547a99"},
+    {file = "cel_expr_python-0.1.3-cp314-cp314-win_amd64.whl", hash = "sha256:4711f59f0dd3fcabf68a617685ab2857ed931cc10e2f1595abe7d4d99f921bba"},
+]
+
+[[package]]
 name = "certifi"
 version = "2026.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -3361,4 +3391,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11, <3.15"
-content-hash = "59a946bf33743f4b9e926dc764a3b975a9cbfec8c816597cc055de5eba2b7216"
+content-hash = "c303c966b0fbccae2134500d96b3a4a871c45b7398855ce7616bb590259fcd36"
