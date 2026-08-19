@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 import click
 from click import ClickException
@@ -77,7 +77,7 @@ def create_package_symlink(cfg, pname: str, package: Package):
     relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
 
 
-def fetch_components(cfg: Config):
+def fetch_components(cfg: Config, bootstrap_target: Optional[str] = None):
     """
     Download all components required by target.
 
@@ -90,7 +90,7 @@ def fetch_components(cfg: Config):
     component_names, component_aliases = _discover_components(cfg)
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    cspecs = _read_components(cfg, component_aliases)
+    cspecs = _read_components(cfg, component_aliases, bootstrap_target)
     click.secho("Fetching components...", bold=True)
 
     deps: dict[str, list] = {}
@@ -184,7 +184,7 @@ def do_parallel(fun: Callable[[Config, Iterable], None], cfg: Config, data: Iter
         list(exe.map(fun, itertools.repeat(cfg), data))
 
 
-def register_components(cfg: Config):
+def register_components(cfg: Config, bootstrap_target: Optional[str] = None):
     """
     Discover components in the inventory, and register them if the
     corresponding directory in `dependencies/` exists.
@@ -194,7 +194,7 @@ def register_components(cfg: Config):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
-        cspecs = _read_components(cfg, component_aliases)
+        cspecs = _read_components(cfg, component_aliases, bootstrap_target)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)
