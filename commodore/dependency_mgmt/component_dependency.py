@@ -43,7 +43,7 @@ class ComponentDependency:
         cls, cname: str, depname: str, depspec: dict[str, str]
     ) -> ComponentDependency:
         if "url" not in depspec:
-            raise ComponentDependencyParseError("url")
+            raise ComponentDependencyParseError("url", "field 'url' missing")
         url = depspec["url"]
         minverspec = None
         if "minversion" in depspec:
@@ -85,10 +85,20 @@ class ComponentDependency:
                 f"Cannot merge ComponentDependency objects with same name but different URLs: {self.url}, {other.url}"
             )
 
+        if self.path != other.path:
+            raise ValueError(
+                "Cannot merge ComponentDependency objects with same name and URL but different sub-paths: "
+                + f"{self.path}, {other.path}"
+            )
+
         if self.minversion and other.minversion:
+            cur_self = self.minversion
             self.minversion = max(self.minversion, other.minversion)
+            if cur_self != self.minversion:
+                self.minverspec = other.minverspec
         elif other.minversion:
             self.minversion = other.minversion
+            self.minverspec = other.minverspec
 
         self.mandatory = self.mandatory or other.mandatory
         self.requiredif.extend(other.requiredif)
