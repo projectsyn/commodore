@@ -99,14 +99,10 @@ def compile_component(
         nodes = kapitan_inventory(config)
         component_deps = collect_catalog_dependencies(config, nodes)
         if len(component_deps) > 0:
-            component_deps["argocd"] = ComponentDependency(
+            component_deps["argocd"] = ComponentDependency.parse(
+                component.name,
                 "argocd",
-                ["argocd"],
-                "https://github.com/projectsyn/component-argocd.git",
-                None,
-                None,
-                True,
-                [""],
+                {"url": "https://github.com/projectsyn/component-argocd.git"},
             )
 
             _setup_dependencies(inv, component_deps)
@@ -322,14 +318,7 @@ def _setup_dependencies(inv: Inventory, dependencies: dict[str, ComponentDepende
     dependencies_yaml: dict[str, Any] = {
         "applications": list(dependencies.keys()),
         "parameters": {
-            "components": {
-                dn: {
-                    "url": dep.url,
-                    "version": dep.minverspec or "master",
-                    # TODO(sg): subpath?
-                }
-                for dn, dep in dependencies.items()
-            }
+            "components": {dn: dep.component_entry for dn, dep in dependencies.items()}
         },
     }
     yaml_dump(dependencies_yaml, inv.global_config_dir / "commodore.yml")

@@ -32,6 +32,7 @@ class ComponentDependency:
     name: str
     instances: list[str]
     url: str
+    path: Optional[str]
     minverspec: Optional[str]
     minversion: Optional[semver.Version]
     mandatory: bool
@@ -64,7 +65,14 @@ class ComponentDependency:
             requiredif = [depspec["requiredif"]]
 
         return ComponentDependency(
-            depname, [cname], url, minverspec, minversion, mandatory, requiredif
+            depname,
+            [cname],
+            url,
+            depspec.get("path"),
+            minverspec,
+            minversion,
+            mandatory,
+            requiredif,
         )
 
     def update(self, other: ComponentDependency):
@@ -137,6 +145,16 @@ class ComponentDependency:
             required = required or resval
 
         return required
+
+    @property
+    def component_entry(self) -> dict[str, str]:
+        entry = {
+            "url": self.url,
+            "version": self.minverspec or "master",
+        }
+        if self.path:
+            entry["path"] = self.path
+        return entry
 
 
 def collect_catalog_dependencies(
