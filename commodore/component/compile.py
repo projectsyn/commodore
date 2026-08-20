@@ -96,8 +96,8 @@ def compile_component(
         click.secho(
             f"Discovering component dependencies for {instance_name}...", bold=True
         )
-        init_inv = kapitan_inventory(config)
-        component_deps = collect_catalog_dependencies(config, init_inv)
+        nodes = kapitan_inventory(config)
+        component_deps = collect_catalog_dependencies(config, nodes)
         if len(component_deps) > 0:
             component_deps["argocd"] = ComponentDependency(
                 "argocd",
@@ -120,6 +120,7 @@ def compile_component(
             cluster_parameters = kapitan_inventory(config)[inv.bootstrap_target][
                 "parameters"
             ]
+            nodes = kapitan_inventory(config)
         else:
             _setup_fake_argocd_lib(inv)
             cluster_parameters = kapitan_inventory(config)[instance_name]["parameters"]
@@ -134,7 +135,6 @@ def compile_component(
         fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
 
         # Verify component alias
-        nodes = kapitan_inventory(config)
         config.verify_component_aliases(nodes, bootstrap_target=instance_name)
 
         cluster_params = nodes[instance_name]["parameters"]
@@ -250,12 +250,14 @@ def _prepare_kapitan_inventory(
         )
 
     # Create class symlink
-    relsymlink(component_class_file, inv.components_dir)
+    relsymlink(
+        component_class_file, inv.components_dir, dest_name=f"{instance_name}.yml"
+    )
     # Create defaults symlink
     relsymlink(
         component_defaults_file,
         inv.defaults_dir,
-        dest_name=f"{component.name}.yml",
+        dest_name=f"{instance_name}.yml",
     )
     # Create component symlink
     relsymlink(component.target_directory, inv.dependencies_dir, component.name)
