@@ -2061,14 +2061,14 @@ doc = ["furo (>=2025.12.19)", "myst-parser (>=5.0.0)", "sphinx (>=7.0.0)"]
 
 [[package]]
 name = "pygithub"
-version = "2.9.1"
+version = "2.10.0"
 description = "Use the full Github API v3"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "pygithub-2.9.1-py3-none-any.whl", hash = "sha256:2ec78fca30092d51a42d76f4ddb02131b6f0c666a35dfdf364cf302cdda115b9"},
-    {file = "pygithub-2.9.1.tar.gz", hash = "sha256:59771d7ff63d54d427be2e7d0dad2208dfffc2b0a045fec959263787739b611c"},
+    {file = "pygithub-2.10.0-py3-none-any.whl", hash = "sha256:192ada2a76e4afc7d6b37e500c9bfeba1731e6506697445a5ba1c4af8bf0b924"},
+    {file = "pygithub-2.10.0.tar.gz", hash = "sha256:90ff24ef1cd1bd57124c2a3869cafee9d7b066909129ecdaba2c2d1903bc118d"},
 ]
 
 [package.dependencies]
@@ -3349,4 +3349,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11, <3.15"
-content-hash = "5a0dbe7c2aa1f21063ffb3609804a16cfd9ceb71736615997d95d0dc61d41232"
+content-hash = "ac0fef1323be300f90464da6675dfe70d90f9f5c464a8fe6606d39ce39483880"
