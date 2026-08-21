@@ -1,6 +1,9 @@
 import json
 from pathlib import Path
 
+import click
+import pytest
+
 from commodore.component import Component
 from commodore.config import Config
 
@@ -88,3 +91,18 @@ def test_clear_jsonnet_lock_file(tmp_path: Path):
             data["dependencies"][0]["version"]
             != "57b4365eacda291b82e0d55ba7eec573a8198dda"
         )
+
+
+def test_fetch_jsonnet_libraries_no_jsonnetfile(tmp_path: Path):
+    jsonnet_bundler.fetch_jsonnet_libraries(tmp_path, [])
+
+
+def test_fetch_jsonnet_libraries_jb_error(tmp_path: Path):
+    missing_path = tmp_path / "foobar"
+    with pytest.raises(click.ClickException) as e:
+        jsonnet_bundler.fetch_jsonnet_libraries(
+            tmp_path,
+            [{"source": {"local": {"directory": str(missing_path)}}}],
+        )
+
+    assert e.value.message == "jsonnet-bundler exited with error"
