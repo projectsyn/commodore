@@ -35,6 +35,7 @@ class ComponentDependency:
     path: Optional[str]
     minverspec: Optional[str]
     minversion: Optional[semver.Version]
+    testversion: Optional[str]
     mandatory: bool
     requiredif: list[str]
 
@@ -71,6 +72,7 @@ class ComponentDependency:
             depspec.get("path"),
             minverspec,
             minversion,
+            depspec.get("test_version"),
             mandatory,
             requiredif,
         )
@@ -160,7 +162,7 @@ class ComponentDependency:
     def component_entry(self) -> dict[str, str]:
         entry = {
             "url": self.url,
-            "version": self.minverspec or "master",
+            "version": self.testversion or self.minverspec or "master",
         }
         if self.path:
             entry["path"] = self.path

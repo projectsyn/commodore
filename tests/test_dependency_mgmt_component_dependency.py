@@ -33,7 +33,15 @@ def _make_dep(
             minversion = semver.Version.parse(minverspec[1:])
 
     return component_dependency.ComponentDependency(
-        name, instances, url, path, minverspec, minversion, mandatory, requiredif or []
+        name,
+        instances,
+        url,
+        path,
+        minverspec,
+        minversion,
+        None,
+        mandatory,
+        requiredif or [],
     )
 
 
