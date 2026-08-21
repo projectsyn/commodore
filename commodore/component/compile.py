@@ -5,7 +5,6 @@ import tempfile
 
 from collections.abc import Iterable
 from pathlib import Path as P
-from textwrap import dedent
 from typing import Any, Optional
 
 import click
@@ -211,7 +210,7 @@ def _prepare_kapitan_inventory(
     Setup Kapitan inventory.
 
     Create component symlinks, values file symlinks, setup params class with fake values
-    and Kapitan target for the component, create a fake `lib/argocd.libjsonnet`.
+    and Kapitan target for the component.
     """
 
     inv = config.inventory
@@ -279,21 +278,6 @@ def _prepare_kapitan_inventory(
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
     update_target(config, instance_name, component.name, value_classes)
-
-
-def _setup_fake_argocd_lib(inv: Inventory):
-    # Fake Argo CD lib
-    # We plug "fake" Argo CD library here because every component relies on it
-    # and we don't want to provide it every time when compiling a single component.
-    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
-        argocd_libf.write(dedent("""
-            local ArgoApp(component, namespace, project='', secrets=true, base=null) = {};
-            local ArgoProject(name) = {};
-
-            {
-              App: ArgoApp,
-              Project: ArgoProject,
-            }"""))
 
 
 def _fetch_component_dependencies(
