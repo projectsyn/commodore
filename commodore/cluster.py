@@ -222,8 +222,6 @@ def render_target(
             click.secho(f" > Default file for class {c} missing", fg="yellow")
 
     classes.append("global.commodore")
-    if extra_classes:
-        classes.extend(extra_classes)
 
     if not bootstrap:
         if not inv.component_file(target).is_file():
@@ -231,6 +229,9 @@ def render_target(
                 f"Target rendering failed for {target}: component class is missing"
             )
         classes.append(f"components.{target}")
+
+    if extra_classes:
+        classes.extend(extra_classes)
 
     return generate_target(inv, target, components, classes, component)
 
