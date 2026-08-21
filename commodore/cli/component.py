@@ -232,6 +232,12 @@ def new_update_options(new_cmd: bool):
             help=f"{add_text} golden tests.",
         )(cmd)
         click.option(
+            "--update-golden-tests/--no-update-golden-tests",
+            default=True,
+            show_default=True,
+            help="Whether to run `make gen-golden(-all)` after applying the template.",
+        )(cmd)
+        click.option(
             "--pp/--no-pp",
             default=False if new_cmd else None,
             show_default=True,
@@ -305,6 +311,7 @@ def component_new(
     owner: str,
     copyright_holder: str,
     golden_tests: bool,
+    update_golden_tests: bool,
     matrix_tests: bool,
     verbose: int,
     output_dir: str,
@@ -331,6 +338,10 @@ def component_new(
     t.copyright_holder = copyright_holder
     t.golden_tests = golden_tests
     t.matrix_tests = matrix_tests
+    # NOTE(sg): Must be after matrix test config, because that setter adjusts
+    # gen_golden_target.
+    if not update_golden_tests:
+        t.gen_golden_target = None
     t.test_cases = ["defaults"] + list(additional_test_case)
     t.automerge_patch = automerge_patch
     t.automerge_patch_v0 = automerge_patch_v0
@@ -435,6 +446,7 @@ def component_update(
     copyright_holder: str,
     template_version: Optional[str],
     golden_tests: Optional[bool],
+    update_golden_tests: Optional[bool],
     matrix_tests: Optional[bool],
     lib: Optional[bool],
     pp: Optional[bool],
@@ -479,6 +491,10 @@ def component_update(
         t.golden_tests = golden_tests
     if matrix_tests is not None:
         t.matrix_tests = matrix_tests
+    # NOTE(sg): Must be after matrix test config, because that setter adjusts
+    # gen_golden_target.
+    if not update_golden_tests:
+        t.gen_golden_target = None
     if lib is not None:
         t.library = lib
     if pp is not None:

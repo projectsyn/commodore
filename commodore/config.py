@@ -344,7 +344,7 @@ class Config:
     def update_verbosity(self, verbose):
         self._verbose += verbose
 
-    def get_components(self):
+    def get_components(self) -> dict[str, Component]:
         return self._components
 
     def register_component(self, component: Component):
@@ -396,7 +396,7 @@ class Config:
             dep.url = repo_url
         return dep
 
-    def get_component_aliases(self):
+    def get_component_aliases(self) -> dict[str, str]:
         return self._component_aliases
 
     def register_component_aliases(self, aliases: dict[str, str]):
