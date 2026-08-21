@@ -36,6 +36,7 @@ def call_component_new(
     automerge_patch="--no-automerge-patch",
     automerge_patch_v0="--no-automerge-patch-v0",
     autorelease="--no-autorelease",
+    update_golden="--no-update-golden-tests",
     output_dir="",
     extra_args: list[str] = [],
 ):
@@ -52,6 +53,7 @@ def call_component_new(
             automerge_patch,
             automerge_patch_v0,
             autorelease,
+            update_golden,
         ]
     )
     args.extend(extra_args)
@@ -482,7 +484,8 @@ def test_run_component_new_command_with_name(tmp_path: P):
     cruftjson_path = tmp_path / "dependencies" / component_slug / ".cruft.json"
 
     exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new --name '{component_name}' {component_slug}",
+        f"commodore -d {tmp_path} -vvv component new "
+        + f"--no-update-golden-tests --name '{component_name}' {component_slug}",
         shell=True,
     )
 
@@ -915,7 +918,7 @@ def test_check_golden_diff(tmp_path: P):
 
     component_name = "test-component"
     exit_status = call(
-        f"commodore -d {tmp_path} -vvv component new {component_name}",
+        f"commodore -d {tmp_path} -vvv component new --update-golden-tests {component_name}",
         shell=True,
     )
     assert exit_status == 0
@@ -967,6 +970,7 @@ def test_component_update_bool_flags(
         "--no-lib",
         "--no-pp",
         "--no-golden-tests",
+        "--no-update-golden-tests",
         "--no-matrix-tests",
         "--no-automerge-patch",
         "--no-automerge-patch-v0",
@@ -1004,6 +1008,7 @@ def test_component_update_bool_flags(
         str(tmp_path),
         "component",
         "update",
+        "--no-update-golden-tests",
         f"{tmp_path}/dependencies/{component_name}",
     ]
     has_lib = "--lib" in update_args

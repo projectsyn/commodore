@@ -45,6 +45,7 @@ class ComponentTemplater(Templater):
         self._automerge_patch_blocklist = set()
         self._automerge_patch_v0_allowlist = set()
         self._automerge_minor_allowlist = set()
+        self.gen_golden_target = "gen-golden"
 
     @classmethod
     def from_existing(cls, config: Config, path: Path):
@@ -189,6 +190,10 @@ class ComponentTemplater(Templater):
     @matrix_tests.setter
     def matrix_tests(self, matrix_tests: bool) -> None:
         self._matrix_tests = matrix_tests
+        if self.matrix_tests:
+            self.gen_golden_target = "gen-golden-all"
+        else:
+            self.gen_golden_target = "gen-golden"
 
     def add_automerge_patch_block_pattern(self, pattern: str):
         """Add pattern to the patch automerge blocklist.
