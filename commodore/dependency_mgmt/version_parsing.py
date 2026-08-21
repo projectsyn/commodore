@@ -69,17 +69,14 @@ def _read_versions(
     ignore_class_notfound: bool = False,
     aliases: dict[str, str] = {},
     fallback: dict[str, DependencySpec] = {},
-    bootstrap_target: Optional[str] = None,
 ) -> dict[str, DependencySpec]:
     deps_key = dependency_type.value
     deptype_str = dependency_type.name.lower()
     deptype_cap = deptype_str.capitalize()
     dependencies = {}
 
-    real_bootstrap_target = bootstrap_target or cfg.inventory.bootstrap_target
-
     inv = kapitan_inventory(cfg, ignore_class_notfound=ignore_class_notfound)
-    cluster_inventory = inv[real_bootstrap_target]
+    cluster_inventory = inv[cfg.inventory.bootstrap_target]
     deps = cluster_inventory["parameters"].get(deps_key, None)
     if not deps:
         if require_key:
@@ -123,23 +120,18 @@ def _read_versions(
 
 
 def _read_components(
-    cfg: Config,
-    component_aliases: dict[str, str],
-    bootstrap_target: Optional[str] = None,
+    cfg: Config, component_aliases: dict[str, str]
 ) -> dict[str, DependencySpec]:
     component_names = set(component_aliases.values())
     alias_names = set(component_aliases.keys()) - component_names
 
-    component_versions = _read_versions(
-        cfg, DepType.COMPONENT, component_names, bootstrap_target=bootstrap_target
-    )
+    component_versions = _read_versions(cfg, DepType.COMPONENT, component_names)
     alias_versions = _read_versions(
         cfg,
         DepType.COMPONENT,
         alias_names,
         aliases=component_aliases,
         fallback=component_versions,
-        bootstrap_target=bootstrap_target,
     )
 
     for alias, aspec in alias_versions.items():

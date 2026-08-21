@@ -77,7 +77,7 @@ def create_package_symlink(cfg, pname: str, package: Package):
     relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
 
 
-def fetch_components(cfg: Config, bootstrap_target: Optional[str] = None):
+def fetch_components(cfg: Config, applications_target: Optional[str] = None):
     """
     Download all components required by target.
 
@@ -87,10 +87,12 @@ def fetch_components(cfg: Config, bootstrap_target: Optional[str] = None):
 
     click.secho("Discovering components...", bold=True)
     cfg.inventory.ensure_dirs()
-    component_names, component_aliases = _discover_components(cfg)
+    component_names, component_aliases = _discover_components(
+        cfg, applications_target=applications_target
+    )
     click.secho("Registering component aliases...", bold=True)
     cfg.register_component_aliases(component_aliases)
-    cspecs = _read_components(cfg, component_aliases, bootstrap_target)
+    cspecs = _read_components(cfg, component_aliases)
     click.secho("Fetching components...", bold=True)
 
     deps: dict[str, list] = {}
@@ -184,7 +186,7 @@ def do_parallel(fun: Callable[[Config, Iterable], None], cfg: Config, data: Iter
         list(exe.map(fun, itertools.repeat(cfg), data))
 
 
-def register_components(cfg: Config, bootstrap_target: Optional[str] = None):
+def register_components(cfg: Config):
     """
     Discover components in the inventory, and register them if the
     corresponding directory in `dependencies/` exists.
@@ -194,7 +196,7 @@ def register_components(cfg: Config, bootstrap_target: Optional[str] = None):
     click.secho("Discovering included components...", bold=True)
     try:
         components, component_aliases = _discover_components(cfg)
-        cspecs = _read_components(cfg, component_aliases, bootstrap_target)
+        cspecs = _read_components(cfg, component_aliases)
     except KeyError as e:
         raise click.ClickException(f"While discovering components: {e}")
     click.secho("Registering components and aliases...", bold=True)

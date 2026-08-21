@@ -75,7 +75,9 @@ def compile_component(
         inv.ensure_dirs()
         inv.global_config_dir.mkdir()
         yaml_dump({}, inv.global_config_dir / "commodore.yml")
+        search_paths.append(component_path / "vendor")
         search_paths.append(inv.dependencies_dir)
+        # search_paths.append(component_path)
         component = _setup_component(
             config,
             component_name,
@@ -83,6 +85,7 @@ def compile_component(
             component_path,
         )
         config.register_component(component)
+        create_component_symlinks(config, component)
         _prepare_kapitan_inventory(config, component, value_files, instance_name)
 
         # Raise error if component uses removed reclass parameters
@@ -98,30 +101,26 @@ def compile_component(
         )
         nodes = kapitan_inventory(config)
         component_deps = collect_catalog_dependencies(config, nodes)
-        if len(component_deps) > 0:
+        # Inject argocd as dependency, if it's not explicitly specified by the component.
+        if "argocd" not in component_deps:
             component_deps["argocd"] = ComponentDependency.parse(
                 component.name,
                 "argocd",
                 {"url": "https://github.com/projectsyn/component-argocd.git"},
             )
 
-            _setup_dependencies(inv, component_deps)
-            update_target(config, inv.bootstrap_target)
+        _setup_dependencies(inv, component_deps)
+        update_target(config, inv.bootstrap_target)
 
-            fetch_components(config)
+        fetch_components(config, applications_target=instance_name)
 
-            update_target(config, inv.bootstrap_target)
-            _prepare_kapitan_inventory(config, component, value_files, instance_name)
+        update_target(config, inv.bootstrap_target)
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
 
-            cluster_parameters = kapitan_inventory(config)[inv.bootstrap_target][
-                "parameters"
-            ]
-            nodes = kapitan_inventory(config)
-        else:
-            _setup_fake_argocd_lib(inv)
-            cluster_parameters = kapitan_inventory(config)[instance_name]["parameters"]
-            create_component_symlinks(config, component)
-            search_paths.append(component_path / "vendor")
+        cluster_parameters = kapitan_inventory(config)[inv.bootstrap_target][
+            "parameters"
+        ]
+        nodes = kapitan_inventory(config)
 
         # Fetch Jsonnet dependencies
         for component in config.get_components().values():
