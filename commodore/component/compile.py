@@ -43,6 +43,7 @@ def compile_component(
     search_paths_: Iterable[str],
     output_path_: str,
     component_name: str,
+    discovery_iterations: int = 3,
 ):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path_).resolve()
@@ -96,31 +97,10 @@ def compile_component(
         )
 
         # Fetch and install component dependencies
-        click.secho(
-            f"Discovering component dependencies for {instance_name}...", bold=True
+        nodes = _fetch_component_dependencies(
+            config, component, instance_name, value_files, discovery_iterations
         )
-        nodes = kapitan_inventory(config)
-        component_deps = collect_catalog_dependencies(config, nodes)
-        # Inject argocd as dependency, if it's not explicitly specified by the component.
-        if "argocd" not in component_deps:
-            component_deps["argocd"] = ComponentDependency.parse(
-                component.name,
-                "argocd",
-                {"url": "https://github.com/projectsyn/component-argocd.git"},
-            )
-
-        _setup_dependencies(inv, component_deps)
-        update_target(config, inv.bootstrap_target)
-
-        fetch_components(config, applications_target=instance_name)
-
-        update_target(config, inv.bootstrap_target)
-        _prepare_kapitan_inventory(config, component, value_files, instance_name)
-
-        cluster_parameters = kapitan_inventory(config)[inv.bootstrap_target][
-            "parameters"
-        ]
-        nodes = kapitan_inventory(config)
+        cluster_parameters = nodes[inv.bootstrap_target]["parameters"]
 
         # Fetch Jsonnet dependencies
         for component in config.get_components().values():
@@ -150,7 +130,10 @@ def compile_component(
 
         # Change working directory for postprocessing
         config.work_dir = output_path
-        postprocess_components(config, nodes, config.get_components())
+        # NOTE(sg): We prune the inventory here, since we only want to run
+        # postprocessing for the component that we're actually compiling.
+        pp_nodes = {instance_name: nodes[instance_name]}
+        postprocess_components(config, pp_nodes, config.get_components())
         config.print_deprecation_notices()
     finally:
         if config.trace:
@@ -311,6 +294,74 @@ def _setup_fake_argocd_lib(inv: Inventory):
               App: ArgoApp,
               Project: ArgoProject,
             }"""))
+
+
+def _fetch_component_dependencies(
+    config: Config,
+    component: Component,
+    instance_name: str,
+    value_files: list[P],
+    discovery_iterations: int,
+) -> dict[str, Any]:
+    click.secho(
+        f"Discovering component dependencies for {instance_name} "
+        + f"(iterations={discovery_iterations})...",
+        bold=True,
+    )
+    inv = config.inventory
+
+    nodes = kapitan_inventory(config)
+    prev_component_deps: dict[str, ComponentDependency] = {}
+    component_deps = _collect_component_dependencies(config, nodes, component.name)
+    i = 0
+
+    while (
+        component_deps.keys() != prev_component_deps.keys() and i < discovery_iterations
+    ):
+        _setup_dependencies(inv, component_deps)
+        update_target(config, inv.bootstrap_target)
+
+        fetch_components(
+            config,
+            applications_target=inv.bootstrap_target,
+            prefetched_set=set(prev_component_deps.keys()),
+        )
+
+        update_target(config, inv.bootstrap_target)
+        for c in component_deps:
+            update_target(config, c)
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
+
+        nodes = kapitan_inventory(config)
+
+        prev_component_deps = component_deps
+        component_deps = _collect_component_dependencies(config, nodes, component.name)
+        i = i + 1
+
+    diff = set(component_deps.keys()) - set(prev_component_deps.keys())
+    if diff:
+        click.secho(
+            f" > [WARNING] component dependency fetching didn't reach fixpoint in {discovery_iterations} iterations",
+            fg="yellow",
+        )
+
+    return nodes
+
+
+def _collect_component_dependencies(
+    config: Config,
+    nodes: dict[str, Any],
+    cn: str,
+) -> dict[str, ComponentDependency]:
+    component_deps = collect_catalog_dependencies(config, nodes)
+    # Inject argocd as dependency, if it's not explicitly specified by the component.
+    if "argocd" not in component_deps:
+        component_deps["argocd"] = ComponentDependency.parse(
+            cn,
+            "argocd",
+            {"url": "https://github.com/projectsyn/component-argocd.git"},
+        )
+    return component_deps
 
 
 def _setup_dependencies(inv: Inventory, dependencies: dict[str, ComponentDependency]):
