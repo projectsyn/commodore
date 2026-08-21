@@ -77,7 +77,11 @@ def create_package_symlink(cfg, pname: str, package: Package):
     relsymlink(package.target_dir, cfg.inventory.classes_dir, dest_name=pname)
 
 
-def fetch_components(cfg: Config, applications_target: Optional[str] = None):
+def fetch_components(
+    cfg: Config,
+    applications_target: Optional[str] = None,
+    prefetched_set: Optional[set[str]] = None,
+):
     """
     Download all components required by target.
 
@@ -96,7 +100,8 @@ def fetch_components(cfg: Config, applications_target: Optional[str] = None):
     click.secho("Fetching components...", bold=True)
 
     deps: dict[str, list] = {}
-    for cn in component_names:
+    prefetched = prefetched_set or set()
+    for cn in set(component_names) - prefetched:
         cspec = cspecs[cn]
         if cfg.debug:
             click.echo(f" > Fetching component {cn}...")
