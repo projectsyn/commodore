@@ -32,6 +32,8 @@ from commodore.inventory.lint import check_removed_reclass_variables
 from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
 
+_ARGOCD_REPO_URL = "https://github.com/projectsyn/component-argocd.git"
+
 
 # pylint: disable=too-many-arguments disable=too-many-locals
 def compile_component(
@@ -296,12 +298,12 @@ def _fetch_component_dependencies(
 
     nodes = kapitan_inventory(config)
     prev_component_deps: dict[str, ComponentDependency] = {}
-    component_deps = _collect_component_dependencies(config, nodes, component.name)
+    component_deps = _collect_component_dependencies(config, nodes, component)
     i = 0
 
     while (
-        component_deps.keys() != prev_component_deps.keys() and i < discovery_iterations
-    ):
+        component_deps.keys() != prev_component_deps.keys() or i == 0
+    ) and i < discovery_iterations:
         _setup_dependencies(inv, component_deps)
         update_target(config, inv.bootstrap_target)
 
@@ -319,7 +321,7 @@ def _fetch_component_dependencies(
         nodes = kapitan_inventory(config)
 
         prev_component_deps = component_deps
-        component_deps = _collect_component_dependencies(config, nodes, component.name)
+        component_deps = _collect_component_dependencies(config, nodes, component)
         i = i + 1
 
     diff = set(component_deps.keys()) - set(prev_component_deps.keys())
@@ -335,16 +337,21 @@ def _fetch_component_dependencies(
 def _collect_component_dependencies(
     config: Config,
     nodes: dict[str, Any],
-    cn: str,
+    c: Component,
 ) -> dict[str, ComponentDependency]:
     component_deps = collect_catalog_dependencies(config, nodes)
-    # Inject argocd as dependency, if it's not explicitly specified by the component.
+
+    # Inject argocd as dependency, if it's not explicitly specified by the
+    # component, and we're not compiling component-argocd itself.
+    if c.repo_url == _ARGOCD_REPO_URL:
+        click.echo(" > Skipping component-argocd dependency injection")
+        return component_deps
+
     if "argocd" not in component_deps:
         component_deps["argocd"] = ComponentDependency.parse(
-            cn,
-            "argocd",
-            {"url": "https://github.com/projectsyn/component-argocd.git"},
+            c.name, "argocd", {"url": _ARGOCD_REPO_URL}
         )
+
     return component_deps
 
 
