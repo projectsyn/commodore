@@ -25,6 +25,7 @@ from .dependency_mgmt import (
     verify_version_overrides,
 )
 from .dependency_mgmt.component_library import create_component_library_aliases
+from .dependency_mgmt.component_dependency import validate_catalog_dependencies
 from .dependency_mgmt.jsonnet_bundler import (
     fetch_jsonnet_libraries,
     jsonnet_dependencies,
@@ -241,6 +242,9 @@ def setup_compile_environment(config: Config) -> tuple[dict[str, Any], Iterable[
     # Raise exception if component version override without URL is present in the
     # hierarchy.
     verify_version_overrides(cluster_parameters, config.get_component_aliases())
+    # Raise exception if the catalog violates any component dependency version
+    # requirements.
+    validate_catalog_dependencies(config, inventory)
 
     for component in config.get_components().values():
         ckey = component.parameters_key

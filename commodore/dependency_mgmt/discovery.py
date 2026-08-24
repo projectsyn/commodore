@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from typing import Optional
 
 import click
 
@@ -49,7 +50,9 @@ def _extract_component_aliases(
     return components, all_component_aliases
 
 
-def _discover_components(cfg) -> tuple[list[str], dict[str, str]]:
+def _discover_components(
+    cfg, applications_target: Optional[str] = None
+) -> tuple[list[str], dict[str, str]]:
     """
     Discover components used by the current cluster by extracting all entries from the
     reclass applications dictionary.
@@ -57,10 +60,15 @@ def _discover_components(cfg) -> tuple[list[str], dict[str, str]]:
     The function also verifies the extracted entries, and raises an exception if any
     invalid aliases are found.
     """
-    kapitan_applications = kapitan_inventory(cfg, key="applications")
+    if not applications_target:
+        kapitan_applications = kapitan_inventory(cfg, key="applications").keys()
+    else:
+        kapitan_applications = kapitan_inventory(cfg)[applications_target][
+            "applications"
+        ]
 
     components, all_component_aliases = _extract_component_aliases(
-        cfg, kapitan_applications.keys()
+        cfg, kapitan_applications
     )
 
     component_aliases: dict[str, str] = {}

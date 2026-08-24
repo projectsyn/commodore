@@ -5,25 +5,34 @@ import tempfile
 
 from collections.abc import Iterable
 from pathlib import Path as P
-from textwrap import dedent
-from typing import Optional
+from typing import Any, Optional
 
 import click
 import git
 
-from commodore.cluster import generate_target
+from commodore.cluster import update_target
 from commodore.config import Config
 from commodore.component import Component
+from commodore.dependency_mgmt import fetch_components, create_component_symlinks
+from commodore.dependency_mgmt.component_dependency import (
+    collect_catalog_dependencies,
+    ComponentDependency,
+)
 from commodore.dependency_mgmt.component_library import (
     validate_component_library_name,
     create_component_library_aliases,
 )
-from commodore.dependency_mgmt.jsonnet_bundler import fetch_jsonnet_libraries
+from commodore.dependency_mgmt.jsonnet_bundler import (
+    fetch_jsonnet_libraries,
+    jsonnet_dependencies,
+)
 from commodore.helpers import kapitan_inventory, kapitan_compile, relsymlink, yaml_dump
 from commodore.inventory import Inventory
 from commodore.inventory.lint import check_removed_reclass_variables
 from commodore.multi_dependency import MultiDependency
 from commodore.postprocess import postprocess_components
+
+_ARGOCD_REPO_URL = "https://github.com/projectsyn/component-argocd.git"
 
 
 # pylint: disable=too-many-arguments disable=too-many-locals
@@ -35,12 +44,12 @@ def compile_component(
     search_paths_: Iterable[str],
     output_path_: str,
     component_name: str,
+    discovery_iterations: int = 3,
 ):
     # Resolve all input to absolute paths to fix symlinks
     component_path = P(component_path_).resolve()
     value_files = [P(f).resolve() for f in value_files_]
     search_paths = [P(d).resolve() for d in search_paths_]
-    search_paths.append(component_path / "vendor")
     output_path = P(output_path_).resolve()
 
     if not component_name:
@@ -59,20 +68,27 @@ def compile_component(
         )
 
     temp_dir = P(tempfile.mkdtemp(prefix="component-")).resolve()
+    search_paths.append(temp_dir / "vendor")
     config.work_dir = temp_dir
     try:
         if config.debug:
             click.echo(f"   > Created temp workspace: {config.work_dir}")
         inv = config.inventory
         inv.ensure_dirs()
+        inv.global_config_dir.mkdir()
+        yaml_dump({}, inv.global_config_dir / "commodore.yml")
+        search_paths.append(component_path / "vendor")
         search_paths.append(inv.dependencies_dir)
+        # search_paths.append(component_path)
         component = _setup_component(
             config,
             component_name,
             instance_name,
             component_path,
         )
-        _prepare_kapitan_inventory(inv, component, value_files, instance_name)
+        config.register_component(component)
+        create_component_symlinks(config, component)
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
 
         # Raise error if component uses removed reclass parameters
         check_removed_reclass_variables(
@@ -81,20 +97,24 @@ def compile_component(
             [component.defaults_file, component.class_file] + value_files,
         )
 
+        # Fetch and install component dependencies
+        nodes = _fetch_component_dependencies(
+            config, component, instance_name, value_files, discovery_iterations
+        )
+        cluster_parameters = nodes[inv.bootstrap_target]["parameters"]
+
+        # Fetch Jsonnet dependencies
+        for component in config.get_components().values():
+            ckey = component.parameters_key
+            component.render_jsonnetfile_json(cluster_parameters[ckey])
+
+        fetch_jsonnet_libraries(config.work_dir, deps=jsonnet_dependencies(config))
+
         # Verify component alias
-        nodes = kapitan_inventory(config)
         config.verify_component_aliases(nodes, bootstrap_target=instance_name)
 
         cluster_params = nodes[instance_name]["parameters"]
         create_component_library_aliases(config, cluster_params)
-
-        # Render jsonnetfile.jsonnet if necessary
-        component_params = nodes[instance_name]["parameters"].get(
-            component_name.replace("-", "_"), {}
-        )
-        component.render_jsonnetfile_json(component_params)
-        # Fetch Jsonnet libs
-        fetch_jsonnet_libraries(component_path)
 
         # Compile component
         kapitan_compile(
@@ -111,7 +131,10 @@ def compile_component(
 
         # Change working directory for postprocessing
         config.work_dir = output_path
-        postprocess_components(config, nodes, config.get_components())
+        # NOTE(sg): We prune the inventory here, since we only want to run
+        # postprocessing for the component that we're actually compiling.
+        pp_nodes = {instance_name: nodes[instance_name]}
+        postprocess_components(config, pp_nodes, config.get_components())
         config.print_deprecation_notices()
     finally:
         if config.trace:
@@ -180,14 +203,20 @@ def _setup_component(
 
 
 def _prepare_kapitan_inventory(
-    inv: Inventory, component: Component, value_files: Iterable[P], instance_name: str
+    config: Config,
+    component: Component,
+    value_files: Iterable[P],
+    instance_name: str,
 ):
     """
     Setup Kapitan inventory.
 
     Create component symlinks, values file symlinks, setup params class with fake values
-    and Kapitan target for the component, create a fake `lib/argocd.libjsonnet`.
+    and Kapitan target for the component.
     """
+
+    inv = config.inventory
+
     component_class_file = component.class_file
     component_defaults_file = component.defaults_file
     if not component_class_file.exists():
@@ -200,12 +229,14 @@ def _prepare_kapitan_inventory(
         )
 
     # Create class symlink
-    relsymlink(component_class_file, inv.components_dir)
+    relsymlink(
+        component_class_file, inv.components_dir, dest_name=f"{instance_name}.yml"
+    )
     # Create defaults symlink
     relsymlink(
         component_defaults_file,
         inv.defaults_dir,
-        dest_name=f"{component.name}.yml",
+        dest_name=f"{instance_name}.yml",
     )
     # Create component symlink
     relsymlink(component.target_directory, inv.dependencies_dir, component.name)
@@ -229,9 +260,6 @@ def _prepare_kapitan_inventory(
                     "cloud": "cloudscale",
                     "region": "rma1",
                 },
-                "argocd": {
-                    "namespace": "test",
-                },
                 "components": {
                     component.name: {
                         "url": f"https://example.com/{component.name}.git",
@@ -251,27 +279,87 @@ def _prepare_kapitan_inventory(
 
     # Create test target
     value_classes = [f"{c.stem}" for c in value_files]
-    classes = [
-        f"params.{inv.bootstrap_target}",
-        f"defaults.{component.name}",
-        f"components.{component.name}",
-    ] + value_classes
-    yaml_dump(
-        generate_target(
-            inv, instance_name, {component.name: component}, classes, component.name
-        ),
-        inv.target_file(instance_name),
+    update_target(config, instance_name, component.name, value_classes)
+
+
+def _fetch_component_dependencies(
+    config: Config,
+    component: Component,
+    instance_name: str,
+    value_files: list[P],
+    discovery_iterations: int,
+) -> dict[str, Any]:
+    click.secho(
+        f"Discovering component dependencies for {instance_name} "
+        + f"(iterations={discovery_iterations})...",
+        bold=True,
     )
+    inv = config.inventory
 
-    # Fake Argo CD lib
-    # We plug "fake" Argo CD library here because every component relies on it
-    # and we don't want to provide it every time when compiling a single component.
-    with open(inv.lib_dir / "argocd.libjsonnet", "w", encoding="utf-8") as argocd_libf:
-        argocd_libf.write(dedent("""
-            local ArgoApp(component, namespace, project='', secrets=true, base=null) = {};
-            local ArgoProject(name) = {};
+    nodes = kapitan_inventory(config)
+    prev_component_deps: dict[str, ComponentDependency] = {}
+    component_deps = _collect_component_dependencies(config, nodes, component)
+    i = 0
 
-            {
-              App: ArgoApp,
-              Project: ArgoProject,
-            }"""))
+    while (
+        component_deps.keys() != prev_component_deps.keys() or i == 0
+    ) and i < discovery_iterations:
+        _setup_dependencies(inv, component_deps)
+        update_target(config, inv.bootstrap_target)
+
+        fetch_components(
+            config,
+            applications_target=inv.bootstrap_target,
+            prefetched_set=set(prev_component_deps.keys()),
+        )
+
+        update_target(config, inv.bootstrap_target)
+        for c in component_deps:
+            update_target(config, c)
+        _prepare_kapitan_inventory(config, component, value_files, instance_name)
+
+        nodes = kapitan_inventory(config)
+
+        prev_component_deps = component_deps
+        component_deps = _collect_component_dependencies(config, nodes, component)
+        i = i + 1
+
+    diff = set(component_deps.keys()) - set(prev_component_deps.keys())
+    if diff:
+        click.secho(
+            f" > [WARNING] component dependency fetching didn't reach fixpoint in {discovery_iterations} iterations",
+            fg="yellow",
+        )
+
+    return nodes
+
+
+def _collect_component_dependencies(
+    config: Config,
+    nodes: dict[str, Any],
+    c: Component,
+) -> dict[str, ComponentDependency]:
+    component_deps = collect_catalog_dependencies(config, nodes)
+
+    # Inject argocd as dependency, if it's not explicitly specified by the
+    # component, and we're not compiling component-argocd itself.
+    if c.repo_url == _ARGOCD_REPO_URL:
+        click.echo(" > Skipping component-argocd dependency injection")
+        return component_deps
+
+    if "argocd" not in component_deps:
+        component_deps["argocd"] = ComponentDependency.parse(
+            c.name, "argocd", {"url": _ARGOCD_REPO_URL}
+        )
+
+    return component_deps
+
+
+def _setup_dependencies(inv: Inventory, dependencies: dict[str, ComponentDependency]):
+    dependencies_yaml: dict[str, Any] = {
+        "applications": list(dependencies.keys()),
+        "parameters": {
+            "components": {dn: dep.component_entry for dn, dep in dependencies.items()}
+        },
+    }
+    yaml_dump(dependencies_yaml, inv.global_config_dir / "commodore.yml")

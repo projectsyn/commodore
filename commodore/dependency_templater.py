@@ -5,7 +5,9 @@ import difflib
 import json
 import re
 import tempfile
+import os
 import shutil
+import subprocess  # nosec
 import textwrap
 
 from abc import ABC, abstractmethod
@@ -90,6 +92,7 @@ class Templater(ABC):
     copyright_holder: str
     copyright_year: Optional[str] = None
     golden_tests: bool
+    gen_golden_target: Optional[str]
     today: datetime.date
     output_dir: Optional[Path] = None
     _target_dir: Optional[Path] = None
@@ -112,6 +115,7 @@ class Templater(ABC):
         self.slug = slug
         self._name = name
         self.today = datetime.date.today()
+        self.gen_golden_target = None
         if output_dir != "":
             odir = Path(output_dir)
             if not odir.is_dir():
@@ -339,6 +343,13 @@ class Templater(ABC):
             )
             shutil.copytree(
                 Path(tmpdir) / self.slug, self.target_dir, dirs_exist_ok=True
+            )
+
+        if self.golden_tests and self.gen_golden_target:
+            env = os.environ
+            env["COMMODORE_CMD"] = "commodore"
+            subprocess.call(
+                ["make", self.gen_golden_target, "-j1"], cwd=self.target_dir, env=env
             )
 
         self.commit("Initial commit", amend=want_worktree)
