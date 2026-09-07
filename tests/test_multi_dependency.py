@@ -61,7 +61,7 @@ def test_multi_dependency_init(tmp_path: Path):
 
     assert md.repo_directory == bare_clone_path
 
-    b = Repo.init(bare_clone_path)
+    b = Repo(bare_clone_path)
     assert b.bare
     assert b.working_tree_dir is None
 
