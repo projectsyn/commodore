@@ -43,7 +43,7 @@ kapitan = "0.36.3"
 click = "8.5.0"
 gitpython = "3.1.62"
 requests = { version = "2.34.2", extras = ["socks"] }
-url-normalize = "3.0.0"
+url-normalize = "3.0.1"
 python-dotenv = "1.2.3"
 pyxdg = "0.28"
 cruft = "2.16.0"
