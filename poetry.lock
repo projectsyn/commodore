@@ -3317,14 +3317,14 @@ files = [
 
 [[package]]
 name = "url-normalize"
-version = "3.0.0"
+version = "3.0.1"
 description = "URL normalization for Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "url_normalize-3.0.0-py3-none-any.whl", hash = "sha256:95234bd359f86831c1fd87c248877f2a6887db2f3b5087120083f2fffcba4889"},
-    {file = "url_normalize-3.0.0.tar.gz", hash = "sha256:0552cbf2831a32a28994a13d29bca58a60e10ff6c0380e343ec6d1c2a0d232d8"},
+    {file = "url_normalize-3.0.1-py3-none-any.whl", hash = "sha256:97ea68fc543b1fc9f270f34c90cf164453e7d490da2ec653dcd8ebd4e3ac1faf"},
+    {file = "url_normalize-3.0.1.tar.gz", hash = "sha256:1655cd214159d9d47dc37aa6ce993c2149da44fa35cac6bafd90036a4eda3ac3"},
 ]
 
 [package.dependencies]
@@ -3403,4 +3403,4 @@ dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sph
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11, <3.15"
-content-hash = "58e91e3bdb672ac20a331d8310aa3a90b8c1879b61e2dafc4a4af44444dfde58"
+content-hash = "860f02c62c90db0c1f7d9200377732c1c2ed1769d10b9285dcb9d68bbfaf0338"
