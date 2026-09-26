@@ -30,7 +30,7 @@ def lint_dependency_specification(
             )
             errcount += 1
 
-        unk_keys = set(dspec.keys()) - {"url", "version", "path"}
+        unk_keys = set(dspec.keys()) - {"url", "version", "test_version", "path"}
         if len(unk_keys) > 0:
             click.secho(
                 f"> {deptype_str} specification for {d} "
