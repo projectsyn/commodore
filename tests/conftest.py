@@ -168,3 +168,14 @@ def make_mock_templater(mock_templater, expected_path):
     mock_templater.from_existing = mock_from_existing
 
     return mt
+
+
+# NOTE(sg): workaround for pytest-benchmark AttributeError
+# ```
+# AttributeError: 'Function' object has no attribute '_nodeid'. Did you mean: 'nodeid'?
+# ```
+# cf. https://github.com/ionelmc/pytest-benchmark/issues/321#issuecomment-6480337552
+def pytest_collection_modifyitems(items):
+    for item in items:
+        if not hasattr(item, "_nodeid"):
+            item._nodeid = item.nodeid
