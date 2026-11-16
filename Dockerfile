@@ -43,7 +43,7 @@ RUN pip install ./dist/syn_commodore-*-py3-none-any.whl
 
 ARG KUSTOMIZE_VERSION=5.8.3
 ARG JSONNET_BUNDLER_VERSION=v0.6.4
-ARG HELM_VERSION=v4.3.1
+ARG HELM_VERSION=v4.3.2
 
 RUN commodore tool install helm --version ${HELM_VERSION} \
  && commodore tool install kustomize --version ${KUSTOMIZE_VERSION} \
