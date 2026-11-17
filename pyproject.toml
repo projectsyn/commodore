@@ -50,7 +50,7 @@ cruft = "2.16.0"
 oauthlib = "4.0.1"
 pyjwt = "2.15.1"
 PyGithub = "2.10.0"
-reclass-rs = "0.11.0"
+reclass-rs = "0.12.0"
 gojsonnet = "0.22.0"
 pygorpmrustinfo = "0.1.5"
 
