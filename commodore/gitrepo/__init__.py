@@ -14,7 +14,7 @@ import click
 from git import Actor, BadName, FetchInfo, GitCommandError, PushInfo, Repo
 from git.objects import Tree
 
-from url_normalize.tools import deconstruct_url
+from url_normalize.url_normalize import deconstruct_url
 
 from commodore.normalize_url import normalize_git_url
 

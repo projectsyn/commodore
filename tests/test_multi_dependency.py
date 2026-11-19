@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from git import Repo
-from url_normalize.tools import deconstruct_url
+from url_normalize.url_normalize import deconstruct_url
 
 from commodore import multi_dependency
 
