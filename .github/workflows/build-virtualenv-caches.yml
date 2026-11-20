@@ -27,7 +27,7 @@ jobs:
     - uses: actions/setup-python@v7
       with:
         python-version: '3.11'
-    - uses: Gr1N/setup-poetry@v9
+    - uses: Gr1N/setup-poetry@v10
     - name: Install tox
       run: |
         pip install tox
@@ -53,7 +53,7 @@ jobs:
     - uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v9
+    - uses: Gr1N/setup-poetry@v10
     - uses: actions/cache@v6
       with:
         path: |
@@ -83,7 +83,7 @@ jobs:
     - uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: Gr1N/setup-poetry@v9
+    - uses: Gr1N/setup-poetry@v10
     - uses: actions/cache@v6
       with:
         path: |
@@ -106,7 +106,7 @@ jobs:
     - uses: actions/setup-python@v7
       with:
         python-version: '3.11'
-    - uses: Gr1N/setup-poetry@v9
+    - uses: Gr1N/setup-poetry@v10
     - uses: actions/cache@v6
       with:
         path: ~/.cache/pypoetry/virtualenvs
