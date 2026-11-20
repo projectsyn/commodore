@@ -1,5 +1,5 @@
 from url_normalize import url_normalize
-from url_normalize.tools import deconstruct_url, reconstruct_url
+from url_normalize.url_normalize import deconstruct_url, reconstruct_url
 
 
 def normalize_url(url: str) -> str:

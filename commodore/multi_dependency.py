@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from url_normalize.tools import deconstruct_url
+from url_normalize.url_normalize import deconstruct_url
 
 from commodore.gitrepo import GitRepo, normalize_git_url
 
