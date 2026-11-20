@@ -1,6 +1,6 @@
 FROM docker.io/golang:1.27.4 AS golang
 
-FROM docker.io/python:3.14.10-slim-trixie AS base
+FROM docker.io/python:3.15.2-slim-trixie AS base
 
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
