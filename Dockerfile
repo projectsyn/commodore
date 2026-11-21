@@ -13,7 +13,7 @@ FROM base AS builder
 
 ENV PATH=${PATH}:${HOME}/.local/bin:/usr/local/go/bin
 
-ARG POETRY_VERSION=2.5.1
+ARG POETRY_VERSION=2.5.2
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential \
       curl \
