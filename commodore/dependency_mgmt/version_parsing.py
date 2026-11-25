@@ -31,6 +31,7 @@ class DependencySpec:
 
     url: str
     version: str
+    test_version: Optional[str]
     path: str
 
     @classmethod
@@ -52,13 +53,15 @@ class DependencySpec:
         if base_config:
             url = info.get("url", base_config.url)
             version = info.get("version", base_config.version)
+            test_version = info.get("test_version", base_config.test_version)
             if not path:
                 path = base_config.path
         else:
             url = info["url"]
             version = info["version"]
+            test_version = info.get("test_version")
 
-        return DependencySpec(url, version, path)
+        return DependencySpec(url, version, test_version, path)
 
 
 def _read_versions(
@@ -112,6 +115,10 @@ def _read_versions(
         if cfg.debug:
             click.echo(f" > URL for {depname}: {dep.url}")
             click.echo(f" > Version for {depname}: {dep.version}")
+            if dep.test_version:
+                click.echo(
+                    f" > Test (override) version for {depname}: {dep.test_version}"
+                )
             click.echo(f" > Subpath for {depname}: {dep.path}")
 
         dependencies[depname] = dep
